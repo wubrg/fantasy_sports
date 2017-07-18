@@ -18,8 +18,6 @@
 
 #### Lock Date
 
-
-
 <p align="center">
   <b>Navigation</b><br>
   <br><br>

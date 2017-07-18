@@ -11,9 +11,15 @@ First off though, let's discuss the bones of the league.
 The league is currently run through ESPN's fantasy football [application][espn]. There is also an app available for
 [Android][play_store] and [Apple][apple_store] products.
 
+The League is a Dynasty league in which each team may have up to two `franchise` players, colloquially called
+`keepers`.
+
+The League rotates between Standard, .5 PPR, and PPR scoring formats every year. 
+
 ## League Mission
 
-TODO
+Create and foster a competitive, fun, and rewarding fantasy football experience in which everyone is treated with the
+fairness, dignity, and bullshit that they deserve.
 
 ## Table of Contents:
 

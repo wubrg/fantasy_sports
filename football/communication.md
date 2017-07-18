@@ -3,13 +3,16 @@
 ## Official Announcements
 
 The league uses email to communicate. Your team should have a email address that is actively monitored so that important
-announcements are not missed, nor other such important things like trade offers.
+announcements are not missed, nor other important things like trade offers.
 
 ## General Chat
 
 The league also has a [Google Hangouts][hangouts] used for more general purpose chats about the league, smack talk and
 other miscellanea.
-The hangouts will often discuss revisions to the league policies but **nothing is official until it resides within the
+
+The League Manager should send you an invite upon joining the league.
+
+**NOTICE** The hangouts will often discuss revisions to the league policies but **nothing is official until it resides within the
 documents listed below.**
 
 <p align="center">

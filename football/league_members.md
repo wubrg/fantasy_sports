@@ -13,38 +13,58 @@
 
 ## Team Requirements
 
-### Name
+As the owner of a team in `Hit or Miss` there are certain requirements your team must uphold to.
 
-### Logo
+Firstly, your team needs a name. There will be none of this 'Team Wieberg' nonsense. Have some fun with it, bash on
+Trump, bash on me, be clever with it, or don't, just do something with it is all I ask.
+
+Secondly, your team needs a logo. Repeat everything I said above about your team name and apply it to your logo.
+
+Thirdly, you must try. Watch the waivers, offer and accept trades, yell at the LM when he's being a dick, set your lineups, yell at Connor when he's making a terrible trade, participate in the weekly poll. Interact with the other members of the league, it'll be more fun that way. Some of these things are mandatory and come with fines.  
+
+See more in [league fees and dues](league_fees_and_dues.md)
 
 ## Roles and Responsibilities
 
+Some members of the league have more responsibilities than simply managing their team.
+
 ### League Manager
 
-Adam Wieberg
+The LM is in charge of overseeing the league and acting in the best interest of the players and the league. The LM
+has absolute authority but can be overridden by the league.
 
-### Poll Manager
+The current LM is Adam Wieberg
 
-Chris Buschjost
+### Poll Master
+
+The PM is in charge of crafting a poll during every week of competition.
+
+The current PM is Chris Buschjost
 
 ### Money Collector
 
-Adam Wieberg
+The MC is in charge of collecting league fees and dues and distributing awards.
+
+The current MC is Adam Wieberg (awiebergs@gmail.com)
 
 ### The Bookkeeper
 
-Connor Hanna
+The Bookie is in charge of managing Side Pot bets, collecting the money, and distributing it to the winners.  
+
+The current Bookie is Connor Hanna
 
 ### League Ambassador
 
-Dan Felty
+The Ambassador is in charge of representing the best interests of the owners and policing the tyranny of the LM. The
+League Ambassador is the head of the High Council.
+
+The current League Ambassador is Dan Felty.
 
 ### League Fool
 
-Unnamed. 
+The League Fool is the previous season's Sack-O award winner. They suck.
 
-## History of League Positions
-
+The is no League Fool currently. They suck.
 
 <p align="center">
   <b>Navigation</b><br>
