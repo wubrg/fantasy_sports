@@ -17,14 +17,15 @@
 
 As the owner of a team in `Hit or Miss` there are certain requirements your team must uphold to.
 
-Firstly, your team needs a name. There will be none of this 'Team Wieberg' nonsense.
+Firstly, your team needs a name.
+There will be none of this 'Team Wieberg' nonsense.
 Have some fun with it, bash on Trump, bash on me, be clever with it, or don't, just do something with it is all I ask.
 
 Secondly, your team needs a logo.
 Repeat everything I said above about your team name and apply it to your logo.
 
-Thirdly, you must try. Watch the waivers, offer and accept trades, yell at the LM when he's being a dick, set your lineups, yell at Connor when he's making a terrible trade, participate in the weekly poll.
-Interact with the other members of the league, and it'll be more fun that way.
+Thirdly, you must try.
+Watch the waivers, offer and accept trades, yell at the LM when he's being a dick, set your lineups, yell at Connor when he's making a terrible trade, participate in the weekly poll.
 Some of these things are mandatory and come with fines.
 
 See more in [league fees and dues](league_fees_and_dues.md)
@@ -63,7 +64,8 @@ The League Ambassador is the head of the High Council.
 
 ### League Fool
 
-The League Fool is the previous season's Sack-O award winner. They suck.
+The League Fool is the previous season's Sack-O award winner.
+They suck.
 
 The is no League Fool currently. They still suck.
 

@@ -1,13 +1,14 @@
 # Hit or Miss - League Fees and Dues
 
-The league is a pay to play league. There are dues to join for a season and there are penalties for behavior unbecoming
+The league is a pay to play league.
+There are dues to join for a season and there are penalties for behavior unbecoming
 a member of the league.
 
- Since there is money involved there are also payouts!
+Since there is money involved there are also payouts!
 
 ## Membership Dues
 
-The yearly dues for the league are a single Silver $30.
+The yearly dues for the league is a single Silver Point ($30).
 
 Dues are paid before the first game of the season.
 
@@ -27,7 +28,12 @@ Before we start, let's discuss the basic currency of the league.
 | Silver Point | $30 |
 | Gold Point | $60 |
 
+League currency is used to help simplify payouts because math is hard for some people.
+But its also used to fund other league ventures. Be sure to keep track of how much of each coin you have!
+
 ### Playoffs
+
+#### 10 Man League
 
 The playoffs will start in week 13 and end in week 16.
 
@@ -39,14 +45,26 @@ The top 4 teams will make the playoffs, with each conference champion earning a 
 | Second Place: 'The First of the Worst'| 1 GP |
 | Third Place: 'The One Nobody Remembers' | 1 SP |
 
+#### 12 Man League
+
+The playoffs will start in week 13 and end in week 16.
+
+The top 6 teams will make the playoffs, with each conference champion earning a bye in the first round.
+
+| Place | Award |
+| --- |:---:|
+| First place: 'The Grand Champion' | 2 GP + 1 SP |
+| Second Place: 'The First of the Worst'| 1 GP + 1 SP |
+| Third Place: 'The One Nobody Remembers' | 1 SP |
+
 ### Toilet Bowl
 
-The remaining teams will enter into the Toilet Bowl, a competition to prove that you didn't actually suck at this.
+The remaining teams will enter into the Toilet Bowl, a competition to prove that you don't actually suck at this.
 The Toilet Bowl also determines the Sack-O. The bottom two teams get an automatic `bye` into the loser's bracket.
 
-The Toilet Bowl has two parts, the winner's bracket and the loser's bracket. The Toilet Bowl produces one
-undefeated team and one defeated team. The undefeated is the Toilet Bowl Champion, and the defeated (loses every
-match) is the winner of the Sack-O award.
+The Toilet Bowl has two parts, the winner's bracket and the loser's bracket.
+The Toilet Bowl produces one undefeated team and one defeated team.
+The undefeated is the Toilet Bowl Champion, and the defeated (loses every match) is the winner of the Sack-O award.
 
 | Place | Award |
 | --- |:---:|
