@@ -23,7 +23,7 @@ This slot does not count against your roster size.
 
 ## Keepers
 
-Keepers lock an hour before the draft.
+Keepers officially lock one hour before the draft, but they must be locked two hours prior when an `expansion draft` or `new owner draft` occurs.
 A team may have a maximum of two keepers going into the draft, but are not required to keep any players.
 
 Keeper's are discussed more thoroughly on the [draft][draft] page.
