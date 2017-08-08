@@ -39,19 +39,13 @@ Some members of the league have more responsibilities than simply managing their
 The LM is in charge of overseeing the league and acting in the best interest of the players and the league.
 The LM has absolute authority but can be overridden by the league.
 
-The current LM is Adam Wieberg
-
 ### Poll Master
 
 The PM is in charge of crafting a poll during every week of competition.
 
-The current PM is Chris Buschjost
-
 ### Money Collector
 
 The MC is in charge of collecting league fees and dues and distributing awards.
-
-The current MC is Adam Wieberg (awiebergs@gmail.com)
 
 ### The Bookkeeper
 
