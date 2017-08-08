@@ -31,11 +31,32 @@ Hopefully all of that is straightforward and unnecessary.
 
 The High Council is the will of the owners of the league.
 
-Simply put, it is a formal gathering of a majority of the league owners (7 or more) in which they vote on a particular point of contention in the league. The High Council must conclude with a majority vote to enact on a
-dispute of a league policy change. A majority vote is 7 or more, in all cases. It is important to note that the High Council may only request a change to league policy, not vote to enable new league policy. The power to create policy still resides with the LM.
+Simply put, it is a formal gathering of a surplus majority of the league owners in which they vote on a particular point of contention in the league. The High Council must conclude with a majority vote to enact on a dispute of a league policy change.
+It is important to note that the High Council may only request a change to league policy, not vote to enable new league policy.
+The power to create policy still resides with the LM.
+
+#### Voting
 
 The High Council must vote in such a way as to prove the votes were not forged. Typically this will be through the
 league hangouts or in the league message boards.  
+
+The LM may enact a policy change with the approval of the League Ambassador if the they deem the High Council cannot / has not come to a timely conclusion. 
+
+##### Majority Vote
+
+The majority vote needed changes with the size of the league.
+
+| League Size | Majority Vote | Surplus Majority |
+| --- |:---:|:---:|
+| 10 | 6 | 7+ |
+| 12 | 7 | 8+ |
+| 14 | 8 | 9+ |
+
+### Policy Changes
+
+Policies that have successfully been backed by the High Council will take affect starting in the next season. Policy
+updates made before the start of a season (i.e. before the draft) will not take affect until the following season unless
+ there is a unanimous vote to enact the change immediately.
 
 ## Rituals
 
