@@ -66,7 +66,7 @@ The is no League Fool currently. They still suck.
 ## League Roles History
 
 | Year | League Manager | Money Collector | League Ambassador | Poll Master | Bookie |
-|:---:|:---:|:---:|:---:|
+|:---:|:---:|:---:|:---:|:---:|:---:|
 |2014 | Adam Wieberg | Adam Wieberg | - | - | - |
 |2015 | Matt Delaney / Adam Wieberg | Matt Delaney | - | - | - |
 |2016 | Adam Wieberg | Adam Wieberg | - | Chris Bushjost | - |
