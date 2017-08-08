@@ -56,20 +56,26 @@ The current MC is Adam Wieberg (awiebergs@gmail.com)
 
 The Bookie is in charge of managing Side Pot bets, collecting the money, and distributing it to the winners.  
 
-The current Bookie is Connor Hanna
-
 ### League Ambassador
 
 The Ambassador is in charge of representing the best interests of the owners and policing the tyranny of the LM.
 The League Ambassador is the head of the High Council.
 
-The current League Ambassador is Dan Felty.
-
 ### League Fool
 
 The League Fool is the previous season's Sack-O award winner. They suck.
 
-The is no League Fool currently. They suck.
+The is no League Fool currently. They still suck.
+
+## League Roles History
+
+| Year | League Manager | Money Collector | League Ambassador | Poll Master | Bookie |
+|:---:|:---:|:---:|:---:|
+|2014 | Adam Wieberg | Adam Wieberg | - | - | - |
+|2015 | Matt Delaney / Adam Wieberg | Matt Delaney | - | - | - |
+|2016 | Adam Wieberg | Adam Wieberg | - | Chris Bushjost | - |
+|2017 | Adam Wieberg | Adam Wieberg | Dan Felty | Chris Bushjost | Connor Hanna |
+|2018 | - | - | - | - | - |
 
 [main][main] - [top][top] - [previous][previous] - [next][next]
 

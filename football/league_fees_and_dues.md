@@ -74,6 +74,8 @@ Those that demonstrate great valor or unparalleled misfortune can still come awa
 | 2014 | Michael Hillstrom | Adam Wieberg | Adam Wieberg | Sai Inampudi | Ryan Birmingham | Sai Inampudi | - | - | - | Sai Inampudi |
 | 2015 | Michael Hillstrom | Samuel Wieberg | Samuel Wieberg | Connor Hanna | Mark Ausley | Mark Ausley | - | - | - | Chris Bushjost |
 | 2016 | Cody Schwartz | Chris Bushjost | Dan Felty | Locke Thompson | Dan Felty | Matt Delaney | Adam Wieberg | Dan Felty | Adam Wieberg | Locke Thompson |
+| 2017 | - | - | - | - | - | - | - | - | - | - |
+| 2018 | - | - | - | - | - | - | - | - | - | - |
 
 [main][main] - [top][top] - [previous][previous] - [next][next]
 
