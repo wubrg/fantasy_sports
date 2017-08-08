@@ -28,7 +28,7 @@ See the [League Members][league_members] page.
 
 [main]: readme.md
 [top]: communication.md
-[previous]: main.md
+[previous]: readme.md
 [next]: league_members.md
 
 [hangouts]: https://hangouts.google.com/

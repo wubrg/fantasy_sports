@@ -33,8 +33,8 @@ Create and foster a competitive, fun, and rewarding fantasy football experience 
 [main][main] - [top][top] - [next][next]
 
 [main]: readme.md
-[top]: league_fees_and_dues.md
-[next]: scoring.md
+[top]: readme.md
+[next]: communication.md
 
 [espn]: http://games.espn.com/ffl/leagueoffice?leagueId=56226
 [play_store]: https://play.google.com/store/apps/details?id=com.espn.fantasy.lm.football&hl=en

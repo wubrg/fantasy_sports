@@ -85,13 +85,13 @@ Side pots may be over a particular game, over a weekend of games, or even the en
 -   Side pots are winner-take-all.
 -   Side pots must be approved and managed by the Bookkeeper.
 -   Side pots must pertain solely to the league.
--   Side pots must not encourage tanking or forfeiture of a match. 
+-   Side pots must not encourage tanking or forfeiture of a match.
 
 [main][main] - [top][top] - [previous][previous] - [next][next]
 
 [main]: readme.md
 [top]: rituals_and_proceedings.md
-[previous]: readme.md
+[previous]: league_members.md
 [next]: league_fees_and_dues.md
 
 [espn]: http://games.espn.com/ffl/leagueoffice?leagueId=56226
