@@ -54,7 +54,7 @@ The Bookie is in charge of managing Side Pot bets, collecting the money, and dis
 ### League Ambassador
 
 The Ambassador is in charge of representing the best interests of the owners and policing the tyranny of the LM.
-The League Ambassador is the head of the High Council.
+The League Ambassador is the head of the High Council and acts on behalf of the league when they are unable to assemble for a decision. 
 
 ### League Fool
 
