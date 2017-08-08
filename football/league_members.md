@@ -1,15 +1,17 @@
 # Hit or Miss - League Members
 
--   Adam Wieberg
--   Chris Buschjost
--   Connor Hanna
--   Matt Delaney
--   Michael Hillstrom
--   Sam Wieberg
--   Drew Towell
--   Dan Felty
--   Nick Bax
--   Cody Schwartz
+| Name | Position | Email | Phone
+|---|:---:|:---:|:---:|
+| Adam Wieberg | League Manager | awiebergs@gmail.com | 816-663-3907 |
+| Chris Buschjost | Poll Manager | - | - |
+| Connor Hanna | Bookie | - | - |
+| Matt Delaney | - | - | - |
+| Michael Hillstrom | - | - | - |
+| Sam Wieberg | - | - | - |
+| Drew Towell | - | - | - |
+| Dan Felty | League Ambassador | - | - |
+| Nick Bax | - | - | - |
+| Cody Schwartz | Reigning Champion | - | - |
 
 ## Team Requirements
 

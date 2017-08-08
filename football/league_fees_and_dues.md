@@ -35,9 +35,9 @@ The top 4 teams will make the playoffs, with each conference champion earning a 
 
 | Place | Award |
 | --- |:---:|
-| First place: 'The Grand Champion' | ??? |
-| Second Place: 'The First of the Worst'| ??? |
-| Third Place: 'The One Nobody Remembers' | ??? |
+| First place: 'The Grand Champion' | 2 GP |
+| Second Place: 'The First of the Worst'| 1 GP |
+| Third Place: 'The One Nobody Remembers' | 1 SP |
 
 ### Toilet Bowl
 
@@ -50,7 +50,7 @@ match) is the winner of the Sack-O award.
 
 | Place | Award |
 | --- |:---:|
-| Toilet Bowl Champion: 'The Shit Eater' | ??? + League Fees |
+| Toilet Bowl Champion: 'The Shit Eater' | 1 SP + League Fees |
 | The Sack-O | Becomes the League Fool |
 
 ### Awards
@@ -59,12 +59,21 @@ Those that demonstrate great valor or unparalleled misfortune can still come awa
 
 | Trophy | Award | Description |
 | --- |:---:|:---:|
-| Points Farmer | ??? | Most Points For (season) |
-| The Taco | ??? | Least Points For (season) |
-| The Scrub Life | ??? | Most Points For but did not compete in the championship |
-| Lady Luck | ??? | Most Points Against (season) |
-| The Eli | ??? | Fewest Points in a single game |
-| The Strong Man | ??? | Most Points in a single game |
+| Points Farmer | 1 SP | Most Points For (season) |
+| The Taco | Dishonor on you | Least Points For (season) |
+| The Scrub Life | 1 BP | Most Points For but did not compete in the championship |
+| Lady Luck | 1 BP | Most Points Against (season) |
+| The Eli | Dishonor on your cow | Fewest Points in a single game |
+| The Strong Man | 1 BP | Most Points in a single game |
+
+#### Award History
+
+##### Points Farmer
+| Season | Grand Champion | First of the Worst | Points Farmer | The Taco | The Scrub Life | Lady Luck | The Eli | The Strong Man | Toilet Bowl Champion | Sack-O |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 2014 | Michael Hillstrom | Adam Wieberg | Adam Wieberg | Sai Inampudi | Ryan Birmingham | Sai Inampudi | - | - | - | Sai Inampudi |
+| 2015 | Michael Hillstrom | Samuel Wieberg | Samuel Wieberg | Connor Hanna | Mark Ausley | Mark Ausley | - | - | - | Chris Bushjost |
+| 2016 | Cody Schwartz | Chris Bushjost | Dan Felty | Locke Thompson | Dan Felty | Matt Delaney | Adam Wieberg | Dan Felty | Adam Wieberg | Locke Thompson |
 
 [main][main] - [top][top] - [previous][previous] - [next][next]
 
