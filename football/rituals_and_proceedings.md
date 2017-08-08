@@ -23,7 +23,7 @@ The LM cannot, without authority granted by the High Council:
 -   manipulate rosters
 -   manipulate scores
 -   change league policy
--   own multiple teams
+-   own multiple teams(except a team in a state of transition, in which case no manipulation of the team is allowed)
 
 Hopefully all of that is straightforward and unnecessary.
 
@@ -32,7 +32,7 @@ Hopefully all of that is straightforward and unnecessary.
 The High Council is the will of the owners of the league.
 
 Simply put, it is a formal gathering of a majority of the league owners (7 or more) in which they vote on a particular point of contention in the league. The High Council must conclude with a majority vote to enact on a
-dispute or league policy change. A majority vote is 7 or more, in all cases.
+dispute of a league policy change. A majority vote is 7 or more, in all cases. It is important to note that the High Council may only request a change to league policy, not vote to enable new league policy. The power to create policy still resides with the LM.
 
 The High Council must vote in such a way as to prove the votes were not forged. Typically this will be through the
 league hangouts or in the league message boards.  
@@ -54,7 +54,7 @@ is mandatory for all league members to participate in. The poll will be posted o
 ### Side Pots
 
 Many in the league wish to raise the stakes of the league. Rather than increase league dues across the board, owners
-may participate in any number of side pots. Side pots may be over a particular game, over a weekend of games, or even the entire fantasy football season, but they **must always pertain to the league and to nothing else**. 
+may participate in any number of side pots. Side pots may be over a particular game, over a weekend of games, or even the entire fantasy football season, but they **must always pertain to the league and to nothing else**.
 
 -   Side pots are bets amongst willing owners.
 -   Each owner in a side pot will contribute the same amount to the side pot.
@@ -62,11 +62,7 @@ may participate in any number of side pots. Side pots may be over a particular g
 -   Side pots must be approved and managed by the Bookkeeper.
 -   Side pots must pertain solely to the league.
 
-<p align="center">
-  <b>Navigation</b><br>
-  <br><br>
-  [main][main] - [top][top] - [previous](previous) - [next](next)
-</p>
+[main][main] - [top][top] - [previous][previous] - [next][next]
 
 [main]: readme.md
 [top]: rituals_and_proceedings.md

@@ -66,11 +66,7 @@ Those that demonstrate great valor or unparalleled misfortune can still come awa
 | The Eli | ??? | Fewest Points in a single game |
 | The Strong Man | ??? | Most Points in a single game |
 
-<p align="center">
-  <b>Navigation</b><br>
-  <br><br>
-  [main][main] - [top][top] - [previous](previous) - [next](next)
-</p>
+[main][main] - [top][top] - [previous][previous] - [next][next]
 
 [main]: readme.md
 [top]: league_fees_and_dues.md

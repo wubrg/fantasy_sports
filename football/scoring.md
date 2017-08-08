@@ -16,11 +16,7 @@
 
 ### Special Teams
 
-<p align="center">
-  <b>Navigation</b><br>
-  <br><br>
-  [main][main] - [top][top] - [previous](previous) - [next](next)
-</p>
+[main][main] - [top][top] - [previous][previous] - [next][next]
 
 [main]: readme.md
 [top]: scoring.md

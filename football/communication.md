@@ -15,11 +15,7 @@ The League Manager should send you an invite upon joining the league.
 **NOTICE** The hangouts will often discuss revisions to the league policies but **nothing is official until it resides within the
 documents listed below.**
 
-<p align="center">
-  <b>Navigation</b><br>
-  <br><br>
-  [main][main] - [top][top] - [previous](previous) - [next](next)
-</p>
+[main][main] - [top][top] - [previous][previous] - [next][next]
 
 [main]: readme.md
 [top]: communication.md

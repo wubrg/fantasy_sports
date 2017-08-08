@@ -59,11 +59,7 @@ It is `not` required that new teams select any keepers in the snake draft.
 
 TODO
 
-<p align="center">
-  <b>Navigation</b><br>
-  <br><br>
-  [main][main] - [top][top] - [previous](previous))
-</p>
+[main][main] - [top][top] - [previous][previous]
 
 [main]: readme.md
 [top]: draft.md

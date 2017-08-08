@@ -14,7 +14,7 @@ The league is currently run through ESPN's fantasy football [application][espn].
 The League is a Dynasty league in which each team may have up to two `franchise` players, colloquially called
 `keepers`.
 
-The League rotates between Standard, .5 PPR, and PPR scoring formats every year. 
+The League rotates between Standard, .5 PPR, and PPR scoring formats every year.
 
 ## League Mission
 
@@ -31,16 +31,11 @@ fairness, dignity, and bullshit that they deserve.
 -   [Rosters][rosters]
 -   [Draft][draft]
 
-<p align="center">
-  <b>Navigation</b><br>
-  <br><br>
-  [main][main] - [top][top] - [previous](previous) - [next](next)
-</p>
+[main][main] - [top][top] - [next][next]
 
 [main]: readme.md
 [top]: league_fees_and_dues.md
 [next]: scoring.md
-
 
 [espn]: http://games.espn.com/ffl/leagueoffice?leagueId=56226
 [play_store]: https://play.google.com/store/apps/details?id=com.espn.fantasy.lm.football&hl=en
