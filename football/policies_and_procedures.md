@@ -87,6 +87,33 @@ Side pots may be over a particular game, over a weekend of games, or even the en
 -   Side pots must pertain solely to the league.
 -   Side pots must not encourage tanking or forfeiture of a match.
 
+# Pending High Council Approval
+
+The following are pending review by the High Council
+
+### Cooperstown Vault and Johnny Football Foundation
+
+When a player earns BP, SP, or GP for their efforts in the league, they are paid out of the Cooperstown Vault.
+The Vault never runs out of coin.
+Players must return all unused coin at the end of each season. Afterwards, coin is paid out as per the end of season awards.
+
+Coins are used to fund individual ventures provided by the `Johnny Football Foundation`.
+A owner may spend their hard earned coin at any time to enlist the JFF for a particular task.
+
+#### JFF Tasks
+
+The following is a list of tasks provided by the JFF and their cost.
+
+- Rename a team (1 BP): Until the next waiver reset, the named owner must change their team name.
+- Force player pickup (1 SP): The named owner (cannot be the week's opponent) must succeed in acquiring the named FA player by the next Head-to-Head match*.
+- Force a trade (1 GP): The named owner must complete a trade before the next Head-to-Head match*.
+
+**NOTICE** Failure to comply with the JFF results in a $5 fine.
+
+**NOTICE** Per the JFF, a `Head-to-Head match` begins on the next Wed after waivers reset.
+When determining the next `match` a owner must have at least 5 days to comply.
+
+
 [main][main] - [top][top] - [previous][previous] - [next][next]
 
 [main]: readme.md
