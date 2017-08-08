@@ -1,4 +1,4 @@
-# Hit or Miss - Rituals and Proceedings
+# Hit or Miss - Policies and Procedures
 
 Now let's go over the many different league policies and rulings that help keep the league civil.
 
