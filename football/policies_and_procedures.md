@@ -90,7 +90,7 @@ Side pots may be over a particular game, over a weekend of games, or even the en
 [main][main] - [top][top] - [previous][previous] - [next][next]
 
 [main]: readme.md
-[top]: rituals_and_proceedings.md
+[top]: policies_and_procedures.md
 [previous]: league_members.md
 [next]: league_fees_and_dues.md
 

@@ -78,4 +78,4 @@ The is no League Fool currently. They still suck.
 [main]: readme.md
 [top]: league_members.md
 [previous]: communication.md
-[next]: rituals_and_proceedings.md
+[next]: policies_and_procedures.md

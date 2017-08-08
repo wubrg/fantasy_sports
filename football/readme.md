@@ -41,7 +41,7 @@ Create and foster a competitive, fun, and rewarding fantasy football experience 
 [apple_store]: https://itunes.apple.com/us/app/espn-fantasy-football-and-more-games/id555376968?mt=8
 [communication]: communication.md
 [members]: league_members.md
-[rituals]: rituals_and_proceedings.md
+[rituals]: policies_and_procedures.md
 [fees]: league_fees_and_dues.md
 [scoring]: scoring.md
 [rosters]: rosters.md

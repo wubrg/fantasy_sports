@@ -99,5 +99,5 @@ Those that demonstrate great valor or unparalleled misfortune can still come awa
 
 [main]: readme.md
 [top]: league_fees_and_dues.md
-[previous]: rituals_and_proceedings.md
+[previous]: policies_and_procedures.md
 [next]: scoring.md
