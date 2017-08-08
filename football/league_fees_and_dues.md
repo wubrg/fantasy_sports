@@ -10,7 +10,7 @@ Since there is money involved there are also payouts!
 
 The yearly dues for the league is a single Silver Point ($30).
 
-Dues are paid before the first game of the season.
+Dues are paid before the draft.
 
 Dues are paid to the Money Collector via a traceable form of payment like Google Wallet, VenMo, Square Cash, or PayPal.
 
