@@ -3,15 +3,15 @@
 | Name | Position | Email | Phone
 |---|:---:|:---:|:---:|
 | Adam Wieberg | League Manager | awiebergs@gmail.com | 816-663-3907 |
-| Chris Buschjost | Poll Manager | - | - |
-| Connor Hanna | Bookie | - | - |
-| Matt Delaney | - | - | - |
-| Michael Hillstrom | - | - | - |
-| Sam Wieberg | - | - | - |
+| Chris Buschjost | Poll Manager | chris.buschjost@gmail.com | - |
+| Connor Hanna | Bookie | channa177@gmail.com | - |
+| Matt Delaney | - | matthewdelaney18@gmail.com | - |
+| Michael Hillstrom | - | mahills1622@gmail.com | - |
+| Sam Wieberg | - | sweibs@gmail.com | - |
 | Drew Towell | - | - | - |
-| Dan Felty | League Ambassador | - | - |
-| Nick Bax | - | - | - |
-| Cody Schwartz | Reigning Champion | - | - |
+| Dan Felty | League Ambassador | dwfelty@gmail.com | - |
+| Nick Bax | - |  | - |
+| Cody Schwartz | Reigning Champion | schwartzie.22@gmail.com | - |
 
 ## Team Requirements
 
@@ -54,7 +54,7 @@ The Bookie is in charge of managing Side Pot bets, collecting the money, and dis
 ### League Ambassador
 
 The Ambassador is in charge of representing the best interests of the owners and policing the tyranny of the LM.
-The League Ambassador is the head of the High Council and acts on behalf of the league when they are unable to assemble for a decision. 
+The League Ambassador is the head of the High Council and acts on behalf of the league when they are unable to assemble for a decision.
 
 ### League Fool
 

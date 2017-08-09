@@ -86,7 +86,6 @@ Those that demonstrate great valor or unparalleled misfortune can still come awa
 
 #### Award History
 
-##### Points Farmer
 | Season | Grand Champion | First of the Worst | Points Farmer | The Taco | The Scrub Life | Lady Luck | The Eli | The Strong Man | Toilet Bowl Champion | Sack-O |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | 2014 | Michael Hillstrom | Adam Wieberg | Adam Wieberg | Sai Inampudi | Ryan Birmingham | Sai Inampudi | - | - | - | Sai Inampudi |
