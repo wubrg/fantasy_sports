@@ -10,7 +10,7 @@
 | Sam Wieberg | - | sweibs@gmail.com | - |
 | Drew Towell | - | d.towell28@gmail.com | - |
 | Dan Felty | League Ambassador | dwfelty@gmail.com | - |
-| Nick Bax | - |  | - |
+| Nick Bax | - | mutigers1223@gmail.com | - |
 | Cody Schwartz | Reigning Champion | schwartzie.22@gmail.com | - |
 
 ## Team Requirements
