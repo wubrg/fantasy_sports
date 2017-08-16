@@ -7,7 +7,7 @@ You can review the scoring rules on the [league homepage][league].
 ### Passing points per
 | Passing Yard (PY) | TD Pass (PTD) | Interception Thrown (INT) | 2pt Conversion (2PC) |
 |---|:---:|:---:|:---:|
-| 4 | 4 |  -2 | 2 |
+| 40 | 4 |  -2 | 2 |
 
 ### Rushing points per
 | Rushing Yard (RY) | TD Rush (RTD) | 2pt Conversion (2PR) |
