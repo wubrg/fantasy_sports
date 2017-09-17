@@ -87,6 +87,22 @@ Side pots may be over a particular game, over a weekend of games, or even the en
 -   Side pots must pertain solely to the league.
 -   Side pots must not encourage tanking or forfeiture of a match.
 
+#### Weekly Side Pots
+
+These side pots are available week in and week out.
+
+- Most Points - $5
+
+#### Trophy Side Pots
+
+Each of the following trophies in the league are also available year long side-pot bets. The bet for a trophy is $15. Trophy pots adhere to the same rules as regular Side-Pots.
+
+- John Cena - Grand Champion
+- Points Farmer - Most Points For at season's end
+- The Strong Man - Most Points For in a single game
+- Lady Luck - Most Points Against at season's end
+- The Plumber - Toilet Bowl winner
+
 # Pending High Council Approval
 
 The following are pending review by the High Council
