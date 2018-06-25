@@ -39,6 +39,14 @@ Some members of the league have more responsibilities than simply managing their
 The LM is in charge of overseeing the league and acting in the best interest of the players and the league.
 The LM has absolute authority but can be overridden by the league.
 
+### VP of League Management
+
+The VP of LM exists as third axis of control over the LM, along with the League Ambassador. In addition to the below explanation of overruling the LM, the VP and the LA can jointly override a decision by the LM.  It should be noted that the VP and the LA do not have the power to instantiate new rules, simply to veto or adjust rulings by the LM. 
+
+The VP will step in as LM when it is appropriate to do so during a leave of absence. 
+
+The VP is also in charge of generating stats and diagrams detailing the plot of the league as the season progresses. 
+
 ### Poll Master
 
 The PM is in charge of crafting a poll during every week of competition.
@@ -61,17 +69,18 @@ The League Ambassador is the head of the High Council and acts on behalf of the 
 The League Fool is the previous season's Sack-O award winner.
 They suck.
 
-The is no League Fool currently. They still suck.
+The current League Fool is the LM, Adam Wieberg. He still sucks.
 
 ## League Roles History
 
-| Year | League Manager | Money Collector | League Ambassador | Poll Master | Bookie |
-|:---:|:---:|:---:|:---:|:---:|:---:|
-|2014 | Adam Wieberg | Adam Wieberg | - | - | - |
-|2015 | Matt Delaney / Adam Wieberg | Matt Delaney | - | - | - |
-|2016 | Adam Wieberg | Adam Wieberg | - | Chris Bushjost | - |
-|2017 | Adam Wieberg | Adam Wieberg | Dan Felty | Chris Bushjost | Connor Hanna |
-|2018 | - | - | - | - | - |
+| Year | League Manager | Money Collector | League Ambassador | Poll Master | Bookie | VP |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|2014 | Adam Wieberg | Adam Wieberg | - | - | - | - |
+|2015 | Matt Delaney / Adam Wieberg | Matt Delaney | - | - | - | - |
+|2016 | Adam Wieberg | Adam Wieberg | - | Chris Bushjost | - | - |
+|2017 | Adam Wieberg | Adam Wieberg | Dan Felty | Chris Bushjost | Connor Hanna | - |
+|2018 | Adam Wieberg | Adam Wieberg | Dan Felty | Chris Bushjost | Connor Hanna | Michael Hillstrom |
+|2019 | - | - | - | - | - | - |
 
 [main][main] - [top][top] - [previous][previous] - [next][next]
 
