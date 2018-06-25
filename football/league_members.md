@@ -6,9 +6,9 @@
 | Chris Buschjost | Poll Manager | chris.buschjost@gmail.com | - |
 | Connor Hanna | Bookie | channa177@gmail.com | - |
 | Matt Delaney | - | matthewdelaney18@gmail.com | - |
-| Michael Hillstrom | - | mahills1622@gmail.com | - |
+| Michael Hillstrom | VP of League Management | mahills1622@gmail.com | - |
 | Sam Wieberg | - | sweibs@gmail.com | - |
-| Drew Towell | - | d.towell28@gmail.com | - |
+| Bobby Jaegers | - | @gmail.com | - |
 | Dan Felty | League Ambassador | dwfelty@gmail.com | - |
 | Nick Bax | - | mutigers1223@gmail.com | - |
 | Cody Schwartz | Reigning Champion | schwartzie.22@gmail.com | - |
