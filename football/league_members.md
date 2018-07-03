@@ -8,7 +8,7 @@
 | Matt Delaney | - | matthewdelaney18@gmail.com | - |
 | Michael Hillstrom | VP of League Management | mahills1622@gmail.com | - |
 | Sam Wieberg | - | sweibs@gmail.com | - |
-| Bobby Jaegers | - | @gmail.com | - |
+| Bobby Jaegers | - | bobbyjaegers@gmail.com | - |
 | Dan Felty | League Ambassador | dwfelty@gmail.com | - |
 | Nick Bax | - | mutigers1223@gmail.com | - |
 | Cody Schwartz | Reigning Champion | schwartzie.22@gmail.com | - |
