@@ -11,7 +11,7 @@
 | Bobby Jaegers | - | bobbyjaegers@gmail.com | - |
 | Dan Felty | League Ambassador | dwfelty@gmail.com | - |
 | Nick Bax | - | mutigers1223@gmail.com | - |
-| Cody Schwartz | Reigning Champion | schwartzie.22@gmail.com | - |
+| Cody Schwartz | - | schwartzie.22@gmail.com | - |
 | Jasenko | - | jhosic@gmail.com | - |
 | Dakota Graham | - | dkotag11@gmail.com | - |
 
