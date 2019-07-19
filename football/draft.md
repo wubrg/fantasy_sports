@@ -14,7 +14,7 @@ The draft `budget` is $200 for every team, minus the draft value of their keeper
 This league is a dynasty league and each team is allowed to `keep` up to two players on their roster heading into the next year's draft.
 
 Players carry over their auction value to the next season if they are selected as a keeper.
-This value increases the more times a player is selected by the same team.
+This value increases the more times a player is selected as a keeper.
 
 There is also a minimum value that is enforced on every keeper.
 Every keeper must cost at least $10.
@@ -23,7 +23,7 @@ If a player is selected as a keeper and their previous draft or FA value was les
 #### Keeper pricing
 
 - First year keepers are last year's draft cost +$5, minimum $10.
-- Second year keepers are +$10, third year are +$15. Trading resets number of years kept.
+- Second year keepers are +$10, third year are +$15.
 - Undrafted players (i.e., free agent pickups) are the $10 minimum.
 
 | Keep Count | Previous value | Penalty | New value |
@@ -35,7 +35,6 @@ If a player is selected as a keeper and their previous draft or FA value was les
 | Third time | $25 | $15 | $40 |
 
 This keeper pricing strategy aims to strike a balance between rewarding players for good foresight but ensures that they do not hinder the ability for other owners to compete.
-It also encourages trading as a trade will effectively `reset` the player's `keep count`
 
 ## Addendum
 
