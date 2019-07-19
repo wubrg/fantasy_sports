@@ -12,9 +12,9 @@ First off though, let's discuss the bones of the league.
 The league is currently run through ESPN's fantasy football [application][espn].
 There is also an app available for [Android][play_store] and [Apple][apple_store] products.
 
-The League is a Dynasty league in which each team may have up to two `franchise` players, colloquially called `keepers`.
+The League is a Keeper league in which each team may have up to two `franchise` players they can roll-over to the next season, colloquially called `keepers`.
 
-The League is a variant of standard scoring in which kickers are ignored.
+The League is a variant of half-point per reception scoring in which kickers are ignored.
 
 ## League Mission
 
