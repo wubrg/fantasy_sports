@@ -14,7 +14,7 @@
 
 ### Bench
 
-There will be 6 bench slots for you to fill.
+There will be 5 bench slots for you to fill.
 
 ### IR
 
