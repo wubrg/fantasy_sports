@@ -12,6 +12,9 @@
 | Dan Felty | League Ambassador | dwfelty@gmail.com | - |
 | Nick Bax | - | mutigers1223@gmail.com | - |
 | Cody Schwartz | Reigning Champion | schwartzie.22@gmail.com | - |
+| Jasenko | - | jhosic@gmail.com | - |
+| Dakota Graham | - | dkotag11@gmail.com | - |
+
 
 ## Team Requirements
 
@@ -25,8 +28,8 @@ Secondly, your team needs a logo.
 Repeat everything I said above about your team name and apply it to your logo.
 
 Thirdly, you must try.
-Watch the waivers, offer and accept trades, yell at the LM when he's being a dick, set your lineups, yell at Connor when he's making a terrible trade, participate in the weekly poll.
-Some of these things are mandatory and come with fines.
+Watch the waivers, offer and accept trades, yell at the LM when he's being a dick, set your lineups, yell at Connor when he's making a terrible trade, participate in the league.
+Some of these things are mandatory and may come with fines.
 
 See more in [league fees and dues](league_fees_and_dues.md)
 
@@ -47,14 +50,6 @@ The VP will step in as LM when it is appropriate to do so during a leave of abse
 
 The VP is also in charge of generating stats and diagrams detailing the plot of the league as the season progresses. 
 
-### Poll Master
-
-The PM is in charge of crafting a poll during every week of competition.
-
-### Money Collector
-
-The MC is in charge of collecting league fees and dues and distributing awards.
-
 ### The Bookkeeper
 
 The Bookie is in charge of managing Side Pot bets, collecting the money, and distributing it to the winners.  
@@ -69,8 +64,6 @@ The League Ambassador is the head of the High Council and acts on behalf of the 
 The League Fool is the previous season's Sack-O award winner.
 They suck.
 
-The current League Fool is the LM, Adam Wieberg. He still sucks.
-
 ## League Roles History
 
 | Year | League Manager | Money Collector | League Ambassador | Poll Master | Bookie | VP |
@@ -80,7 +73,7 @@ The current League Fool is the LM, Adam Wieberg. He still sucks.
 |2016 | Adam Wieberg | Adam Wieberg | - | Chris Bushjost | - | - |
 |2017 | Adam Wieberg | Adam Wieberg | Dan Felty | Chris Bushjost | Connor Hanna | - |
 |2018 | Adam Wieberg | Adam Wieberg | Dan Felty | Chris Bushjost | Connor Hanna | Michael Hillstrom |
-|2019 | - | - | - | - | - | - |
+|2019 | Adam Wieberg | - | Dan Felty | - | Connor Hanna | Michael Hillstrom |
 
 [main][main] - [top][top] - [previous][previous] - [next][next]
 
