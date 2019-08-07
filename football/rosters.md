@@ -23,7 +23,7 @@ This slot does not count against your roster size.
 
 ## Keepers
 
-Keepers officially lock one hour before the draft, but they must be locked two hours prior when an `expansion draft` or `new owner draft` occurs.
+Keepers officially lock one hour before the draft, but they must be locked at least two hours prior when an `expansion draft` or `new owner draft` occurs. The league will however be able to determine when the expansion draft starts on a case-by-case basis.
 
 A team may have a maximum of two keepers going into the draft, but are not required to keep any players.
 
@@ -49,12 +49,13 @@ Players remain on waivers continuously and thus are always subject to bidding.
 
 **NOTICE:** This means that your roster must be game ready at least an hour before each kickoff as acquisitions are halted until the next processing time.
 
+**NOTICE:** The league would prefer an open waiver on Sundays but this is not an allowed function on any platform currently. 
+
 ### Trade Deadline
 
 The league adheres to a trade dealine, after which no trades between teams may happen until the start of next season.
 
-The deadline is two weeks prior to the start of playoffs, typically the start of Week 11.
-- Week 11: Thursday, Nov 16 2017, 11 AM Central
+The deadline is the start of Week 10.
 
 ### Undroppable
 
