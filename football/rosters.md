@@ -53,7 +53,7 @@ Players remain on waivers continuously and thus are always subject to bidding.
 
 ### Trade Deadline
 
-The league adheres to a trade dealine, after which no trades between teams may happen until the start of next season.
+The league adheres to a trade dealine, after which no trades between teams may happen until the start of next season. The next season officially begins after the draft when all rosters unlock. 
 
 The deadline is the start of Week 10.
 
