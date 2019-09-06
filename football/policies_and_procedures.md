@@ -48,9 +48,9 @@ The majority vote needed changes with the size of the league.
 
 | League Size | Majority Vote | Surplus Majority |
 | --- |:---:|:---:|
-| 10 | 6 | 7+ |
-| 12 | 7 | 8+ |
-| 14 | 8 | 9+ |
+| 10 | 6 | 8+ |
+| 12 | 7 | 9+ |
+| 14 | 8 | 11+ |
 
 ### Policy Changes
 
