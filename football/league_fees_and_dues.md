@@ -75,6 +75,8 @@ The undefeated is the Toilet Bowl Champion, and the defeated (loses every match)
 | 2016 | Cody Schwartz | Chris Bushjost | Dan Felty | Locke Thompson | Dan Felty | Matt Delaney | Adam Wieberg | Dan Felty | Adam Wieberg | Locke Thompson |
 | 2017 | Dan Felty | Michael Hillstrom | Nick Bax | Matt Delaney | Sam Wieberg | Adam Wieberg | Matt Delaney | Nick Bax | Sam Wieberg | Adam Wieberg |
 | 2018 | Michael Hillstrom | Connor Hanna | Sam Wieberg | Matt Delaney | Sam Wieberg | Chris Buschjost | Bobby Jaegers | Dan Felty | Matt Delaney | Chris Buschjost |
+| 2019 | Nick Bax | Jasenko Hosic | Jasenko Hosic | Bobby Jaegers | Chris Buschjost | Bobby Jaegers | Bobby Jaegers | Jasenko Hosic | Adam Wieberg | Dakota Graham |
+
 
 [main][main] - [top][top] - [previous][previous] - [next][next]
 
