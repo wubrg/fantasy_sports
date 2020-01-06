@@ -24,10 +24,10 @@ All payout is determined by a percentage of the league pool.
 
 | Place | Award (10 players) | Award (12 players)
 | --- |:---:|:---:|
-| First place: `The Grand Champion` | 40%| 44% |
-| Second Place: `The First of the Worst`| 20% | 24% |
-| Third Place: `The One Nobody Remembers` | 10% | 8% |
-| Toilet Bowl Champion: `The Shit Eater` | 10% | 8% |
+| First place: `The Grand Champion` | 40%| ~43% |
+| Second Place: `The First of the Worst`| 20% | ~23% |
+| Third Place: `The One Nobody Remembers` | 10% | ~8% (8% is meant to be Money Back) |
+| Toilet Bowl Champion: `The Shit Eater` | 10% | ~8% |
 
 ### Awards
 
