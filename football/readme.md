@@ -9,8 +9,8 @@ Below you'll find a list of documents that detail the procedures and protocols o
 
 First off though, let's discuss the bones of the league.
 
-The league is currently run through ESPN's fantasy football [application][espn].
-There is also an app available for [Android][play_store] and [Apple][apple_store] products.
+The league is currently run through Sleeper's fantasy football [application][sleeper].
+There is also an app available for Android and Apple products.
 
 The League is a Keeper league in which each team may have up to two `franchise` players they can roll-over to the next season, colloquially called `keepers`.
 
@@ -36,9 +36,7 @@ Create and foster a competitive, fun, and rewarding fantasy football experience 
 [top]: readme.md
 [next]: communication.md
 
-[espn]: http://games.espn.com/ffl/leagueoffice?leagueId=56226
-[play_store]: https://play.google.com/store/apps/details?id=com.espn.fantasy.lm.football&hl=en
-[apple_store]: https://itunes.apple.com/us/app/espn-fantasy-football-and-more-games/id555376968?mt=8
+[sleeper]: https://sleeper.app/leagues/698583839592771584
 [communication]: communication.md
 [members]: league_members.md
 [rituals]: policies_and_procedures.md

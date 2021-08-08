@@ -3,9 +3,7 @@
 | Name | Position | Email | Phone
 |---|:---:|:---:|:---:|
 | Adam Wieberg | League Manager | awiebergs@gmail.com | 816-663-3907 |
-| Chris Buschjost | Poll Manager | chris.buschjost@gmail.com | - |
 | Connor Hanna | Bookie | channa177@gmail.com | - |
-| Matt Delaney | - | matthewdelaney18@gmail.com | - |
 | Michael Hillstrom | VP of League Management | mahills1622@gmail.com | - |
 | Sam Wieberg | - | sweibs@gmail.com | - |
 | Bobby Jaegers | - | bobbyjaegers@gmail.com | - |
@@ -14,7 +12,8 @@
 | Cody Schwartz | - | schwartzie.22@gmail.com | - |
 | Jasenko | - | jhosic@gmail.com | - |
 | Dakota Graham | - | dkotag11@gmail.com | - |
-
+| Michael Duren | - | - | - |
+| Brandon | - | - | - |
 
 ## Team Requirements
 
@@ -22,7 +21,7 @@ As the owner of a team in `Hit or Miss` there are certain requirements your team
 
 Firstly, your team needs a name.
 There will be none of this 'Team Wieberg' nonsense.
-Have some fun with it, bash on Trump, bash on me, be clever with it, or don't, just do something with it is all I ask.
+Have some fun with it, be clever with it, or don't, just do something with it is all I ask.
 
 Secondly, your team needs a logo.
 Repeat everything I said above about your team name and apply it to your logo.
@@ -44,11 +43,11 @@ The LM has absolute authority but can be overridden by the league.
 
 ### VP of League Management
 
-The VP of LM exists as third axis of control over the LM, along with the League Ambassador. In addition to the below explanation of overruling the LM, the VP and the LA can jointly override a decision by the LM.  It should be noted that the VP and the LA do not have the power to instantiate new rules, simply to veto or adjust rulings by the LM. 
+The VP of LM exists as third axis of control over the LM, along with the League Ambassador. In addition to the below explanation of overruling the LM, the VP and the LA can jointly override a decision by the LM.  It should be noted that the VP and the LA do not have the power to instantiate new rules, simply to veto or adjust rulings by the LM.
 
-The VP will step in as LM when it is appropriate to do so during a leave of absence. 
+The VP will step in as LM when it is appropriate to do so during a leave of absence.
 
-The VP is also in charge of generating stats and diagrams detailing the plot of the league as the season progresses. 
+The VP is also in charge of generating stats and diagrams detailing the plot of the league as the season progresses.
 
 ### The Bookkeeper
 
@@ -66,7 +65,7 @@ They suck.
 
 ## League Roles History
 
-| Year | League Manager | Money Collector | League Ambassador | Poll Master | Bookie | VP |
+| Year | League Manager | -Money Collector- | League Ambassador | Poll Master | Bookie | VP |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |2014 | Adam Wieberg | Adam Wieberg | - | - | - | - |
 |2015 | Matt Delaney / Adam Wieberg | Matt Delaney | - | - | - | - |
@@ -74,6 +73,7 @@ They suck.
 |2017 | Adam Wieberg | Adam Wieberg | Dan Felty | Chris Bushjost | Connor Hanna | - |
 |2018 | Adam Wieberg | Adam Wieberg | Dan Felty | Chris Bushjost | Connor Hanna | Michael Hillstrom |
 |2019 | Adam Wieberg | - | Dan Felty | - | Connor Hanna | Michael Hillstrom |
+|2020 | Adam Wieberg | - | Dan Felty | - | Connor Hanna | Michael Hillstrom |
 
 [main][main] - [top][top] - [previous][previous] - [next][next]
 

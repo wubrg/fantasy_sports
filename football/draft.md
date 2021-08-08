@@ -5,7 +5,7 @@ Synopsis of Hit or Miss draft rules, proceedings and guidelines.
 ## Draft Format
 
 The draft is an `auction` style.
-It is done using ESPN's built-in auction draft.
+It is done using Sleeper's built-in auction draft.
 
 The draft `budget` is $200 for every team, minus the draft value of their keepers, if any.
 
@@ -55,7 +55,6 @@ own personal touch to their team before entering the draft.
 
 Players selected in the snake draft `will` count against the starting auction budget of $200 based on the keeper rules
 noted above.
-They are treated as `first time keepers` for the new teams.
 
 It is `not` required that new teams select any keepers in the snake draft.
 

@@ -8,19 +8,19 @@ Since there is money involved there are also payouts!
 
 ## Membership Dues
 
-The yearly dues for the league is $50. The collective league dues are put into the League Pool. 
+The yearly dues for the league is $50. The collective league dues are put into the League Pool.
 
 Dues are paid before the draft.
 
-Dues are paid to the League Manager via a traceable form of payment like Google Wallet, Square Cash, or PayPal.
+Dues are paid to the League Manager via a traceable form of payment like Google Wallet, Square Cash, Venmo, or PayPal.
 
 ## Fees and Fines
 
 ## Payout
 
-There are ample ways to make your money back or even earn money in the league. 
+There are ample ways to make your money back or even earn money in the league.
 
-All payout is determined by a percentage of the league pool. 
+All payout is determined by a percentage of the league pool.
 
 | Place | Award (10 players) | Award (12 players)
 | --- |:---:|:---:|
@@ -47,13 +47,13 @@ Those that demonstrate great valor or unparalleled misfortune can still come awa
 
 #### 10 Man League
 
-The playoffs will start in week 13 and end in week 16.
+The playoffs will start in week 14 and end in week 17.
 
 The top 4 teams will make the playoffs, with the top two teams earning a bye in the first round.
 
 #### 12 Man League
 
-The playoffs will start in week 13 and end in week 16.
+The playoffs will start in week 14 and end in week 17.
 
 The top 6 teams will make the playoffs, with the top two teams earning a bye in the first round.
 
@@ -76,7 +76,9 @@ The undefeated is the Toilet Bowl Champion, and the defeated (loses every match)
 | 2017 | Dan Felty | Michael Hillstrom | Nick Bax | Matt Delaney | Sam Wieberg | Adam Wieberg | Matt Delaney | Nick Bax | Sam Wieberg | Adam Wieberg |
 | 2018 | Michael Hillstrom | Connor Hanna | Sam Wieberg | Matt Delaney | Sam Wieberg | Chris Buschjost | Bobby Jaegers | Dan Felty | Matt Delaney | Chris Buschjost |
 | 2019 | Nick Bax | Jasenko Hosic | Jasenko Hosic | Bobby Jaegers | Chris Buschjost | Bobby Jaegers | Bobby Jaegers | Jasenko Hosic | Adam Wieberg | Dakota Graham |
+| 2020* | Jasenko Hosic | Samuel Wieberg | Samuel Wieberg | Matt Delaney | Adam Wieberg | Dakota Graham / Adam Wieberg | Matt Delaney | Dan Felty | - | - |
 
+*Due to the weird nature of Covid season, no payouts were made.
 
 [main][main] - [top][top] - [previous][previous] - [next][next]
 

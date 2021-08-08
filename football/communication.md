@@ -2,9 +2,8 @@
 
 ## Official Announcements
 
-The league uses email to communicate.
-Your team should have a email address that is actively monitored so that important
-announcements are not missed, nor other important things like trade offers.
+The league uses Discord / Texting to communicate.
+Your team should have access to the private league Discord server and the league fantasy app of choice (currently Sleeper). 
 
 ## General Chat
 

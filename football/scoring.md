@@ -64,4 +64,4 @@ You can review the scoring rules on the [league homepage][league].
 [previous]: league_fees_and_dues.md
 [next]: rosters.md
 
-[league]: http://games.espn.com/ffl/leagueoffice?leagueId=56226
+[league]: https://sleeper.app/leagues/698583839592771584
