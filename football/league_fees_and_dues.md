@@ -78,8 +78,12 @@ The undefeated is the Toilet Bowl Champion, and the defeated (loses every match)
 | 2019 | Nick Bax | Jasenko Hosic | Jasenko Hosic | Bobby Jaegers | Chris Buschjost | Bobby Jaegers | Bobby Jaegers | Jasenko Hosic | Adam Wieberg | Dakota Graham |
 | 2020* | Jasenko Hosic | Samuel Wieberg | Samuel Wieberg | Matt Delaney | Adam Wieberg | Dakota Graham / Adam Wieberg | Matt Delaney | Dan Felty | - | - |
 | 2021 | Michael Hillstrom | Cody Schwartz | Cody Schwartz | Dan Felty | Bobby Jaegers | Nick Bax | Adam Wieberg | Dakota Graham | Jasenko Hosic | Dan Felty |
+| 2022** | Sam Wieberg / Dakota Graham | Sam Wieberg / Dakota Graham | Adam Wieberg | Connor Hanna | Adam Wieberg| Cody Schwartz| Michael Duren | Adam Wieberg | Nick Bax | Michael Duren |
+
 
 *Due to the weird nature of Covid season, no payouts were made.
+
+** Due to the weird nature of the final matchup we elected to have Sam and Dakota tie and split the prize. 
 
 [main][main] - [top][top] - [previous][previous] - [next][next]
 

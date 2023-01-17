@@ -3,11 +3,11 @@
 | Name | Position | Email | Phone
 |---|:---:|:---:|:---:|
 | Adam Wieberg | League Manager | awiebergs@gmail.com | 816-663-3907 |
-| Connor Hanna | Bookie | channa177@gmail.com | - |
+| Connor Hanna | - | channa177@gmail.com | - |
 | Michael Hillstrom | VP of League Management | mahills1622@gmail.com | - |
-| Sam Wieberg | - | sweibs@gmail.com | - |
+| Sam Wieberg | League Ambassador | sweibs@gmail.com | - |
 | Bobby Jaegers | - | bobbyjaegers@gmail.com | - |
-| Dan Felty | League Ambassador | dwfelty@gmail.com | - |
+| Chris Buschjost | - | - | - |
 | Nick Bax | - | mutigers1223@gmail.com | - |
 | Cody Schwartz | - | schwartzie.22@gmail.com | - |
 | Jasenko | - | jhosic@gmail.com | - |
@@ -74,6 +74,8 @@ They suck.
 |2018 | Adam Wieberg | Adam Wieberg | Dan Felty | Chris Bushjost | Connor Hanna | Michael Hillstrom |
 |2019 | Adam Wieberg | - | Dan Felty | - | Connor Hanna | Michael Hillstrom |
 |2020 | Adam Wieberg | - | Dan Felty | - | Connor Hanna | Michael Hillstrom |
+|2021 | Adam Wieberg | - | - | - | - | Michael Hillstrom |
+|2022 | Adam Wieberg | - | Samuel Wieberg | - | - | Michael Hillstrom |
 
 [main][main] - [top][top] - [previous][previous] - [next][next]
 
