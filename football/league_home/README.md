@@ -23,7 +23,7 @@ format the result differently:
   (league settings, rosters, users, matchups, NFL state).
 - `internal/core` — normalizes Sleeper data + the local JSON into the
   operations every front end will call: `Standings`, `Faab`, `Matchups`,
-  `History`, `Rules`, `Managers`, `Announcements`, `Schedule`,
+  `History`, `Rules`, `Scoring`, `Managers`, `Announcements`, `Schedule`,
   `Rivalries`, `State`.
 - `cmd/leaguectl` — CLI front end, used right now to validate the core
   against the real league before building the Discord bot or web UI on
@@ -57,12 +57,12 @@ FAAB balances, weekly matchups (Sleeper-backed) and award/role history
 
 **Phase 2 (done):** rules data layer, covering roster slots, keepers,
 waivers, draft format, trade deadline, playoffs and governance
-(locally-curated, current season only). Scoring is deliberately excluded:
-it lives in Sleeper's own `league.scoring_settings`, the actual source of
-truth points get computed from, so hand-transcribing it here risks
-silently drifting out of sync (as `../scoring.md`'s own half-PPR ambiguity
-already shows). It'll be added later as a live Sleeper-backed lookup
-instead.
+(locally-curated, current season only). Scoring was deliberately excluded
+at the time: it lives in Sleeper's own `league.scoring_settings`, the
+actual source of truth points get computed from, so hand-transcribing it
+risked silently drifting out of sync (as `../scoring.md`'s own half-PPR
+ambiguity already showed). `Scoring()` now fills that gap live — see
+Phase 5 below.
 
 **Phase 3 (done, schema + placeholder/mock data):** `Managers`,
 `Announcements`, `Schedule`, `Rivalries`. `Managers` is real, curated data
@@ -90,9 +90,15 @@ leaguectl command as a slash command (`/standings`, `/faab`, `/matchups`,
 (`/announcements` and `/schedule` are placeholder data, `/rivalries` is
 empty) — see "Running the Discord bot" below for setup.
 
+**Phase 5 (done):** `Scoring()`, pulled live from Sleeper's
+`league.scoring_settings` and grouped into categories (Passing, Rushing,
+Receiving, Fumbles, Kicking, Defense/Special Teams, Points Allowed) with
+human labels for Sleeper's stat-code vocabulary. Confirms the league is
+half-PPR (`rec: 0.5`), resolving `../scoring.md`'s ambiguity. Exposed as
+`leaguectl scoring` and `/scoring` (the latter as a Discord embed, since
+the full output doesn't fit Discord's 2000-char message limit).
+
 **Not built yet:**
-- Scoring (live from Sleeper's `league.scoring_settings`, not
-  hand-transcribed)
 - Rivalries sync job (the actual computation described above)
 - Recap archive (revisiting later, per league discussion)
 - Side pots (revisiting later, per league discussion)
@@ -108,6 +114,7 @@ go build -o leaguectl ./cmd/leaguectl
 ./leaguectl matchups -week 7
 ./leaguectl history
 ./leaguectl rules
+./leaguectl scoring
 ./leaguectl managers
 ./leaguectl announcements
 ./leaguectl schedule
@@ -116,8 +123,8 @@ go build -o leaguectl ./cmd/leaguectl
 ```
 
 All commands default `-league` to the Hit or Miss league ID from
-`../readme.md`. Only `standings`, `faab`, `matchups` and `state` call the
-live Sleeper API, so those need outbound network access to
+`../readme.md`. Only `standings`, `faab`, `matchups`, `scoring` and `state`
+call the live Sleeper API, so those need outbound network access to
 `api.sleeper.app` (no auth/API key required); the rest run entirely off
 embedded local data.
 

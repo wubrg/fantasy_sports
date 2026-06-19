@@ -38,6 +38,8 @@ func main() {
 		cmdHistory(args)
 	case "rules":
 		cmdRules(args)
+	case "scoring":
+		cmdScoring(args)
 	case "managers":
 		cmdManagers(args)
 	case "announcements":
@@ -66,6 +68,7 @@ Usage:
   leaguectl matchups [-league ID] -week N    Matchups for a given week
   leaguectl history                         Award and league-role history
   leaguectl rules                           Current roster/keeper/waiver/draft rules
+  leaguectl scoring [-league ID]            Live scoring settings (from Sleeper)
   leaguectl managers                        All managers, past and present
   leaguectl announcements                   League announcements (placeholder data)
   leaguectl schedule                        Season calendar events
@@ -171,6 +174,24 @@ func cmdRules(args []string) {
 	for _, p := range r.Playoffs {
 		fmt.Printf("  %d-team league: weeks %d-%d, %d teams (%d byes)\n",
 			p.LeagueSize, p.StartWeek, p.EndWeek, p.PlayoffTeams, p.ByeTeams)
+	}
+}
+
+func cmdScoring(args []string) {
+	fs := flag.NewFlagSet("scoring", flag.ExitOnError)
+	leagueID := fs.String("league", defaultLeagueID, "sleeper league id")
+	fs.Parse(args)
+
+	categories, err := core.New(*leagueID).Scoring()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "scoring failed: %v\n", err)
+		os.Exit(1)
+	}
+	for _, c := range categories {
+		fmt.Printf("%s:\n", c.Name)
+		for _, e := range c.Entries {
+			fmt.Printf("  %-40s %+g\n", e.Label, e.Points)
+		}
 	}
 }
 

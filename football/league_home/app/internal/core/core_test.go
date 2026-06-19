@@ -215,6 +215,49 @@ func TestScheduleLoadsEmbeddedData(t *testing.T) {
 	}
 }
 
+func TestScoringGroupsByCategoryAndRoundsFloatArtifacts(t *testing.T) {
+	s := testService(t, map[string]interface{}{
+		"/league/123": map[string]interface{}{
+			"league_id": "123",
+			"scoring_settings": map[string]interface{}{
+				"pass_yd":             0.03999999910593033, // Sleeper's float32 -> float64 artifact for 0.04
+				"pass_td":             4,
+				"rec":                 0.5,
+				"made_up_future_stat": 3, // unlabeled key should still surface, under "Other"
+			},
+		},
+	})
+
+	categories, err := s.Scoring()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	byName := make(map[string]ScoringCategory)
+	for _, c := range categories {
+		byName[c.Name] = c
+	}
+
+	passing, ok := byName["Passing"]
+	if !ok || len(passing.Entries) != 2 {
+		t.Fatalf("expected 2 Passing entries, got %+v", passing)
+	}
+	for _, e := range passing.Entries {
+		if e.Key == "pass_yd" && e.Points != 0.04 {
+			t.Errorf("expected pass_yd rounded to 0.04, got %v", e.Points)
+		}
+	}
+
+	if _, ok := byName["Receiving"]; !ok {
+		t.Error("expected a Receiving category for the rec key")
+	}
+
+	other, ok := byName["Other"]
+	if !ok || len(other.Entries) != 1 || other.Entries[0].Label != "made_up_future_stat" {
+		t.Errorf("expected unlabeled key to fall into Other with its raw key as label, got %+v", other)
+	}
+}
+
 func TestRivalriesLoadsEmbeddedData(t *testing.T) {
 	s := NewWithClient("123", sleeper.New())
 

@@ -31,6 +31,7 @@ var commands = []*discordgo.ApplicationCommand{
 	},
 	{Name: "history", Description: "Award and league-role history"},
 	{Name: "rules", Description: "Current roster/keeper/waiver/draft rules"},
+	{Name: "scoring", Description: "Live scoring settings (from Sleeper)"},
 	{Name: "managers", Description: "All managers, past and present"},
 	{Name: "announcements", Description: "League announcements"},
 	{Name: "schedule", Description: "Season calendar events"},
@@ -48,6 +49,22 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate, svc
 	}
 
 	data := i.ApplicationCommandData()
+
+	// scoring's output (~2KB across 7 categories) doesn't fit Discord's
+	// 2000-char message content limit, so it gets its own embed (6000-char
+	// limit, 1024 per field) with one field per category instead of a
+	// single code block.
+	if data.Name == "scoring" {
+		embed, err := buildScoringEmbed(svc)
+		if err != nil {
+			log.Printf("scoring failed: %v", err)
+			respondEphemeral(s, i, fmt.Sprintf("scoring failed: %v", err))
+			return
+		}
+		respondEmbed(s, i, embed)
+		return
+	}
+
 	var body string
 	var err error
 
@@ -91,6 +108,16 @@ func respond(s *discordgo.Session, i *discordgo.InteractionCreate, body string) 
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{Content: content},
+	})
+	if err != nil {
+		log.Printf("responding to interaction: %v", err)
+	}
+}
+
+func respondEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, embed *discordgo.MessageEmbed) {
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{Embeds: []*discordgo.MessageEmbed{embed}},
 	})
 	if err != nil {
 		log.Printf("responding to interaction: %v", err)
@@ -187,6 +214,28 @@ func formatRules(svc *core.Service) (string, error) {
 			p.LeagueSize, p.StartWeek, p.EndWeek, p.PlayoffTeams, p.ByeTeams)
 	}
 	return strings.TrimRight(b.String(), "\n"), nil
+}
+
+func buildScoringEmbed(svc *core.Service) (*discordgo.MessageEmbed, error) {
+	categories, err := svc.Scoring()
+	if err != nil {
+		return nil, err
+	}
+	embed := &discordgo.MessageEmbed{
+		Title:  "Scoring settings",
+		Fields: make([]*discordgo.MessageEmbedField, 0, len(categories)),
+	}
+	for _, c := range categories {
+		var b strings.Builder
+		for _, e := range c.Entries {
+			fmt.Fprintf(&b, "%-40s %+g\n", e.Label, e.Points)
+		}
+		embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+			Name:  c.Name,
+			Value: "```\n" + strings.TrimRight(b.String(), "\n") + "\n```",
+		})
+	}
+	return embed, nil
 }
 
 func formatManagers(svc *core.Service) (string, error) {

@@ -29,11 +29,12 @@ func New() *Client {
 
 // League describes the subset of league settings this tool needs.
 type League struct {
-	LeagueID         string `json:"league_id"`
-	Name             string `json:"name"`
-	Season           string `json:"season"`
-	Status           string `json:"status"`
-	PreviousLeagueID string `json:"previous_league_id"`
+	LeagueID         string             `json:"league_id"`
+	Name             string             `json:"name"`
+	Season           string             `json:"season"`
+	Status           string             `json:"status"`
+	PreviousLeagueID string             `json:"previous_league_id"`
+	ScoringSettings  map[string]float64 `json:"scoring_settings"`
 	Settings         struct {
 		WaiverBudget     int `json:"waiver_budget"`
 		PlayoffWeekStart int `json:"playoff_week_start"`
