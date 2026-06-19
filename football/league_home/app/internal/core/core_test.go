@@ -112,6 +112,40 @@ func TestMatchupsPairsRostersByMatchupID(t *testing.T) {
 	}
 }
 
+func TestRulesLoadsEmbeddedData(t *testing.T) {
+	s := NewWithClient("123", sleeper.New())
+
+	r, err := s.Rules()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.Roster.BenchSlots != 5 || r.Keepers.MaxKeepers != 2 {
+		t.Errorf("unexpected rules: %+v", r)
+	}
+}
+
+// TestKeeperPricingFormulaMatchesDraftDocExamples checks the formula
+// reproduces every row of draft.md's worked-example pricing table.
+func TestKeeperPricingFormulaMatchesDraftDocExamples(t *testing.T) {
+	k := KeeperRules{MinimumValue: 10, IncrementPerKeepCount: 5}
+
+	cases := []struct {
+		previousValue, keepCount, want int
+	}{
+		{1, 1, 10},  // first time, under minimum
+		{7, 1, 12},  // first time, under minimum
+		{10, 1, 15}, // first time
+		{15, 2, 25}, // second time
+		{25, 3, 40}, // third time
+	}
+	for _, c := range cases {
+		got := k.NewValue(c.previousValue, c.keepCount)
+		if got != c.want {
+			t.Errorf("NewValue(%d, %d) = %d, want %d", c.previousValue, c.keepCount, got, c.want)
+		}
+	}
+}
+
 func TestHistoryLoadsEmbeddedData(t *testing.T) {
 	s := NewWithClient("123", sleeper.New())
 

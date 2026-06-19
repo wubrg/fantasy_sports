@@ -1,0 +1,45 @@
+{
+  "roster": {
+    "starting_slots": [
+      {"position": "QB", "starters": 1, "max_on_roster": 3},
+      {"position": "RB", "starters": 2, "max_on_roster": 6},
+      {"position": "WR", "starters": 3, "max_on_roster": 9},
+      {"position": "TE", "starters": 1, "max_on_roster": 3},
+      {"position": "RB/WR/TE", "starters": 1, "max_on_roster": 0},
+      {"position": "Def", "starters": 1, "max_on_roster": 3},
+      {"position": "Kicker", "starters": 0, "max_on_roster": 0}
+    ],
+    "bench_slots": 5,
+    "ir_slots": 1
+  },
+  "keepers": {
+    "max_keepers": 2,
+    "minimum_value": 10,
+    "increment_per_keep_count": 5,
+    "lock_hours_before_draft": 1,
+    "expansion_lock_hours_before_draft": 2
+  },
+  "waivers": {
+    "yearly_budget": 100,
+    "minimum_bid": 0,
+    "processing_schedule": "Daily at 10am Central, except Tuesdays and Sundays (no processing)",
+    "respects_undroppable": true
+  },
+  "draft": {
+    "format": "auction",
+    "base_budget": 200
+  },
+  "trade_deadline_week": 10,
+  "playoffs": [
+    {"league_size": 10, "start_week": 14, "end_week": 17, "playoff_teams": 4, "bye_teams": 2},
+    {"league_size": 12, "start_week": 14, "end_week": 17, "playoff_teams": 6, "bye_teams": 2}
+  ],
+  "governance": {
+    "roles": ["League Manager", "VP of League Management", "League Ambassador", "Bookkeeper", "League Fool"],
+    "majority_votes": [
+      {"league_size": 10, "majority": 6, "surplus_majority": 8},
+      {"league_size": 12, "majority": 7, "surplus_majority": 9},
+      {"league_size": 14, "majority": 8, "surplus_majority": 11}
+    ]
+  }
+}

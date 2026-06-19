@@ -36,6 +36,8 @@ func main() {
 		cmdMatchups(args)
 	case "history":
 		cmdHistory(args)
+	case "rules":
+		cmdRules(args)
 	case "state":
 		cmdState(args)
 	case "-h", "-help", "--help", "help":
@@ -55,6 +57,7 @@ Usage:
   leaguectl faab [-league ID]               FAAB (waiver budget) balances
   leaguectl matchups [-league ID] -week N    Matchups for a given week
   leaguectl history                         Award and league-role history
+  leaguectl rules                           Current roster/keeper/waiver/draft rules
   leaguectl state                           Current NFL season/week
 
 Flags default -league to the Hit or Miss league.
@@ -125,6 +128,37 @@ func cmdHistory(args []string) {
 	}
 	for _, a := range h.Awards {
 		fmt.Printf("%d  Grand Champion: %-30s Sack-O: %s\n", a.Season, a.GrandChampion, a.SackO)
+	}
+}
+
+func cmdRules(args []string) {
+	fs := flag.NewFlagSet("rules", flag.ExitOnError)
+	leagueID := fs.String("league", defaultLeagueID, "sleeper league id")
+	fs.Parse(args)
+
+	r, err := core.New(*leagueID).Rules()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "rules failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Starting lineup:")
+	for _, slot := range r.Roster.StartingSlots {
+		fmt.Printf("  %-10s starters=%d max_on_roster=%d\n", slot.Position, slot.Starters, slot.MaxOnRoster)
+	}
+	fmt.Printf("Bench: %d  IR: %d\n\n", r.Roster.BenchSlots, r.Roster.IRSlots)
+
+	fmt.Printf("Keepers: max %d, minimum value $%d, +$%d per keep count\n",
+		r.Keepers.MaxKeepers, r.Keepers.MinimumValue, r.Keepers.IncrementPerKeepCount)
+	fmt.Printf("Waivers: $%d budget, $%d minimum bid, %s\n",
+		r.Waivers.YearlyBudget, r.Waivers.MinimumBid, r.Waivers.ProcessingSchedule)
+	fmt.Printf("Draft: %s, $%d base budget\n", r.Draft.Format, r.Draft.BaseBudget)
+	fmt.Printf("Trade deadline: start of week %d\n\n", r.TradeDeadlineWeek)
+
+	fmt.Println("Playoffs:")
+	for _, p := range r.Playoffs {
+		fmt.Printf("  %d-team league: weeks %d-%d, %d teams (%d byes)\n",
+			p.LeagueSize, p.StartWeek, p.EndWeek, p.PlayoffTeams, p.ByeTeams)
 	}
 }
 
