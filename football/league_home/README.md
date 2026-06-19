@@ -23,7 +23,8 @@ format the result differently:
   (league settings, rosters, users, matchups, NFL state).
 - `internal/core` — normalizes Sleeper data + the local JSON into the
   operations every front end will call: `Standings`, `Faab`, `Matchups`,
-  `History`, `Rules`, `State`.
+  `History`, `Rules`, `Managers`, `Announcements`, `Schedule`,
+  `Rivalries`, `State`.
 - `cmd/leaguectl` — CLI front end, used right now to validate the core
   against the real league before building the Discord bot or web UI on
   top of the same package.
@@ -35,6 +36,14 @@ format the result differently:
   `../rosters.md`, `../draft.md`, `../league_fees_and_dues.md` and
   `../policies_and_procedures.md`. Holds today's rules only, not a
   history of past changes. Embedded into the binary at build time.
+- `data/managers.json` — every manager who's ever owned a team, past and
+  present, with name-spelling aliases (e.g. "Chris Bushjost" /
+  "Chris Buschjost") so history and Sleeper data can be joined to one
+  stable identity regardless of which spelling/season used. Transcribed
+  from `../league_members.md` plus the variants in `data/history.json`.
+- `data/announcements.json`, `data/schedule.json`, `data/rivalries.json`
+  — see Status below; these are placeholder/example data or intentionally
+  empty pending a real source.
 
 ## Status
 
@@ -51,18 +60,29 @@ silently drifting out of sync (as `../scoring.md`'s own half-PPR ambiguity
 already shows). It'll be added later as a live Sleeper-backed lookup
 instead.
 
+**Phase 3 (done, schema + placeholder/mock data):** `Managers`,
+`Announcements`, `Schedule`, `Rivalries`. `Managers` is real, curated data
+(see `data/managers.json` above). The other three ship with the schema
+and a working `leaguectl` command, but not real data yet, since each
+needs something this environment doesn't have:
+- `Announcements` — example entries only; there's no real feed to
+  transcribe until a way to write to it (a Discord-reading bot, or a
+  small posting tool) exists.
+- `Schedule` — illustrative entries derived from `Rules` (trade deadline,
+  playoff weeks) plus the known recurring/structural events; real
+  calendar dates still live only in the Google Calendar from
+  `../communication.md`.
+- `Rivalries` — ships an intentionally empty dataset. Real head-to-head
+  records need walking each season's `previous_league_id` chain back
+  through Sleeper and aggregating every matchup, which needs live Sleeper
+  API access this sandboxed environment doesn't have. Fabricating
+  win/loss numbers for real people instead would just be wrong, so the
+  schema exists and the data waits for a real sync job.
+
 **Not built yet:**
 - Scoring (live from Sleeper's `league.scoring_settings`, not
   hand-transcribed)
-- Manager identity (a stable entity to join Sleeper accounts, history and
-  rivalries to the same real person across seasons)
-- League calendar / non-matchup schedule events (waivers, lineup locks,
-  trade deadline — currently only in a Google Calendar, see
-  `../communication.md`)
-- Announcements
-- Rivalries (head-to-head history across seasons — needs walking each
-  season's `previous_league_id` chain and caching the result; too
-  expensive to compute live on every request)
+- Rivalries sync job (the actual computation described above)
 - Recap archive (revisiting later, per league discussion)
 - Side pots (revisiting later, per league discussion)
 - Discord bot front end
@@ -78,13 +98,18 @@ go build -o leaguectl ./cmd/leaguectl
 ./leaguectl matchups -week 7
 ./leaguectl history
 ./leaguectl rules
+./leaguectl managers
+./leaguectl announcements
+./leaguectl schedule
+./leaguectl rivalries
 ./leaguectl state
 ```
 
 All commands default `-league` to the Hit or Miss league ID from
-`../readme.md`. Everything except `history` and `rules` calls the live
-Sleeper API, so it needs outbound network access to `api.sleeper.app` (no
-auth/API key required).
+`../readme.md`. Only `standings`, `faab`, `matchups` and `state` call the
+live Sleeper API, so those need outbound network access to
+`api.sleeper.app` (no auth/API key required); the rest run entirely off
+embedded local data.
 
 ```sh
 go test ./...

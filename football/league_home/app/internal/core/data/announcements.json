@@ -1,0 +1,16 @@
+[
+  {
+    "id": "example-1",
+    "title": "Welcome to League Home",
+    "body": "This is a placeholder announcement. Real announcements currently happen straight in Discord; this feed will start carrying real posts once a way to write to it (a Discord-reading bot, or a small posting tool) exists.",
+    "posted_at": "2026-01-15T12:00:00-06:00",
+    "author": "League Manager"
+  },
+  {
+    "id": "example-2",
+    "title": "Trade deadline reminder",
+    "body": "Example reminder-style announcement: trades lock at the start of the trade deadline week (see the rules command).",
+    "posted_at": "2025-11-01T09:00:00-06:00",
+    "author": "League Manager"
+  }
+]

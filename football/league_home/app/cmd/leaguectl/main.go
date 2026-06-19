@@ -38,6 +38,14 @@ func main() {
 		cmdHistory(args)
 	case "rules":
 		cmdRules(args)
+	case "managers":
+		cmdManagers(args)
+	case "announcements":
+		cmdAnnouncements(args)
+	case "schedule":
+		cmdSchedule(args)
+	case "rivalries":
+		cmdRivalries(args)
 	case "state":
 		cmdState(args)
 	case "-h", "-help", "--help", "help":
@@ -58,6 +66,10 @@ Usage:
   leaguectl matchups [-league ID] -week N    Matchups for a given week
   leaguectl history                         Award and league-role history
   leaguectl rules                           Current roster/keeper/waiver/draft rules
+  leaguectl managers                        All managers, past and present
+  leaguectl announcements                   League announcements (placeholder data)
+  leaguectl schedule                        Season calendar events
+  leaguectl rivalries                       Manager head-to-head records (not yet populated)
   leaguectl state                           Current NFL season/week
 
 Flags default -league to the Hit or Miss league.
@@ -159,6 +171,86 @@ func cmdRules(args []string) {
 	for _, p := range r.Playoffs {
 		fmt.Printf("  %d-team league: weeks %d-%d, %d teams (%d byes)\n",
 			p.LeagueSize, p.StartWeek, p.EndWeek, p.PlayoffTeams, p.ByeTeams)
+	}
+}
+
+func cmdManagers(args []string) {
+	fs := flag.NewFlagSet("managers", flag.ExitOnError)
+	leagueID := fs.String("league", defaultLeagueID, "sleeper league id")
+	fs.Parse(args)
+
+	managers, err := core.New(*leagueID).Managers()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "managers failed: %v\n", err)
+		os.Exit(1)
+	}
+	for _, m := range managers {
+		status := "active"
+		if !m.Active {
+			status = "inactive"
+		}
+		aliases := ""
+		if len(m.Aliases) > 0 {
+			aliases = fmt.Sprintf(" (aka %v)", m.Aliases)
+		}
+		fmt.Printf("%-20s %-9s%s\n", m.Name, status, aliases)
+	}
+}
+
+func cmdAnnouncements(args []string) {
+	fs := flag.NewFlagSet("announcements", flag.ExitOnError)
+	leagueID := fs.String("league", defaultLeagueID, "sleeper league id")
+	fs.Parse(args)
+
+	rows, err := core.New(*leagueID).Announcements()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "announcements failed: %v\n", err)
+		os.Exit(1)
+	}
+	for _, a := range rows {
+		fmt.Printf("[%s] %s - %s\n  %s\n", a.PostedAt, a.Title, a.Author, a.Body)
+	}
+}
+
+func cmdSchedule(args []string) {
+	fs := flag.NewFlagSet("schedule", flag.ExitOnError)
+	leagueID := fs.String("league", defaultLeagueID, "sleeper league id")
+	fs.Parse(args)
+
+	rows, err := core.New(*leagueID).Schedule()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "schedule failed: %v\n", err)
+		os.Exit(1)
+	}
+	for _, e := range rows {
+		switch {
+		case e.Recurring:
+			fmt.Printf("%-20s (recurring)  %s\n", e.Label, e.Detail)
+		case e.Week > 0:
+			fmt.Printf("%-20s (week %d)    %s\n", e.Label, e.Week, e.Detail)
+		default:
+			fmt.Printf("%-20s              %s\n", e.Label, e.Detail)
+		}
+	}
+}
+
+func cmdRivalries(args []string) {
+	fs := flag.NewFlagSet("rivalries", flag.ExitOnError)
+	leagueID := fs.String("league", defaultLeagueID, "sleeper league id")
+	fs.Parse(args)
+
+	rows, err := core.New(*leagueID).Rivalries()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "rivalries failed: %v\n", err)
+		os.Exit(1)
+	}
+	if len(rows) == 0 {
+		fmt.Println("No rivalry data yet (needs live Sleeper history to compute).")
+		return
+	}
+	for _, r := range rows {
+		fmt.Printf("%s vs %s: %d-%d-%d  (PF %.2f vs %.2f)\n",
+			r.ManagerAID, r.ManagerBID, r.WinsA, r.WinsB, r.Ties, r.PointsForA, r.PointsForB)
 	}
 }
 

@@ -160,3 +160,69 @@ func TestHistoryLoadsEmbeddedData(t *testing.T) {
 		t.Errorf("expected first award season 2014, got %d", h.Awards[0].Season)
 	}
 }
+
+func TestManagersLoadsEmbeddedData(t *testing.T) {
+	s := NewWithClient("123", sleeper.New())
+
+	managers, err := s.Managers()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(managers) == 0 {
+		t.Fatal("expected non-empty managers")
+	}
+}
+
+func TestResolveManagerMatchesAlias(t *testing.T) {
+	managers := []Manager{
+		{ID: "chris-buschjost", Name: "Chris Buschjost", Aliases: []string{"Chris Bushjost"}},
+	}
+
+	m, ok := ResolveManager(managers, "chris bushjost")
+	if !ok || m.ID != "chris-buschjost" {
+		t.Errorf("expected alias match to resolve to chris-buschjost, got %+v, ok=%v", m, ok)
+	}
+
+	if _, ok := ResolveManager(managers, "nobody"); ok {
+		t.Error("expected no match for unknown name")
+	}
+}
+
+func TestAnnouncementsLoadsEmbeddedDataMostRecentFirst(t *testing.T) {
+	s := NewWithClient("123", sleeper.New())
+
+	rows, err := s.Announcements()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) < 2 {
+		t.Fatal("expected at least 2 announcements")
+	}
+	if rows[0].PostedAt < rows[1].PostedAt {
+		t.Errorf("expected most recent first, got %+v", rows)
+	}
+}
+
+func TestScheduleLoadsEmbeddedData(t *testing.T) {
+	s := NewWithClient("123", sleeper.New())
+
+	rows, err := s.Schedule()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) == 0 {
+		t.Fatal("expected non-empty schedule")
+	}
+}
+
+func TestRivalriesLoadsEmbeddedData(t *testing.T) {
+	s := NewWithClient("123", sleeper.New())
+
+	rows, err := s.Rivalries()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rows == nil {
+		t.Error("expected non-nil (possibly empty) rivalries slice")
+	}
+}

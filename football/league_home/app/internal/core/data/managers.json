@@ -1,0 +1,20 @@
+[
+  {"id": "adam-wieberg", "name": "Adam Wieberg", "active": true},
+  {"id": "connor-hanna", "name": "Connor Hanna", "active": true},
+  {"id": "michael-hillstrom", "name": "Michael Hillstrom", "active": true},
+  {"id": "sam-wieberg", "name": "Sam Wieberg", "aliases": ["Samuel Wieberg"], "active": true},
+  {"id": "bobby-jaegers", "name": "Bobby Jaegers", "active": true},
+  {"id": "chris-buschjost", "name": "Chris Buschjost", "aliases": ["Chris Bushjost"], "active": true},
+  {"id": "nick-bax", "name": "Nick Bax", "active": true},
+  {"id": "cody-schwartz", "name": "Cody Schwartz", "active": true},
+  {"id": "jasenko-hosic", "name": "Jasenko Hosic", "aliases": ["Jasenko"], "active": true},
+  {"id": "dakota-graham", "name": "Dakota Graham", "active": true},
+  {"id": "michael-duren", "name": "Michael Duren", "active": true},
+  {"id": "brandon", "name": "Brandon", "active": true},
+  {"id": "dan-felty", "name": "Dan Felty", "active": false},
+  {"id": "matt-delaney", "name": "Matt Delaney", "active": false},
+  {"id": "ryan-birmingham", "name": "Ryan Birmingham", "active": false},
+  {"id": "sai-inampudi", "name": "Sai Inampudi", "active": false},
+  {"id": "mark-ausley", "name": "Mark Ausley", "active": false},
+  {"id": "locke-thompson", "name": "Locke Thompson", "active": false}
+]
