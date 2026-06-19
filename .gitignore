@@ -54,6 +54,7 @@ football/nfl_awards/app/nflawards
 football/nfl_awards/app/nflctl
 football/league_home/app/leaguectl
 football/league_home/app/leaguebot
+football/league_home/app/leagueweb
 
 # Local SQLite DB (regenerate with: nflctl import ../data/nfl_awards_data.json)
 football/nfl_awards/data/nfl_awards.db

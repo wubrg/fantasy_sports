@@ -6,17 +6,17 @@ and governance history that predates Sleeper and isn't in its API.
 
 ## Design
 
-One core data layer, two thin front ends planned on top of it — neither
-front end owns league-data logic, they just call the same operations and
-format the result differently:
+One core data layer, three thin front ends on top of it — none of them
+own league-data logic, they just call the same operations and format the
+result differently:
 
 ```
         Sleeper API ─┐
                       ├─▶  core (internal/core)  ◀── data/history.json
    data/history.json ─┘            │
-                       ┌────────────┴────────────┐
-                  leaguectl                  leaguebot        (planned)
-                  (CLI, Phase 1)          (Discord, Phase 4)     Web UI
+                  ┌─────────────────┼─────────────────┐
+             leaguectl          leaguebot          leagueweb
+            (CLI, Phase 1)   (Discord, Phase 4)   (Web, Phase 6)
 ```
 
 - `internal/sleeper` — minimal client for the public, keyless Sleeper API
@@ -32,6 +32,10 @@ format the result differently:
   leaguectl, one per slash command, against a single league configured at
   startup (no per-command `-league` override, unlike the CLI, since one
   bot install only ever serves the one server/league it's invited to).
+- `cmd/leagueweb` — web UI front end. A thin JSON API (one endpoint per
+  core operation) plus a static, build-step-free single-page app
+  (`cmd/leagueweb/static`) that fetches and renders it, both embedded into
+  one binary the same way `data/*.json` is.
 - `data/history.json` — hand-maintained award and league-role history
   (2014-2022), transcribed from `../league_fees_and_dues.md` and
   `../league_members.md`. Embedded into the binary at build time.
@@ -98,11 +102,17 @@ half-PPR (`rec: 0.5`), resolving `../scoring.md`'s ambiguity. Exposed as
 `leaguectl scoring` and `/scoring` (the latter as a Discord embed, since
 the full output doesn't fit Discord's 2000-char message limit).
 
+**Phase 6 (done):** `cmd/leagueweb`, a web UI front end: a tabbed
+single-page app (standings, FAAB, matchups, scoring, rules, managers,
+history, announcements, schedule, rivalries) backed by a `/api/*` JSON
+endpoint per core operation. Same core package, same caveats as the CLI
+and Discord bot (announcements/schedule are placeholder data, rivalries
+is empty) — see "Running the web UI" below.
+
 **Not built yet:**
 - Rivalries sync job (the actual computation described above)
 - Recap archive (revisiting later, per league discussion)
 - Side pots (revisiting later, per league discussion)
-- Web UI front end
 
 ## Running it
 
@@ -164,3 +174,20 @@ register globally instead (every server the bot is in, but registration
 can take up to an hour to show up). `LEAGUE_ID` overrides the default
 league ID if needed, same as leaguectl's `-league` flag. The process stays
 running handling slash commands until killed (Ctrl+C).
+
+## Running the web UI
+
+```sh
+cd football/league_home/app
+go build -o leagueweb ./cmd/leagueweb
+./leagueweb
+```
+
+Serves on `:8081` by default (override with `-addr`); `LEAGUE_ID`
+overrides the default league ID, same as the CLI and bot. Open
+`http://localhost:8081` and pick a tab — each one lazily fetches its data
+from a matching `/api/*` endpoint (`/api/standings`, `/api/faab`,
+`/api/matchups?week=N`, `/api/scoring`, `/api/rules`, `/api/managers`,
+`/api/history`, `/api/announcements`, `/api/schedule`, `/api/rivalries`,
+`/api/state`) and caches it for the rest of the page session (matchups
+excepted, since the week selector changes the query).

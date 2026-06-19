@@ -1,0 +1,174 @@
+:root {
+  color-scheme: light dark;
+  --border: #d0d0d8;
+  --accent: #b8860b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  padding: 0 1.5rem 2rem;
+  max-width: 1100px;
+  margin-inline: auto;
+}
+
+header {
+  padding: 1.5rem 0 0.5rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  opacity: 0.7;
+  font-size: 0.95rem;
+}
+
+nav#tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+nav#tabs button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+nav#tabs button.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+main > section {
+  display: none;
+  padding-top: 1.25rem;
+}
+
+main > section.active {
+  display: block;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.controls label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+input[type="number"] {
+  width: 5.5rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: transparent;
+}
+
+.controls button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+th, td {
+  text-align: left;
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+td.num {
+  text-align: right;
+}
+
+.empty {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.scoring-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.scoring-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.scoring-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.scoring-card table td {
+  padding: 0.25rem 0.3rem;
+  border-bottom: none;
+}
+
+#rules-body h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+#rules-body h3:first-child {
+  margin-top: 0;
+}
+
+.announcement {
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 0;
+}
+
+.announcement:first-child {
+  padding-top: 0;
+}
+
+.announcement h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.announcement .meta {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  opacity: 0.65;
+}
+
+.announcement p:last-child {
+  margin: 0;
+}

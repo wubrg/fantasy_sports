@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hit or Miss - League Home</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Hit or Miss</h1>
+  <p class="subtitle" id="state-line">loading season state&hellip;</p>
+</header>
+
+<nav id="tabs">
+  <button type="button" data-tab="standings" class="active">Standings</button>
+  <button type="button" data-tab="faab">FAAB</button>
+  <button type="button" data-tab="matchups">Matchups</button>
+  <button type="button" data-tab="scoring">Scoring</button>
+  <button type="button" data-tab="rules">Rules</button>
+  <button type="button" data-tab="managers">Managers</button>
+  <button type="button" data-tab="history">History</button>
+  <button type="button" data-tab="announcements">Announcements</button>
+  <button type="button" data-tab="schedule">Schedule</button>
+  <button type="button" data-tab="rivalries">Rivalries</button>
+</nav>
+
+<main>
+  <section data-tab="standings" class="active">
+    <table>
+      <thead><tr><th>#</th><th>Team</th><th>Record</th><th>PF</th><th>PA</th></tr></thead>
+      <tbody id="standings-body"></tbody>
+    </table>
+  </section>
+
+  <section data-tab="faab">
+    <table>
+      <thead><tr><th>Team</th><th>Remaining</th><th>Budget</th><th>Used</th></tr></thead>
+      <tbody id="faab-body"></tbody>
+    </table>
+  </section>
+
+  <section data-tab="matchups">
+    <div class="controls">
+      <label for="week-input">Week</label>
+      <input type="number" id="week-input" min="1" value="1">
+      <button type="button" id="week-load">Load</button>
+    </div>
+    <table>
+      <thead><tr><th>Home</th><th></th><th>Away</th></tr></thead>
+      <tbody id="matchups-body"></tbody>
+    </table>
+    <p id="matchups-empty" class="empty" hidden>No matchups for this week yet.</p>
+  </section>
+
+  <section data-tab="scoring">
+    <div id="scoring-body" class="scoring-grid"></div>
+  </section>
+
+  <section data-tab="rules">
+    <div id="rules-body"></div>
+  </section>
+
+  <section data-tab="managers">
+    <table>
+      <thead><tr><th>Name</th><th>Status</th><th>Aliases</th></tr></thead>
+      <tbody id="managers-body"></tbody>
+    </table>
+  </section>
+
+  <section data-tab="history">
+    <table>
+      <thead><tr><th>Season</th><th>Grand Champion</th><th>Sack-O</th></tr></thead>
+      <tbody id="history-body"></tbody>
+    </table>
+  </section>
+
+  <section data-tab="announcements">
+    <div id="announcements-body"></div>
+  </section>
+
+  <section data-tab="schedule">
+    <table>
+      <thead><tr><th>Event</th><th>When</th><th>Detail</th></tr></thead>
+      <tbody id="schedule-body"></tbody>
+    </table>
+  </section>
+
+  <section data-tab="rivalries">
+    <div id="rivalries-body"></div>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
