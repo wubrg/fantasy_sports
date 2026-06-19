@@ -51,3 +51,9 @@ build-iPhoneSimulator/
 
 # Go build artifacts
 football/nfl_awards/app/nflawards
+football/nfl_awards/app/nflctl
+
+# Local SQLite DB (regenerate with: nflctl import ../data/nfl_awards_data.json)
+football/nfl_awards/data/nfl_awards.db
+football/nfl_awards/data/nfl_awards.db-shm
+football/nfl_awards/data/nfl_awards.db-wal
