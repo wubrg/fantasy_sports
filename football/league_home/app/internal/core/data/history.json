@@ -1,0 +1,206 @@
+{
+  "awards": [
+    {
+      "season": 2014,
+      "grand_champion": "Michael Hillstrom",
+      "first_of_the_worst": "Adam Wieberg",
+      "points_farmer": "Adam Wieberg",
+      "the_taco": "Sai Inampudi",
+      "the_scrub_life": "Ryan Birmingham",
+      "lady_luck": "Sai Inampudi",
+      "the_eli": "-",
+      "the_strong_man": "-",
+      "toilet_bowl_champion": "-",
+      "sacko": "Sai Inampudi"
+    },
+    {
+      "season": 2015,
+      "grand_champion": "Michael Hillstrom",
+      "first_of_the_worst": "Samuel Wieberg",
+      "points_farmer": "Samuel Wieberg",
+      "the_taco": "Connor Hanna",
+      "the_scrub_life": "Mark Ausley",
+      "lady_luck": "Mark Ausley",
+      "the_eli": "-",
+      "the_strong_man": "-",
+      "toilet_bowl_champion": "-",
+      "sacko": "Chris Bushjost"
+    },
+    {
+      "season": 2016,
+      "grand_champion": "Cody Schwartz",
+      "first_of_the_worst": "Chris Bushjost",
+      "points_farmer": "Dan Felty",
+      "the_taco": "Locke Thompson",
+      "the_scrub_life": "Dan Felty",
+      "lady_luck": "Matt Delaney",
+      "the_eli": "Adam Wieberg",
+      "the_strong_man": "Dan Felty",
+      "toilet_bowl_champion": "Adam Wieberg",
+      "sacko": "Locke Thompson"
+    },
+    {
+      "season": 2017,
+      "grand_champion": "Dan Felty",
+      "first_of_the_worst": "Michael Hillstrom",
+      "points_farmer": "Nick Bax",
+      "the_taco": "Matt Delaney",
+      "the_scrub_life": "Sam Wieberg",
+      "lady_luck": "Adam Wieberg",
+      "the_eli": "Matt Delaney",
+      "the_strong_man": "Nick Bax",
+      "toilet_bowl_champion": "Sam Wieberg",
+      "sacko": "Adam Wieberg"
+    },
+    {
+      "season": 2018,
+      "grand_champion": "Michael Hillstrom",
+      "first_of_the_worst": "Connor Hanna",
+      "points_farmer": "Sam Wieberg",
+      "the_taco": "Matt Delaney",
+      "the_scrub_life": "Sam Wieberg",
+      "lady_luck": "Chris Buschjost",
+      "the_eli": "Bobby Jaegers",
+      "the_strong_man": "Dan Felty",
+      "toilet_bowl_champion": "Matt Delaney",
+      "sacko": "Chris Buschjost"
+    },
+    {
+      "season": 2019,
+      "grand_champion": "Nick Bax",
+      "first_of_the_worst": "Jasenko Hosic",
+      "points_farmer": "Jasenko Hosic",
+      "the_taco": "Bobby Jaegers",
+      "the_scrub_life": "Chris Buschjost",
+      "lady_luck": "Bobby Jaegers",
+      "the_eli": "Bobby Jaegers",
+      "the_strong_man": "Jasenko Hosic",
+      "toilet_bowl_champion": "Adam Wieberg",
+      "sacko": "Dakota Graham"
+    },
+    {
+      "season": 2020,
+      "grand_champion": "Jasenko Hosic",
+      "first_of_the_worst": "Samuel Wieberg",
+      "points_farmer": "Samuel Wieberg",
+      "the_taco": "Matt Delaney",
+      "the_scrub_life": "Adam Wieberg",
+      "lady_luck": "Dakota Graham / Adam Wieberg",
+      "the_eli": "Matt Delaney",
+      "the_strong_man": "Dan Felty",
+      "toilet_bowl_champion": "-",
+      "sacko": "-",
+      "note": "Due to the weird nature of Covid season, no payouts were made."
+    },
+    {
+      "season": 2021,
+      "grand_champion": "Michael Hillstrom",
+      "first_of_the_worst": "Cody Schwartz",
+      "points_farmer": "Cody Schwartz",
+      "the_taco": "Dan Felty",
+      "the_scrub_life": "Bobby Jaegers",
+      "lady_luck": "Nick Bax",
+      "the_eli": "Adam Wieberg",
+      "the_strong_man": "Dakota Graham",
+      "toilet_bowl_champion": "Jasenko Hosic",
+      "sacko": "Dan Felty"
+    },
+    {
+      "season": 2022,
+      "grand_champion": "Sam Wieberg / Dakota Graham",
+      "first_of_the_worst": "Sam Wieberg / Dakota Graham",
+      "points_farmer": "Adam Wieberg",
+      "the_taco": "Connor Hanna",
+      "the_scrub_life": "Adam Wieberg",
+      "lady_luck": "Cody Schwartz",
+      "the_eli": "Michael Duren",
+      "the_strong_man": "Adam Wieberg",
+      "toilet_bowl_champion": "Nick Bax",
+      "sacko": "Michael Duren",
+      "note": "Sam and Dakota tied the final matchup and elected to split the Grand Champion / First of the Worst prize. Dakota and Nick both elected to stash their 2022 winnings toward future season dues instead of being paid out."
+    }
+  ],
+  "roles": [
+    {
+      "year": 2014,
+      "league_manager": "Adam Wieberg",
+      "money_collector": "Adam Wieberg",
+      "league_ambassador": "-",
+      "poll_master": "-",
+      "bookie": "-",
+      "vp": "-"
+    },
+    {
+      "year": 2015,
+      "league_manager": "Matt Delaney / Adam Wieberg",
+      "money_collector": "Matt Delaney",
+      "league_ambassador": "-",
+      "poll_master": "-",
+      "bookie": "-",
+      "vp": "-"
+    },
+    {
+      "year": 2016,
+      "league_manager": "Adam Wieberg",
+      "money_collector": "Adam Wieberg",
+      "league_ambassador": "-",
+      "poll_master": "Chris Bushjost",
+      "bookie": "-",
+      "vp": "-"
+    },
+    {
+      "year": 2017,
+      "league_manager": "Adam Wieberg",
+      "money_collector": "Adam Wieberg",
+      "league_ambassador": "Dan Felty",
+      "poll_master": "Chris Bushjost",
+      "bookie": "Connor Hanna",
+      "vp": "-"
+    },
+    {
+      "year": 2018,
+      "league_manager": "Adam Wieberg",
+      "money_collector": "Adam Wieberg",
+      "league_ambassador": "Dan Felty",
+      "poll_master": "Chris Bushjost",
+      "bookie": "Connor Hanna",
+      "vp": "Michael Hillstrom"
+    },
+    {
+      "year": 2019,
+      "league_manager": "Adam Wieberg",
+      "money_collector": "-",
+      "league_ambassador": "Dan Felty",
+      "poll_master": "-",
+      "bookie": "Connor Hanna",
+      "vp": "Michael Hillstrom"
+    },
+    {
+      "year": 2020,
+      "league_manager": "Adam Wieberg",
+      "money_collector": "-",
+      "league_ambassador": "Dan Felty",
+      "poll_master": "-",
+      "bookie": "Connor Hanna",
+      "vp": "Michael Hillstrom"
+    },
+    {
+      "year": 2021,
+      "league_manager": "Adam Wieberg",
+      "money_collector": "-",
+      "league_ambassador": "-",
+      "poll_master": "-",
+      "bookie": "-",
+      "vp": "Michael Hillstrom"
+    },
+    {
+      "year": 2022,
+      "league_manager": "Adam Wieberg",
+      "money_collector": "-",
+      "league_ambassador": "Samuel Wieberg",
+      "poll_master": "-",
+      "bookie": "-",
+      "vp": "Michael Hillstrom"
+    }
+  ]
+}
