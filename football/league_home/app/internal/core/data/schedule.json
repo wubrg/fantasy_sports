@@ -1,0 +1,8 @@
+[
+  {"label": "Auction Draft", "detail": "Preseason auction draft; exact date is set fresh each year"},
+  {"label": "Keeper Lock", "detail": "Keeper selections lock 1 hour before the draft (2 hours for expansion teams)"},
+  {"label": "Waiver Processing", "detail": "Daily at 10am Central, except Tuesdays and Sundays (no processing)", "recurring": true},
+  {"label": "Trade Deadline", "detail": "Trades lock at the start of this week", "week": 10},
+  {"label": "Playoffs Begin", "detail": "Playoff bracket starts", "week": 14},
+  {"label": "Championship", "detail": "Final playoff week", "week": 17}
+]

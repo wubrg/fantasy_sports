@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NFL Awards Reference</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>NFL Awards Reference</h1>
+  <p class="subtitle">AP awards · All-Pro · Pro Bowl · 1994&ndash;2025</p>
+</header>
+
+<main>
+  <section class="filters">
+    <div class="filter-group">
+      <label for="team-select">Team</label>
+      <select id="team-select"></select>
+    </div>
+
+    <div class="filter-group">
+      <label>Unit</label>
+      <div class="toggle-group" id="unit-toggle">
+        <button type="button" data-unit="" class="active">All</button>
+        <button type="button" data-unit="O">Offense</button>
+        <button type="button" data-unit="D">Defense</button>
+        <button type="button" data-unit="ST">Special Teams</button>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label>Year Range</label>
+      <div class="year-range">
+        <input type="number" id="year-min" />
+        <span>&ndash;</span>
+        <input type="number" id="year-max" />
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label for="player-search">Player Search</label>
+      <input type="text" id="player-search" placeholder="e.g. Mahomes" />
+    </div>
+
+    <div class="filter-group awards-group">
+      <label>Award Type</label>
+      <div class="award-checkboxes" id="award-checkboxes"></div>
+    </div>
+  </section>
+
+  <section class="results-bar">
+    <span id="result-count"></span>
+    <button type="button" id="export-csv">Export CSV</button>
+  </section>
+
+  <section class="results">
+    <table id="results-table">
+      <thead>
+        <tr>
+          <th data-sort="yr">Year</th>
+          <th data-sort="pl">Player</th>
+          <th data-sort="pos">Pos</th>
+          <th data-sort="tm">Team</th>
+          <th data-sort="aw">Award</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
