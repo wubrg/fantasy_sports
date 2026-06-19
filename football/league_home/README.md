@@ -15,8 +15,8 @@ format the result differently:
                       ├─▶  core (internal/core)  ◀── data/history.json
    data/history.json ─┘            │
                        ┌────────────┴────────────┐
-                  leaguectl                  (planned)
-                  (CLI, this phase)      Discord bot · Web UI
+                  leaguectl                  leaguebot        (planned)
+                  (CLI, Phase 1)          (Discord, Phase 4)     Web UI
 ```
 
 - `internal/sleeper` — minimal client for the public, keyless Sleeper API
@@ -28,6 +28,10 @@ format the result differently:
 - `cmd/leaguectl` — CLI front end, used right now to validate the core
   against the real league before building the Discord bot or web UI on
   top of the same package.
+- `cmd/leaguebot` — Discord bot front end. Exposes the same operations as
+  leaguectl, one per slash command, against a single league configured at
+  startup (no per-command `-league` override, unlike the CLI, since one
+  bot install only ever serves the one server/league it's invited to).
 - `data/history.json` — hand-maintained award and league-role history
   (2014-2022), transcribed from `../league_fees_and_dues.md` and
   `../league_members.md`. Embedded into the binary at build time.
@@ -79,13 +83,19 @@ needs something this environment doesn't have:
   win/loss numbers for real people instead would just be wrong, so the
   schema exists and the data waits for a real sync job.
 
+**Phase 4 (done):** `cmd/leaguebot`, a Discord bot front end exposing every
+leaguectl command as a slash command (`/standings`, `/faab`, `/matchups`,
+`/history`, `/rules`, `/managers`, `/announcements`, `/schedule`,
+`/rivalries`, `/state`). Same core package, same caveats as the CLI
+(`/announcements` and `/schedule` are placeholder data, `/rivalries` is
+empty) — see "Running the Discord bot" below for setup.
+
 **Not built yet:**
 - Scoring (live from Sleeper's `league.scoring_settings`, not
   hand-transcribed)
 - Rivalries sync job (the actual computation described above)
 - Recap archive (revisiting later, per league discussion)
 - Side pots (revisiting later, per league discussion)
-- Discord bot front end
 - Web UI front end
 
 ## Running it
@@ -117,3 +127,33 @@ go test ./...
 
 The Sleeper client and core package are tested against `httptest` fixtures
 rather than the live API, so `go test` works offline.
+
+## Running the Discord bot
+
+One-time setup, on [Discord's Developer Portal](https://discord.com/developers/applications):
+
+1. **New Application** → name it (e.g. "League Home") → **Bot** tab →
+   **Reset Token** and copy it. This is `DISCORD_BOT_TOKEN` below; treat it
+   like a password (whoever has it can act as the bot).
+2. **OAuth2 → URL Generator** → scopes: `bot` and `applications.commands`.
+   No privileged Gateway intents are needed (the bot only handles slash
+   commands, not raw messages).
+3. Open the generated URL, pick the league's Discord server, authorize it.
+4. Right-click the server icon → **Copy Server ID** (enable Developer Mode
+   under Discord's Advanced settings first if that option isn't visible).
+   This is `DISCORD_GUILD_ID` below.
+
+Then run it:
+
+```sh
+cd football/league_home/app
+go build -o leaguebot ./cmd/leaguebot
+DISCORD_BOT_TOKEN=<bot token> DISCORD_GUILD_ID=<server id> ./leaguebot
+```
+
+`DISCORD_GUILD_ID` scopes slash-command registration to that one server,
+where Discord propagates new/changed commands within seconds; omit it to
+register globally instead (every server the bot is in, but registration
+can take up to an hour to show up). `LEAGUE_ID` overrides the default
+league ID if needed, same as leaguectl's `-league` flag. The process stays
+running handling slash commands until killed (Ctrl+C).
