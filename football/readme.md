@@ -36,7 +36,7 @@ Create and foster a competitive, fun, and rewarding fantasy football experience 
 [top]: readme.md
 [next]: communication.md
 
-[sleeper]: https://sleeper.app/leagues/698583839592771584
+[sleeper]: https://sleeper.app/leagues/1368649414419189760
 [communication]: communication.md
 [members]: league_members.md
 [rituals]: policies_and_procedures.md

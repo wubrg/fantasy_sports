@@ -16,7 +16,7 @@ import (
 // defaultLeagueID is the "Hit or Miss" league's current Sleeper league ID
 // (see football/readme.md). Override with -league for a different season
 // or league.
-const defaultLeagueID = "698583839592771584"
+const defaultLeagueID = "1368649414419189760"
 
 func main() {
 	if len(os.Args) < 2 {
