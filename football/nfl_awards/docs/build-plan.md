@@ -34,19 +34,17 @@ Award values: `AP MVP`, `AP OPOY`, `AP DPOY`, `AP OROTY`, `AP DROTY`, `AP CPOTY`
 |---|---|---|---|---|
 | 1 | Named AP awards 1994–2025 (MVP, OPOY, DPOY, ROTY×2, Comeback, SB MVP) | ✅ DONE | v0.1 | ~220 rows; 7 [verify] entries |
 | 2 | All-Pro 1st + 2nd, 2010–2025 | ✅ DONE | v0.2 | 923 new rows; team docs regenerated |
-| 3 | All-Pro 1st + 2nd, 1994–2009 | ⏳ Pending | v0.3 | |
-| 4 | Pro Bowl 2013–2025 | ⏳ Pending | v0.4 | |
-| 5 | Pro Bowl 2001–2012 | ⏳ Pending | v0.5 | |
-| 6 | Pro Bowl 1994–2000 + final review + dedup | ⏳ Pending | v1.0 | |
+| 3 | All-Pro 1st + 2nd, 1994–2009 | ✅ DONE | v0.8 | 833 rows |
+| 4 | Pro Bowl 2013–2025 | ✅ DONE | v0.8 | 933 rows |
+| 5 | Pro Bowl 2001–2012 | ✅ DONE | v0.8 | 1,004 rows |
+| 6 | Pro Bowl 1994–2000 + final review + dedup | ✅ DONE | v0.8 | 588 rows; superseded by `data/nfl_awards_data.json` (4,498 rows total, 88 [verify]-flagged, zero duplicates) |
 
-## Verify List (chunk 1 [verify] entries to confirm in a future session)
-- 2013 AP DROTY: Sheldon Richardson, DT, NYJ
-- 2009 AP OROTY: Percy Harvin, WR, MIN
-- 2001 AP OROTY: Anthony Thomas, RB, CHI
-- 2001 AP DROTY: Kendrell Bell, LB, PIT
-- 2000 AP OROTY: Mike Anderson, RB, DEN
-- 1995 AP DROTY: Hugh Douglas, DE, NYJ
-- 1994 AP DROTY: Tim Bowens, DT, MIA
+## Verify List
+
+Superseded by the `nt` field in `data/nfl_awards_data.json` (88 rows carry a
+`[verify]` note as of v0.8 — mostly Pro Bowl depth/backup selections in
+1994–1998 and 2013–2018, plus a couple of contested All-Pro slot calls).
+Query the JSON for `[verify]` rather than maintaining this list by hand.
 
 ---
 
@@ -70,3 +68,4 @@ Award values: `AP MVP`, `AP OPOY`, `AP DPOY`, `AP OROTY`, `AP DROTY`, `AP CPOTY`
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | 2026-06-17 | Initial plan created |
+| 1.1 | 2026-06-20 | Marked chunks 3–6 done (shipped in v0.8); replaced hand-maintained verify list with a pointer to the data's `[verify]` notes |
