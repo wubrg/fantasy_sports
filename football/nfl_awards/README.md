@@ -17,6 +17,11 @@ Pro Bowl selections, 1994–2025, across all 32 franchises.
 - `docs/ui-spec.md` — spec for the interactive filterable awards browser UI
 - `app/` — Go server + `nflctl` admin CLI; see `app/README.md` for setup, updating data, and running it
   over Tailscale
+- `quicklook.html` — single-file, no-server mobile lookup: team / offense-or-defense / year-range
+  filters over a snapshot of `data/nfl_awards_data.json` embedded directly in the page. Open it
+  straight from disk (or any static host) on a phone for quick lookups before the full Tailscale-backed
+  `app/` is deployed. It's a static snapshot, not live — regenerate it after the data changes (see the
+  comment at the top of the file).
 - `archive/team_breakdowns_v0.2/` — early per-team award docs (v0.2). Superseded by the v0.8 master
   and JSON, which include all-Pro 1994–2009 and Pro Bowl data the v0.2 team docs lack. Kept for
   reference only; only 18 of 32 teams have a v0.2 file.
