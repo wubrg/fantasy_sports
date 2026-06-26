@@ -191,3 +191,52 @@ from a matching `/api/*` endpoint (`/api/standings`, `/api/faab`,
 `/api/history`, `/api/announcements`, `/api/schedule`, `/api/rivalries`,
 `/api/state`) and caches it for the rest of the page session (matchups
 excepted, since the week selector changes the query).
+
+## Run on your desktop, reachable over Tailscale
+
+The server binds `0.0.0.0` when given a port-only address (e.g. `:8081`),
+so any device on your tailnet can reach it once pointed at your desktop's
+Tailscale IP or MagicDNS name:
+
+```sh
+./leagueweb -addr :8081
+```
+
+Then from any device on your tailnet:
+
+```
+http://<your-desktop-tailscale-name>:8081
+```
+
+Find your desktop's Tailscale name/IP with `tailscale status`, or check the
+Tailscale admin console.
+
+### Optional: clean HTTPS URL via `tailscale serve`
+
+```sh
+tailscale serve --bg 8081
+```
+
+Exposes the app at `https://<desktop-name>.<your-tailnet>.ts.net` with
+Tailscale handling TLS. Run `tailscale serve --https=443 off` to stop.
+
+### Running it persistently
+
+Wrap the built binary in a systemd user service (Linux) or LaunchAgent
+(macOS) running:
+
+```
+/path/to/leagueweb -addr :8081
+```
+
+Set `LEAGUE_ID` in the service's environment if overriding the default
+league.
+
+### Notes
+
+- No authentication is implemented — access control relies entirely on
+  Tailscale's network-level ACLs (only devices on your tailnet can reach the
+  port). Don't expose this port on the open internet.
+- `leagueweb` has no database; it calls the live Sleeper API plus the
+  repo's embedded JSON data on every request, so no `-db` flag or one-time
+  setup step is needed beyond building the binary.
