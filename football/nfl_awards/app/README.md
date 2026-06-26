@@ -117,17 +117,35 @@ https://<desktop-name>.<your-tailnet>.ts.net/leagueweb
 Check current mappings with `tailscale serve status`; remove one with
 `tailscale serve --bg off /nflawards` (same mount point).
 
-### Running it persistently
+### Running it persistently (macOS, via launchd)
 
-Wrap the built binary in a systemd user service (Linux) or LaunchAgent
-(macOS) running:
+`com.nflawards.serve.plist.template` is checked in alongside the app. Copy
+it into place, fill in the three `/REPLACE/WITH/...` placeholders with real
+absolute paths (binary, db, and `WorkingDirectory`), then load it:
 
+```sh
+cp com.nflawards.serve.plist.template ~/Library/LaunchAgents/com.nflawards.serve.plist
+# edit ~/Library/LaunchAgents/com.nflawards.serve.plist: fill in all three
+# /REPLACE/WITH/ABSOLUTE/PATH/TO/... placeholders
+launchctl load ~/Library/LaunchAgents/com.nflawards.serve.plist
 ```
-/path/to/nflawards -addr :8080 -db /path/to/football/nfl_awards/data/nfl_awards.db -prefix /nflawards
+
+Drop the `-prefix`/`/nflawards` pair from the plist's `ProgramArguments` if
+you're not sharing a hostname with `leagueweb` (i.e. you're using direct
+port access instead, per above).
+
+`RunAtLoad` + `KeepAlive` mean `nflawards` starts on login and restarts if
+it crashes. The `tailscale serve` mapping persists on its own across
+Tailscale restarts/reboots, so that's a one-time setup, not a per-boot
+task. Logs land in `/tmp/nflawards.log` and `/tmp/nflawards.error.log`. To
+stop it:
+
+```sh
+launchctl unload ~/Library/LaunchAgents/com.nflawards.serve.plist
 ```
 
-Omit `-prefix` if you're not sharing a hostname with another app (e.g.
-you're using direct port access instead, per above).
+On Linux, use an equivalent `systemd --user` unit instead (same idea,
+different syntax).
 
 ## Flags
 

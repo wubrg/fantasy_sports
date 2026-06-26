@@ -10,7 +10,11 @@
         <string>/REPLACE/WITH/ABSOLUTE/PATH/TO/leagueweb</string>
         <string>-addr</string>
         <string>:8081</string>
+        <string>-prefix</string>
+        <string>/leagueweb</string>
     </array>
+    <!-- Drop the -prefix pair above if you're not sharing one Tailscale
+         hostname with nflawards (see ../../nfl_awards/app/README.md). -->
 
     <!-- Uncomment and set if you need a non-default league:
     <key>EnvironmentVariables</key>

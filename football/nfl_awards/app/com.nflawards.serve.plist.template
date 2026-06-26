@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.nflawards.serve</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/REPLACE/WITH/ABSOLUTE/PATH/TO/nflawards</string>
+        <string>-addr</string>
+        <string>:8080</string>
+        <string>-prefix</string>
+        <string>/nflawards</string>
+        <string>-db</string>
+        <string>/REPLACE/WITH/ABSOLUTE/PATH/TO/football/nfl_awards/data/nfl_awards.db</string>
+    </array>
+    <!-- Drop the -prefix pair above if you're not sharing one Tailscale
+         hostname with leagueweb (see ../../league_home/README.md). -->
+
+    <key>WorkingDirectory</key>
+    <string>/REPLACE/WITH/ABSOLUTE/PATH/TO/football/nfl_awards/app</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/nflawards.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/nflawards.error.log</string>
+</dict>
+</plist>
