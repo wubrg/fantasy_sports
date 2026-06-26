@@ -220,17 +220,36 @@ tailscale serve --bg 8081
 Exposes the app at `https://<desktop-name>.<your-tailnet>.ts.net` with
 Tailscale handling TLS. Run `tailscale serve --https=443 off` to stop.
 
-### Running it persistently
+### Running it persistently (macOS, via launchd)
 
-Wrap the built binary in a systemd user service (Linux) or LaunchAgent
-(macOS) running:
+`com.leagueweb.serve.plist.template` is checked in alongside the app. Copy
+it into place, fill in the two `/REPLACE/WITH/...` placeholders with real
+absolute paths, then load it:
+
+```sh
+cp com.leagueweb.serve.plist.template ~/Library/LaunchAgents/com.leagueweb.serve.plist
+# edit ~/Library/LaunchAgents/com.leagueweb.serve.plist: fill in both
+# /REPLACE/WITH/ABSOLUTE/PATH/TO/... placeholders (binary path + WorkingDirectory)
+launchctl load ~/Library/LaunchAgents/com.leagueweb.serve.plist
+```
+
+`RunAtLoad` + `KeepAlive` mean `leagueweb` starts on login and restarts if
+it crashes. The `tailscale serve` mapping from the previous section
+persists on its own across Tailscale restarts/reboots, so that's a
+one-time setup, not a per-boot task. Logs land in `/tmp/leagueweb.log` and
+`/tmp/leagueweb.error.log`. To override the league, uncomment the
+`EnvironmentVariables` block in the plist before loading it. To stop it:
+
+```sh
+launchctl unload ~/Library/LaunchAgents/com.leagueweb.serve.plist
+```
+
+On Linux, use an equivalent `systemd --user` unit instead (same idea,
+different syntax) running:
 
 ```
 /path/to/leagueweb -addr :8081
 ```
-
-Set `LEAGUE_ID` in the service's environment if overriding the default
-league.
 
 ### Notes
 
