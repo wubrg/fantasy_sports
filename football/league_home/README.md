@@ -230,8 +230,8 @@ path with `-prefix` and mount each at a distinct path instead of root:
 
 ```sh
 ./leagueweb -addr :8081 -prefix /leagueweb
-tailscale serve --bg /leagueweb http://127.0.0.1:8081
-# (and, for nflawards: tailscale serve --bg /nflawards http://127.0.0.1:8080)
+tailscale serve --bg --set-path=/leagueweb localhost:8081
+# (and, for nflawards: tailscale serve --bg --set-path=/nflawards localhost:8080)
 ```
 
 `-prefix` makes the app mount all its routes (static assets and `/api/*`)
@@ -246,7 +246,7 @@ https://<desktop-name>.<your-tailnet>.ts.net/nflawards
 ```
 
 Check current mappings with `tailscale serve status`; remove one with
-`tailscale serve --bg off /leagueweb` (same mount point).
+`tailscale serve --set-path=/leagueweb off`.
 
 ### Running it persistently (macOS, via launchd)
 
