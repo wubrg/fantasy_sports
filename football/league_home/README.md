@@ -184,9 +184,7 @@ go build -o leagueweb ./cmd/leagueweb
 ```
 
 Serves on `:8081` by default (override with `-addr`); `LEAGUE_ID`
-overrides the default league ID, same as the CLI and bot. `-prefix` mounts
-the app under a path instead of root (e.g. `/leagueweb`) — see "Run on
-your desktop, reachable over Tailscale" below for why you'd want that. Open
+overrides the default league ID, same as the CLI and bot. Open
 `http://localhost:8081` and pick a tab — each one lazily fetches its data
 from a matching `/api/*` endpoint (`/api/standings`, `/api/faab`,
 `/api/matchups?week=N`, `/api/scoring`, `/api/rules`, `/api/managers`,
@@ -226,19 +224,18 @@ This maps the app to the hostname's root path (`/`). If you're also
 running `nflawards` (the NFL Awards Reference app, see
 `../nfl_awards/app/README.md`) on the same desktop and want both reachable
 under one HTTPS hostname instead of separate ports, give each app its own
-path with `-prefix` and mount each at a distinct path instead of root:
+path:
 
 ```sh
-./leagueweb -addr :8081 -prefix /leagueweb
 tailscale serve --bg --set-path=/leagueweb localhost:8081
-# (and, for nflawards: tailscale serve --bg --set-path=/nflawards localhost:8080)
+tailscale serve --bg --set-path=/nflawards localhost:8080
 ```
 
-`-prefix` makes the app mount all its routes (static assets and `/api/*`)
-under that path instead of root, so it works correctly behind a
-`tailscale serve` path mount (which forwards the full request path,
-including the prefix, to the backend — it does not strip it). Now both
-apps are reachable at:
+`tailscale serve --set-path` strips the mount path before forwarding to
+the backend (a request to `https://<host>.ts.net/leagueweb/foo` arrives at
+the backend as plain `GET /foo`), so `leagueweb` needs no path-prefix
+awareness of its own — it just serves everything at root, same as always.
+Both apps are reachable at:
 
 ```
 https://<desktop-name>.<your-tailnet>.ts.net/leagueweb
@@ -260,10 +257,6 @@ cp com.leagueweb.serve.plist.template ~/Library/LaunchAgents/com.leagueweb.serve
 # /REPLACE/WITH/ABSOLUTE/PATH/TO/... placeholders (binary path + WorkingDirectory)
 launchctl load ~/Library/LaunchAgents/com.leagueweb.serve.plist
 ```
-
-If you're using the shared-hostname `-prefix` setup above, add `-prefix`
-`/leagueweb` to the `ProgramArguments` array in the plist before loading
-it.
 
 `RunAtLoad` + `KeepAlive` mean `leagueweb` starts on login and restarts if
 it crashes. The `tailscale serve` mapping from the previous section

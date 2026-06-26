@@ -94,20 +94,18 @@ Tailscale handling TLS. Run `tailscale serve --https=443 off` to stop.
 This maps the app to the hostname's root path (`/`). If you're also running
 `leagueweb` (the League Home web UI) on the same desktop and want both
 reachable under one HTTPS hostname instead of separate ports, give each app
-its own path with `-prefix` and mount each at a distinct path instead of
-root:
+its own path:
 
 ```sh
-./nflawards -addr :8080 -prefix /nflawards
 tailscale serve --bg --set-path=/nflawards localhost:8080
-# (and, for leagueweb: tailscale serve --bg --set-path=/leagueweb localhost:8081)
+tailscale serve --bg --set-path=/leagueweb localhost:8081
 ```
 
-`-prefix` makes the app mount all its routes (static assets and `/api/*`)
-under that path instead of root, so it works correctly behind a
-`tailscale serve` path mount (which forwards the full request path,
-including the prefix, to the backend — it does not strip it). Now both
-apps are reachable at:
+`tailscale serve --set-path` strips the mount path before forwarding to
+the backend (a request to `https://<host>.ts.net/nflawards/foo` arrives at
+the backend as plain `GET /foo`), so `nflawards` needs no path-prefix
+awareness of its own — it just serves everything at root, same as always.
+Both apps are reachable at:
 
 ```
 https://<desktop-name>.<your-tailnet>.ts.net/nflawards
@@ -130,10 +128,6 @@ cp com.nflawards.serve.plist.template ~/Library/LaunchAgents/com.nflawards.serve
 launchctl load ~/Library/LaunchAgents/com.nflawards.serve.plist
 ```
 
-Drop the `-prefix`/`/nflawards` pair from the plist's `ProgramArguments` if
-you're not sharing a hostname with `leagueweb` (i.e. you're using direct
-port access instead, per above).
-
 `RunAtLoad` + `KeepAlive` mean `nflawards` starts on login and restarts if
 it crashes. The `tailscale serve` mapping persists on its own across
 Tailscale restarts/reboots, so that's a one-time setup, not a per-boot
@@ -155,7 +149,6 @@ different syntax).
 |---|---|---|
 | `-addr` | `:8080` | Listen address. `:PORT` binds all interfaces (needed for Tailscale); `127.0.0.1:PORT` restricts to localhost. |
 | `-db` | `../data/nfl_awards.db` | Path to the SQLite database. |
-| `-prefix` | `` (none) | URL path prefix to mount the app under (e.g. `/nflawards`), for sharing one Tailscale hostname with another app via `tailscale serve` path mounts. |
 
 **`nflctl`** (admin CLI) — every subcommand accepts `-db PATH` (same default).
 

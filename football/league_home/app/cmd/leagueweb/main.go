@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	"leaguehome/internal/core"
 )
@@ -28,13 +27,7 @@ var staticFS embed.FS
 
 func main() {
 	addr := flag.String("addr", ":8081", "address to listen on")
-	prefix := flag.String("prefix", "", "URL path prefix to mount the app under (e.g. /leagueweb), for sharing one Tailscale hostname with other apps via `tailscale serve`")
 	flag.Parse()
-
-	*prefix = strings.TrimSuffix(*prefix, "/")
-	if *prefix != "" && !strings.HasPrefix(*prefix, "/") {
-		*prefix = "/" + *prefix
-	}
 
 	leagueID := os.Getenv("LEAGUE_ID")
 	if leagueID == "" {
@@ -48,11 +41,11 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle(*prefix+"/", http.StripPrefix(*prefix, http.FileServer(http.FS(staticContent))))
+	mux.Handle("/", http.FileServer(http.FS(staticContent)))
 
-	mux.HandleFunc(*prefix+"/api/standings", jsonHandler(func() (interface{}, error) { return svc.Standings() }))
-	mux.HandleFunc(*prefix+"/api/faab", jsonHandler(func() (interface{}, error) { return svc.Faab() }))
-	mux.HandleFunc(*prefix+"/api/matchups", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/standings", jsonHandler(func() (interface{}, error) { return svc.Standings() }))
+	mux.HandleFunc("/api/faab", jsonHandler(func() (interface{}, error) { return svc.Faab() }))
+	mux.HandleFunc("/api/matchups", func(w http.ResponseWriter, r *http.Request) {
 		week, err := strconv.Atoi(r.URL.Query().Get("week"))
 		if err != nil || week < 1 {
 			http.Error(w, "missing or invalid week query parameter", http.StatusBadRequest)
@@ -60,16 +53,16 @@ func main() {
 		}
 		writeJSON(w, func() (interface{}, error) { return svc.Matchups(week) })
 	})
-	mux.HandleFunc(*prefix+"/api/history", jsonHandler(func() (interface{}, error) { return svc.History() }))
-	mux.HandleFunc(*prefix+"/api/rules", jsonHandler(func() (interface{}, error) { return svc.Rules() }))
-	mux.HandleFunc(*prefix+"/api/scoring", jsonHandler(func() (interface{}, error) { return svc.Scoring() }))
-	mux.HandleFunc(*prefix+"/api/managers", jsonHandler(func() (interface{}, error) { return svc.Managers() }))
-	mux.HandleFunc(*prefix+"/api/announcements", jsonHandler(func() (interface{}, error) { return svc.Announcements() }))
-	mux.HandleFunc(*prefix+"/api/schedule", jsonHandler(func() (interface{}, error) { return svc.Schedule() }))
-	mux.HandleFunc(*prefix+"/api/rivalries", jsonHandler(func() (interface{}, error) { return svc.Rivalries() }))
-	mux.HandleFunc(*prefix+"/api/state", jsonHandler(func() (interface{}, error) { return svc.State() }))
+	mux.HandleFunc("/api/history", jsonHandler(func() (interface{}, error) { return svc.History() }))
+	mux.HandleFunc("/api/rules", jsonHandler(func() (interface{}, error) { return svc.Rules() }))
+	mux.HandleFunc("/api/scoring", jsonHandler(func() (interface{}, error) { return svc.Scoring() }))
+	mux.HandleFunc("/api/managers", jsonHandler(func() (interface{}, error) { return svc.Managers() }))
+	mux.HandleFunc("/api/announcements", jsonHandler(func() (interface{}, error) { return svc.Announcements() }))
+	mux.HandleFunc("/api/schedule", jsonHandler(func() (interface{}, error) { return svc.Schedule() }))
+	mux.HandleFunc("/api/rivalries", jsonHandler(func() (interface{}, error) { return svc.Rivalries() }))
+	mux.HandleFunc("/api/state", jsonHandler(func() (interface{}, error) { return svc.State() }))
 
-	log.Printf("league home web UI serving on %s (league %s, prefix: %q)", *addr, leagueID, *prefix)
+	log.Printf("league home web UI serving on %s (league %s)", *addr, leagueID)
 	log.Fatal(http.ListenAndServe(*addr, mux))
 }
 
