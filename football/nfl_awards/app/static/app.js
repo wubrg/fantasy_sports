@@ -17,7 +17,7 @@ const state = {
 };
 
 async function init() {
-  const res = await fetch("/api/data");
+  const res = await fetch("api/data");
   const json = await res.json();
   meta = json.meta;
   rows = json.data;

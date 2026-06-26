@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"strings"
 
 	"nflawards/internal/store"
 )
@@ -20,7 +21,13 @@ var staticFS embed.FS
 func main() {
 	addr := flag.String("addr", ":8080", "address to listen on (use :PORT to bind all interfaces, reachable over Tailscale)")
 	dbPath := flag.String("db", "../data/nfl_awards.db", "path to the sqlite database")
+	prefix := flag.String("prefix", "", "URL path prefix to mount the app under (e.g. /nflawards), for sharing one Tailscale hostname with other apps via `tailscale serve`")
 	flag.Parse()
+
+	*prefix = strings.TrimSuffix(*prefix, "/")
+	if *prefix != "" && !strings.HasPrefix(*prefix, "/") {
+		*prefix = "/" + *prefix
+	}
 
 	s, err := store.Open(*dbPath)
 	if err != nil {
@@ -34,8 +41,8 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.FS(staticContent)))
-	mux.HandleFunc("/api/data", func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle(*prefix+"/", http.StripPrefix(*prefix, http.FileServer(http.FS(staticContent))))
+	mux.HandleFunc(*prefix+"/api/data", func(w http.ResponseWriter, r *http.Request) {
 		ds, err := s.Dataset()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -45,6 +52,6 @@ func main() {
 		json.NewEncoder(w).Encode(ds)
 	})
 
-	log.Printf("nfl awards reference serving on %s (db: %s)", *addr, *dbPath)
+	log.Printf("nfl awards reference serving on %s (db: %s, prefix: %q)", *addr, *dbPath, *prefix)
 	log.Fatal(http.ListenAndServe(*addr, mux))
 }

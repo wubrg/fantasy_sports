@@ -24,7 +24,7 @@ function fmtPoints(n) {
 async function loadState() {
   const line = document.getElementById("state-line");
   try {
-    const st = await fetchJSON("/api/state");
+    const st = await fetchJSON("api/state");
     line.textContent = `${st.season} season (${st.season_type}) — week ${st.week}`;
   } catch (e) {
     line.textContent = "season state unavailable";
@@ -32,7 +32,7 @@ async function loadState() {
 }
 
 async function loadStandings() {
-  const rows = await cached("standings", "/api/standings");
+  const rows = await cached("standings", "api/standings");
   const body = document.getElementById("standings-body");
   body.innerHTML = rows.map((r, i) => `
     <tr>
@@ -46,7 +46,7 @@ async function loadStandings() {
 }
 
 async function loadFaab() {
-  const rows = await cached("faab", "/api/faab");
+  const rows = await cached("faab", "api/faab");
   const body = document.getElementById("faab-body");
   body.innerHTML = rows.map((r) => `
     <tr>
@@ -61,7 +61,7 @@ async function loadFaab() {
 async function loadMatchups(week) {
   const body = document.getElementById("matchups-body");
   const empty = document.getElementById("matchups-empty");
-  const rows = await fetchJSON(`/api/matchups?week=${encodeURIComponent(week)}`);
+  const rows = await fetchJSON(`api/matchups?week=${encodeURIComponent(week)}`);
   empty.hidden = rows.length > 0;
   body.innerHTML = rows.map((m) => `
     <tr>
@@ -73,7 +73,7 @@ async function loadMatchups(week) {
 }
 
 async function loadScoring() {
-  const categories = await cached("scoring", "/api/scoring");
+  const categories = await cached("scoring", "api/scoring");
   const container = document.getElementById("scoring-body");
   container.innerHTML = categories.map((c) => `
     <div class="scoring-card">
@@ -90,7 +90,7 @@ async function loadScoring() {
 }
 
 async function loadRules() {
-  const r = await cached("rules", "/api/rules");
+  const r = await cached("rules", "api/rules");
   const container = document.getElementById("rules-body");
   container.innerHTML = `
     <h3>Starting lineup</h3>
@@ -143,7 +143,7 @@ async function loadRules() {
 }
 
 async function loadManagers() {
-  const rows = await cached("managers", "/api/managers");
+  const rows = await cached("managers", "api/managers");
   const body = document.getElementById("managers-body");
   body.innerHTML = rows.map((m) => `
     <tr>
@@ -155,7 +155,7 @@ async function loadManagers() {
 }
 
 async function loadHistory() {
-  const h = await cached("history", "/api/history");
+  const h = await cached("history", "api/history");
   const body = document.getElementById("history-body");
   body.innerHTML = h.awards.map((a) => `
     <tr>
@@ -167,7 +167,7 @@ async function loadHistory() {
 }
 
 async function loadAnnouncements() {
-  const rows = await cached("announcements", "/api/announcements");
+  const rows = await cached("announcements", "api/announcements");
   const container = document.getElementById("announcements-body");
   container.innerHTML = rows.map((a) => `
     <article class="announcement">
@@ -179,7 +179,7 @@ async function loadAnnouncements() {
 }
 
 async function loadSchedule() {
-  const rows = await cached("schedule", "/api/schedule");
+  const rows = await cached("schedule", "api/schedule");
   const body = document.getElementById("schedule-body");
   body.innerHTML = rows.map((e) => {
     const when = e.recurring ? "recurring" : (e.week ? `week ${e.week}` : "");
@@ -195,8 +195,8 @@ async function loadSchedule() {
 
 async function loadRivalries() {
   const [rows, managers] = await Promise.all([
-    cached("rivalries", "/api/rivalries"),
-    cached("managers", "/api/managers"),
+    cached("rivalries", "api/rivalries"),
+    cached("managers", "api/managers"),
   ]);
   const nameByID = Object.fromEntries(managers.map((m) => [m.id, m.name]));
   const container = document.getElementById("rivalries-body");

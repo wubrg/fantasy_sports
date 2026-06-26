@@ -91,14 +91,43 @@ tailscale serve --bg 8080
 Exposes the app at `https://<desktop-name>.<your-tailnet>.ts.net` with
 Tailscale handling TLS. Run `tailscale serve --https=443 off` to stop.
 
+This maps the app to the hostname's root path (`/`). If you're also running
+`leagueweb` (the League Home web UI) on the same desktop and want both
+reachable under one HTTPS hostname instead of separate ports, give each app
+its own path with `-prefix` and mount each at a distinct path instead of
+root:
+
+```sh
+./nflawards -addr :8080 -prefix /nflawards
+tailscale serve --bg /nflawards http://127.0.0.1:8080
+# (and, for leagueweb: tailscale serve --bg /leagueweb http://127.0.0.1:8081)
+```
+
+`-prefix` makes the app mount all its routes (static assets and `/api/*`)
+under that path instead of root, so it works correctly behind a
+`tailscale serve` path mount (which forwards the full request path,
+including the prefix, to the backend — it does not strip it). Now both
+apps are reachable at:
+
+```
+https://<desktop-name>.<your-tailnet>.ts.net/nflawards
+https://<desktop-name>.<your-tailnet>.ts.net/leagueweb
+```
+
+Check current mappings with `tailscale serve status`; remove one with
+`tailscale serve --bg off /nflawards` (same mount point).
+
 ### Running it persistently
 
 Wrap the built binary in a systemd user service (Linux) or LaunchAgent
 (macOS) running:
 
 ```
-/path/to/nflawards -addr :8080 -db /path/to/football/nfl_awards/data/nfl_awards.db
+/path/to/nflawards -addr :8080 -db /path/to/football/nfl_awards/data/nfl_awards.db -prefix /nflawards
 ```
+
+Omit `-prefix` if you're not sharing a hostname with another app (e.g.
+you're using direct port access instead, per above).
 
 ## Flags
 
@@ -108,6 +137,7 @@ Wrap the built binary in a systemd user service (Linux) or LaunchAgent
 |---|---|---|
 | `-addr` | `:8080` | Listen address. `:PORT` binds all interfaces (needed for Tailscale); `127.0.0.1:PORT` restricts to localhost. |
 | `-db` | `../data/nfl_awards.db` | Path to the SQLite database. |
+| `-prefix` | `` (none) | URL path prefix to mount the app under (e.g. `/nflawards`), for sharing one Tailscale hostname with another app via `tailscale serve` path mounts. |
 
 **`nflctl`** (admin CLI) — every subcommand accepts `-db PATH` (same default).
 
