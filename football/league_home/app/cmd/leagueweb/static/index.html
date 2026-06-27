@@ -2,6 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>
+// Behind tailscale serve --set-path, the mount prefix is stripped before
+// reaching this app, so every asset/API reference below is relative with
+// no leading slash. That only resolves correctly if the address bar ends
+// in "/" (otherwise the browser treats the last path segment as a
+// filename and resolves siblings against the wrong parent). Normalize it
+// with replace(), not assign/href, so this doesn't add its own entry to
+// the back/forward history stack.
+if (!location.pathname.endsWith("/")) {
+  location.replace(location.pathname + "/" + location.search + location.hash);
+}
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hit or Miss - League Home</title>
 <link rel="stylesheet" href="style.css">
