@@ -14,6 +14,8 @@ short, Tailscale-URL-friendly name for the app that used to be called
 - `data/canton.db` — the live SQLite database the app reads/writes (gitignored; build it from the
   JSON snapshot, see `app/README.md`).
 - `docs/ADR-001-awards-reference-structure.md` — why the flat-table structure was chosen
+- `docs/ADR-002-pre-merger-award-taxonomy.md` — award/team-code decisions for
+  extending coverage back to 1960 (see Roadmap below)
 - `docs/build-plan.md` — chunked build plan and source strategy (PFR, etc.)
 - `docs/stat-lookup-guide.md` — lookup format and source priority for player season-stat chat queries
 - `docs/ui-spec.md` — spec for the interactive filterable awards browser UI
@@ -45,4 +47,18 @@ broaden beyond a pure awards-and-Pro-Bowl reference into a more general NFL
 historical/stat lookup tool over time. What exactly that grows into — season
 stat lookups, more award categories, something else — is not planned out
 yet; this note is just a placeholder marking the intent so the name doesn't
-need to change again later. No scope work has started.
+need to change again later.
+
+**In progress (June 2026): extending coverage back to 1960** (AFL founding),
+from the current 1994 start ("modern cap era"). 1960–1969 was a genuinely
+two-league era — the AFL and NFL had separate MVPs, separate All-League
+teams, and separate all-star games before the 1970 merger — so this isn't
+just "more years of the same four award types." See
+`docs/ADR-002-pre-merger-award-taxonomy.md` for the four new AFL-era award
+codes this adds (`AFL MVP`, `AFL ROY`, `All-AFL 1st/2nd`, `AFL All-Star`) and
+the franchise-lineage team-code notes (no new team codes needed — relocated
+franchises like the Houston Oilers already get recorded under their current
+code, `TEN`, same as the existing 1994–2025 data does), and
+`docs/build-plan.md`'s "1960–1993 Extension" section for the chunk-by-chunk
+plan (chunks 7–12, not started yet). Sourced from Wikipedia/web search rather
+than direct PFR fetches, which return HTTP 403 in this environment.

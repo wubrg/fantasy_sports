@@ -11,6 +11,14 @@ The awards reference system is complete. The data file (`canton_data.json`) cont
 
 This spec defines a standalone interactive web UI to query that data.
 
+**Note (2026-06-28):** this spec describes the dataset as it stood at 1994–2025.
+The dataset is being extended back to 1960 (see `ADR-002-pre-merger-award-taxonomy.md`
+and `build-plan.md`'s "1960–1993 Extension" section) — once that lands, the
+award-code list, year range, and "fully verified" data-quality notes below
+will no longer be current for the 1960–1993 portion. Left as-is here since
+this doc records the spec for the *original* build, not a living description
+of the dataset.
+
 ---
 
 ## Data File
