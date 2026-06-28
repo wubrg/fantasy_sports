@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.canton.serve</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/REPLACE/WITH/ABSOLUTE/PATH/TO/canton</string>
+        <string>-addr</string>
+        <string>:8080</string>
+        <string>-db</string>
+        <string>/REPLACE/WITH/ABSOLUTE/PATH/TO/canton/data/canton.db</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/REPLACE/WITH/ABSOLUTE/PATH/TO/canton/app</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/canton.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/canton.error.log</string>
+</dict>
+</plist>
