@@ -18,6 +18,14 @@ import (
 // or league.
 const defaultLeagueID = "1368649414419189760"
 
+// defaultESPNLeagueID is the "Hit or Miss" league's ESPN league ID, from
+// before it migrated to Sleeper. Override with -espn-league for a
+// different league. Unlike Sleeper's API, reading this league's history
+// requires auth: set ESPN_S2 and ESPN_SWID (the espn_s2/SWID cookie values
+// from a league member's logged-in browser session) before running any
+// espn-* command, or every one of them will fail.
+const defaultESPNLeagueID = "56226"
+
 func main() {
 	if len(os.Args) < 2 {
 		usage()
@@ -52,6 +60,14 @@ func main() {
 		cmdState(args)
 	case "seasons":
 		cmdSeasons(args)
+	case "espn-seasons":
+		cmdEspnSeasons(args)
+	case "espn-standings":
+		cmdEspnStandings(args)
+	case "espn-matchups":
+		cmdEspnMatchups(args)
+	case "espn-draft":
+		cmdEspnDraft(args)
 	case "-h", "-help", "--help", "help":
 		usage()
 	default:
@@ -78,8 +94,18 @@ Usage:
   leaguectl state                           Current NFL season/week
   leaguectl seasons [-league ID]            This league's seasons on Sleeper, most recent first
 
+  leaguectl espn-seasons [-espn-league ID]                 This league's seasons on ESPN, most recent first
+  leaguectl espn-standings [-espn-league ID] -year Y        Final standings for an ESPN-era season
+  leaguectl espn-matchups [-espn-league ID] -year Y -week N Matchups for a week of an ESPN-era season
+  leaguectl espn-draft [-espn-league ID] -year Y             Draft results for an ESPN-era season
+
 Flags default -league to the Hit or Miss league. Pass a season's league ID
 (see "seasons") to any -league flag above to query that season instead.
+
+espn-* commands cover the league's pre-Sleeper history and need ESPN auth:
+set ESPN_S2 and ESPN_SWID (the espn_s2/SWID cookie values from a league
+member's logged-in browser session at fantasy.espn.com) before running
+them, since ESPN has no keyless public read access the way Sleeper does.
 `)
 }
 
@@ -304,5 +330,96 @@ func cmdSeasons(args []string) {
 	}
 	for _, s := range rows {
 		fmt.Printf("%s  %-10s  %s\n", s.Season, s.Status, s.LeagueID)
+	}
+}
+
+// espnService builds a core.Service configured for ESPN history, reading
+// the espn_s2/SWID auth cookies from the environment rather than flags so
+// they don't end up in shell history or process listings.
+func espnService(espnLeagueID string) *core.Service {
+	return core.New(defaultLeagueID).WithESPN(espnLeagueID, os.Getenv("ESPN_S2"), os.Getenv("ESPN_SWID"))
+}
+
+func cmdEspnSeasons(args []string) {
+	fs := flag.NewFlagSet("espn-seasons", flag.ExitOnError)
+	espnLeagueID := fs.String("espn-league", defaultESPNLeagueID, "ESPN league id")
+	fs.Parse(args)
+
+	years, err := espnService(*espnLeagueID).HistoricalSeasons()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "espn-seasons failed: %v\n", err)
+		os.Exit(1)
+	}
+	for _, y := range years {
+		fmt.Println(y)
+	}
+}
+
+func cmdEspnStandings(args []string) {
+	fs := flag.NewFlagSet("espn-standings", flag.ExitOnError)
+	espnLeagueID := fs.String("espn-league", defaultESPNLeagueID, "ESPN league id")
+	year := fs.Int("year", 0, "season year")
+	fs.Parse(args)
+
+	if *year == 0 {
+		fmt.Fprintln(os.Stderr, "missing required flag: -year")
+		os.Exit(1)
+	}
+
+	rows, err := espnService(*espnLeagueID).HistoricalStandings(*year)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "espn-standings failed: %v\n", err)
+		os.Exit(1)
+	}
+	for i, r := range rows {
+		fmt.Printf("%2d. %-25s %d-%d-%d  PF %.2f  PA %.2f\n",
+			i+1, r.Team, r.Wins, r.Losses, r.Ties, r.PointsFor, r.PointsAgainst)
+	}
+}
+
+func cmdEspnMatchups(args []string) {
+	fs := flag.NewFlagSet("espn-matchups", flag.ExitOnError)
+	espnLeagueID := fs.String("espn-league", defaultESPNLeagueID, "ESPN league id")
+	year := fs.Int("year", 0, "season year")
+	week := fs.Int("week", 0, "week number")
+	fs.Parse(args)
+
+	if *year == 0 {
+		fmt.Fprintln(os.Stderr, "missing required flag: -year")
+		os.Exit(1)
+	}
+	if *week == 0 {
+		fmt.Fprintln(os.Stderr, "missing required flag: -week")
+		os.Exit(1)
+	}
+
+	rows, err := espnService(*espnLeagueID).HistoricalMatchups(*year, *week)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "espn-matchups failed: %v\n", err)
+		os.Exit(1)
+	}
+	for _, m := range rows {
+		fmt.Printf("%-25s %6.2f  vs  %6.2f  %s\n", m.Home, m.HomePoints, m.AwayPoints, m.Away)
+	}
+}
+
+func cmdEspnDraft(args []string) {
+	fs := flag.NewFlagSet("espn-draft", flag.ExitOnError)
+	espnLeagueID := fs.String("espn-league", defaultESPNLeagueID, "ESPN league id")
+	year := fs.Int("year", 0, "season year")
+	fs.Parse(args)
+
+	if *year == 0 {
+		fmt.Fprintln(os.Stderr, "missing required flag: -year")
+		os.Exit(1)
+	}
+
+	picks, err := espnService(*espnLeagueID).HistoricalDraft(*year)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "espn-draft failed: %v\n", err)
+		os.Exit(1)
+	}
+	for _, p := range picks {
+		fmt.Printf("%3d. (round %d, pick %d) %-25s player #%d\n", p.Overall, p.Round, p.Pick, p.Team, p.PlayerID)
 	}
 }
