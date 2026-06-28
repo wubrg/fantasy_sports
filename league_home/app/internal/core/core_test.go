@@ -269,3 +269,60 @@ func TestRivalriesLoadsEmbeddedData(t *testing.T) {
 		t.Error("expected non-nil (possibly empty) rivalries slice")
 	}
 }
+
+func TestSeasonsWalksPreviousLeagueIDChain(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		leagues := map[string]map[string]interface{}{
+			"/league/3": {"league_id": "3", "season": "2026", "status": "pre_draft", "previous_league_id": "2"},
+			"/league/2": {"league_id": "2", "season": "2025", "status": "complete", "previous_league_id": "1"},
+			"/league/1": {"league_id": "1", "season": "2024", "status": "complete", "previous_league_id": "0"},
+		}
+		body, ok := leagues[r.URL.Path]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(body)
+	}))
+	t.Cleanup(srv.Close)
+	s := NewWithClient("3", &sleeper.Client{BaseURL: srv.URL, HTTPClient: srv.Client()})
+
+	seasons, err := s.Seasons()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []Season{
+		{LeagueID: "3", Season: "2026", Status: "pre_draft"},
+		{LeagueID: "2", Season: "2025", Status: "complete"},
+		{LeagueID: "1", Season: "2024", Status: "complete"},
+	}
+	if len(seasons) != len(want) {
+		t.Fatalf("expected %d seasons, got %+v", len(want), seasons)
+	}
+	for i, s := range seasons {
+		if s != want[i] {
+			t.Errorf("season %d: got %+v, want %+v", i, s, want[i])
+		}
+	}
+}
+
+func TestSeasonsStopsWhenPreviousLeagueIDMissing(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// No previous_league_id field at all, the terminator for the
+		// oldest leagues Sleeper hosts (predates the field's existence).
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"league_id": "1", "season": "2019", "status": "complete",
+		})
+	}))
+	t.Cleanup(srv.Close)
+	s := NewWithClient("1", &sleeper.Client{BaseURL: srv.URL, HTTPClient: srv.Client()})
+
+	seasons, err := s.Seasons()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(seasons) != 1 {
+		t.Fatalf("expected chain to stop after 1 season, got %+v", seasons)
+	}
+}

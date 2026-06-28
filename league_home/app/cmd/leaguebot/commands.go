@@ -37,6 +37,7 @@ var commands = []*discordgo.ApplicationCommand{
 	{Name: "schedule", Description: "Season calendar events"},
 	{Name: "rivalries", Description: "Manager head-to-head records"},
 	{Name: "state", Description: "Current NFL season/week"},
+	{Name: "seasons", Description: "This league's seasons on Sleeper, most recent first"},
 }
 
 func floatPtr(f float64) *float64 { return &f }
@@ -90,6 +91,8 @@ func handleInteraction(s *discordgo.Session, i *discordgo.InteractionCreate, svc
 		body, err = formatRivalries(svc)
 	case "state":
 		body, err = formatState(svc)
+	case "seasons":
+		body, err = formatSeasons(svc)
 	default:
 		respondEphemeral(s, i, fmt.Sprintf("unknown command %q", data.Name))
 		return
@@ -311,4 +314,16 @@ func formatState(svc *core.Service) (string, error) {
 		return "", err
 	}
 	return fmt.Sprintf("season %s (%s), week %d", st.Season, st.SeasonType, st.Week), nil
+}
+
+func formatSeasons(svc *core.Service) (string, error) {
+	rows, err := svc.Seasons()
+	if err != nil {
+		return "", err
+	}
+	var b strings.Builder
+	for _, s := range rows {
+		fmt.Fprintf(&b, "%s  %-10s  %s\n", s.Season, s.Status, s.LeagueID)
+	}
+	return strings.TrimRight(b.String(), "\n"), nil
 }
