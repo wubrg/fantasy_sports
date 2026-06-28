@@ -7,15 +7,15 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/REPLACE/WITH/ABSOLUTE/PATH/TO/nflawards</string>
+        <string>/Users/adamwieberg/adori/fantasy_sports/football/nfl_awards/app/nflawards</string>
         <string>-addr</string>
         <string>:8080</string>
         <string>-db</string>
-        <string>/REPLACE/WITH/ABSOLUTE/PATH/TO/football/nfl_awards/data/nfl_awards.db</string>
+        <string>/Users/adamwieberg/adori/fantasy_sports/football/nfl_awards/data/nfl_awards.db</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/REPLACE/WITH/ABSOLUTE/PATH/TO/football/nfl_awards/app</string>
+    <string>/Users/adamwieberg/adori/fantasy_sports/football/nfl_awards/app</string>
 
     <key>RunAtLoad</key>
     <true/>
