@@ -1,8 +1,10 @@
 # League Home
 
 A planned home base for the `Hit or Miss` league (see `../leagues/hit_or_miss/readme.md`):
-live standings/matchups/FAAB pulled from Sleeper, plus the league's award
-and governance history that predates Sleeper and isn't in its API.
+live standings/matchups/FAAB pulled from Sleeper, the league's award and
+governance history that predates Sleeper and isn't in its API, and (as a
+scaffold pending real auth credentials) the league's pre-Sleeper seasons
+from ESPN.
 
 ## Design
 
@@ -12,19 +14,31 @@ result differently:
 
 ```
         Sleeper API ─┐
-                      ├─▶  core (internal/core)  ◀── data/history.json
+           ESPN API ─┼─▶  core (internal/core)  ◀── data/history.json
    data/history.json ─┘            │
                   ┌─────────────────┼─────────────────┐
              leaguectl          leaguebot          leagueweb
             (CLI, Phase 1)   (Discord, Phase 4)   (Web, Phase 6)
 ```
 
+(`leaguebot`/`leagueweb` only call the Sleeper-era operations today; the
+ESPN-era `Historical*` operations are wired into `leaguectl` only so far —
+see Phase 8 below.)
+
 - `internal/sleeper` — minimal client for the public, keyless Sleeper API
   (league settings, rosters, users, matchups, NFL state).
-- `internal/core` — normalizes Sleeper data + the local JSON into the
+- `internal/espn` — client for ESPN's fantasy football API, covering the
+  league's history from before it migrated to Sleeper. Unlike Sleeper,
+  ESPN has no keyless public read access for league history; a private
+  league needs the `espn_s2`/`SWID` auth cookies from a member's browser
+  session (see "Running ESPN history commands" below).
+- `internal/core` — normalizes Sleeper/ESPN data + the local JSON into the
   operations every front end will call: `Standings`, `Faab`, `Matchups`,
   `History`, `Rules`, `Scoring`, `Managers`, `Announcements`, `Schedule`,
-  `Rivalries`, `State`, `Seasons`.
+  `Rivalries`, `State`, `Seasons`, and the ESPN-era `Historical*` methods
+  (`HistoricalSeasons`, `HistoricalStandings`, `HistoricalMatchups`,
+  `HistoricalDraft`), available on a `Service` only after calling
+  `WithESPN`/`WithESPNClient`.
 - `cmd/leaguectl` — CLI front end, used right now to validate the core
   against the real league before building the Discord bot or web UI on
   top of the same package.
@@ -120,7 +134,31 @@ selector uses this to let the tabbed UI show a past season's standings,
 FAAB, matchups or scoring instead of only the current one — see "Running
 the web UI" below for how the `?league=` override works.
 
+**Phase 8 (scaffold only, no live data yet):** `internal/espn`, a client
+for the Hit or Miss league's pre-Sleeper seasons on ESPN (league ID
+`56226`, from before the 2023 migration), plus the matching `Historical*`
+core operations (`HistoricalSeasons`, `HistoricalStandings`,
+`HistoricalMatchups`, `HistoricalDraft`) and four `leaguectl` commands
+(`espn-seasons`, `espn-standings`, `espn-matchups`, `espn-draft`) — see
+"Running ESPN history commands" below. Unlike Sleeper, ESPN has no
+keyless public read access to league history; this league is private, so
+every one of these calls needs the `espn_s2`/`SWID` auth cookies from a
+league member's logged-in browser session, which this environment doesn't
+have. The client, core operations, and CLI commands are built, tested
+against `httptest` fixtures, and confirmed to fail with a clear,
+actionable error (rather than a confusing JSON-parse failure) when run
+without credentials — but none of it has been exercised against real ESPN
+data yet, and it isn't wired into `leaguebot` or `leagueweb` yet either.
+That's left for once real `ESPN_S2`/`ESPN_SWID` values are available to
+validate against.
+
 **Not built yet:**
+- ESPN historical data, validated against the real league (Phase 8 above
+  is scaffold/plumbing only, pending real `espn_s2`/`SWID` credentials)
+- ESPN history wired into `leaguebot`/`leagueweb` (CLI-only for now)
+- ESPN draft pick player names — `HistoricalDraft` returns ESPN's raw
+  numeric player ID only; resolving it to a name needs a separate lookup
+  against ESPN's player database, not yet implemented
 - Rivalries sync job (the actual computation described above)
 - Recap archive (revisiting later, per league discussion)
 - Side pots (revisiting later, per league discussion)
@@ -163,6 +201,36 @@ go test ./...
 
 The Sleeper client and core package are tested against `httptest` fixtures
 rather than the live API, so `go test` works offline.
+
+## Running ESPN history commands
+
+```sh
+cd league_home/app
+go build -o leaguectl ./cmd/leaguectl
+ESPN_S2=<espn_s2 cookie value> ESPN_SWID=<SWID cookie value> ./leaguectl espn-seasons
+ESPN_S2=<espn_s2 cookie value> ESPN_SWID=<SWID cookie value> ./leaguectl espn-standings -year 2020
+ESPN_S2=<espn_s2 cookie value> ESPN_SWID=<SWID cookie value> ./leaguectl espn-matchups -year 2020 -week 1
+ESPN_S2=<espn_s2 cookie value> ESPN_SWID=<SWID cookie value> ./leaguectl espn-draft -year 2020
+```
+
+These cover the league's pre-Sleeper seasons (ESPN league ID `56226`,
+overridable with `-espn-league`). Unlike the Sleeper-backed commands
+above, ESPN has no keyless public read access to league history, and this
+league is private, so every `espn-*` command needs `ESPN_S2`/`SWID` — the
+`espn_s2`/`SWID` cookie values from a league member's session, logged in
+at fantasy.espn.com (open browser dev tools → Application/Storage →
+Cookies → `fantasy.espn.com`, copy both values). They're read from the
+environment only, never as a `-flag`, so they don't end up in shell
+history or a `ps aux` listing. Without them, every `espn-*` command fails
+fast with a clear error instead of a confusing one (e.g. `espn: GET
+/leagueHistory/56226: redirected to https://www.espn.com/fantasy/ (this
+league is private and needs valid espn_s2/SWID, or they've expired)`).
+
+`espn-seasons` lists every year ESPN has data for under this league ID;
+pass one of those years to `-year` on the other three commands. None of
+this is wired into `leaguebot` or `leagueweb` yet (see Phase 8 above), and
+none of it has been run against real ESPN data in this environment, since
+no `espn_s2`/`SWID` values are available here.
 
 ## Running the Discord bot
 

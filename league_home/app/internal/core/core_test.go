@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"leaguehome/internal/espn"
 	"leaguehome/internal/sleeper"
 )
 
@@ -324,5 +325,143 @@ func TestSeasonsStopsWhenPreviousLeagueIDMissing(t *testing.T) {
 	}
 	if len(seasons) != 1 {
 		t.Fatalf("expected chain to stop after 1 season, got %+v", seasons)
+	}
+}
+
+func testESPNService(t *testing.T, routes map[string]interface{}) *Service {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, ok := routes[r.URL.Path]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(body)
+	}))
+	t.Cleanup(srv.Close)
+	return New("123").WithESPNClient("56226", &espn.Client{BaseURL: srv.URL, HTTPClient: srv.Client()})
+}
+
+func TestHistoricalRequiresESPNConfigured(t *testing.T) {
+	s := New("123")
+	if _, err := s.HistoricalSeasons(); err == nil {
+		t.Error("expected an error when ESPN isn't configured, got nil")
+	}
+}
+
+func TestHistoricalSeasonsMostRecentFirst(t *testing.T) {
+	s := testESPNService(t, map[string]interface{}{
+		"/leagueHistory/56226": []map[string]interface{}{
+			{"id": 56226, "seasonId": 2018},
+			{"id": 56226, "seasonId": 2020},
+			{"id": 56226, "seasonId": 2019},
+		},
+	})
+
+	years, err := s.HistoricalSeasons()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []int{2020, 2019, 2018}
+	if len(years) != len(want) {
+		t.Fatalf("expected %v, got %v", want, years)
+	}
+	for i, y := range years {
+		if y != want[i] {
+			t.Errorf("expected %v, got %v", want, years)
+			break
+		}
+	}
+}
+
+func espnTeamRow(id int, location, nickname string, wins, losses int, pf, pa float64) map[string]interface{} {
+	return map[string]interface{}{
+		"id": id, "location": location, "nickname": nickname,
+		"record": map[string]interface{}{
+			"overall": map[string]interface{}{
+				"wins": wins, "losses": losses, "ties": 0,
+				"pointsFor": pf, "pointsAgainst": pa,
+			},
+		},
+	}
+}
+
+func TestHistoricalStandingsRanksByWinsThenPoints(t *testing.T) {
+	s := testESPNService(t, map[string]interface{}{
+		"/seasons/2020/segments/0/leagues/56226": map[string]interface{}{
+			"id": 56226, "seasonId": 2020,
+			"teams": []map[string]interface{}{
+				espnTeamRow(1, "Team", "One", 5, 2, 500, 480),
+				espnTeamRow(2, "Team", "Two", 6, 1, 480, 460),
+			},
+		},
+	})
+
+	rows, err := s.HistoricalStandings(2020)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 2 || rows[0].Team != "Team Two" {
+		t.Errorf("expected Team Two (6 wins) ranked first, got %+v", rows)
+	}
+}
+
+func TestHistoricalMatchupsFiltersByWeek(t *testing.T) {
+	s := testESPNService(t, map[string]interface{}{
+		"/seasons/2020/segments/0/leagues/56226": map[string]interface{}{
+			"id": 56226, "seasonId": 2020,
+			"teams": []map[string]interface{}{
+				espnTeamRow(1, "Team", "One", 0, 0, 0, 0),
+				espnTeamRow(2, "Team", "Two", 0, 0, 0, 0),
+			},
+			"schedule": []map[string]interface{}{
+				{
+					"matchupPeriodId": 1,
+					"home":            map[string]interface{}{"teamId": 1, "totalPoints": 100.0},
+					"away":            map[string]interface{}{"teamId": 2, "totalPoints": 90.0},
+				},
+				{
+					"matchupPeriodId": 2,
+					"home":            map[string]interface{}{"teamId": 2, "totalPoints": 80.0},
+					"away":            map[string]interface{}{"teamId": 1, "totalPoints": 70.0},
+				},
+			},
+		},
+	})
+
+	rows, err := s.HistoricalMatchups(2020, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 || rows[0].Home != "Team One" || rows[0].Away != "Team Two" {
+		t.Errorf("unexpected week 1 matchups: %+v", rows)
+	}
+}
+
+func TestHistoricalDraftOrdersByOverallPick(t *testing.T) {
+	s := testESPNService(t, map[string]interface{}{
+		"/seasons/2020/segments/0/leagues/56226": map[string]interface{}{
+			"id": 56226, "seasonId": 2020,
+			"teams": []map[string]interface{}{
+				espnTeamRow(1, "Team", "One", 0, 0, 0, 0),
+				espnTeamRow(2, "Team", "Two", 0, 0, 0, 0),
+			},
+			"draftDetail": map[string]interface{}{
+				"drafted": true,
+				"picks": []map[string]interface{}{
+					{"teamId": 2, "playerId": 222, "roundId": 1, "roundPickNumber": 2, "overallPickNumber": 2},
+					{"teamId": 1, "playerId": 111, "roundId": 1, "roundPickNumber": 1, "overallPickNumber": 1},
+				},
+			},
+		},
+	})
+
+	picks, err := s.HistoricalDraft(2020)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(picks) != 2 || picks[0].Team != "Team One" || picks[1].Team != "Team Two" {
+		t.Errorf("expected picks ordered by overall pick number, got %+v", picks)
 	}
 }
