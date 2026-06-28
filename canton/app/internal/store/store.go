@@ -61,22 +61,31 @@ var unitSeed = map[string]string{
 }
 
 // awardOrder fixes display/listing order to match the original taxonomy.
+// The AFL-* and All-AFL codes are only valid for AFL teams in 1960-1969, the
+// one decade the AFL operated as a separate league from the NFL before the
+// merger — see ADR-002 for which codes apply in which years.
 var awardOrder = []string{
 	"AP MVP", "AP OPOY", "AP DPOY", "AP OROTY", "AP DROTY", "AP CPOTY",
 	"SB MVP", "All-Pro 1st", "All-Pro 2nd", "Pro Bowl",
+	"AFL MVP", "AFL ROY", "All-AFL 1st", "All-AFL 2nd", "AFL All-Star",
 }
 
 var awardSeed = map[string]string{
-	"AP MVP":      "AP NFL Most Valuable Player",
-	"AP OPOY":     "AP NFL Offensive Player of the Year",
-	"AP DPOY":     "AP NFL Defensive Player of the Year",
-	"AP OROTY":    "AP NFL Offensive Rookie of the Year",
-	"AP DROTY":    "AP NFL Defensive Rookie of the Year",
-	"AP CPOTY":    "AP NFL Comeback Player of the Year",
-	"SB MVP":      "Super Bowl Most Valuable Player",
-	"All-Pro 1st": "AP All-Pro First Team",
-	"All-Pro 2nd": "AP All-Pro Second Team",
-	"Pro Bowl":    "Pro Bowl / Pro Bowl Games selection",
+	"AP MVP":       "AP NFL Most Valuable Player",
+	"AP OPOY":      "AP NFL Offensive Player of the Year",
+	"AP DPOY":      "AP NFL Defensive Player of the Year",
+	"AP OROTY":     "AP NFL Offensive Rookie of the Year",
+	"AP DROTY":     "AP NFL Defensive Rookie of the Year",
+	"AP CPOTY":     "AP NFL Comeback Player of the Year",
+	"SB MVP":       "Super Bowl Most Valuable Player",
+	"All-Pro 1st":  "AP All-Pro First Team",
+	"All-Pro 2nd":  "AP All-Pro Second Team",
+	"Pro Bowl":     "Pro Bowl / Pro Bowl Games selection",
+	"AFL MVP":      "AFL Most Valuable Player / Player of the Year (1960-1969)",
+	"AFL ROY":      "AFL Rookie of the Year (1960-1966, before the AP's O/D split)",
+	"All-AFL 1st":  "All-AFL Team First Team (1960-1969)",
+	"All-AFL 2nd":  "All-AFL Team Second Team (1960-1969)",
+	"AFL All-Star": "AFL All-Star Game selection (1960-1969)",
 }
 
 const verifyNote = "Entries with [verify] in 'nt' field are Pro Bowl entries needing PFR cross-check"
