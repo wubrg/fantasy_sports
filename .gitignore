@@ -50,13 +50,13 @@ build-iPhoneSimulator/
 .rvmrc
 
 # Go build artifacts
-football/nfl_awards/app/nflawards
-football/nfl_awards/app/nflctl
-football/league_home/app/leaguectl
-football/league_home/app/leaguebot
-football/league_home/app/leagueweb
+canton/app/canton
+canton/app/cantonctl
+league_home/app/leaguectl
+league_home/app/leaguebot
+league_home/app/leagueweb
 
-# Local SQLite DB (regenerate with: nflctl import ../data/nfl_awards_data.json)
-football/nfl_awards/data/nfl_awards.db
-football/nfl_awards/data/nfl_awards.db-shm
-football/nfl_awards/data/nfl_awards.db-wal
+# Local SQLite DB (regenerate with: cantonctl import ../data/canton_data.json)
+canton/data/canton.db
+canton/data/canton.db-shm
+canton/data/canton.db-wal
