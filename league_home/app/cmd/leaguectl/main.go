@@ -50,6 +50,8 @@ func main() {
 		cmdRivalries(args)
 	case "state":
 		cmdState(args)
+	case "seasons":
+		cmdSeasons(args)
 	case "-h", "-help", "--help", "help":
 		usage()
 	default:
@@ -74,8 +76,10 @@ Usage:
   leaguectl schedule                        Season calendar events
   leaguectl rivalries                       Manager head-to-head records (not yet populated)
   leaguectl state                           Current NFL season/week
+  leaguectl seasons [-league ID]            This league's seasons on Sleeper, most recent first
 
-Flags default -league to the Hit or Miss league.
+Flags default -league to the Hit or Miss league. Pass a season's league ID
+(see "seasons") to any -league flag above to query that season instead.
 `)
 }
 
@@ -286,4 +290,19 @@ func cmdState(args []string) {
 		os.Exit(1)
 	}
 	fmt.Printf("season %s (%s), week %d\n", st.Season, st.SeasonType, st.Week)
+}
+
+func cmdSeasons(args []string) {
+	fs := flag.NewFlagSet("seasons", flag.ExitOnError)
+	leagueID := fs.String("league", defaultLeagueID, "sleeper league id")
+	fs.Parse(args)
+
+	rows, err := core.New(*leagueID).Seasons()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "seasons failed: %v\n", err)
+		os.Exit(1)
+	}
+	for _, s := range rows {
+		fmt.Printf("%s  %-10s  %s\n", s.Season, s.Status, s.LeagueID)
+	}
 }

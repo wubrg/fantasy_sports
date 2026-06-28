@@ -40,27 +40,47 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// seasonService resolves the optional ?league= query param (one of the
+	// IDs /api/seasons returns) to a Service for that season, falling back
+	// to the server's configured league. Each Sleeper-backed-per-season
+	// endpoint (standings/faab/matchups/scoring) takes this override so the
+	// web UI's season selector can ask for a past year's data; State is
+	// global NFL state, not league-specific, so it doesn't take one.
+	seasonService := func(r *http.Request) *core.Service {
+		if league := r.URL.Query().Get("league"); league != "" {
+			return core.New(league)
+		}
+		return svc
+	}
+
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.FS(staticContent)))
 
-	mux.HandleFunc("/api/standings", jsonHandler(func() (interface{}, error) { return svc.Standings() }))
-	mux.HandleFunc("/api/faab", jsonHandler(func() (interface{}, error) { return svc.Faab() }))
+	mux.HandleFunc("/api/standings", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, func() (interface{}, error) { return seasonService(r).Standings() })
+	})
+	mux.HandleFunc("/api/faab", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, func() (interface{}, error) { return seasonService(r).Faab() })
+	})
 	mux.HandleFunc("/api/matchups", func(w http.ResponseWriter, r *http.Request) {
 		week, err := strconv.Atoi(r.URL.Query().Get("week"))
 		if err != nil || week < 1 {
 			http.Error(w, "missing or invalid week query parameter", http.StatusBadRequest)
 			return
 		}
-		writeJSON(w, func() (interface{}, error) { return svc.Matchups(week) })
+		writeJSON(w, func() (interface{}, error) { return seasonService(r).Matchups(week) })
 	})
 	mux.HandleFunc("/api/history", jsonHandler(func() (interface{}, error) { return svc.History() }))
 	mux.HandleFunc("/api/rules", jsonHandler(func() (interface{}, error) { return svc.Rules() }))
-	mux.HandleFunc("/api/scoring", jsonHandler(func() (interface{}, error) { return svc.Scoring() }))
+	mux.HandleFunc("/api/scoring", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, func() (interface{}, error) { return seasonService(r).Scoring() })
+	})
 	mux.HandleFunc("/api/managers", jsonHandler(func() (interface{}, error) { return svc.Managers() }))
 	mux.HandleFunc("/api/announcements", jsonHandler(func() (interface{}, error) { return svc.Announcements() }))
 	mux.HandleFunc("/api/schedule", jsonHandler(func() (interface{}, error) { return svc.Schedule() }))
 	mux.HandleFunc("/api/rivalries", jsonHandler(func() (interface{}, error) { return svc.Rivalries() }))
 	mux.HandleFunc("/api/state", jsonHandler(func() (interface{}, error) { return svc.State() }))
+	mux.HandleFunc("/api/seasons", jsonHandler(func() (interface{}, error) { return svc.Seasons() }))
 
 	log.Printf("league home web UI serving on %s (league %s)", *addr, leagueID)
 	log.Fatal(http.ListenAndServe(*addr, mux))

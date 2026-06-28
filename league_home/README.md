@@ -24,7 +24,7 @@ result differently:
 - `internal/core` — normalizes Sleeper data + the local JSON into the
   operations every front end will call: `Standings`, `Faab`, `Matchups`,
   `History`, `Rules`, `Scoring`, `Managers`, `Announcements`, `Schedule`,
-  `Rivalries`, `State`.
+  `Rivalries`, `State`, `Seasons`.
 - `cmd/leaguectl` — CLI front end, used right now to validate the core
   against the real league before building the Discord bot or web UI on
   top of the same package.
@@ -90,7 +90,7 @@ needs something this environment doesn't have:
 **Phase 4 (done):** `cmd/leaguebot`, a Discord bot front end exposing every
 leaguectl command as a slash command (`/standings`, `/faab`, `/matchups`,
 `/history`, `/rules`, `/managers`, `/announcements`, `/schedule`,
-`/rivalries`, `/state`). Same core package, same caveats as the CLI
+`/rivalries`, `/state`, `/seasons`). Same core package, same caveats as the CLI
 (`/announcements` and `/schedule` are placeholder data, `/rivalries` is
 empty) — see "Running the Discord bot" below for setup.
 
@@ -105,9 +105,20 @@ the full output doesn't fit Discord's 2000-char message limit).
 **Phase 6 (done):** `cmd/leagueweb`, a web UI front end: a tabbed
 single-page app (standings, FAAB, matchups, scoring, rules, managers,
 history, announcements, schedule, rivalries) backed by a `/api/*` JSON
-endpoint per core operation. Same core package, same caveats as the CLI
+endpoint per core operation, plus a season selector in the header (see
+Phase 7 below). Same core package, same caveats as the CLI
 and Discord bot (announcements/schedule are placeholder data, rivalries
 is empty) — see "Running the web UI" below.
+
+**Phase 7 (done):** `Seasons()`, which walks a league's
+`previous_league_id` chain back through Sleeper to list every season it's
+had its own league ID for, most recent first (Sleeper terminates the
+chain either with an empty/`"0"` `previous_league_id` or by omitting the
+field, depending on league age — both are handled). Exposed as
+`leaguectl seasons`, `/seasons`, and `/api/seasons`. `leagueweb`'s season
+selector uses this to let the tabbed UI show a past season's standings,
+FAAB, matchups or scoring instead of only the current one — see "Running
+the web UI" below for how the `?league=` override works.
 
 **Not built yet:**
 - Rivalries sync job (the actual computation described above)
@@ -134,13 +145,17 @@ go build -o leaguectl ./cmd/leaguectl
 ./leaguectl schedule
 ./leaguectl rivalries
 ./leaguectl state
+./leaguectl seasons
 ```
 
 All commands default `-league` to the Hit or Miss league ID from
-`../leagues/hit_or_miss/readme.md`. Only `standings`, `faab`, `matchups`, `scoring` and `state`
-call the live Sleeper API, so those need outbound network access to
+`../leagues/hit_or_miss/readme.md`. Only `standings`, `faab`, `matchups`, `scoring`, `state`
+and `seasons` call the live Sleeper API, so those need outbound network access to
 `api.sleeper.app` (no auth/API key required); the rest run entirely off
-embedded local data.
+embedded local data. Pass a season's league ID from `seasons`' output to
+any other command's `-league` flag (except `state`, which is global NFL
+state, not league-specific) to query that season instead of the current
+one.
 
 ```sh
 go test ./...
@@ -193,8 +208,18 @@ overrides the default league ID, same as the CLI and bot. Open
 from a matching `/api/*` endpoint (`/api/standings`, `/api/faab`,
 `/api/matchups?week=N`, `/api/scoring`, `/api/rules`, `/api/managers`,
 `/api/history`, `/api/announcements`, `/api/schedule`, `/api/rivalries`,
-`/api/state`) and caches it for the rest of the page session (matchups
-excepted, since the week selector changes the query).
+`/api/state`, `/api/seasons`) and caches it for the rest of the page session
+(matchups excepted, since the week selector changes the query).
+
+The header's season selector (populated from `/api/seasons`) lets you
+view a past season instead of the current one. Switching it appends
+`?league=<season's league ID>` to the four Sleeper-backed, season-scoped
+endpoints — `/api/standings`, `/api/faab`, `/api/matchups`, `/api/scoring`
+— which then query that season's data instead of the server's configured
+default. The other tabs (rules, managers, history, announcements,
+schedule, rivalries) are locally-curated and not season-scoped, and
+`/api/state` reports the live, current NFL week regardless of league, so
+none of them are affected by the selector.
 
 ## Run on your desktop, reachable over Tailscale
 

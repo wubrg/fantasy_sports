@@ -1,5 +1,13 @@
 const cache = {};
 
+// Sleeper-backed-per-season tabs (standings/faab/matchups/scoring) carry
+// the currently-selected season's league ID as a query param so the
+// season selector can ask for a past year's data instead of the server's
+// default/current one. Tabs backed by locally-curated data (rules,
+// managers, history, announcements, schedule, rivalries) and /api/state
+// (global NFL state, not league-specific) ignore it.
+let currentLeague = "";
+
 async function fetchJSON(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url}: ${res.status} ${await res.text()}`);
@@ -7,8 +15,14 @@ async function fetchJSON(url) {
 }
 
 async function cached(key, url) {
-  if (!(key in cache)) cache[key] = await fetchJSON(url);
-  return cache[key];
+  const cacheKey = `${key}:${currentLeague}`;
+  if (!(cacheKey in cache)) cache[cacheKey] = await fetchJSON(url);
+  return cache[cacheKey];
+}
+
+function withLeague(url) {
+  if (!currentLeague) return url;
+  return url + (url.includes("?") ? "&" : "?") + `league=${encodeURIComponent(currentLeague)}`;
 }
 
 function escapeHtml(s) {
@@ -31,8 +45,22 @@ async function loadState() {
   }
 }
 
+async function loadSeasons() {
+  const select = document.getElementById("season-select");
+  try {
+    const seasons = await fetchJSON("api/seasons");
+    select.innerHTML = seasons.map((s, i) => `
+      <option value="${s.LeagueID}" ${i === 0 ? "selected" : ""}>${s.Season}${s.Status === "complete" ? "" : ` (${s.Status})`}</option>
+    `).join("");
+    currentLeague = select.value;
+  } catch (e) {
+    console.error("loading seasons failed:", e);
+    select.innerHTML = "";
+  }
+}
+
 async function loadStandings() {
-  const rows = await cached("standings", "api/standings");
+  const rows = await cached("standings", withLeague("api/standings"));
   const body = document.getElementById("standings-body");
   body.innerHTML = rows.map((r, i) => `
     <tr>
@@ -46,7 +74,7 @@ async function loadStandings() {
 }
 
 async function loadFaab() {
-  const rows = await cached("faab", "api/faab");
+  const rows = await cached("faab", withLeague("api/faab"));
   const body = document.getElementById("faab-body");
   body.innerHTML = rows.map((r) => `
     <tr>
@@ -61,7 +89,7 @@ async function loadFaab() {
 async function loadMatchups(week) {
   const body = document.getElementById("matchups-body");
   const empty = document.getElementById("matchups-empty");
-  const rows = await fetchJSON(`api/matchups?week=${encodeURIComponent(week)}`);
+  const rows = await fetchJSON(withLeague(`api/matchups?week=${encodeURIComponent(week)}`));
   empty.hidden = rows.length > 0;
   body.innerHTML = rows.map((m) => `
     <tr>
@@ -73,7 +101,7 @@ async function loadMatchups(week) {
 }
 
 async function loadScoring() {
-  const categories = await cached("scoring", "api/scoring");
+  const categories = await cached("scoring", withLeague("api/scoring"));
   const container = document.getElementById("scoring-body");
   container.innerHTML = categories.map((c) => `
     <div class="scoring-card">
@@ -234,7 +262,10 @@ const loaders = {
   rivalries: loadRivalries,
 };
 
+let activeTab = "standings";
+
 function showTab(name) {
+  activeTab = name;
   for (const btn of document.querySelectorAll("#tabs button")) {
     btn.classList.toggle("active", btn.dataset.tab === name);
   }
@@ -244,7 +275,7 @@ function showTab(name) {
   loaders[name]?.().catch((e) => console.error(`loading ${name} failed:`, e));
 }
 
-function init() {
+async function init() {
   document.getElementById("tabs").addEventListener("click", (e) => {
     const btn = e.target.closest("button");
     if (!btn) return;
@@ -254,8 +285,13 @@ function init() {
     loadMatchups(document.getElementById("week-input").value || 1)
       .catch((e) => console.error("loading matchups failed:", e));
   });
+  document.getElementById("season-select").addEventListener("change", (e) => {
+    currentLeague = e.target.value;
+    showTab(activeTab);
+  });
 
   loadState();
+  await loadSeasons();
   showTab("standings");
 }
 
