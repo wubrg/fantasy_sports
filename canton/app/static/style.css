@@ -108,6 +108,17 @@ input[type="number"] {
   cursor: pointer;
 }
 
+.award-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tier-toggle.toggle-group button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
 .results-bar {
   display: flex;
   justify-content: space-between;

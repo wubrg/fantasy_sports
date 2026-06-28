@@ -2,6 +2,28 @@ const NAMED_AWARDS = new Set([
   "AP MVP", "AP OPOY", "AP DPOY", "AP OROTY", "AP DROTY", "AP CPOTY", "SB MVP",
 ]);
 
+// Cross-league meta-groups: each bundles a league-specific NFL code with its
+// AFL-era equivalent (1960-1969, see ADR-002) so a user filtering for "MVP"
+// or "Pro Bowl" doesn't need to know which league named which award in a
+// given year. All-Pro additionally splits into 1st/2nd team tiers, since
+// "made All-Pro" and "made 1st-team All-Pro" are meaningfully different
+// filters. Awards with no cross-league equivalent (OPOY/DPOY/CPOTY/SB MVP)
+// are deliberately left out and rendered as standalone checkboxes instead.
+const AWARD_GROUPS = [
+  { key: "mvp", label: "MVP", codes: ["AP MVP", "AFL MVP"] },
+  { key: "roy", label: "Rookie of the Year", codes: ["AP OROTY", "AP DROTY", "AFL ROY"] },
+  {
+    key: "allpro",
+    label: "All-Pro",
+    codes: ["All-Pro 1st", "All-Pro 2nd", "All-AFL 1st", "All-AFL 2nd"],
+    tiers: {
+      "1st": ["All-Pro 1st", "All-AFL 1st"],
+      "2nd": ["All-Pro 2nd", "All-AFL 2nd"],
+    },
+  },
+  { key: "probowl", label: "Pro Bowl", codes: ["Pro Bowl", "AFL All-Star"] },
+];
+
 let meta = null;
 let rows = [];
 let sortKey = "yr";
@@ -10,11 +32,25 @@ let sortDir = -1; // -1 = desc, 1 = asc
 const state = {
   team: "",
   unit: "",
-  awards: new Set(),
+  awards: new Set(), // standalone (ungrouped) award codes
+  groupActive: {}, // AWARD_GROUPS key -> bool
+  allProTier: "all", // "all" | "1st" | "2nd"
   yearMin: null,
   yearMax: null,
   search: "",
 };
+
+// Flattens the group/tier/standalone selections into the single set of raw
+// award codes filteredRows() needs to match against.
+function activeAwardCodes() {
+  const codes = new Set(state.awards);
+  for (const group of AWARD_GROUPS) {
+    if (!state.groupActive[group.key]) continue;
+    const groupCodes = group.tiers ? group.tiers[state.allProTier] || group.codes : group.codes;
+    for (const c of groupCodes) codes.add(c);
+  }
+  return codes;
+}
 
 async function init() {
   const res = await fetch("api/data");
@@ -49,7 +85,18 @@ function buildTeamSelect() {
 
 function buildAwardCheckboxes() {
   const container = document.getElementById("award-checkboxes");
+  const available = new Set(meta.awards);
+  const groupedCodes = new Set();
+
+  for (const group of AWARD_GROUPS) {
+    const codes = group.codes.filter((c) => available.has(c));
+    if (codes.length === 0) continue;
+    for (const c of codes) groupedCodes.add(c);
+    container.appendChild(buildAwardGroupControl(group));
+  }
+
   for (const award of meta.awards) {
+    if (groupedCodes.has(award)) continue;
     const label = document.createElement("label");
     const cb = document.createElement("input");
     cb.type = "checkbox";
@@ -63,6 +110,45 @@ function buildAwardCheckboxes() {
     label.append(award);
     container.appendChild(label);
   }
+}
+
+function buildAwardGroupControl(group) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "award-group";
+
+  const label = document.createElement("label");
+  const cb = document.createElement("input");
+  cb.type = "checkbox";
+  cb.addEventListener("change", () => {
+    state.groupActive[group.key] = cb.checked;
+    render();
+  });
+  label.appendChild(cb);
+  label.append(group.label);
+  wrapper.appendChild(label);
+
+  if (group.tiers) {
+    const tierToggle = document.createElement("div");
+    tierToggle.className = "toggle-group tier-toggle";
+    for (const [value, text] of [["all", "All"], ["1st", "1st only"], ["2nd", "2nd only"]]) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = text;
+      btn.dataset.tier = value;
+      if (value === state.allProTier) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        state.allProTier = value;
+        for (const b of tierToggle.querySelectorAll("button")) {
+          b.classList.toggle("active", b === btn);
+        }
+        render();
+      });
+      tierToggle.appendChild(btn);
+    }
+    wrapper.appendChild(tierToggle);
+  }
+
+  return wrapper;
 }
 
 function buildYearInputs() {
@@ -126,10 +212,11 @@ function wireEvents() {
 }
 
 function filteredRows() {
+  const activeAwards = activeAwardCodes();
   return rows.filter((r) => {
     if (state.team && r.tm !== state.team) return false;
     if (state.unit && r.u !== state.unit) return false;
-    if (state.awards.size > 0 && !state.awards.has(r.aw)) return false;
+    if (activeAwards.size > 0 && !activeAwards.has(r.aw)) return false;
     if (r.yr < state.yearMin || r.yr > state.yearMax) return false;
     if (state.search && !r.pl.toLowerCase().includes(state.search)) return false;
     return true;
