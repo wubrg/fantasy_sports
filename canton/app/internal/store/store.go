@@ -68,6 +68,7 @@ var awardOrder = []string{
 	"AP MVP", "AP OPOY", "AP DPOY", "AP OROTY", "AP DROTY", "AP CPOTY",
 	"SB MVP", "All-Pro 1st", "All-Pro 2nd", "Pro Bowl",
 	"AFL MVP", "AFL ROY", "All-AFL 1st", "All-AFL 2nd", "AFL All-Star",
+	"HOF",
 }
 
 var awardSeed = map[string]string{
@@ -86,6 +87,7 @@ var awardSeed = map[string]string{
 	"All-AFL 1st":  "All-AFL Team First Team (1960-1969)",
 	"All-AFL 2nd":  "All-AFL Team Second Team (1960-1969)",
 	"AFL All-Star": "AFL All-Star Game selection (1960-1969)",
+	"HOF":          "Pro Football Hall of Fame inductee",
 }
 
 const verifyNote = "Entries with [verify] in 'nt' field are Pro Bowl entries needing PFR cross-check"
