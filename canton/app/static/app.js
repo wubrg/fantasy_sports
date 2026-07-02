@@ -1,5 +1,5 @@
 const NAMED_AWARDS = new Set([
-  "AP MVP", "AP OPOY", "AP DPOY", "AP OROTY", "AP DROTY", "AP CPOTY", "SB MVP",
+  "AP MVP", "AP OPOY", "AP DPOY", "AP OROTY", "AP DROTY", "AP CPOTY", "SB MVP", "HOF",
 ]);
 
 // Cross-league meta-groups: each bundles a league-specific NFL code with its
