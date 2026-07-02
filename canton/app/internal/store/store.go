@@ -54,6 +54,7 @@ var teamSeed = map[string]string{
 	"NYJ": "New York Jets", "PHI": "Philadelphia Eagles", "PIT": "Pittsburgh Steelers",
 	"SEA": "Seattle Seahawks", "SF": "San Francisco 49ers", "TB": "Tampa Bay Buccaneers",
 	"TEN": "Tennessee Titans", "WAS": "Washington Commanders",
+	"HIST": "Historical franchise (no current successor)",
 }
 
 var unitSeed = map[string]string{
