@@ -24,8 +24,9 @@ go build -o cantonctl ./cmd/cantonctl
 ```
 
 This creates `../data/canton.db`, applies the schema, seeds the
-team/unit/award reference tables, and loads all 4,498 rows. Safe to re-run —
-already-imported rows are skipped as duplicates, not errors.
+team/unit/award reference tables, and loads all rows from the snapshot
+(currently ~9,500 covering 1960–2025). Safe to re-run — already-imported
+rows are skipped as duplicates, not errors.
 
 ## Updating data
 
