@@ -58,12 +58,12 @@ that added complexity and generally lower source confidence.
 
 | Chunk | Scope | Status | Notes |
 |---|---|---|---|
-| 7 | Named awards 1970–1993 (`AP MVP`, `AP OROTY` continuous; `AP DPOY` 1971+; `AP OPOY` 1972+; `AP DROTY` continuous from 1967; `SB MVP`; no `AP CPOTY` — gap 1967–1997) | Not started | |
-| 8 | Named awards 1960–1969, NFL side (`AP MVP`, `AP OROTY`, `AP DROTY` 1967+, `AP CPOTY` 1963–1966 only, `SB MVP` 1966 only) + AFL side (`AFL MVP`, `AFL ROY` through 1966 / `AP OROTY`+`AP DROTY` 1967–1969) | Not started | Lower confidence — competing AP/UPI/Sporting News sources; `[UPI]`-flag fallback per ADR-002 |
-| 9 | All-Pro 1st + 2nd, 1970–1993 (NFL only, no AFL) | Not started | |
-| 10 | All-Pro 1st + 2nd (NFL) + All-AFL 1st + 2nd (AFL), 1960–1969 | Not started | |
-| 11 | Pro Bowl, 1970–1993 | Not started | |
-| 12 | Pro Bowl (NFL) + AFL All-Star (AFL), 1960–1969 | Not started | |
+| 7 | Named awards 1970–1993 (`AP MVP`, `AP OROTY` continuous; `AP DPOY` 1971+; `AP OPOY` 1972+; `AP DROTY` continuous from 1967; `SB MVP`; no `AP CPOTY` — gap 1967–1997) | ✅ DONE | ~220 rows imported |
+| 8 | Named awards 1960–1969, NFL side (`AP MVP`, `AP OROTY`, `AP DROTY` 1967+, `AP CPOTY` 1963–1966 only, `SB MVP` 1966 only) + AFL side (`AFL MVP`, `AFL ROY` through 1966 / `AP OROTY`+`AP DROTY` 1967–1969) | ✅ DONE | ~130 rows; some `[verify]` on early AFL awards |
+| 9 | All-Pro 1st + 2nd, 1970–1993 (NFL only, no AFL) | ✅ DONE | ~2000 rows via Wikipedia wikitext parser |
+| 10 | All-Pro 1st + 2nd (NFL) + All-AFL 1st + 2nd (AFL), 1960–1969 | ✅ DONE | 890 rows (294 for 1960–1964, 596 for 1965–1969 via wikitext parser) |
+| 11 | Pro Bowl, 1970–1993 | ✅ DONE | ~2100 rows; 1978–1979 added via Wikipedia API |
+| 12 | Pro Bowl (NFL) + AFL All-Star (AFL), 1960–1969 | ✅ PARTIAL | AFL All-Star 1961–1966 done (367 rows); Pro Bowl 1960–1969 skipped (Wikipedia has no roster tables for 1961–1970 Pro Bowls); AFL All-Star 1967–1969 skipped (Wikipedia pages redirect, no roster data) |
 
 Each chunk lands via `cantonctl add` (or a bulk JSON merge + `import`),
 followed by `cantonctl export-json` to refresh the tracked snapshot, same
@@ -111,3 +111,4 @@ source-of-record policy for the new AFL-side awards.
 | 1.0 | 2026-06-17 | Initial plan created |
 | 1.1 | 2026-06-20 | Marked chunks 3–6 done (shipped in v0.8); replaced hand-maintained verify list with a pointer to the data's `[verify]` notes |
 | 2.0 | 2026-06-28 | Extended scope to 1960–1993 per ADR-002: added chunks 7–12, the four new AFL-side award codes, franchise-lineage team-code notes, and an updated source strategy (Wikipedia/search instead of direct PFR fetches, which now 403 in this environment) |
+| 2.1 | 2026-07-03 | Completed chunks 7–11 and partial chunk 12 (AFL All-Star 1961–1966); HOF feature added; DB at 9,458 rows |
