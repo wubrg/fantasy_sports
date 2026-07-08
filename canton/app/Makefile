@@ -44,7 +44,7 @@ PLIST_DEST := $(HOME)/Library/LaunchAgents/$(PLIST)
 
 canton-install: ## (macOS) Copy the plist template into ~/Library/LaunchAgents
 	cp com.canton.serve.plist.template $(PLIST_DEST)
-	@echo "Edit $(PLIST_DEST) to fill in the /REPLACE/WITH/... placeholders, then run: make canton-load"
+	@echo "$(PLIST_DEST) copied. Paths in the template are pre-filled for this checkout; edit if your checkout lives elsewhere, then run: make canton-load"
 
 canton-load: ## (macOS) launchctl load the canton launch agent
 	launchctl load $(PLIST_DEST)
