@@ -30,7 +30,7 @@ See `REQUEST.md` for the original ask and `ADR-0001` through `ADR-0006` for the 
 
 ### Chunk 5 — Push (blocked — needs your local Mac)
 1. ✅ Verification passed (Chunk 3) — the ADR-0004 condition is satisfied.
-2. ❌ **Push failed from the sandbox**: `git push origin main` → `fatal: could not read Username for 'https://github.com'` — the sandbox has no GitHub credentials for this repo (it can only fetch, since the repo is public; push needs your stored auth). Not a code problem — just needs to run where your credentials live.
+2. ❌ **Push failed from the sandbox, twice** (before and after you cleared the lock files): `git push origin main` → `fatal: could not read Username for 'https://github.com'` — the sandbox has no GitHub credentials for this repo (it can only fetch, since the repo is public; push needs your stored auth). Confirmed this is a credentials gap, not the lock issue — clearing the locks didn't change this error at all.
 3. **Action needed from you**, run locally:
    ```
    cd /Users/adamwieberg/adori/fantasy_sports
@@ -39,7 +39,7 @@ See `REQUEST.md` for the original ask and `ADR-0001` through `ADR-0006` for the 
 
 ### Chunk 6 — Second-pass cleanup (2026-07-08, this session)
 1. ✅ Reviewed all 4 stashes (read-only `git stash show -p`) — all four are superseded WIP for the old pre-flatten `football/` plist paths; the fix already landed via ADR-0001 at the new locations. You approved dropping all 4 (see ADR-0006).
-2. ⚠️ **Couldn't execute the drop from the sandbox** — see ADR-0005 (git write-lock limitation). **Action needed from you**, run locally:
+2. ❌ **Drop still fails after clearing locks** — `git stash clear` now gives a hard error (`unable to unlink '.git/refs/stash': Operation not permitted`), not just a warning. No damage — all 4 stashes still present, working tree still clean, confirmed via `git stash list`/`git status`. This looks like a real delete (removing the `refs/stash` ref) rather than a create/rename, which is a different code path than the commit below that *did* succeed. **Action needed from you**, run locally:
    ```
    cd /Users/adamwieberg/adori/fantasy_sports
    git stash clear
@@ -48,19 +48,13 @@ See `REQUEST.md` for the original ask and `ADR-0001` through `ADR-0006` for the 
    - `origin/claude/nfl-stat-master-migration-29t40x` — **fully merged into `main` already** (0 unique commits, confirmed via `git merge-base --is-ancestor`). Safe to delete.
    - `origin/rules-and-proceedings-updates` — **15 unmerged commits of real league-rules content** (`scoring.md`, `rosters.md`, `policies_and_procedures.md`, etc.), branched *before* the `football/` → root flatten, so its paths still say `football/*.md`. This is not stale — it needs a rebase/path-fix before it can merge cleanly. Left untouched; see ADR-0006 for the recommended next step.
 4. ✅ Fixed the stale Makefile placeholder message (`league_home/app/Makefile`, `canton/app/Makefile`) — `*-install` targets no longer claim there are `/REPLACE/WITH/...` placeholders to fill in, since ADR-0001 already pre-filled them.
-5. ⚠️ **Edits above (Makefile fix + these docs) are sitting uncommitted** in your working tree — same git write-lock issue as step 2. **Action needed from you**, run locally:
-   ```
-   cd /Users/adamwieberg/adori/fantasy_sports
-   git add -A
-   git commit -m "docs: record second-pass cleanup (stash review, branch status, Makefile fix)"
-   ```
-   (Do this *before* `git stash clear` in step 2, or after — order doesn't matter, they touch different things.)
+5. ✅ **Committed successfully** after you cleared the sandbox lock files — commit `1028a66` "docs: record second-pass cleanup..." is on `main` now (verified via `git cat-file`/`git show`). Still needs `git push` locally (Chunk 5) to reach `origin`.
 
 ## Open items (not in scope for this pass)
 
-- `origin/claude/nfl-stat-master-migration-29t40x` — confirmed safe to delete (Chunk 6.3), but deletion needs your local Mac (same lock issue). Optional: `git push origin --delete claude/nfl-stat-master-migration-29t40x`.
+- `origin/claude/nfl-stat-master-migration-29t40x` — confirmed safe to delete (Chunk 6.3). Optional, run locally: `git push origin --delete claude/nfl-stat-master-migration-29t40x`.
 - `origin/rules-and-proceedings-updates` — 15 commits of real content, needs a rebase pass to fix `football/*.md` → root paths before merging. Recommend a dedicated session for this rather than folding it into a "tidy up" pass.
-- The stuck lock files (`index.lock`, `packed-refs.lock`, `refs/stash.lock`, `objects/maintenance.lock`) under `.git/` — see ADR-0005. Worth a quick look locally (`ls -la .git/*.lock .git/refs/stash.lock .git/objects/maintenance.lock`) to confirm they clear once a local git command runs, since local git won't have the sandbox's permission problem.
+- **Sandbox delete-vs-write asymmetry**: after you cleared the stuck lock files locally, a sandbox commit (create/rename-over) succeeded, but `git stash clear` (a genuine ref delete) still fails the same way. Working theory: this may line up with Cowork's own guardrail against deleting files in a connected workspace folder without explicit approval — but that's not fully confirmed, since deletions (the `football/` dir, stray branches) *did* succeed in the very first pass. Treat any git operation that deletes something (stash drop/clear, branch -d, gc, rebase) as needing to run locally until this is better understood.
 
 ## Progress tracker
 
@@ -71,4 +65,4 @@ See `REQUEST.md` for the original ask and `ADR-0001` through `ADR-0006` for the 
 | 3. Resolve + verify | ✅ Done |
 | 4. Cleanup | ✅ Done |
 | 5. Push | ⬜ Blocked — run `git push origin main` locally |
-| 6. Second-pass cleanup | ⚠️ Findings done; 2 actions need your local Mac (commit + stash clear) |
+| 6. Second-pass cleanup | ⚠️ Findings + commit done; `git stash clear` still needs your local Mac |
