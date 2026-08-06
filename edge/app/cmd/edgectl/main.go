@@ -31,6 +31,8 @@ func main() {
 		err = bonusCmd(os.Args[2:])
 	case "card":
 		err = cardCmd(os.Args[2:])
+	case "hitrate":
+		err = hitrateCmd(os.Args[2:])
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -59,6 +61,10 @@ func usage() {
   edgectl card bonus [-target <rate>]
         The static bonus-bet reference card. Needs no data: a bonus bet is +EV
         at any price, so the floor depends only on your conversion target.
+
+  edgectl hitrate -line <n> -side over|under -values <csv> [-price <american>]
+        Empirical win probability from a game log, with a Wilson interval. With
+        -price, returns a verdict: supported, unproven, or reject.
 
   edgectl card real -p <prob> [-lo <lower bound>] [-label <text>]
         Minimum acceptable price for a cash wager. With -lo, shows the
