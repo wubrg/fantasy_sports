@@ -29,6 +29,8 @@ func main() {
 		err = marketCmd(os.Args[2:])
 	case "bonus":
 		err = bonusCmd(os.Args[2:])
+	case "card":
+		err = cardCmd(os.Args[2:])
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -53,6 +55,15 @@ func usage() {
   edgectl bonus -odds <american> [-stake <amount>] [-p <true prob>]
         Bonus-bet (stake not returned) value. Without -p, reports the fair-odds
         conversion ceiling.
+
+  edgectl card bonus [-target <rate>]
+        The static bonus-bet reference card. Needs no data: a bonus bet is +EV
+        at any price, so the floor depends only on your conversion target.
+
+  edgectl card real -p <prob> [-lo <lower bound>] [-label <text>]
+        Minimum acceptable price for a cash wager. With -lo, shows the
+        threshold your uncertainty can actually support alongside the one your
+        point estimate claims.
 
 edgectl never fetches prices and never guesses one. Bad input is an error, not
 a zero.
