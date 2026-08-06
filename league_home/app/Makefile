@@ -1,13 +1,15 @@
-BINS := leaguectl leaguebot leagueweb
+BINS := leaguectl leaguebot leagueweb draftroom
 
 .PHONY: build test vet fmt fmt-check lint clean check list \
+	draftroom keepers board serve install refresh data-status extractor-test \
 	leagueweb-install leagueweb-load leagueweb-unload leagueweb-restart leagueweb-status \
 	leagueweb-serve-mount leagueweb-serve-unmount leagueweb-serve-status
 
-build: ## Build leaguectl, leaguebot, and leagueweb binaries
+build: ## Build leaguectl, leaguebot, leagueweb, and draftroom binaries
 	go build -o leaguectl ./cmd/leaguectl
 	go build -o leaguebot ./cmd/leaguebot
 	go build -o leagueweb ./cmd/leagueweb
+	go build -o draftroom ./cmd/draftroom
 
 test: ## Run go test ./...
 	go test ./...
@@ -30,7 +32,63 @@ lint: ## Run golangci-lint
 clean: ## Remove built binaries
 	rm -f $(BINS)
 
-check: fmt-check vet test ## Run fmt-check + vet + test (the pre-commit bundle)
+extractor-test: ## Run the Python source-extractor tests (internal/draft/data/tools)
+	@cd internal/draft/data && python3 tools/test_extractors.py
+
+## --- draft room ---------------------------------------------------------
+## The private data repo holds every proprietary source. Override its
+## location with DATA=/path/to/fantasy_sports_data or $DRAFTROOM_DATA_DIR.
+
+DATA ?= ../../../fantasy_sports_data
+TOOLS := internal/draft/data/tools
+ME ?= $(DRAFTROOM_OWNER_ID)
+
+draftroom: ## Build just the draftroom binary
+	go build -o draftroom ./cmd/draftroom
+
+keepers: draftroom ## Keeper reconciliation, true budgets, and 2026 keeper prices
+	./draftroom keepers
+
+board: draftroom ## The draft board (BASELINE=beer|beerplus|vols, ME=<owner id>, LIMIT=n)
+	./draftroom board $(if $(ME),-me $(ME),) $(if $(BASELINE),-baseline $(BASELINE),) $(if $(LIMIT),-limit $(LIMIT),)
+
+serve: draftroom ## Serve the board as a web page (ME=<owner id>, ADDR=:8083)
+	./draftroom serve $(if $(ME),-me $(ME),) $(if $(ADDR),-addr $(ADDR),) $(if $(BASELINE),-baseline $(BASELINE),)
+
+install: ## Install draftroom into $GOBIN so it runs from any directory
+	@go install -ldflags "\
+		-X main.builtinConfigDir=$$(pwd)/internal/draft/data \
+		-X main.builtinDataDir=$$(cd $(DATA) && pwd)" ./cmd/draftroom
+	@echo "installed to $$(go env GOPATH)/bin/draftroom"
+	@echo "  config: $$(pwd)/internal/draft/data"
+	@echo "  data:   $$(cd $(DATA) && pwd)"
+	@echo "ensure $$(go env GOPATH)/bin is on your PATH; no env vars needed"
+
+refresh: ## Re-extract every source from the private data repo
+	@echo "==> Ciely"
+	@python3 $(TOOLS)/extract_ciely.py \
+		$$(ls -d $(DATA)/raw/ciely/*/ | tail -1)2026FFBProjections.xlsx \
+		$(DATA)/normalized/ciely-2026.csv
+	@echo "==> Subvertadown"
+	@python3 $(TOOLS)/extract_subvertadown.py \
+		$$(ls -d $(DATA)/raw/subvertadown/*/ | tail -1)sheets \
+		$(DATA)/normalized/subvertadown-2026.csv
+	@echo "==> Fantasy Points (Big 3)"
+	@python3 $(TOOLS)/extract_fantasypoints.py \
+		"$$(ls $(DATA)/raw/fantasypoints/*.html | tail -1)" \
+		$(DATA)/normalized/fantasypoints-big3-2026.csv
+
+data-status: ## Show how stale each source snapshot is
+	@echo "private data root: $$(cd $(DATA) 2>/dev/null && pwd || echo 'NOT FOUND')"
+	@echo
+	@echo "raw snapshots:"
+	@find $(DATA)/raw -mindepth 2 -maxdepth 2 -type d 2>/dev/null | \
+		sed "s|$(DATA)/raw/||" | sort | awk '{printf "  %s\n", $$0}'
+	@echo
+	@echo "normalized:"
+	@ls -l $(DATA)/normalized 2>/dev/null | awk 'NR>1 {printf "  %-34s %s %s %s\n", $$9, $$6, $$7, $$8}'
+
+check: fmt-check vet test extractor-test ## Run fmt-check + vet + test + extractor tests (the pre-commit bundle)
 
 list: ## List available targets
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_.-]+:.*?## /{printf "  %-26s %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort

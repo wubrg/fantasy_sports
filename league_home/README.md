@@ -27,6 +27,9 @@ see Phase 8 below.)
 
 - `internal/sleeper` — minimal client for the public, keyless Sleeper API
   (league settings, rosters, users, matchups, NFL state).
+- `internal/draft` — the auction draft room: keeper ledger, market-anchored
+  valuation, source ingestion, and the live board. Fronted by the
+  `draftroom` CLI; see `app/cmd/draftroom/README.md`.
 - `internal/espn` — client for ESPN's fantasy football API, covering the
   league's history from before it migrated to Sleeper. Unlike Sleeper,
   ESPN has no keyless public read access for league history; a private

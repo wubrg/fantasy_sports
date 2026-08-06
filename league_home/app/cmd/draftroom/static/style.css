@@ -1,0 +1,240 @@
+/* Built for a second monitor at an 8pm draft: dark, large type, readable
+   from a couple of feet away without leaning in. No responsive work — this
+   page has one job on one screen. */
+
+:root {
+  --bg: #14161a;
+  --panel: #1c1f26;
+  --line: #2b303a;
+  --text: #e8eaed;
+  --dim: #9099a8;
+  --good: #4ade80;
+  --bad: #f87171;
+  --warn: #fbbf24;
+  --accent: #60a5fa;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ---- header strip: the numbers you glance at while bidding ---- */
+
+#strip {
+  display: flex;
+  gap: 2rem;
+  align-items: baseline;
+  padding: 0.9rem 1.4rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.stat { display: flex; flex-direction: column; }
+.stat.wide { flex: 1; }
+.stat.right { align-items: flex-end; }
+
+.label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+}
+
+.value { font-size: 1.9rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat.wide .value { font-size: 1rem; font-weight: 400; color: var(--dim); }
+
+/* ---- banners ---- */
+
+.pivot {
+  padding: 0.7rem 1.4rem;
+  background: #3b2f0b;
+  border-bottom: 1px solid var(--warn);
+  font-size: 1.05rem;
+}
+.pivot .name { color: var(--warn); font-weight: 700; margin-right: 0.6rem; }
+
+.musthaves {
+  padding: 0.55rem 1.4rem;
+  background: #101a24;
+  border-bottom: 1px solid var(--line);
+  color: var(--dim);
+  font-size: 0.92rem;
+}
+.musthaves.thin { color: var(--bad); }
+.hidden { display: none; }
+
+/* ---- layout ---- */
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.4rem;
+  padding: 1.1rem 1.4rem 3rem;
+  align-items: start;
+}
+
+/* ---- board ---- */
+
+.searchbar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0.7rem;
+}
+
+#search {
+  flex: 1;
+  max-width: 26rem;
+  padding: 0.5rem 0.7rem;
+  font-size: 1rem;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+#search:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+.toggle, .hint { color: var(--dim); font-size: 0.85rem; }
+
+table { width: 100%; border-collapse: collapse; }
+
+th {
+  text-align: left;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 3.9rem;
+  background: var(--bg);
+}
+
+td {
+  padding: 0.32rem 0.6rem;
+  border-bottom: 1px solid #21252c;
+  font-variant-numeric: tabular-nums;
+}
+
+tbody tr:hover { background: #1a1e25; }
+.num { text-align: right; }
+.pos { color: var(--dim); }
+
+/* An unaffordable row is dimmed rather than hidden: you still want to see
+   what is going, you just cannot have it. */
+tr.unaffordable td { opacity: 0.38; }
+
+.pos-RB { color: #fca5a5; }
+.pos-WR { color: #93c5fd; }
+.pos-TE { color: #fcd34d; }
+.pos-QB { color: #c4b5fd; }
+
+.good { color: var(--good); }
+.bad { color: var(--bad); }
+.mymax { font-weight: 700; }
+.mymax.must::after { content: "*"; color: var(--warn); }
+.mymax.dnd { color: var(--bad); font-weight: 400; }
+
+.flag {
+  display: inline-block;
+  padding: 0 0.35rem;
+  margin-right: 0.25rem;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  background: #262b33;
+  color: var(--dim);
+}
+.flag.must { background: #3b2f0b; color: var(--warn); }
+.flag.dnd { background: #3b1414; color: var(--bad); }
+.flag.hurt { background: #3b1414; color: #fca5a5; }
+.flag.split { background: #2a2440; color: #c4b5fd; }
+
+/* ---- sale buttons ---- */
+
+.sold-col { width: 6.5rem; }
+.sell { display: flex; gap: 0.3rem; }
+.sell button {
+  padding: 0.1rem 0.45rem;
+  font-size: 0.75rem;
+  background: #262b33;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.sell button:hover { color: var(--text); border-color: var(--accent); }
+.sell button.mine:hover { border-color: var(--good); color: var(--good); }
+
+/* ---- sidebar ---- */
+
+aside section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+}
+
+aside h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--dim);
+  font-weight: 600;
+}
+
+.mini td { padding: 0.2rem 0; border: 0; font-size: 0.9rem; }
+.mini td.num { text-align: right; }
+
+.note { color: var(--dim); font-size: 0.76rem; margin: 0.5rem 0 0; }
+
+.sold { list-style: none; margin: 0; padding: 0; font-size: 0.88rem; }
+.sold li { padding: 0.15rem 0; border-bottom: 1px solid #21252c; }
+.sold li.empty { color: var(--dim); border: 0; }
+.sold .price { color: var(--dim); float: right; }
+
+.undo {
+  margin-top: 0.6rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.78rem;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.undo:hover { color: var(--bad); border-color: var(--bad); }
+
+/* ---- footer ---- */
+
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 1.4rem;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  color: var(--dim);
+  font-size: 0.78rem;
+}
+
+kbd {
+  background: #262b33;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 0.3rem;
+  font-family: inherit;
+}

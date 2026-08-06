@@ -1,6 +1,8 @@
 // Package sleeper is a minimal client for the subset of Sleeper's public,
 // keyless REST API (https://docs.sleeper.com) the league home tool needs:
-// league settings, rosters, users, matchups, and the current NFL state.
+// league settings, rosters, users, matchups, and the current NFL state,
+// plus the drafts, transactions, season stats, and player dictionary the
+// draft room builds on (see draft.go).
 package sleeper
 
 import (
@@ -35,7 +37,12 @@ type League struct {
 	Status           string             `json:"status"`
 	PreviousLeagueID string             `json:"previous_league_id"`
 	ScoringSettings  map[string]float64 `json:"scoring_settings"`
-	Settings         struct {
+	// RosterPositions lists every roster slot in lineup order, with bench
+	// slots as "BN" (e.g. QB, RB, RB, WR, WR, WR, TE, FLEX, DEF, BN...).
+	// Counting it is how the draft room derives starter requirements and
+	// total roster size.
+	RosterPositions []string `json:"roster_positions"`
+	Settings        struct {
 		WaiverBudget     int `json:"waiver_budget"`
 		PlayoffWeekStart int `json:"playoff_week_start"`
 	} `json:"settings"`
@@ -45,6 +52,10 @@ type League struct {
 type Roster struct {
 	RosterID int    `json:"roster_id"`
 	OwnerID  string `json:"owner_id"`
+	// Players lists every player ID on the roster. Rosters carry forward
+	// between seasons, so before a draft this still holds last season's
+	// squad — which is the pool of keeper candidates.
+	Players  []string `json:"players"`
 	Settings struct {
 		Wins             int `json:"wins"`
 		Losses           int `json:"losses"`

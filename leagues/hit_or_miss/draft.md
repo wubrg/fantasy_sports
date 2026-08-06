@@ -23,8 +23,22 @@ If a player is selected as a keeper and their previous draft or FA value was les
 #### Keeper pricing
 
 - First year keepers are last year's draft cost +$5, minimum $10.
-- Second year keepers are +$10, third year are +$15.
+- Second year keepers are +$10, third year are +$15, fourth year are +$15.
 - Undrafted players (i.e., free agent pickups) are the $10 minimum.
+  A winning FAAB bid does **not** carry forward — however much was spent on
+  waivers, the player enters the ladder at the $10 minimum.
+- A **trade resets the escalation** as of the 2026 season: the acquiring
+  manager restarts at the first-year increment, though the player's cost
+  basis still follows him. This is not applied retroactively; keepers priced
+  in earlier seasons stand as charged.
+- Dropping and re-adding **your own** player is roster churn, not a new
+  acquisition, and does not reset anything.
+
+> **Sleeper does not enforce any of this.** The keeper amount it records is
+> whatever was entered by hand, so it is not automatically the league price.
+> `draftroom keepers` recomputes every keeper from these rules and reports
+> any disagreement; commissioner rulings are recorded in the draft room's
+> `rulings.csv` and carry forward to later seasons.
 
 | Keep Count | Previous value | Penalty | New value |
 | ---|:---:| ---:|---:|
@@ -33,6 +47,7 @@ If a player is selected as a keeper and their previous draft or FA value was les
 | First time | $10 | $5 | $15 |
 | Second time | $15 | $10 | $25 |
 | Third time | $25 | $15 | $40 |
+| Fourth time | $40 | $15 | $55 |
 
 This keeper pricing strategy aims to strike a balance between rewarding players for good foresight but ensures that they do not hinder the ability for other owners to compete.
 

@@ -4,10 +4,13 @@ You can review the scoring rules on the [league homepage][league].
 
 **NOTICE** Please report any discrepancies to the LM if noticed as this list may come out of sync.
 
+**This league is half-PPR (0.5 points per reception).** Yardage columns below
+read as "one point per N yards".
+
 ### Passing points per
 | Passing Yard (PY) | TD Pass (PTD) | Interception Thrown (INT) | 2pt Conversion (2PC) |
 |---|:---:|:---:|:---:|
-| 25 | 4 |  -2 | 2 |
+| 25 | 4 |  -1 | 2 |
 
 ### Rushing points per
 | Rushing Yard (RY) | TD Rush (RTD) | 2pt Conversion (2PR) |
@@ -15,9 +18,14 @@ You can review the scoring rules on the [league homepage][league].
 | 10 | 6 | 2 |
 
 ### Receiving
-| Receiving Yard (REY) | TD Reception (RETD) | 2pt Conversion (2PRE) |
-|---|:---:|:---:|
-| 10 | 6 | 2 |
+| Reception (REC) | Receiving Yard (REY) | TD Reception (RETD) | 2pt Conversion (2PRE) |
+|:---:|---|:---:|:---:|
+| 0.5 | 10 | 6 | 2 |
+
+Receptions are worth **0.5 points at every position** (RB, WR, TE alike).
+This matters more than it looks: most published rankings and auction values
+are built for full PPR, and using them here overvalues pass-catching backs
+and slot receivers relative to goal-line and explosive-play production.
 
 ### Miscellaneous
 

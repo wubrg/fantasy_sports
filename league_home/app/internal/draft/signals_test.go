@@ -1,0 +1,304 @@
+package draft
+
+import (
+	"fmt"
+	"testing"
+)
+
+func svRow(id, name, pos, baseline string, value, aav, ps float64, up, down bool) SourceRow {
+	return SourceRow{
+		Source: "subvertadown", PlayerID: id, Player: name, Position: pos,
+		Baseline: baseline, AuctionValue: value, AAV: aav, ScarcityPct: ps,
+		ECRUp: up, ECRDown: down,
+	}
+}
+
+func signalFixture() []PlayerSignals {
+	in := SignalInputs{
+		Values: []PlayerValue{
+			{PlayerID: "1", Name: "Jahmyr Gibbs", Position: "RB", Price: 76},
+			{PlayerID: "2", Name: "Justin Jefferson", Position: "WR", Price: 50},
+			{PlayerID: "3", Name: "George Kittle", Position: "TE", Price: 14},
+			{PlayerID: "4", Name: "Nobody Known", Position: "WR", Price: 3},
+		},
+		Subvertadown: []SourceRow{
+			svRow("1", "Jahmyr Gibbs", "RB", "beer", 73, 68, 93, false, false),
+			svRow("1", "Jahmyr Gibbs", "RB", "beerplus", 71, 68, 93, false, false),
+			svRow("1", "Jahmyr Gibbs", "RB", "vols", 91, 68, 93, false, false),
+			svRow("2", "Justin Jefferson", "WR", "beerplus", 44, 47, 67, true, true),
+			svRow("3", "George Kittle", "TE", "beerplus", 6, 3, 6, false, true),
+		},
+		CielyPoints:    map[string]float64{"1": 324, "2": 240, "3": 155},
+		Availability:   map[string]string{"3": "PUP"},
+		Costs:          map[string]int{"1": 72, "2": 50, "3": 4},
+		RecommendedBid: 90,
+		Leans: Leans{
+			normalizeName("Jahmyr Gibbs"):     {Player: "Jahmyr Gibbs", Lean: LeanUp, Note: "believe"},
+			normalizeName("George Kittle"):    {Player: "George Kittle", Lean: LeanDND, Note: "age"},
+			normalizeName("Justin Jefferson"): {Player: "Justin Jefferson", Lean: LeanDown},
+		},
+	}
+	return BuildSignals(in)
+}
+
+func find(t *testing.T, ps []PlayerSignals, name string) PlayerSignals {
+	t.Helper()
+	for _, p := range ps {
+		if p.Name == name {
+			return p
+		}
+	}
+	t.Fatalf("no signals for %s", name)
+	return PlayerSignals{}
+}
+
+func TestBuildSignalsFoldsBaselinesIntoOneRow(t *testing.T) {
+	ps := signalFixture()
+	if len(ps) != 4 {
+		t.Fatalf("expected one row per priced player, got %d", len(ps))
+	}
+	gibbs := find(t, ps, "Jahmyr Gibbs")
+	if len(gibbs.VBD) != 3 {
+		t.Errorf("expected 3 baselines, got %v", gibbs.VBD)
+	}
+	if gibbs.VBD[BaselineVOLS] != 91 || gibbs.VBD[BaselineBEER] != 73 {
+		t.Errorf("baseline values wrong: %v", gibbs.VBD)
+	}
+	// AAV and PS% are per player, not per baseline.
+	if gibbs.AAV != 68 || gibbs.ScarcityPct != 93 {
+		t.Errorf("aav=%v ps=%v, want 68/93", gibbs.AAV, gibbs.ScarcityPct)
+	}
+}
+
+// TestBuildSignalsKeepsSourcesSeparate — nothing may be silently blended.
+// The market price leads and the references sit beside it.
+func TestBuildSignalsKeepsSourcesSeparate(t *testing.T) {
+	gibbs := find(t, signalFixture(), "Jahmyr Gibbs")
+	if gibbs.Value != 76 {
+		t.Errorf("value = %d, want the re-solved 76", gibbs.Value)
+	}
+	if gibbs.Cost != 72 {
+		t.Errorf("cost = %d, want 72 — a separate quantity from value", gibbs.Cost)
+	}
+	if gibbs.Edge() != 4 {
+		t.Errorf("Edge = %d, want +4 (worth more than he costs)", gibbs.Edge())
+	}
+	if gibbs.AAV != 68 {
+		t.Errorf("AAV should stay 68 alongside, got %v", gibbs.AAV)
+	}
+}
+
+func TestBaselineSpreadFlagsFragileBuys(t *testing.T) {
+	ps := signalFixture()
+	// Gibbs swings $71 (BEER+) to $91 (VOLS): his price depends heavily
+	// on where replacement level is drawn, which makes him fragile.
+	if got := find(t, ps, "Jahmyr Gibbs").BaselineSpread(); got != 20 {
+		t.Errorf("spread = %v, want 20", got)
+	}
+	// A single baseline has no spread, and must not report a false one.
+	if got := find(t, ps, "Justin Jefferson").BaselineSpread(); got != 0 {
+		t.Errorf("spread = %v, want 0 for a single baseline", got)
+	}
+	if got := find(t, ps, "Nobody Known").BaselineSpread(); got != 0 {
+		t.Errorf("spread = %v, want 0 when no source covers him", got)
+	}
+}
+
+func TestContestedSurvivesTheFold(t *testing.T) {
+	ps := signalFixture()
+	if !find(t, ps, "Justin Jefferson").Contested() {
+		t.Error("Jefferson carries both ECR arrows and should read contested")
+	}
+	if find(t, ps, "George Kittle").ECR != ECRDownside {
+		t.Error("Kittle carries only the down arrow")
+	}
+	if find(t, ps, "Jahmyr Gibbs").ECR != ECRConsensus {
+		t.Error("Gibbs is covered and carries neither arrow, so consensus")
+	}
+}
+
+func TestLeansApplyToMyBidNotTheMarket(t *testing.T) {
+	ps := signalFixture()
+	gibbs := find(t, ps, "Jahmyr Gibbs")
+	if gibbs.Value != 76 {
+		t.Errorf("a lean must not move the value, got %d", gibbs.Value)
+	}
+	if gibbs.MyMaxBid != 87 {
+		t.Errorf("my max bid = %d, want 87 (76 x 1.15)", gibbs.MyMaxBid)
+	}
+	kittle := find(t, ps, "George Kittle")
+	if kittle.Value != 14 || kittle.MyMaxBid != 0 {
+		t.Errorf("dnd should zero my bid but leave the value at 14: %d/%d",
+			kittle.Value, kittle.MyMaxBid)
+	}
+}
+
+// TestBuildSignalsHandlesUncoveredPlayers — a player no source mentions
+// still belongs on the board at his market price, with silence read as
+// "no opinion" rather than "worthless".
+func TestBuildSignalsHandlesUncoveredPlayers(t *testing.T) {
+	p := find(t, signalFixture(), "Nobody Known")
+	if p.Value != 3 || p.MyMaxBid != 3 {
+		t.Errorf("uncovered player should keep his value, got %d/%d", p.Value, p.MyMaxBid)
+	}
+	// "Nobody looked" must not read as "everyone agrees".
+	if p.AAV != 0 || p.ECR != ECRUnknown {
+		t.Errorf("expected unknown references, got aav=%v ecr=%q", p.AAV, p.ECR)
+	}
+}
+
+func TestAvailabilityCarriesThrough(t *testing.T) {
+	if got := find(t, signalFixture(), "George Kittle").Availability; got != "PUP" {
+		t.Errorf("availability = %q, want PUP", got)
+	}
+	if got := find(t, signalFixture(), "Jahmyr Gibbs").Availability; got != "" {
+		t.Errorf("availability = %q, want empty for a healthy player", got)
+	}
+}
+
+// TestEdgesRankBargainsFirst is the primary decision view: worth more than
+// he costs, versus paying for something a median cannot see.
+func TestEdgesRankBargainsFirst(t *testing.T) {
+	got := Edges(signalFixture(), 1)
+	if len(got) == 0 {
+		t.Fatal("expected edges")
+	}
+	// Kittle: value 14 against cost 4 = +10, the best bargain here.
+	if got[0].Name != "George Kittle" || got[0].Edge() != 10 {
+		t.Errorf("best edge = %s %+d, want Kittle +10", got[0].Name, got[0].Edge())
+	}
+	// A player no market source covers has no cost and cannot have an edge.
+	for _, p := range got {
+		if p.Name == "Nobody Known" {
+			t.Error("an uncovered player must not appear in the edge list")
+		}
+	}
+}
+
+func TestEdgesRespectMinimum(t *testing.T) {
+	if got := Edges(signalFixture(), 100); len(got) != 0 {
+		t.Errorf("expected nothing above a $100 threshold, got %d", len(got))
+	}
+}
+
+func TestGapsSkipSilentSources(t *testing.T) {
+	for _, g := range Gaps(signalFixture(), "aav", 1) {
+		if g.Player == "Nobody Known" {
+			t.Error("a silent source must not produce a gap")
+		}
+	}
+}
+
+func TestGapsRespectMinimum(t *testing.T) {
+	if got := Gaps(signalFixture(), "aav", 100); len(got) != 0 {
+		t.Errorf("expected no gaps above a $100 threshold, got %v", got)
+	}
+}
+
+func TestGapsAgainstABaseline(t *testing.T) {
+	gaps := Gaps(signalFixture(), string(BaselineVOLS), 1)
+	// Only Gibbs carries a VOLS value: cost 72 against 91 = -19.
+	if len(gaps) != 1 || gaps[0].Delta != -19 {
+		t.Errorf("expected one -23 gap against VOLS, got %+v", gaps)
+	}
+}
+
+func TestScarcityMeasuresDepthAndCliff(t *testing.T) {
+	players := []PlayerSignals{
+		{Name: "RB1", Position: "RB", CielyPoints: 320, ScarcityPct: 90},
+		{Name: "RB2", Position: "RB", CielyPoints: 315, ScarcityPct: 80},
+		{Name: "RB3", Position: "RB", CielyPoints: 250, ScarcityPct: 40},
+		{Name: "WR1", Position: "WR", CielyPoints: 300, ScarcityPct: 95},
+	}
+	state := HitOrMissPool()
+	got := Scarcity(players, state)
+
+	rb := got["RB"]
+	if rb.Remaining != 3 {
+		t.Errorf("RB remaining = %d, want 3", rb.Remaining)
+	}
+	// The cliff is the biggest single drop among the top few: 315 -> 250.
+	if rb.Cliff != 65 {
+		t.Errorf("RB cliff = %v, want 65", rb.Cliff)
+	}
+	if rb.TopScarcityPct != 90 {
+		t.Errorf("top PS%% = %v, want 90", rb.TopScarcityPct)
+	}
+	if got["WR"].Cliff != 0 {
+		t.Errorf("a lone player has no cliff, got %v", got["WR"].Cliff)
+	}
+}
+
+// biasFixture is a board where one whole position is lifted by a source
+// artifact, plus one player who is genuinely better than his position.
+func biasFixture() []PlayerSignals {
+	var out []PlayerSignals
+	// Every TE reads about +14 because the value source prices the
+	// position far deeper than the market does. None of it is real.
+	for i, edge := range []int{15, 14, 13, 14} {
+		out = append(out, PlayerSignals{
+			Name: fmt.Sprintf("TE%d", i+1), Position: "TE",
+			Cost: 10, Value: 10 + edge,
+		})
+	}
+	// Running backs sit near zero, so a standout there is genuine.
+	for i, edge := range []int{1, 0, -1, 12} {
+		out = append(out, PlayerSignals{
+			Name: fmt.Sprintf("RB%d", i+1), Position: "RB",
+			Cost: 40, Value: 40 + edge,
+		})
+	}
+	return out
+}
+
+func TestPositionalBiasFindsTheCommonComponent(t *testing.T) {
+	bias := PositionalBias(biasFixture())
+	if bias["TE"] != 14 {
+		t.Errorf("TE bias = %v, want the median 14", bias["TE"])
+	}
+	if bias["RB"] != 0.5 {
+		t.Errorf("RB bias = %v, want the median 0.5", bias["RB"])
+	}
+}
+
+// TestAdjustedEdgeStripsThePositionalStory is the point of the whole
+// exercise: a +15 tight end on a board where every tight end reads +14 is
+// not a bargain, and a +12 back on a flat position is.
+func TestAdjustedEdgeStripsThePositionalStory(t *testing.T) {
+	players := biasFixture()
+	bias := PositionalBias(players)
+
+	ranked := RankByAdjustedEdge(players, bias, 0)
+	if ranked[0].Name != "RB4" {
+		t.Errorf("best adjusted edge = %s, want RB4 — the only genuine outlier", ranked[0].Name)
+	}
+
+	byName := map[string]PlayerSignals{}
+	for _, p := range players {
+		byName[p.Name] = p
+	}
+	// Raw edge says the tight end is the better buy...
+	if byName["TE1"].Edge() <= byName["RB4"].Edge() {
+		t.Fatal("fixture no longer demonstrates the trap")
+	}
+	// ...and adjusting says the opposite.
+	if AdjustedEdge(byName["TE1"], bias) >= AdjustedEdge(byName["RB4"], bias) {
+		t.Errorf("adjustment failed: TE1 %.1f vs RB4 %.1f",
+			AdjustedEdge(byName["TE1"], bias), AdjustedEdge(byName["RB4"], bias))
+	}
+}
+
+func TestPositionalBiasIgnoresUncoveredPlayers(t *testing.T) {
+	players := append(biasFixture(), PlayerSignals{Name: "Ghost", Position: "TE", Cost: 0, Value: 99})
+	if got := PositionalBias(players)["TE"]; got != 14 {
+		t.Errorf("a player with no cost must not shift the bias: %v", got)
+	}
+}
+
+func TestRankByAdjustedEdgeRespectsMinimum(t *testing.T) {
+	players := biasFixture()
+	bias := PositionalBias(players)
+	if got := RankByAdjustedEdge(players, bias, 100); len(got) != 0 {
+		t.Errorf("expected nothing above a 100 threshold, got %d", len(got))
+	}
+}
