@@ -14,7 +14,7 @@ func healthyState() MyState {
 
 func roomyScarcity() map[string]PositionScarcity {
 	return map[string]PositionScarcity{
-		"RB": {Position: "RB", Startable: 40, StartersLeft: 20, Cover: 2, TopScarcityPct: 85},
+		"RB": {Position: "RB", Startable: 40, StartersLeft: 20, Cover: 2, Gone: 7, TopScarcityPct: 85},
 		"WR": {Position: "WR", Startable: 60, StartersLeft: 30, Cover: 2, TopScarcityPct: 90},
 		"QB": {Position: "QB", Startable: 16, StartersLeft: 8, Cover: 2, TopScarcityPct: 70},
 		"TE": {Position: "TE", Startable: 16, StartersLeft: 8, Cover: 2, TopScarcityPct: 70},
@@ -109,26 +109,38 @@ func TestTierCliffNeedsAMeaningfulDrop(t *testing.T) {
 // while backs are plentiful.
 func TestRB33(t *testing.T) {
 	scarce := roomyScarcity()
+	// healthyState needs 1 RB. Seven backs gone leaves 26 inside the
+	// window, far more than one, so there is nothing to say yet.
 	if got := Pivots(nil, scarce, healthyState(), DraftTempo{}); len(got) != 0 {
-		t.Errorf("twice as many startable backs as spots should not fire RB33: %+v", got)
+		t.Errorf("early in the draft should not fire RB33: %+v", got)
 	}
 
-	// Fewer backs worth starting than starting spots left to fill.
-	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 12, StartersLeft: 20, Cover: 0.6, TopScarcityPct: 85}
+	// One back left before the window shuts and one still needed.
+	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 12, StartersLeft: 20, Gone: 32, TopScarcityPct: 85}
 	top, fired := Top(Pivots(nil, scarce, healthyState(), DraftTempo{}))
 	if !fired || top.Name != "RB33" {
-		t.Fatalf("expected RB33 once cover drops below 1, got %+v", top)
+		t.Fatalf("expected RB33 as the window closes, got %+v", top)
 	}
-	if !strings.Contains(top.Reason, "12") {
-		t.Errorf("reason should say how many are startable: %q", top.Reason)
+	if !strings.Contains(top.Reason, "lock one up") {
+		t.Errorf("inside the window the advice is to act: %q", top.Reason)
 	}
 
-	// Exactly enough is not yet scarce.
-	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 20, StartersLeft: 20, Cover: 1, TopScarcityPct: 85}
-	for _, p := range Pivots(nil, scarce, healthyState(), DraftTempo{}) {
-		if p.Name == "RB33" {
-			t.Errorf("cover of exactly 1 should not fire RB33: %+v", p)
-		}
+	// Past the 33rd the advice flips.
+	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 8, StartersLeft: 14, Gone: 35, TopScarcityPct: 85}
+	top, fired = Top(Pivots(nil, scarce, healthyState(), DraftTempo{}))
+	if !fired || top.Name != "RB33" {
+		t.Fatalf("expected RB33 past the cutoff, got %+v", top)
+	}
+	if !strings.Contains(top.Reason, "receiver") {
+		t.Errorf("past the window the advice is to pivot: %q", top.Reason)
+	}
+
+	// TestRB33CouldNeverFireOnRemainingCounts is the regression that matters:
+	// 108 backs are listed, so a rule reading "fewer than 33 left" was
+	// unreachable. Plenty gone must fire even with plenty still listed.
+	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 15, StartersLeft: 10, Gone: 40, TopScarcityPct: 85}
+	if _, fired := Top(Pivots(nil, scarce, healthyState(), DraftTempo{})); !fired {
+		t.Error("40 backs gone must fire regardless of how many are still listed")
 	}
 }
 

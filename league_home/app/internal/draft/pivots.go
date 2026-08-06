@@ -187,32 +187,52 @@ func bestPointsAt(players []PlayerSignals, pos string) float64 {
 	return best
 }
 
+// cielyRBCutoff is the back whose departure closes the window: Ciely's rule
+// is stated as the 33rd running back coming off the board.
+const cielyRBCutoff = 33
+
 // rb33Pivot encodes Ciely's rule: lock up backs before the 33rd comes off
 // the board, because after that every receiver you take while the room
 // chases running backs builds an edge.
 //
-// The trigger is startable backs against the backs the room still has to
-// start, not a raw count. Against a raw count this could never fire: 108
-// players are listed at running back and a 12-team draft makes 168 picks in
-// total, so "fewer than 33 backs left on the board" was unreachable. The
-// count that moves is the one that ignores waiver fodder.
+// The count is backs that have *gone*, which is what the rule says and is
+// not the same as backs remaining. This compared 33 against the number still
+// on the board, and 108 players are listed at running back while a 12-team
+// draft makes 168 picks in total — so "fewer than 33 backs left" needed 75
+// of them gone and could never happen. The rule never fired once.
 //
-// Cover below 1 is Ciely's moment stated in this league's terms — fewer
-// backs worth starting than starting spots left to fill, so from here the
-// room is bidding on replacement level and the receivers are the edge.
+// Two moments, because the rule has two halves. Before the window closes it
+// is advice to act; after, it is advice to stop. The line between them is
+// whether the backs left inside the window still cover what you need, which
+// comes from the rule and your own roster rather than from a number picked
+// here.
 func rb33Pivot(scarcity map[string]PositionScarcity, me MyState) []Pivot {
 	s, ok := scarcity["RB"]
-	if !ok || me.StartersNeeded["RB"] <= 0 {
+	need := me.StartersNeeded["RB"]
+	if !ok || need <= 0 {
 		return nil
 	}
-	if s.Startable == 0 || s.Cover >= 1 {
-		return nil
+
+	if left := cielyRBCutoff - s.Gone; left > 0 {
+		// Still inside the window. Only worth saying once you can no longer
+		// expect to fill your backfield before it shuts.
+		if left > need {
+			return nil
+		}
+		return []Pivot{{
+			Name:     "RB33",
+			Position: "RB",
+			Reason: fmt.Sprintf("%d backs before Ciely's 33rd comes off and you still need %d — lock one up now",
+				left, need),
+			Priority: priorityRB33,
+		}}
 	}
+
 	return []Pivot{{
 		Name:     "RB33",
 		Position: "RB",
-		Reason: fmt.Sprintf("%d startable backs left for %d starting spots and you still need %d — after this the WR/RB gap swings your way",
-			s.Startable, s.StartersLeft, me.StartersNeeded["RB"]),
+		Reason: fmt.Sprintf("%d backs gone, past Ciely's 33rd — every receiver you take while the room chases backs builds an edge",
+			s.Gone),
 		Priority: priorityRB33,
 	}}
 }
