@@ -43,7 +43,7 @@ if (!location.pathname.endsWith("/")) {
           <th class="num">Cost</th><th class="num">Value</th>
           <th class="num">Edge</th><th class="num">vs Pos</th>
           <th class="num">My Max</th><th class="num">PS%</th>
-          <th>Flags</th><th class="sold-col"></th>
+          <th>Flags</th><th class="sold-col"></th><th class="try-col"></th>
         </tr>
       </thead>
       <tbody id="rows"></tbody>
@@ -51,6 +51,19 @@ if (!location.pathname.endsWith("/")) {
   </section>
 
   <aside>
+    <section id="scratch-panel" class="scratch">
+      <h2>Scratch roster <span class="mode">hypothetical</span></h2>
+      <div class="scratch-stats">
+        <div><span class="k">spent</span><span class="v" id="s-spent">$0</span></div>
+        <div><span class="k">left</span><span class="v" id="s-left">—</span></div>
+        <div><span class="k">slots</span><span class="v" id="s-slots">—</span></div>
+        <div><span class="k">POPR</span><span class="v" id="s-popr">0</span></div>
+      </div>
+      <table class="mini lineup" id="s-lineup"></table>
+      <p class="note" id="s-note">Click <kbd>+</kbd> on a row to try a player here.
+      Nothing on this panel touches the live board.</p>
+      <button id="s-clear" class="undo">clear roster</button>
+    </section>
     <section>
       <h2>Positional bias</h2>
       <table class="mini" id="bias"></table>

@@ -238,3 +238,66 @@ kbd {
   padding: 0 0.3rem;
   font-family: inherit;
 }
+
+/* ---- scratch roster ----------------------------------------------------
+   Visually distinct from the live board on purpose: a hypothetical roster
+   on screen during a real draft is exactly the confusion this design exists
+   to prevent. */
+
+.scratch { border-color: var(--accent); }
+
+.scratch h2 .mode {
+  float: right;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  padding: 0 0.35rem;
+  border-radius: 3px;
+  background: #1d3352;
+  color: var(--accent);
+}
+
+.scratch-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+.scratch-stats .k {
+  display: block;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+}
+.scratch-stats .v { font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.scratch-stats .v.bad { color: var(--bad); }
+
+.lineup td { padding: 0.16rem 0; font-size: 0.85rem; }
+.lineup .slot { color: var(--dim); width: 3rem; }
+.lineup .price { text-align: right; color: var(--dim); width: 3rem; }
+.lineup .drop {
+  width: 1rem;
+  text-align: right;
+  color: var(--dim);
+  cursor: pointer;
+}
+.lineup .drop:hover { color: var(--bad); }
+.lineup tr.hole td { color: var(--warn); font-style: italic; }
+.lineup tr.bench td { color: var(--dim); }
+
+.try-col { width: 2rem; }
+.try {
+  padding: 0.1rem 0.4rem;
+  font-size: 0.75rem;
+  background: #1d3352;
+  color: var(--accent);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.try:hover { border-color: var(--accent); }
+tr.in-scratch { background: #16233a; }
+
+/* The imagined price is editable, so it has to look clickable. */
+.lineup td[data-reprice] { cursor: pointer; border-bottom: 1px dotted var(--dim); }
+.lineup td[data-reprice]:hover { color: var(--accent); }

@@ -4,11 +4,21 @@
 // The server owns every number. This file filters and draws — it must never
 // compute a price, or the page and the terminal would eventually disagree.
 
-const POLL_MS = 20000;
+// Matched to the server's own Sleeper poll: it can't have newer data than
+// that, and /api/scratch/view is served from the cached snapshot, so asking
+// this often costs no Sleeper traffic at all.
+const POLL_MS = 2000;
 
 let snap = null;
+let scratch = null;
 let filter = "";
 let affordableOnly = false;
+
+// Player IDs currently on the scratch roster, so board rows can show it.
+function scratchIDs() {
+  if (!scratch) return new Set();
+  return new Set([...(scratch.starters || []), ...(scratch.bench || [])].map(s => s.playerId));
+}
 
 async function fetchJSON(url, options) {
   const res = await fetch(url, options);
@@ -91,6 +101,7 @@ function draw() {
     .sort((a, b) => a[1].TopScarcityPct - b[1].TopScarcityPct)
     .map(([pos, s]) => [pos, `${s.Remaining} left · ${Math.round(s.TopScarcityPct)}%`]));
   drawSold();
+  drawScratch();
 
   document.getElementById("status").textContent =
     `${snap.players.length} available · updated ${new Date().toLocaleTimeString()}` +
@@ -135,6 +146,7 @@ function drawRows() {
   document.getElementById("hint").textContent =
     needle ? `${rows.length} matching` : "";
 
+  const inScratch = scratchIDs();
   tbody.innerHTML = rows.map(p => {
     const lean = (p.Lean && p.Lean.Lean) || "";
     const tooRich = p.MyMaxBid > snap.maxBid;
@@ -143,7 +155,8 @@ function drawRows() {
     else if (tooRich) myMax = `<span class="mymax bad">$${snap.maxBid}!</span>`;
     else myMax = `<span class="mymax${p.BidRule === "must-have" ? " must" : ""}">$${p.MyMaxBid}</span>`;
 
-    return `<tr class="${tooRich ? "unaffordable" : ""}">
+    const trying = inScratch.has(p.PlayerID);
+    return `<tr class="${tooRich ? "unaffordable" : ""} ${trying ? "in-scratch" : ""}">
       <td>${esc(p.Name)}</td>
       <td class="pos pos-${esc(p.Position)}">${esc(p.Position)}</td>
       <td class="num">${p.Cost ? money(p.Cost) : "—"}</td>
@@ -157,6 +170,9 @@ function drawRows() {
         <button class="mine" data-player="${esc(p.Name)}" data-mine="1">me</button>
         <button data-player="${esc(p.Name)}" data-mine="0">them</button>
       </td>
+      <td><button class="try" data-try="${esc(p.Name)}" data-in="${trying ? 1 : 0}"
+          title="${trying ? "remove from the scratch roster" : "try him on the scratch roster"}"
+          >${trying ? "\u2212" : "+"}</button></td>
     </tr>`;
   }).join("");
 }
@@ -173,6 +189,60 @@ function drawSold() {
   if (!entries.length) { el.innerHTML = `<li class="empty">none yet</li>`; return; }
   el.innerHTML = entries.map(([name, price]) =>
     `<li>${esc(name)}<span class="price">${price ? "$" + price : "them"}</span></li>`).join("");
+}
+
+function drawScratch() {
+  if (!scratch) return;
+  const m = scratch.metrics || {};
+  document.getElementById("s-spent").textContent = `$${m.Spend || 0}`;
+  document.getElementById("s-left").textContent = `$${scratch.budgetLeft}`;
+  document.getElementById("s-slots").textContent = scratch.slotsLeft;
+  document.getElementById("s-popr").textContent = Math.round(m.POPR || 0);
+
+  // A roster you cannot afford is the one thing worth shouting about.
+  document.getElementById("s-left").className =
+    "v" + (scratch.budgetLeft < 0 ? " bad" : "");
+
+  const rows = [];
+  for (const s of scratch.starters || []) {
+    rows.push(`<tr><td class="slot">${esc(s.slot)}</td><td>${esc(s.name)}</td>` +
+      `<td class="price" data-reprice="${esc(s.name)}" title="click to change the price">$${s.price}</td>` +
+      `<td class="drop" data-drop="${esc(s.name)}" title="remove">&times;</td></tr>`);
+  }
+  for (const slot of scratch.unfilled || []) {
+    rows.push(`<tr class="hole"><td class="slot">${esc(slot)}</td>` +
+      `<td colspan="3">empty</td></tr>`);
+  }
+  for (const s of scratch.bench || []) {
+    rows.push(`<tr class="bench"><td class="slot">BN</td><td>${esc(s.name)}</td>` +
+      `<td class="price" data-reprice="${esc(s.name)}" title="click to change the price">$${s.price}</td>` +
+      `<td class="drop" data-drop="${esc(s.name)}" title="remove">&times;</td></tr>`);
+  }
+  document.getElementById("s-lineup").innerHTML = rows.join("");
+
+  const note = document.getElementById("s-note");
+  if (scratch.empty) {
+    note.textContent = "Click + on a row to try a player here. Nothing on this panel touches the live board.";
+  } else {
+    const bits = [`${m.MyGuys || 0} of your guys`];
+    if (m.Injured) bits.push(`${m.Injured} carrying an injury designation`);
+    if (m.DNDViolations) bits.push(`${m.DNDViolations} do-not-draft!`);
+    if ((scratch.dropped || []).length) {
+      bits.push(`dropped (drafted for real): ${scratch.dropped.join(", ")}`);
+    }
+    note.textContent = bits.join(" \u00b7 ");
+  }
+}
+
+async function scratchAction(action, player, price) {
+  const res = await fetchJSON("api/scratch", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, player, price: price || 0 }),
+  });
+  snap = res.board;
+  scratch = res.scratch;
+  draw();
 }
 
 // ---- recording sales -------------------------------------------------
@@ -204,6 +274,30 @@ document.addEventListener("click", async ev => {
   const btn = ev.target.closest("button[data-player]");
   if (btn) {
     await recordSale(btn.dataset.player, btn.dataset.mine === "1");
+    return;
+  }
+  const tryBtn = ev.target.closest("button[data-try]");
+  if (tryBtn) {
+    const name = tryBtn.dataset.try;
+    await scratchAction(tryBtn.dataset.in === "1" ? "remove" : "add", name);
+    return;
+  }
+  const reprice = ev.target.closest("[data-reprice]");
+  if (reprice) {
+    const name = reprice.dataset.reprice;
+    const now = prompt(`What do you think ${name} goes for?`, reprice.textContent.replace("$", ""));
+    if (now !== null && now.trim() !== "") {
+      await scratchAction("add", name, Math.max(1, parseInt(now, 10) || 1));
+    }
+    return;
+  }
+  const drop = ev.target.closest("[data-drop]");
+  if (drop) {
+    await scratchAction("remove", drop.dataset.drop);
+    return;
+  }
+  if (ev.target.id === "s-clear") {
+    await scratchAction("clear", "");
     return;
   }
   if (ev.target.id === "undoall") {
@@ -244,7 +338,9 @@ document.addEventListener("keydown", ev => {
 async function refresh() {
   try {
     const sold = snap && snap.__sold;
-    snap = await fetchJSON("api/board");
+    const res = await fetchJSON("api/scratch/view");
+    snap = res.board;
+    scratch = res.scratch;
     snap.__sold = sold || {};
     draw();
   } catch (err) {

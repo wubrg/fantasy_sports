@@ -275,6 +275,22 @@ func (s *staticData) positionOf(playerID string) string {
 	return ""
 }
 
+// nameOf returns a player's display name, for reporting someone who has
+// left the board.
+func (s *staticData) nameOf(playerID string) string {
+	for _, p := range s.projections {
+		if p.PlayerID == playerID {
+			return p.Name
+		}
+	}
+	for _, m := range s.market {
+		if m.PlayerID == playerID {
+			return m.Name
+		}
+	}
+	return playerID
+}
+
 // playerIDByName resolves a board name to a Sleeper ID, normalizing so
 // punctuation in what the page rendered cannot defeat the match.
 func (s *staticData) playerIDByName(name string) string {

@@ -160,10 +160,30 @@ undoes everything.
 Keyboard: `/` focuses the filter, `Esc` clears it. Typing a position
 ("rb") filters to it.
 
-The page polls every 20s and the server caches for the same, because
-building a snapshot walks five seasons of history and the 5 MB player
-dictionary. Hitting Sleeper per request during a live draft would be a bad
-way to get rate-limited.
+**The scratch roster** is the panel on the right, bordered and chipped
+`hypothetical` so it can never be mistaken for the live board. `+` on any
+row tries that player at his board price; click his price in the panel to
+change what you think he goes for; `×` takes him off. The panel shows the
+lineup filling slot by slot, the starting slots still empty, spend, budget
+left, slots left and live POPR — the same POPR the archetypes report, from
+the same scorer, so a roster you build by hand and a shape `draftroom
+shapes` produced are directly comparable.
+
+Nothing in the panel touches the draft. Scratch picks do not debit your
+budget, do not remove anyone from the board, and are never confused with a
+recorded sale — a leak in that direction would corrupt draft-night
+arithmetic invisibly, since a scratch pick and a real sale both look like a
+player leaving the board. The one way the live board reaches in: a player
+who gets drafted for real while sitting in your scratch roster is dropped
+from it and named in the note, because planning around someone already gone
+is worse than losing the note. The roster lives in server memory and starts
+empty on restart.
+
+The page polls every 2s, matched to the server's own Sleeper poll — it
+cannot have newer data than that. Both API reads are served from the cached
+snapshot, so the page costs no Sleeper traffic at all; the server does the
+one live-picks call, because building a full snapshot walks five seasons of
+history and the 5 MB player dictionary.
 
 To reach it from another device on your tailnet, the leagueweb pattern
 applies — see the `leagueweb-serve-*` targets for the shape.
