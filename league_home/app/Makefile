@@ -65,6 +65,9 @@ leans: draftroom ## Show the merged lean sets and what they disagree about (LEAN
 leans-generate: draftroom ## Rebuild the generated lean sets from the private source data
 	./draftroom leans -generate
 
+calibrate: draftroom ## Measure the archetype thresholds against past drafts (SEASONS=2023,2024,2025)
+	./draftroom calibrate $(if $(SEASONS),-seasons "$(SEASONS)",)
+
 install: ## Install draftroom into $GOBIN so it runs from any directory
 	@go install -ldflags "\
 		-X main.builtinConfigDir=$$(pwd)/internal/draft/data \

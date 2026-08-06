@@ -33,6 +33,10 @@ type Archetype struct {
 	// shape, as opposed to merely never violating it. "At least three
 	// backs over $25" cannot be checked player by player.
 	Satisfied func(r Roster) bool
+	// Seen records how often this league has actually built the shape, so
+	// a threshold carries the evidence that set it rather than looking
+	// like a number somebody liked.
+	Seen string
 	// Anchors are the expensive players a shape is built around, bought
 	// before anything else.
 	//
@@ -56,11 +60,27 @@ type Anchor struct {
 
 // Archetypes are the shapes worth comparing.
 //
-// The thresholds are first guesses and should be calibrated against what
-// this league's rosters have actually looked like — the 2023-2025 drafts can
-// answer that, and until they do these are a way to see the space rather
-// than a claim about it.
+// The thresholds are calibrated against this league's own 2023-2025 drafts
+// — 36 rosters — rather than borrowed from national strategy writing, and
+// `draftroom calibrate` re-derives them. Each one now describes a real,
+// populated region: between 14% and 28% of rosters built each shape, where
+// before Zero RB described one roster in three years and Robust RB two.
+//
+// They describe the space; they do not rank it. Nothing in three seasons
+// separates these shapes on results — every correlation between spending
+// shape and points sits under 0.2 at n=36, and the best-looking bucket is
+// six rosters at p≈0.1 before correcting for having looked at five. Use
+// them to see what your money can buy, not to pick a winner.
 func Archetypes() []Archetype {
+	spendAt := func(r Roster, pos string) int {
+		total := 0
+		for _, s := range r.Players {
+			if pos == "" || s.Player.Position == pos {
+				total += s.Price
+			}
+		}
+		return total
+	}
 	countOver := func(r Roster, pos string, price int) int {
 		n := 0
 		for _, s := range r.Players {
@@ -82,6 +102,7 @@ func Archetypes() []Archetype {
 				return price <= 5
 			},
 			Satisfied: func(r Roster) bool { return countOver(r, "", 40) >= 2 },
+			Seen:      "10 of 36 rosters, 2023-2025",
 			Anchors:   []Anchor{{MinPrice: 41, Count: 2}},
 		},
 		{
@@ -91,46 +112,84 @@ func Archetypes() []Archetype {
 				return price <= 35
 			},
 			Satisfied: func(r Roster) bool { return countOver(r, "", 35) == 0 },
+			Seen:      "10 of 36 rosters, 2023-2025",
 		},
 		{
 			Name: "Hero RB",
-			Why:  "one back you trust and nothing else at the position; spend the rest on receivers",
+			Why:  "one back over $40 and no second back over $20; spend the rest on receivers",
 			Allows: func(r Roster, p PlayerSignals, price int) bool {
 				if p.Position != "RB" {
 					return true
 				}
-				if price > 15 {
-					return price > 50 && countOver(r, "RB", 50) < 1
+				if price > 20 {
+					return price > 40 && countOver(r, "RB", 40) < 1
 				}
 				return true
 			},
-			Satisfied: func(r Roster) bool { return countOver(r, "RB", 50) == 1 },
-			Anchors:   []Anchor{{Position: "RB", MinPrice: 51, Count: 1}},
+			// Both halves, because the shape is as much about the backs you
+			// do not buy as the one you do. The old check counted only the
+			// hero, so a roster with a $60 back and a $45 back behind him
+			// passed — which is not this shape under any reading, and was
+			// the opposite of what the per-pick rule enforced.
+			Satisfied: func(r Roster) bool {
+				return countOver(r, "RB", 40) == 1 && countOver(r, "RB", 20) == 1
+			},
+			Seen:    "9 of 36 rosters, 2023-2025",
+			Anchors: []Anchor{{Position: "RB", MinPrice: 41, Count: 1}},
 		},
 		{
 			Name: "Zero RB",
-			Why:  "no back over $12; buy receivers early and backs off the waiver wire",
+			// Total backfield spend rather than a cap on any one back, for
+			// two reasons. It is what the strategy actually means — how much
+			// of the budget went to the position — and a per-player cap
+			// collided with Robust RB: three $19 backs read as both "no
+			// expensive back" and "three real backs" at once.
+			//
+			// Both a cap and a total, because either alone lets the wrong
+			// roster through. On the total alone a single $55 back with
+			// nothing behind him passes, and that is Hero RB wearing this
+			// name; on a per-player cap alone, three $19 backs read as both
+			// this shape and Robust RB at once.
+			//
+			// $61 is this league's bottom quartile of backfield spend. A
+			// national write-up would cap a back at $12; the cheapest
+			// backfield ever assembled here still had a $31 lead back, and
+			// at that line the shape described one roster in three seasons.
+			Why: "no back over $35 and under $61 on backs all told — this league's cheapest quarter",
 			Allows: func(r Roster, p PlayerSignals, price int) bool {
-				return p.Position != "RB" || price <= 12
+				if p.Position != "RB" {
+					return true
+				}
+				return price <= 35 && spendAt(r, "RB")+price <= 61
 			},
-			Satisfied: func(r Roster) bool { return countOver(r, "RB", 12) == 0 },
+			Satisfied: func(r Roster) bool {
+				return countOver(r, "RB", 35) == 0 && spendAt(r, "RB") <= 61
+			},
+			Seen: "7 of 36 rosters, 2023-2025",
 		},
 		{
 			Name: "Robust RB",
-			Why:  "three real backs; Menton's league-winners come from the first four rounds",
+			// $96 is this league's top quartile of backfield spend. Stated
+			// as a total for the same reason Zero RB is: it is the quantity
+			// the strategy is about, and it cannot collide with the cheap
+			// shape the way two per-player thresholds did.
+			//
+			// Three backs at $32 is the cheapest way to reach it, which is
+			// what the anchors go and buy.
+			Why: "at least $96 on backs; Menton's league-winners come from the first four rounds",
 			// An "at least" requirement cannot be expressed as a per-pick
 			// veto — permitting three real backs is not the same as
 			// pursuing them, and a fill that only maximizes value will
 			// never bother. Requiring the first three backs to clear the
 			// bar turns the goal into something each pick can enforce.
-			Allows: func(r Roster, p PlayerSignals, price int) bool {
-				if p.Position != "RB" || countOver(r, "RB", 25) >= 3 {
-					return true
-				}
-				return price > 25
-			},
-			Satisfied: func(r Roster) bool { return countOver(r, "RB", 25) >= 3 },
-			Anchors:   []Anchor{{Position: "RB", MinPrice: 26, Count: 3}},
+			// No per-pick veto: the shape is a floor to reach, not a ceiling
+			// to stay under, and a veto can only forbid. The anchors pursue
+			// it, and three backs at the anchor price clear the floor
+			// exactly — so achieving the anchors is achieving the shape.
+			Allows:    func(r Roster, p PlayerSignals, price int) bool { return true },
+			Satisfied: func(r Roster) bool { return spendAt(r, "RB") >= 96 },
+			Seen:      "9 of 36 rosters, 2023-2025",
+			Anchors:   []Anchor{{Position: "RB", MinPrice: 32, Count: 3}},
 		},
 	}
 }

@@ -88,13 +88,16 @@ func main() {
 	me := fs.String("me", envOr("DRAFTROOM_OWNER_ID", ""), "your Sleeper owner ID, so the board knows your budget")
 	leans := fs.String("leans", defaultLeanSets, "lean sets to apply, in precedence order: the first to name a player owns him")
 	generate := fs.Bool("generate", false, "leans: rebuild the generated sets from source data")
+	seasons := fs.String("seasons", "2023,2024,2025", "calibrate: seasons to measure, comma separated (empty for every usable one)")
+	includeAll := fs.Bool("all", false, "calibrate: include seasons whose prices are not comparable")
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: draftroom <command> [flags]\n\ncommands:\n")
 		fmt.Fprintf(os.Stderr, "  keepers   reconcile keeper prices against Sleeper and show budgets\n")
 		fmt.Fprintf(os.Stderr, "  board     price the live pool and print the draft board\n")
 		fmt.Fprintf(os.Stderr, "  serve     serve the board as a web page for a second monitor\n")
 		fmt.Fprintf(os.Stderr, "  shapes    compare roster archetypes at current prices\n")
-		fmt.Fprintf(os.Stderr, "  leans     show the merged lean sets, or -generate to rebuild them\n\n")
+		fmt.Fprintf(os.Stderr, "  leans     show the merged lean sets, or -generate to rebuild them\n")
+		fmt.Fprintf(os.Stderr, "  calibrate measure the archetype thresholds against past drafts\n\n")
 		fs.PrintDefaults()
 	}
 
@@ -129,6 +132,12 @@ func main() {
 	case "leans":
 		if err := runLeans(orBuiltin(*configDir, builtinConfigDir),
 			orBuiltin(*dataDir, builtinDataDir), draft.SetNames(*leans), *generate); err != nil {
+			log("draftroom: %v", err)
+			os.Exit(1)
+		}
+	case "calibrate":
+		if err := runCalibrate(*leagueID, orBuiltin(*configDir, builtinConfigDir),
+			orBuiltin(*dataDir, builtinDataDir), draft.SetNames(*seasons), *includeAll); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}

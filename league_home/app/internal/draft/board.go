@@ -236,7 +236,9 @@ func WriteShapes(w io.Writer, shapes []Shape, budget int) error {
 	fmt.Fprintf(tw, "What each strategy buys at current prices. POPR is the starting lineup's\n")
 	fmt.Fprintf(tw, "points above positional replacement, which cancels the projection source's\n")
 	fmt.Fprintf(tw, "positional skew. These are illustrations of a shape, not the best possible\n")
-	fmt.Fprintf(tw, "roster of it — the fill is greedy and the thresholds are first guesses.\n\n")
+	fmt.Fprintf(tw, "roster of it — the fill is greedy. Thresholds are calibrated against this\n")
+	fmt.Fprintf(tw, "league's own 2023-2025 drafts; nothing in them separates these shapes on\n")
+	fmt.Fprintf(tw, "results, so read them as what your money can buy rather than as a ranking.\n\n")
 
 	fmt.Fprintln(tw, "SHAPE\tPOPR\tSPEND\tQB\tRB\tWR\tTE\tMY GUYS\tNOTES")
 	for _, s := range shapes {
@@ -256,6 +258,9 @@ func WriteShapes(w io.Writer, shapes []Shape, budget int) error {
 
 	for _, s := range shapes {
 		fmt.Fprintf(tw, "\n%s — %s\n", s.Archetype.Name, s.Archetype.Why)
+		if s.Archetype.Seen != "" {
+			fmt.Fprintf(tw, "  built %s\n", s.Archetype.Seen)
+		}
 		fmt.Fprintln(tw, "  SLOT\tPLAYER\tPOS\tPRICE\tPTS")
 		for _, spot := range s.Roster.Starters() {
 			fmt.Fprintf(tw, "  %s\t%s\t%s\t$%d\t%.0f\n",

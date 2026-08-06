@@ -72,10 +72,18 @@ func TestArchetypeConstraintsHold(t *testing.T) {
 	}
 
 	zero := byName["Zero RB"]
+	zeroRB := 0
 	for _, p := range zero.Roster.Players {
-		if p.Player.Position == "RB" && p.Price > 12 {
+		if p.Player.Position != "RB" {
+			continue
+		}
+		zeroRB += p.Price
+		if p.Price > 35 {
 			t.Errorf("Zero RB bought %s at $%d", p.Player.Name, p.Price)
 		}
+	}
+	if zeroRB > 61 {
+		t.Errorf("Zero RB put $%d into backs, over the $61 ceiling", zeroRB)
 	}
 
 	balanced := byName["Balanced"]
@@ -91,9 +99,9 @@ func TestArchetypeConstraintsHold(t *testing.T) {
 		if p.Player.Position != "RB" {
 			continue
 		}
-		if p.Price > 50 {
+		if p.Price > 40 {
 			over50++
-		} else if p.Price > 15 {
+		} else if p.Price > 20 {
 			t.Errorf("Hero RB bought a second-tier back: %s at $%d", p.Player.Name, p.Price)
 		}
 	}
@@ -282,8 +290,8 @@ func TestShapesDifferFromEachOther(t *testing.T) {
 		t.Errorf("Zero RB spent $%d at the position and Robust RB $%d",
 			rbSpend["Zero RB"], rbSpend["Robust RB"])
 	}
-	if rbSpend["Zero RB"] > 12*3 {
-		t.Errorf("Zero RB put $%d into backs", rbSpend["Zero RB"])
+	if rbSpend["Zero RB"] > 61 {
+		t.Errorf("Zero RB put $%d into backs, over the calibrated ceiling", rbSpend["Zero RB"])
 	}
 	// Stars & Scrubs should concentrate: a few big buys, the rest at the floor.
 	var stars Shape
@@ -324,14 +332,14 @@ func TestPossibleSeparatesTheBoardFromTheHeuristic(t *testing.T) {
 	// Strip them out and it genuinely cannot.
 	var thin []PlayerSignals
 	for _, p := range marketPool() {
-		if p.Position == "RB" && p.Cost > 25 {
+		if p.Position == "RB" && p.Cost > 32 {
 			continue
 		}
 		thin = append(thin, p)
 	}
 	poor := Fill(robust, thin, fillOpts())
 	if poor.Possible {
-		t.Error("without backs over $25 the shape is not possible")
+		t.Error("without backs at the anchor price the shape is not possible")
 	}
 	if poor.Achieved {
 		t.Error("and it certainly was not achieved")

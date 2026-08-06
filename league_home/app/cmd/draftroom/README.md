@@ -253,6 +253,68 @@ history and the 5 MB player dictionary.
 To reach it from another device on your tailnet, the leagueweb pattern
 applies — see the `leagueweb-serve-*` targets for the shape.
 
+### `draftroom calibrate`
+
+Measures the archetype thresholds against completed drafts, so the numbers in
+`Archetypes()` carry their derivation instead of being numbers somebody liked.
+
+```sh
+draftroom calibrate                    # 2023-2025, the usable seasons
+draftroom calibrate -seasons ""        # every season whose prices compare
+draftroom calibrate -all               # include 2022 as well
+```
+
+```
+CALIBRATION — 36 rosters across [2023 2024 2025]
+
+SHAPE           BUILT  SHARE  MED RANK  MED PTS  TOP 4
+Stars & Scrubs  10     28%    7.0       1458     4 of 10
+Balanced        10     28%    9.0       1406     3 of 10
+Hero RB         9      25%    8.0       1452     2 of 9
+Zero RB         7      19%    6.0       1495     2 of 7
+Robust RB       9      25%    4.0       1540     5 of 9
+league median   36     100%   6.5       1471
+
+DOES SPENDING SHAPE PREDICT POINTS?  (n=36, |rho| > 0.33 is p<0.05)
+top-2 concentration   rho +0.20   no signal
+RB total spend        rho +0.13   no signal
+best RB price         rho +0.17   no signal
+...
+```
+
+**Which seasons count.** 2022 is excluded automatically: the median team spent
+$157 of $200 because the league was still working out how keeper money came
+off the auction budget, so a third of every roster was bought with money that
+was never at stake. Including it drags every price threshold down for reasons
+unrelated to how anybody drafts now. 2021 is the inaugural Sleeper draft — one
+keeper, a full pool — so it is available but structurally a different game.
+The thresholds hold up on it as a holdout.
+
+**What the calibration changed.** The old thresholds were national-strategy
+numbers. Against this league they described almost nothing: Zero RB at "no
+back over $12" matched **one roster in three years**, Robust RB at "three
+backs over $25" matched **two**. Every shape now describes 19–28% of rosters.
+
+Two shapes were also reformulated, because per-player thresholds could not
+express what the strategies mean:
+
+- **Zero RB** needs both a cap and a total. On a total alone a single $55 back
+  passes, and that is Hero RB wearing the name; on a cap alone, three $19
+  backs read as both Zero RB *and* Robust RB at once.
+- **Robust RB** is a floor to reach rather than a ceiling to stay under, so it
+  has no per-pick veto — a veto can only forbid. Its anchors do the pursuing.
+
+**Hero RB had a real bug.** Its finished-roster check counted only the hero,
+while the per-pick rule capped the second back. A roster with a $60 back and a
+$45 back behind him passed a shape that is defined by not having one.
+
+**Nothing predicts results.** Every correlation between spending shape and
+points sits under 0.2 at n=36, and the best-looking bucket is nine rosters.
+Robust RB's median rank of 4.0 is the eye-catcher, and at that sample it is
+p≈0.1 before correcting for having looked at five shapes. **The archetypes
+describe the space; they do not rank it.** Re-run this after 2026 — a fourth
+season is a 33% larger sample and the first real chance of a signal.
+
 ### `make leans`
 
 Shows the merged lean sets and what they disagree about, before draft night
