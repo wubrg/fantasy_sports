@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"leaguehome/internal/draft"
@@ -43,13 +44,17 @@ type staticData struct {
 
 	availability map[string]string
 	leans        draft.Leans
-	ownerID      string
-	season       string
-	warnings     []string
+	// leanSets names the opinion sets in precedence order, so the board
+	// can say whose reads it is applying rather than leaving you to
+	// remember which flags you asked for.
+	leanSets []string
+	ownerID  string
+	season   string
+	warnings []string
 }
 
 // loadStatic fetches everything that will not change during the draft.
-func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline) (*staticData, error) {
+func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) (*staticData, error) {
 	c := sleeper.New()
 	c.HTTPClient = &http.Client{Timeout: 180 * time.Second}
 
@@ -106,13 +111,21 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	if err != nil {
 		return nil, err
 	}
-	leans, err := draft.LoadLeans(filepath.Join(cfg, myGuysFile))
+	leans, sets, err := loadLeanSets(cfg, leanSets)
 	if err != nil {
 		return nil, err
 	}
 
 	idx := draft.BuildPlayerIndexWithAliases(info, aliases)
 	var warnings []string
+	for _, pl := range leans.Contested() {
+		var against []string
+		for _, o := range pl.Disagreement() {
+			against = append(against, fmt.Sprintf("%s says %s", o.Source, o.Lean))
+		}
+		warnings = append(warnings, fmt.Sprintf("%s: you say %s, %s",
+			pl.Player, pl.Lean, strings.Join(against, ", ")))
+	}
 	if bad := idx.Resolve(ciely); len(bad) > 0 {
 		warnings = append(warnings, fmt.Sprintf("%d Ciely rows unmatched", len(bad)))
 	}
@@ -123,6 +136,7 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	s := &staticData{
 		client: c, ownerID: ownerID, season: season, warnings: warnings,
 		leans: leans, subvert: sv, points: map[string]float64{},
+		leanSets:     setNames(sets),
 		availability: map[string]string{}, keeperOf: map[string]int{},
 		projected: projected,
 	}
@@ -243,7 +257,9 @@ func (s *staticData) Build(taken map[string]gone) (draft.Snapshot, error) {
 		CielyPoints: s.points, Availability: s.availability,
 		Leans: s.leans, RecommendedBid: recommended,
 	})
-	return draft.Assemble(s.season, state, me, players, s.leans, s.tempo(taken, costs), s.warnings), nil
+	snap := draft.Assemble(s.season, state, me, players, s.leans, s.tempo(taken, costs), s.warnings)
+	snap.LeanSets = s.leanSets
+	return snap, nil
 }
 
 // tempo compares what the room actually paid against what the cost board

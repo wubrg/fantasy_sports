@@ -43,6 +43,9 @@ type Snapshot struct {
 	// Pivots are the rest, for a prep view of what is close to firing.
 	Pivots []Pivot `json:"pivots"`
 
+	// LeanSets names the opinion sets applied, in precedence order.
+	LeanSets []string `json:"leanSets"`
+
 	// Warnings are non-fatal problems worth showing rather than hiding —
 	// unmatched source rows, stale snapshots.
 	Warnings []string `json:"warnings"`

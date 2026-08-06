@@ -55,6 +55,14 @@ type PlayerLean struct {
 	// draft; a number you pick yourself cannot.
 	Cap  int
 	Note string
+	// Source names the lean set this read came from, so the board can say
+	// whose opinion it is showing.
+	Source string
+	// Others holds what lower-precedence sets said about the same player.
+	// A read nobody contradicts and a read you had to outvote are
+	// different propositions, and only one of them is worth a second look
+	// before you bid.
+	Others []PlayerLean
 }
 
 // BidRule names which rule produced a walk-away price, so the board can say
@@ -192,6 +200,10 @@ func ParseLeans(r io.Reader) (Leans, error) {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.TrimLeadingSpace = true
+	// Generated sets carry a provenance header saying what produced them
+	// and when, which is the difference between a file you can trust to
+	// regenerate and one you have to remember the origin of.
+	cr.Comment = '#'
 
 	records, err := cr.ReadAll()
 	if err != nil {

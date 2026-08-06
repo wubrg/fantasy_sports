@@ -48,6 +48,12 @@ function flagHTML(p) {
   if (lean === "up") out.push(`<span class="flag">+</span>`);
   if (lean === "down") out.push(`<span class="flag">-</span>`);
 
+  // Naming the dissenting set, not just flagging dissent: you want to know
+  // which read to go and check before the bidding starts.
+  for (const by of (p.Lean && p.Lean.contestedBy) || []) {
+    out.push(`<span class="flag vs" title="${esc(by)}">vs ${esc(by.split(" ")[0])}</span>`);
+  }
+
   if (p.ECR === "contested") out.push(`<span class="flag split">split</span>`);
   else if (p.ECR === "upside") out.push(`<span class="flag">ecr+</span>`);
   else if (p.ECR === "downside") out.push(`<span class="flag">ecr-</span>`);
