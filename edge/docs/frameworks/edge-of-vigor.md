@@ -88,9 +88,10 @@ That extra **4.8%** is the **Vig** (or "Juice"). It is the sportsbook's fee.
 > to *break even*. To be profitable, your prediction model must strike at a rate higher than
 > that (e.g., 55%+).
 
-> ⚠️ **Verification note.** 4.8% is the **overround** in percentage points. The book's actual
-> **hold** on balanced action is 4.8 / 104.8 = **4.58%**. The document uses "vig" for both
-> throughout. See [Verification](#verification), item 4.
+> ⚠️ **Verification note.** 4.8% is a rounded **overround** in percentage points — each side is
+> 52.3810%, not 52.4%, so the exact overround is **4.7619 points**. The book's actual **hold** on
+> balanced action is a different quantity: 4.7619 / 104.7619 = exactly **1/22 = 4.5455%**. The
+> document uses "vig" for both throughout. See [Verification](#verification), item 4.
 
 ### 4. How to Extract Positive Value (The Strategies)
 
@@ -755,8 +756,11 @@ Flagged inline above with corrected values.
 3. **"Underdogs Scale Fast"** is valid arithmetic aimed at the worst segment to be wrong in:
    longshot markets carry the highest vig, and the historical favorite–longshot bias means
    longshots are chronically *overbet*.
-4. **Overround vs. hold.** "That extra 4.8% is the Vig" conflates two numbers: 4.8 points is the
-   overround; hold on balanced action is 4.8 / 104.8 = **4.58%**.
+4. **Overround vs. hold.** "That extra 4.8% is the Vig" conflates two different quantities, and
+   rounds one of them. Each side of a −110 market is 52.3810%, so the exact **overround** is
+   **4.7619 points**. The book's **hold** on balanced action is 4.7619 / 104.7619 = exactly
+   **1/22 = 4.5455%**. (Dividing the document's own rounded figures, 4.8 / 104.8, gives 4.58% —
+   also wrong.) Pinned by `TestStandardMarketVig`.
 5. **Market Width is self-contradictory.** Part 0 says wide markets warrant caution ("you have to
    be even *more* right"); Part II says wide markets are "where errors live." Both are defensible
    — wider does mean more juice *and* less book confidence — but the document never reconciles

@@ -52,6 +52,7 @@ build-iPhoneSimulator/
 # Go build artifacts
 canton/app/canton
 canton/app/cantonctl
+edge/app/edgectl
 league_home/app/leaguectl
 league_home/app/leaguebot
 league_home/app/leagueweb

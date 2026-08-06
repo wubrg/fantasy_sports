@@ -90,8 +90,10 @@ by a test:
    is designed to find.
 3. **"Underdogs Scale Fast"** is valid arithmetic pointing at the market segment with the
    highest vig and the strongest adverse favorite–longshot bias.
-4. **Vig terminology.** 4.8% is the overround in percentage points; hold on balanced
-   action is 4.8 / 104.8 = **4.58%**.
+4. **Vig terminology.** The document's 4.8% is a rounded overround in percentage points (exactly
+   4.76). Hold on balanced action — the book's actual margin — is exactly 1/22 = **4.5455%**.
+   Note that dividing the document's *rounded* figures (4.8 / 104.8) gives 4.58%, which is also
+   wrong; the exact values are 4.7619 / 104.7619.
 
 Bonus bets: the source gives `EV = p × profit` and three worked examples. The closed form
 it misses is that at fair odds `EV_BB = stake × (1 − p)`, which reproduces all three

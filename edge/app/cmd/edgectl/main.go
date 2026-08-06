@@ -1,0 +1,172 @@
+// Command edgectl computes wager math from operator-supplied prices.
+//
+// It does not fetch odds. There is no network code in this program and there
+// is not meant to be: prices come from the operator, who is responsible for
+// having read them off a book. The point of the tool is that the arithmetic
+// happens here, in tested code, rather than in a language model that will
+// produce a confident-looking number either way.
+//
+//	edgectl market -a -110 -b -110 -p 0.55
+//	edgectl bonus  -odds +1000 -stake 25
+package main
+
+import (
+	"flag"
+	"fmt"
+	"os"
+
+	"edge/internal/wager"
+)
+
+func main() {
+	if len(os.Args) < 2 {
+		usage()
+		os.Exit(2)
+	}
+	var err error
+	switch os.Args[1] {
+	case "market":
+		err = marketCmd(os.Args[2:])
+	case "bonus":
+		err = bonusCmd(os.Args[2:])
+	case "-h", "--help", "help":
+		usage()
+		return
+	default:
+		fmt.Fprintf(os.Stderr, "edgectl: unknown command %q\n\n", os.Args[1])
+		usage()
+		os.Exit(2)
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "edgectl:", err)
+		os.Exit(1)
+	}
+}
+
+func usage() {
+	fmt.Fprint(os.Stderr, `edgectl — wager math for operator-supplied prices
+
+  edgectl market -a <american> -b <american> [-p <true prob>] [-stake <amount>]
+        Both sides of a market. Reports the hurdle rate, the de-vigged fair
+        value, overround and hold, and (with -p) EV for real money and bonus.
+
+  edgectl bonus -odds <american> [-stake <amount>] [-p <true prob>]
+        Bonus-bet (stake not returned) value. Without -p, reports the fair-odds
+        conversion ceiling.
+
+edgectl never fetches prices and never guesses one. Bad input is an error, not
+a zero.
+`)
+}
+
+func marketCmd(args []string) error {
+	fs := flag.NewFlagSet("market", flag.ExitOnError)
+	a := fs.Int("a", 0, "American price for side A (required)")
+	b := fs.Int("b", 0, "American price for side B (required, needed to measure vig)")
+	p := fs.Float64("p", -1, "your true-probability estimate for side A")
+	stake := fs.Float64("stake", 1, "stake")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *a == 0 || *b == 0 {
+		return fmt.Errorf("both -a and -b are required: vig cannot be measured from one side")
+	}
+
+	m := wager.Market{A: wager.American(*a), B: wager.American(*b)}
+	fairA, fairB, err := m.FairDevig()
+	if err != nil {
+		return err
+	}
+	over, err := m.Overround()
+	if err != nil {
+		return err
+	}
+	hold, err := m.Hold()
+	if err != nil {
+		return err
+	}
+	rawA, err := m.A.ImpliedRaw()
+	if err != nil {
+		return err
+	}
+	rawB, err := m.B.ImpliedRaw()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("side       price   implied(raw)   fair(de-vig)\n")
+	fmt.Printf("A        %+6d        %6.2f%%         %6.2f%%\n", *a, rawA*100, fairA*100)
+	fmt.Printf("B        %+6d        %6.2f%%         %6.2f%%\n", *b, rawB*100, fairB*100)
+	fmt.Printf("\novrround %6.2f pts   hold %6.2f%%\n", over*100, hold*100)
+	fmt.Printf("hurdle   %6.2f%% on side A (raw implied — this includes the vig)\n", rawA*100)
+
+	if *p < 0 {
+		fmt.Printf("\nno -p supplied: EV not computed (a missing estimate is not zero)\n")
+		return nil
+	}
+
+	r, err := wager.Report(m, *p, *stake)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("\np_true   %6.2f%%   stake %.2f\n", r.PTrue*100, *stake)
+	fmt.Printf("EV real  %+7.4f   EV bonus %+7.4f\n", r.EVReal, r.EVBonus)
+	fmt.Printf("clears hurdle: %-5v   beats market: %v\n", r.ClearsHurdle, r.BeatsMarket)
+	if r.ClearsHurdle && !r.BeatsMarket {
+		fmt.Printf("note: clears the price but does not disagree with the market's own view\n")
+	}
+	if !r.ClearsHurdle && r.BeatsMarket {
+		fmt.Printf("note: disagrees with the market but not by enough to beat the price\n")
+	}
+	fmt.Printf("\ncalibration: this EV is only as good as p_true. At +150 a 5-point\n")
+	fmt.Printf("error in p_true moves EV by 12.5 points.\n")
+	return nil
+}
+
+func bonusCmd(args []string) error {
+	fs := flag.NewFlagSet("bonus", flag.ExitOnError)
+	odds := fs.Int("odds", 0, "American price (required)")
+	stake := fs.Float64("stake", 1, "bonus bet face value")
+	p := fs.Float64("p", -1, "your true-probability estimate")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *odds == 0 {
+		return fmt.Errorf("-odds is required")
+	}
+	a := wager.American(*odds)
+
+	implied, err := a.ImpliedRaw()
+	if err != nil {
+		return err
+	}
+	ceiling, err := wager.BonusConversionAtFairOdds(a, *stake)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("price          %+d\n", *odds)
+	fmt.Printf("face value     %.2f\n", *stake)
+	fmt.Printf("win prob       %6.2f%%  (raw implied)\n", implied*100)
+	fmt.Printf("fair ceiling   %.2f   (%.1f%% of face, = stake × (1−p))\n",
+		ceiling, ceiling / *stake * 100)
+	fmt.Printf("\nthis is a CEILING at fair odds. Real longshot markets are juiced;\n")
+	fmt.Printf("realised conversion is typically 60-80%% of face value.\n")
+
+	if *p >= 0 {
+		ev, err := wager.EVBonusBet(*p, a, *stake)
+		if err != nil {
+			return err
+		}
+		real, err := wager.EVRealMoney(*p, a, *stake)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("\np_true         %6.2f%%\n", *p*100)
+		fmt.Printf("EV bonus       %+.4f\n", ev)
+		fmt.Printf("EV if cash     %+.4f   (difference is the un-risked stake, (1−p)×stake)\n", real)
+	}
+	fmt.Printf("\nvariance: this wins %.1f%% of the time. Over a handful of bets per\n", implied*100)
+	fmt.Printf("season the median outcome is zero regardless of EV.\n")
+	return nil
+}
