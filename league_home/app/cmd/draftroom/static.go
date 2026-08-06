@@ -43,12 +43,14 @@ type staticData struct {
 	subvert     []draft.SourceRow
 
 	availability map[string]string
-	// baselines are the pinned pre-draft replacement points, computed once
-	// because the projection set and the league shape never change during
-	// a draft — and because everything that measures against them has to
-	// measure against the same ones.
-	baselines map[string]float64
-	leans     draft.Leans
+	// baselines are the pinned pre-draft replacement points that rosters
+	// are scored against; thresholds are the pinned tier medians scarcity
+	// is counted against. Both computed once, because the projection set
+	// and the league shape do not change during a draft, and because
+	// everything measuring against them has to use the same ones.
+	baselines  map[string]float64
+	thresholds map[string]float64
+	leans      draft.Leans
 	// leanSets names the opinion sets in precedence order, so the board
 	// can say whose reads it is applying rather than leaving you to
 	// remember which flags you asked for.
@@ -163,6 +165,7 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	// recomputed: replacement level measured against the pool that remains
 	// falls as the pool empties, so a count above it could never drop.
 	s.baselines = draft.ScoringBaselines(s.projections, s.shape)
+	s.thresholds = draft.ScarcityThresholds(s.projections, s.shape)
 
 	for _, r := range sv {
 		if r.Baseline != "beerplus" || r.PlayerID == "" || r.AAV <= 0 {
@@ -267,7 +270,7 @@ func (s *staticData) Build(taken map[string]gone) (draft.Snapshot, error) {
 		CielyPoints: s.points, Availability: s.availability,
 		Leans: s.leans, RecommendedBid: recommended,
 	})
-	snap := draft.Assemble(s.season, state, me, players, s.leans, s.tempo(taken, costs), s.baselines, s.warnings)
+	snap := draft.Assemble(s.season, state, me, players, s.leans, s.tempo(taken, costs), s.thresholds, s.warnings)
 	snap.LeanSets = s.leanSets
 	return snap, nil
 }

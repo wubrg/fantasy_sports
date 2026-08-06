@@ -63,10 +63,10 @@ func (s Snapshot) AdjustedEdges(minEdge float64) []PlayerSignals {
 // caller owns loading, so this stays testable and the web server can
 // rebuild a snapshot on every request without hidden network calls.
 func Assemble(season string, state PoolState, me MyState, players []PlayerSignals,
-	leans Leans, tempo DraftTempo, baselines map[string]float64, warnings []string) Snapshot {
+	leans Leans, tempo DraftTempo, thresholds map[string]float64, warnings []string) Snapshot {
 
 	bias := PositionalBias(players)
-	scarcity := Scarcity(players, state, baselines)
+	scarcity := Scarcity(players, state, thresholds)
 	leaguePerStarter := state.LeaguePerStarter()
 	recommended := me.MaxRecommendedBid(leaguePerStarter, DefaultRiskFloor)
 

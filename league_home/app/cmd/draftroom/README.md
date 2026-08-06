@@ -131,41 +131,60 @@ Kubiak scheme change, which a median cannot see. Collapsing them into one
 ### Position scarcity
 
 ```
-POS  STARTABLE  STARTERS STILL NEEDED  COVER  PS% AT TOP  NEXT CLIFF
-QB   11         11                     1.00x  83%         34 pts
-RB   27         21                     1.29x  92%         35 pts
-WR   41         37                     1.11x  78%         31 pts
-TE   13         12                     1.08x  52%         15 pts
+POS  STARTABLE  STARTERS STILL NEEDED  COVER    PS% AT TOP  NEXT CLIFF
+QB   8          11                     0.73x !  83%         34 pts
+RB   26         21                     1.24x    92%         35 pts
+WR   45         37                     1.22x    78%         31 pts
+TE   14         12                     1.17x    52%         15 pts
 ```
 
-**`STARTABLE` counts players above replacement level, not bodies.** A raw
-count is worse than no count: 182 receivers remain against 43 starting
-spots, which reads as the deepest position on the board, while only 41 of
-them project above replacement. The other 140 are waiver fodder whose
-presence says nothing except that the NFL employs a lot of receivers.
+**`STARTABLE` counts players good enough to start, not bodies.** A raw count
+is worse than no count: 182 receivers remain against 43 starting spots, which
+reads as the deepest position on the board, while the players anyone would
+actually start are far fewer.
 
-Replacement here is the **pinned pre-draft** baseline — the same one rosters
-are scored against. Pinning is what makes the count mean anything. Measured
-against replacement recomputed from the pool that remains, the line sinks as
-the pool empties and the count above it barely moves; a scarcity number that
-cannot fall has nothing to say.
+The bar is **the median projection of the tier the last starting slot falls
+in** — not the projection of the player sitting in that slot. Those differ,
+and the difference is the whole measure.
 
-Supply and demand are counted at the same line. The baseline is VOLS, whose
-depth is the starting spots themselves, so `STARTERS STILL NEEDED` carries no
-bench rounds behind it — otherwise the table would compare a VOLS count
-against a BEER+ requirement and report a shortage that is only the two curves
-disagreeing about where replacement sits.
+A single player is a knife edge: whoever happens to land at rank 42 sets the
+line, and he is one projection revision away from being someone else. A tier
+is the cluster he belongs to, and asking what its typical member projects for
+asks the real question — how good is the player you end up with in the last
+starting slot, and how many players are that good?
 
-`COVER` is a **surplus gauge, not an alarm.** It starts near 1 because the
-baseline sits at the last starter, and then tends to rise: a drafted starter
-takes one off both sides, while a drafted scrub takes one off demand alone.
-So below 1 is rare and means something has gone badly wrong at the position.
-For picked-over, read `NEXT CLIFF` and `PS% AT TOP` — those are the quality
-measures, and they are what actually move during a run.
+**Where the slot falls inside its tier is what makes the answer move:**
 
-The striking pre-draft reading this season is **QB at 1.00x**: exactly as
-many startable quarterbacks as quarterback spots, so every QB taken puts
-somebody on a replacement starter.
+| | last starting slot | its tier | tier median | startable | slots |
+|---|---|---|---|---|---|
+| QB | Dart, 317 (rank 12) | ranks 4–12 | 322 | **8** | 12 |
+| WR | Robinson, 152 (rank 42) | ranks 41–50 | 148 | **45** | 42 |
+
+The last starting quarterback sits at the *bottom* of his tier, so the tier's
+typical member is better than he is and only eight quarterbacks clear the bar
+against twelve slots. The last starting receiver sits in the *middle* of a
+long flat band, so forty-five receivers clear that band's median against
+forty-two slots. Same league, opposite conclusions, and a point estimate at
+the slot itself reports neither.
+
+A tier straddling the slot is one tier — half of it landing on the bench is a
+fact about roster rules, not about the players. Where the marginal starter
+has a break on both sides he is his own tier, and the measure falls back to
+the point estimate; that is how tight end behaves this season.
+
+Tiers are read from **pinned pre-draft** projections. Against a bar
+recomputed from the pool that remains, the line sinks as the pool empties and
+the count above it barely moves — a scarcity number that cannot fall has
+nothing to say.
+
+Supply and demand are counted at the same line. Demand is taken at VOLS
+depth, which is the starting spots themselves with no bench rounds behind
+them.
+
+`COVER` is startable over spots. Below 1 the room cannot field the position
+from players worth starting — **QB is at 0.73x before a single pick**, which
+means three or four teams are going to start a quarterback nobody wanted.
+`NEXT CLIFF` and `PS% AT TOP` remain the quality measures during a run.
 
 Flags: `MUST` `+` `-` `DND` (your leans) · `vs <set>` (another lean set
 reads him the opposite way) · `ecr+` `ecr-` `split` (industry deviation;

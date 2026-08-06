@@ -261,8 +261,9 @@ func absF(f float64) float64 {
 // PositionScarcity summarizes how thin a position has become.
 type PositionScarcity struct {
 	Position string
-	// Startable is how many players still on the board project above
-	// replacement level at the position.
+	// Startable is how many players still on the board meet or exceed the
+	// scarcity threshold at the position — the median projection of the
+	// tier the last starting slot falls in. See ScarcityThresholds.
 	//
 	// Bodies are not the measure. 182 receivers remain in a room that needs
 	// 43 more starters, which reads as the deepest position on the board;
@@ -293,14 +294,13 @@ type PositionScarcity struct {
 // Scarcity measures how many players worth starting are left at each
 // position, which is what the pivot triggers watch.
 //
-// baselines are the pinned pre-draft replacement points — the same ones
-// rosters are scored against. Pinned matters here more than anywhere else:
-// replacement level computed against the pool that remains moves down as
-// the pool empties, so the count of players above it barely changes, and a
-// scarcity measure that cannot fall has nothing to say. Against a fixed
-// baseline the count decays as the position is picked over, which is the
-// entire signal.
-func Scarcity(players []PlayerSignals, state PoolState, baselines map[string]float64) map[string]PositionScarcity {
+// thresholds are the pinned pre-draft tier medians from ScarcityThresholds.
+// Pinned matters here more than anywhere else: a threshold recomputed from
+// the pool that remains sinks as the pool empties, so the count above it
+// barely changes, and a scarcity measure that cannot fall has nothing to
+// say. Against a fixed threshold the count decays as the position is picked
+// over, which is the entire signal.
+func Scarcity(players []PlayerSignals, state PoolState, thresholds map[string]float64) map[string]PositionScarcity {
 	byPos := map[string][]PlayerSignals{}
 	for _, p := range players {
 		byPos[p.Position] = append(byPos[p.Position], p)
@@ -320,7 +320,9 @@ func Scarcity(players []PlayerSignals, state PoolState, baselines map[string]flo
 		sort.SliceStable(list, func(i, j int) bool { return list[i].CielyPoints > list[j].CielyPoints })
 		startable := 0
 		for _, p := range list {
-			if p.CielyPoints > baselines[pos] {
+			// Meet or exceed: a player who projects exactly at the tier
+			// median is as good as the typical member of it.
+			if p.CielyPoints >= thresholds[pos] {
 				startable++
 			}
 		}
