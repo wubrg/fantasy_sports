@@ -273,6 +273,14 @@ type PositionScarcity struct {
 	Startable int
 	// StartersLeft is how many starting spots the league still has to fill.
 	StartersLeft int
+	// Gone is how many players at the position are already off the board,
+	// through keepers or picks already made.
+	//
+	// Separate from Startable because rules about draft *progress* count
+	// what has left, not what is left. Ciely's running back rule is stated
+	// as "before the 33rd comes off the board", and 33 gone is nothing like
+	// 33 remaining.
+	Gone int
 	// Cover is Startable over StartersLeft: below 1 the room cannot field
 	// this position from players worth starting.
 	//
@@ -330,6 +338,7 @@ func Scarcity(players []PlayerSignals, state PoolState, thresholds map[string]fl
 			Position:     pos,
 			Startable:    startable,
 			StartersLeft: depth[pos],
+			Gone:         state.Filled[pos],
 		}
 		if depth[pos] > 0 {
 			s.Cover = float64(startable) / float64(depth[pos])

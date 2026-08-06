@@ -181,6 +181,12 @@ Supply and demand are counted at the same line. Demand is taken at VOLS
 depth, which is the starting spots themselves with no bench rounds behind
 them.
 
+`GONE` (used by the RB33 pivot, not shown in the table) counts players
+already off the board at the position. It is a different question from
+`STARTABLE` and rules about draft *progress* need it: Ciely's running back
+rule is stated as "before the 33rd comes off the board", and 33 gone is
+nothing like 33 remaining.
+
 `COVER` is startable over spots. Below 1 the room cannot field the position
 from players worth starting — **QB is at 0.73x before a single pick**, which
 means three or four teams are going to start a quarterback nobody wanted.
