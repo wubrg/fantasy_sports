@@ -39,10 +39,20 @@ type server struct {
 	cached draft.Snapshot
 	polled time.Time
 	pollEr string
+
+	// scratch is a hypothetical roster, deliberately not part of the live
+	// state above. See scratch.go for why the separation is load-bearing.
+	scratch *scratchpad
+	// baselines are the pinned VOLS scoring baselines, computed once.
+	baselineOnce sync.Once
+	baselines    map[string]float64
 }
 
 func newServer(s *staticData) (*server, error) {
-	srv := &server{static: s, taken: map[string]gone{}, manual: map[string]gone{}}
+	srv := &server{
+		static: s, taken: map[string]gone{}, manual: map[string]gone{},
+		scratch: newScratchpad(),
+	}
 	return srv, srv.rebuild()
 }
 
@@ -218,6 +228,8 @@ func runServe(addr, leagueID, configDir, dataDir, ownerID string, baseline draft
 	mux.HandleFunc("/api/board", srv.handleBoard)
 	mux.HandleFunc("/api/sold", srv.handleSold)
 	mux.HandleFunc("/api/undo", srv.handleUndo)
+	mux.HandleFunc("/api/scratch", srv.handleScratch)
+	mux.HandleFunc("/api/scratch/view", srv.handleScratchView)
 
 	snap := srv.snapshot()
 	log.Printf("draft board on http://localhost%s  (%d available, $%d pool, polling every %s)",
