@@ -305,3 +305,15 @@ tr.in-scratch { background: #16233a; }
 /* A lean another set argues with. Not an error — your read still wins — so
    it reads as a note rather than a warning. */
 .flag.vs { border-color: var(--warn); color: var(--warn); }
+
+/* Keepers on the scratch roster: already yours, so they read as settled
+   rather than as something you are trying on. */
+.lineup tr.kept td { color: var(--dim); }
+.lineup .tag {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}

@@ -201,6 +201,12 @@ type Shape struct {
 	Metrics   RosterMetrics
 	// Achieved reports whether the finished roster met the shape.
 	Achieved bool
+	// BlockedBy names a held player who rules the shape out whatever the
+	// auction does. Keeping De'Von Achane at $35 is already a second back
+	// over $20, so Hero RB is settled before a bid is made — and reporting
+	// that as "the fill did not get there" would send you chasing a shape
+	// you cannot have.
+	BlockedBy string
 	// Possible reports whether the board could supply the shape at all,
 	// which is a different claim from whether this fill found it.
 	//
@@ -216,8 +222,19 @@ type Shape struct {
 // FillOptions configure how a shape is built.
 type FillOptions struct {
 	Budget int
-	// Slots is how many roster spots to fill.
+	// Slots is the whole roster size, held players included.
 	Slots int
+	// Held are players already owned at a fixed price — keepers.
+	//
+	// They have to be in the roster rather than merely deducted from the
+	// budget, because a shape is a statement about the finished fourteen.
+	// Keeping De'Von Achane at $35 is already a second back over $20, so
+	// Hero RB is settled before the auction opens; filling the other twelve
+	// in isolation reported it achieved. The same blindness had Zero RB
+	// pass at $27 on backs when the keeper made it $62, and had Robust RB
+	// report failure at $62 when the keeper had already carried it past
+	// the line. Every RB shape was wrong for a team holding a back.
+	Held  []RosterSpot
 	Price PriceFunc
 	Shape PoolState
 	// Baselines are the pinned scoring baselines; see ScoringBaselines.
@@ -257,6 +274,12 @@ func Fill(a Archetype, available []PlayerSignals, opts FillOptions) Shape {
 	}
 
 	r := Roster{}
+	// Held players are already bought and already count against the shape,
+	// so the constraint sees them from the first pick rather than after.
+	for _, h := range opts.Held {
+		h.Held = true
+		r.Players = append(r.Players, h)
+	}
 	budget := opts.Budget
 
 	// Pass 0: buy the players the shape is built around.
@@ -266,7 +289,14 @@ func Fill(a Archetype, available []PlayerSignals, opts FillOptions) Shape {
 	// and then reports the shape unachievable — three $26 backs cost $78 of
 	// $130, which is affordable, but not if the first back takes $63.
 	for _, anchor := range a.Anchors {
-		for n := 0; n < anchor.Count; n++ {
+		// A held player already over the anchor price is that anchor.
+		start := 0
+		for _, h := range opts.Held {
+			if (anchor.Position == "" || h.Player.Position == anchor.Position) && h.Price >= anchor.MinPrice {
+				start++
+			}
+		}
+		for n := start; n < anchor.Count; n++ {
 			remaining := (anchor.Count - n - 1) * anchor.MinPrice
 			reserve := opts.Slots - len(r.Players) - 1 + remaining
 			pick := bestAnchor(a, r, pool, anchor, opts, budget-reserve)
@@ -348,11 +378,60 @@ func Fill(a Archetype, available []PlayerSignals, opts FillOptions) Shape {
 	}
 }
 
+// blamedOnKeepers reports which held player, if any, is why a shape could
+// not be built — by building it again without him.
+//
+// Asked as an experiment rather than by reading the constraint, because a
+// shape's per-pick rule is a fill heuristic and not its definition. Stars &
+// Scrubs refuses every mid-priced buy, so replaying a $35 keeper through it
+// says "blocked" when two stars are still perfectly affordable. Filling the
+// same shape with the keeper set aside answers the question that was
+// actually asked: would this have been available to somebody else?
+func blamedOnKeepers(a Archetype, available []PlayerSignals, opts FillOptions) string {
+	if len(opts.Held) == 0 {
+		return ""
+	}
+	for _, drop := range opts.Held {
+		without := opts
+		without.Held = nil
+		without.Budget = opts.Budget
+		for _, h := range opts.Held {
+			if h.Player.PlayerID != drop.Player.PlayerID {
+				without.Held = append(without.Held, h)
+			} else {
+				// His money comes back with him; the slot stays open.
+				without.Budget += h.Price
+			}
+		}
+		if Fill(a, available, without).Achieved {
+			return drop.Player.Name
+		}
+	}
+	return ""
+}
+
 // anchorsAffordable reports whether the board holds enough players to meet
 // every anchor within the budget, ignoring how the fill actually went.
+//
+// Held players count toward an anchor they already satisfy. A kept back over
+// the anchor price is one the board does not have to supply, and treating
+// the requirement as untouched would report a shape impossible when it is
+// already part-built.
 func anchorsAffordable(a Archetype, pool []PlayerSignals, opts FillOptions) bool {
-	spend := opts.Budget - (opts.Slots - 1)
+	spend := opts.Budget - (opts.Slots - len(opts.Held) - 1)
 	for _, anchor := range a.Anchors {
+		need := anchor.Count
+		for _, h := range opts.Held {
+			if anchor.Position != "" && h.Player.Position != anchor.Position {
+				continue
+			}
+			if h.Price >= anchor.MinPrice {
+				need--
+			}
+		}
+		if need <= 0 {
+			continue
+		}
 		found := 0
 		cheapest := 0
 		for _, p := range pool {
@@ -366,7 +445,7 @@ func anchorsAffordable(a Archetype, pool []PlayerSignals, opts FillOptions) bool
 				}
 			}
 		}
-		if found < anchor.Count || cheapest*anchor.Count > spend {
+		if found < need || cheapest*need > spend {
 			return false
 		}
 	}
@@ -460,9 +539,12 @@ func bestUpgrade(a Archetype, r Roster, pool []PlayerSignals, opts FillOptions, 
 				consider(-1, i, price, above)
 			}
 		}
-		// Or an upgrade over someone already held at the same position.
+		// Or an upgrade over someone already on the roster at the same
+		// position. Keepers are exempt: you cannot sell one to make room,
+		// and a fill that traded one away would price a roster nobody can
+		// actually own.
 		for j, held := range r.Players {
-			if held.Player.Position != p.Position {
+			if held.Held || held.Player.Position != p.Position {
 				continue
 			}
 			trimmed := r
@@ -497,7 +579,11 @@ func isFlexEligible(shape PoolState, pos string) bool {
 func CompareShapes(available []PlayerSignals, opts FillOptions) []Shape {
 	out := make([]Shape, 0, len(Archetypes()))
 	for _, a := range Archetypes() {
-		out = append(out, Fill(a, available, opts))
+		s := Fill(a, available, opts)
+		if !s.Achieved {
+			s.BlockedBy = blamedOnKeepers(a, available, opts)
+		}
+		out = append(out, s)
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Metrics.POPR > out[j].Metrics.POPR })
 	return out

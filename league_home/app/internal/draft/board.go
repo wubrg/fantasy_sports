@@ -228,7 +228,7 @@ func formatCover(cover float64) string {
 // The shapes are illustrations, not recommendations. The fill is greedy and
 // the thresholds are first guesses, so the report says so rather than
 // letting a POPR ranking imply one shape is correct.
-func WriteShapes(w io.Writer, shapes []Shape, budget int) error {
+func WriteShapes(w io.Writer, shapes []Shape, budget int, held []RosterSpot) error {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 
 	fmt.Fprintf(tw, "ROSTER SHAPES — $%d\n", budget)
@@ -238,12 +238,24 @@ func WriteShapes(w io.Writer, shapes []Shape, budget int) error {
 	fmt.Fprintf(tw, "positional skew. These are illustrations of a shape, not the best possible\n")
 	fmt.Fprintf(tw, "roster of it — the fill is greedy. Thresholds are calibrated against this\n")
 	fmt.Fprintf(tw, "league's own 2023-2025 drafts; nothing in them separates these shapes on\n")
-	fmt.Fprintf(tw, "results, so read them as what your money can buy rather than as a ranking.\n\n")
+	fmt.Fprintf(tw, "results, so read them as what your money can buy rather than as a ranking.\n")
+	if len(held) > 0 {
+		var parts []string
+		for _, h := range held {
+			parts = append(parts, fmt.Sprintf("%s %s $%d", h.Player.Name, h.Player.Position, h.Price))
+		}
+		fmt.Fprintf(tw, "\nEvery shape is built around your keepers — %s — because they are part\n",
+			strings.Join(parts, ", "))
+		fmt.Fprintf(tw, "of the finished roster and count against the shape like any other buy.\n")
+	}
+	fmt.Fprintln(tw)
 
 	fmt.Fprintln(tw, "SHAPE\tPOPR\tSPEND\tQB\tRB\tWR\tTE\tMY GUYS\tNOTES")
 	for _, s := range shapes {
 		note := ""
-		if !s.Achieved && !s.Possible {
+		if s.BlockedBy != "" {
+			note = fmt.Sprintf("ruled out by keeping %s", s.BlockedBy)
+		} else if !s.Achieved && !s.Possible {
 			note = "the board cannot supply this shape"
 		} else if !s.Achieved {
 			note = "possible, but the greedy fill did not reach it"
@@ -263,8 +275,15 @@ func WriteShapes(w io.Writer, shapes []Shape, budget int) error {
 		}
 		fmt.Fprintln(tw, "  SLOT\tPLAYER\tPOS\tPRICE\tPTS")
 		for _, spot := range s.Roster.Starters() {
+			name := spot.Player.Name
+			if spot.Held {
+				// Which players you are committed to before the auction is
+				// the difference between a shape you can pursue and one you
+				// are already inside.
+				name += " (kept)"
+			}
 			fmt.Fprintf(tw, "  %s\t%s\t%s\t$%d\t%.0f\n",
-				spot.Slot, spot.Player.Name, spot.Player.Position, spot.Price, spot.Player.CielyPoints)
+				spot.Slot, name, spot.Player.Position, spot.Price, spot.Player.CielyPoints)
 		}
 		bench := s.Roster.Bench()
 		if len(bench) > 0 {

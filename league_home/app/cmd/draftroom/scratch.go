@@ -73,13 +73,15 @@ func (s *scratchpad) contents() ([]string, map[string]int) {
 
 // ScratchSpot is one imagined purchase.
 type ScratchSpot struct {
-	PlayerID string  `json:"playerId"`
-	Name     string  `json:"name"`
-	Position string  `json:"position"`
-	Slot     string  `json:"slot"`
-	Price    int     `json:"price"`
-	Points   float64 `json:"points"`
-	Cost     int     `json:"cost"`
+	PlayerID string `json:"playerId"`
+	Name     string `json:"name"`
+	Position string `json:"position"`
+	Slot     string `json:"slot"`
+	Price    int    `json:"price"`
+	// Kept marks a keeper: already yours, not something you are trying on.
+	Kept   bool    `json:"kept"`
+	Points float64 `json:"points"`
+	Cost   int     `json:"cost"`
 }
 
 // ScratchView is the hypothetical roster and how it reads.
@@ -114,6 +116,14 @@ func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 	}
 
 	r := &draft.Roster{}
+	// Keepers first. The panel's whole job is showing what the finished
+	// roster feels like, and yours already contains the players you are
+	// keeping — leaving them out understates POPR, hides the slots they
+	// fill, and disagrees with the shapes report about the same roster.
+	for _, h := range s.static.heldRoster(s.static.ownerID) {
+		h.Held = true
+		r.Players = append(r.Players, h)
+	}
 	for _, id := range order {
 		p, still := onBoard[id]
 		if !still {
@@ -136,14 +146,37 @@ func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 		view.Bench = append(view.Bench, toScratchSpot(spot))
 	}
 
-	view.BudgetLeft = snap.Me.Budget - view.Metrics.Spend
-	view.SlotsLeft = snap.Me.OpenSlots - len(r.Players)
+	// Budget and slots are already net of the keepers, so only the players
+	// actually bought here count against them.
+	bought := view.Metrics.Spend - heldSpend(r)
+	view.BudgetLeft = snap.Me.Budget - bought
+	view.SlotsLeft = snap.Me.OpenSlots - (len(r.Players) - heldCount(r))
 	if view.SlotsLeft > 0 {
 		if bid := view.BudgetLeft - (view.SlotsLeft - 1); bid > 0 {
 			view.MaxBid = bid
 		}
 	}
 	return view
+}
+
+func heldSpend(r *draft.Roster) int {
+	total := 0
+	for _, p := range r.Players {
+		if p.Held {
+			total += p.Price
+		}
+	}
+	return total
+}
+
+func heldCount(r *draft.Roster) int {
+	n := 0
+	for _, p := range r.Players {
+		if p.Held {
+			n++
+		}
+	}
+	return n
 }
 
 func toScratchSpot(s draft.RosterSpot) ScratchSpot {
@@ -153,6 +186,7 @@ func toScratchSpot(s draft.RosterSpot) ScratchSpot {
 		Position: s.Player.Position,
 		Slot:     s.Slot,
 		Price:    s.Price,
+		Kept:     s.Held,
 		Points:   s.Player.CielyPoints,
 		Cost:     s.Player.Cost,
 	}

@@ -295,6 +295,32 @@ func (s *staticData) tempo(taken map[string]gone, costs map[string]int) draft.Dr
 	return t
 }
 
+// heldRoster is the owner's projected keepers as roster spots, priced at
+// what the league will charge rather than at what they are worth.
+//
+// The charge is the number that matters to a shape: it is the money already
+// committed and the slot already filled.
+func (s *staticData) heldRoster(ownerID string) []draft.RosterSpot {
+	aav := map[string]float64{}
+	for _, m := range s.market {
+		aav[m.PlayerID] = m.AAV
+	}
+	var out []draft.RosterSpot
+	for _, e := range projectedKeepers(s.projected, aav, ownerID) {
+		out = append(out, draft.RosterSpot{
+			Player: draft.PlayerSignals{
+				PlayerID:    e.PlayerID,
+				Name:        e.Name,
+				Position:    e.Position,
+				CielyPoints: s.points[e.PlayerID],
+				Cost:        int(aav[e.PlayerID] + 0.5),
+			},
+			Price: e.LeaguePrice,
+		})
+	}
+	return out
+}
+
 func (s *staticData) positionOf(playerID string) string {
 	for _, p := range s.projections {
 		if p.PlayerID == playerID {

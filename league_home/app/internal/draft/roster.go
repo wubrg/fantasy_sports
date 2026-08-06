@@ -16,6 +16,9 @@ type RosterSpot struct {
 	// Slot is the lineup position he fills, "FLEX" for the flex spot and
 	// "BN" for a bench player.
 	Slot string
+	// Held marks a player already owned — a keeper. He cannot be sold to
+	// make room, so no fill may swap him out.
+	Held bool
 }
 
 // Add puts a player on the roster at a price.

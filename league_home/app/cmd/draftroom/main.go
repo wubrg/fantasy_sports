@@ -478,14 +478,18 @@ func runShapes(leagueID, configDir, dataDir, ownerID string, baseline draft.Base
 		fmt.Fprintf(os.Stderr, "note: %s\n", w)
 	}
 
+	held := static.heldRoster(ownerID)
 	shapes := draft.CompareShapes(snap.Players, draft.FillOptions{
-		Budget:    snap.Me.Budget,
-		Slots:     snap.Me.OpenSlots,
+		Budget: snap.Me.Budget,
+		// The whole roster, keepers included: a shape is a claim about the
+		// finished fourteen, not about the twelve still to buy.
+		Slots:     snap.Me.OpenSlots + len(held),
+		Held:      held,
 		Price:     draft.BoardPrice,
 		Shape:     static.shape,
 		Baselines: static.baselines,
 	})
-	return draft.WriteShapes(os.Stdout, shapes, snap.Me.Budget)
+	return draft.WriteShapes(os.Stdout, shapes, snap.Me.Budget, held)
 }
 
 // tail returns the last n entries, which for an edge list sorted best-first
@@ -540,8 +544,25 @@ func myState(projected []draft.Entry, aav map[string]float64, ownerID string, bu
 		Budget: budget, OpenSlots: rosterSize,
 		StartersNeeded: map[string]int{"QB": 1, "RB": 2, "WR": 3, "TE": 1},
 	}
+	for _, e := range projectedKeepers(projected, aav, ownerID) {
+		me.Budget -= e.LeaguePrice
+		me.OpenSlots--
+		if n, ok := me.StartersNeeded[e.Position]; ok && n > 0 {
+			me.StartersNeeded[e.Position] = n - 1
+		}
+	}
+	return me
+}
+
+// projectedKeepers is who an owner is expected to keep: the players whose
+// market cost most exceeds what the league will charge, up to the limit.
+//
+// Split out from myState because the roster shapes need to know *who* is
+// kept, not just what it costs. A keeper is part of the finished roster and
+// the shape constraints have to see him.
+func projectedKeepers(projected []draft.Entry, aav map[string]float64, ownerID string) []draft.Entry {
 	if ownerID == "" {
-		return me
+		return nil
 	}
 	var mine []draft.Entry
 	for _, e := range projected {
@@ -551,15 +572,13 @@ func myState(projected []draft.Entry, aav map[string]float64, ownerID string, bu
 	}
 	surplus := func(e draft.Entry) float64 { return aav[e.PlayerID] - float64(e.LeaguePrice) }
 	sort.Slice(mine, func(i, j int) bool { return surplus(mine[i]) > surplus(mine[j]) })
+
+	var out []draft.Entry
 	for i := 0; i < maxKeepers && i < len(mine); i++ {
 		if surplus(mine[i]) <= 0 {
 			break
 		}
-		me.Budget -= mine[i].LeaguePrice
-		me.OpenSlots--
-		if n, ok := me.StartersNeeded[mine[i].Position]; ok && n > 0 {
-			me.StartersNeeded[mine[i].Position] = n - 1
-		}
+		out = append(out, mine[i])
 	}
-	return me
+	return out
 }

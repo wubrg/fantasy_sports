@@ -217,6 +217,13 @@ function drawScratch() {
 
   const rows = [];
   for (const s of scratch.starters || []) {
+    // A keeper is already yours: no price to imagine, nothing to remove.
+    if (s.kept) {
+      rows.push(`<tr class="kept"><td class="slot">${esc(s.slot)}</td>` +
+        `<td>${esc(s.name)} <span class="tag">kept</span></td>` +
+        `<td class="price">$${s.price}</td><td></td></tr>`);
+      continue;
+    }
     rows.push(`<tr><td class="slot">${esc(s.slot)}</td><td>${esc(s.name)}</td>` +
       `<td class="price" data-reprice="${esc(s.name)}" title="click to change the price">$${s.price}</td>` +
       `<td class="drop" data-drop="${esc(s.name)}" title="remove">&times;</td></tr>`);
@@ -234,7 +241,7 @@ function drawScratch() {
 
   const note = document.getElementById("s-note");
   if (scratch.empty) {
-    note.textContent = "Click + on a row to try a player here. Nothing on this panel touches the live board.";
+    note.textContent = "Your keepers are already here. Click + on a row to try a player alongside them; nothing on this panel touches the live board.";
   } else {
     const bits = [`${m.MyGuys || 0} of your guys`];
     if (m.Injured) bits.push(`${m.Injured} carrying an injury designation`);

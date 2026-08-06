@@ -253,6 +253,41 @@ history and the 5 MB player dictionary.
 To reach it from another device on your tailnet, the leagueweb pattern
 applies — see the `leagueweb-serve-*` targets for the shape.
 
+### Shapes and your keepers
+
+A shape is a claim about the finished fourteen, so `-me` builds every shape
+**around the players you are keeping**:
+
+```
+Every shape is built around your keepers — Puka Nacua WR $35, De'Von Achane RB $35
+
+SHAPE           POPR  SPEND  QB   RB    WR    TE   NOTES
+Stars & Scrubs  543   $200   $1   $36   $156  $7
+Hero RB         521   $200   $4   $103  $80   $13  ruled out by keeping De'Von Achane
+Balanced        506   $199   $13  $53   $106  $27
+```
+
+Filling only the twelve slots you still have to buy got every RB shape wrong
+for anyone holding a back:
+
+| shape | keeper-blind | truth |
+|---|---|---|
+| Hero RB | achieved | **impossible** — Achane at $35 is already a second back over $20 |
+| Zero RB | achieved at $27 on backs | $62 with the keeper, over the $61 ceiling |
+| Robust RB | "did not reach it" at $62 | the keeper had already carried it past the line |
+
+**"Ruled out by keeping X"** is decided by experiment, not by reading the
+constraint: the shape is built again with that keeper set aside, and if it
+succeeds then he is why. Reading it off each shape's per-pick veto looked
+easier and was wrong — a veto is a fill heuristic, not the shape's definition,
+so Stars & Scrubs (which refuses every mid-priced buy) reported a $35 keeper
+as blocking it while two stars were still perfectly affordable.
+
+Keepers cannot be sold to make room, so the upgrade pass may not swap one out.
+The scratch roster on the web board starts with them for the same reason —
+otherwise it understates POPR and disagrees with this report about the same
+roster.
+
 ### `draftroom calibrate`
 
 Measures the archetype thresholds against completed drafts, so the numbers in
