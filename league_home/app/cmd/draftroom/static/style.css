@@ -301,3 +301,7 @@ tr.in-scratch { background: #16233a; }
 /* The imagined price is editable, so it has to look clickable. */
 .lineup td[data-reprice] { cursor: pointer; border-bottom: 1px dotted var(--dim); }
 .lineup td[data-reprice]:hover { color: var(--accent); }
+
+/* A lean another set argues with. Not an error — your read still wins — so
+   it reads as a note rather than a warning. */
+.flag.vs { border-color: var(--warn); color: var(--warn); }

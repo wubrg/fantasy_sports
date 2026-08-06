@@ -43,17 +43,27 @@ DATA ?= ../../../fantasy_sports_data
 TOOLS := internal/draft/data/tools
 ME ?= $(DRAFTROOM_OWNER_ID)
 
+# LEANS is the opinion sets to apply, in precedence order: the first set to
+# name a player owns him. Your own reads alone by default.
+LEANS ?= mine
+
 draftroom: ## Build just the draftroom binary
 	go build -o draftroom ./cmd/draftroom
 
 keepers: draftroom ## Keeper reconciliation, true budgets, and 2026 keeper prices
 	./draftroom keepers
 
-board: draftroom ## The draft board (BASELINE=beer|beerplus|vols, ME=<owner id>, LIMIT=n)
-	./draftroom board $(if $(ME),-me $(ME),) $(if $(BASELINE),-baseline $(BASELINE),) $(if $(LIMIT),-limit $(LIMIT),)
+board: draftroom ## The draft board (BASELINE=beer|beerplus|vols, ME=<owner id>, LIMIT=n, LEANS=mine,menton)
+	./draftroom board $(if $(ME),-me $(ME),) $(if $(BASELINE),-baseline $(BASELINE),) $(if $(LIMIT),-limit $(LIMIT),) -leans $(LEANS)
 
-serve: draftroom ## Serve the board as a web page (ME=<owner id>, ADDR=:8083)
-	./draftroom serve $(if $(ME),-me $(ME),) $(if $(ADDR),-addr $(ADDR),) $(if $(BASELINE),-baseline $(BASELINE),)
+serve: draftroom ## Serve the board as a web page (ME=<owner id>, ADDR=:8083, LEANS=mine,menton)
+	./draftroom serve $(if $(ME),-me $(ME),) $(if $(ADDR),-addr $(ADDR),) $(if $(BASELINE),-baseline $(BASELINE),) -leans $(LEANS)
+
+leans: draftroom ## Show the merged lean sets and what they disagree about (LEANS=mine,menton)
+	./draftroom leans -leans $(LEANS)
+
+leans-generate: draftroom ## Rebuild the generated lean sets from the private source data
+	./draftroom leans -generate
 
 install: ## Install draftroom into $GOBIN so it runs from any directory
 	@go install -ldflags "\
@@ -64,7 +74,7 @@ install: ## Install draftroom into $GOBIN so it runs from any directory
 	@echo "  data:   $$(cd $(DATA) && pwd)"
 	@echo "ensure $$(go env GOPATH)/bin is on your PATH; no env vars needed"
 
-refresh: ## Re-extract every source from the private data repo
+refresh: ## Re-extract every source from the private data repo and rebuild generated lean sets
 	@echo "==> Ciely"
 	@python3 $(TOOLS)/extract_ciely.py \
 		$$(ls -d $(DATA)/raw/ciely/*/ | tail -1)2026FFBProjections.xlsx \
@@ -77,6 +87,8 @@ refresh: ## Re-extract every source from the private data repo
 	@python3 $(TOOLS)/extract_fantasypoints.py \
 		"$$(ls $(DATA)/raw/fantasypoints/*.html | tail -1)" \
 		$(DATA)/normalized/fantasypoints-big3-2026.csv
+	@echo "==> generated lean sets"
+	@$(MAKE) --no-print-directory leans-generate
 
 data-status: ## Show how stale each source snapshot is
 	@echo "private data root: $$(cd $(DATA) 2>/dev/null && pwd || echo 'NOT FOUND')"

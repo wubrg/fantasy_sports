@@ -93,6 +93,11 @@ func flagsFor(p PlayerSignals) []string {
 	if m := p.Lean.Marker(); m != "" {
 		out = append(out, m)
 	}
+	// Naming who disagrees rather than just that someone does: "vs menton"
+	// tells you which read to go and check, which a bare mark does not.
+	for _, o := range p.Lean.Disagreement() {
+		out = append(out, "vs "+o.Source)
+	}
 	switch p.ECR {
 	case ECRContested:
 		out = append(out, "split")

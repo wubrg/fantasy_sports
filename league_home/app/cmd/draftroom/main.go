@@ -38,8 +38,16 @@ const (
 const (
 	rulingsFile = "rulings.csv"
 	aliasesFile = "aliases.csv"
-	myGuysFile  = "my-guys.csv"
+	// myGuysFile is the pre-lean-set filename, still read as a fallback so
+	// an older config directory does not silently lose every read.
+	myGuysFile = "my-guys.csv"
 )
+
+// defaultLeanSets is what -leans holds when you say nothing: your own reads
+// alone. An analyst set only applies when you ask for it by name.
+const defaultLeanSets = "mine"
+
+const ()
 
 // maxKeepers is how many players a team may keep, and rosterSize how many
 // roster spots each team fills, per leagues/hit_or_miss/rosters.md.
@@ -51,7 +59,7 @@ const (
 // builtinConfigDir and builtinDataDir are baked in by `make install` so an
 // installed binary works from any directory without environment variables.
 // They are only fallbacks: an explicit flag or env var still wins, and the
-// files themselves are read at runtime, so editing my-guys.csv takes effect
+// files themselves are read at runtime, so editing leans/mine.csv takes effect
 // without rebuilding.
 var (
 	builtinConfigDir string
@@ -72,18 +80,21 @@ func main() {
 
 	fs := flag.NewFlagSet("draftroom", flag.ExitOnError)
 	leagueID := fs.String("league", envOr("LEAGUE_ID", defaultLeagueID), "Sleeper league ID")
-	configDir := fs.String("config", "", "directory holding rulings.csv, aliases.csv and my-guys.csv (default: the repo's copy)")
+	configDir := fs.String("config", "", "directory holding rulings.csv, aliases.csv and leans/ (default: the repo's copy)")
 	dataDir := fs.String("data", "", "private data directory (default: $DRAFTROOM_DATA_DIR or ../fantasy_sports_data)")
 	baseline := fs.String("baseline", string(draft.BaselineBEERPlus), "valuation curve: beer, beerplus, or vols")
 	limit := fs.Int("limit", 40, "rows to show on the board")
 	addr := fs.String("addr", ":8083", "address for the serve command (leagueweb owns :8081)")
 	me := fs.String("me", envOr("DRAFTROOM_OWNER_ID", ""), "your Sleeper owner ID, so the board knows your budget")
+	leans := fs.String("leans", defaultLeanSets, "lean sets to apply, in precedence order: the first to name a player owns him")
+	generate := fs.Bool("generate", false, "leans: rebuild the generated sets from source data")
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: draftroom <command> [flags]\n\ncommands:\n")
 		fmt.Fprintf(os.Stderr, "  keepers   reconcile keeper prices against Sleeper and show budgets\n")
 		fmt.Fprintf(os.Stderr, "  board     price the live pool and print the draft board\n")
 		fmt.Fprintf(os.Stderr, "  serve     serve the board as a web page for a second monitor\n")
-		fmt.Fprintf(os.Stderr, "  shapes    compare roster archetypes at current prices\n\n")
+		fmt.Fprintf(os.Stderr, "  shapes    compare roster archetypes at current prices\n")
+		fmt.Fprintf(os.Stderr, "  leans     show the merged lean sets, or -generate to rebuild them\n\n")
 		fs.PrintDefaults()
 	}
 
@@ -104,19 +115,26 @@ func main() {
 			os.Exit(1)
 		}
 	case "board":
-		if err := runBoard(*leagueID, orBuiltin(*configDir, builtinConfigDir), orBuiltin(*dataDir, builtinDataDir), *me, draft.Baseline(*baseline), *limit); err != nil {
+		if err := runBoard(*leagueID, orBuiltin(*configDir, builtinConfigDir), orBuiltin(*dataDir, builtinDataDir),
+			*me, draft.Baseline(*baseline), *limit, draft.SetNames(*leans)); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}
 	case "shapes":
 		if err := runShapes(*leagueID, orBuiltin(*configDir, builtinConfigDir),
-			orBuiltin(*dataDir, builtinDataDir), *me, draft.Baseline(*baseline)); err != nil {
+			orBuiltin(*dataDir, builtinDataDir), *me, draft.Baseline(*baseline), draft.SetNames(*leans)); err != nil {
+			log("draftroom: %v", err)
+			os.Exit(1)
+		}
+	case "leans":
+		if err := runLeans(orBuiltin(*configDir, builtinConfigDir),
+			orBuiltin(*dataDir, builtinDataDir), draft.SetNames(*leans), *generate); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}
 	case "serve":
 		if err := runServe(*addr, *leagueID, orBuiltin(*configDir, builtinConfigDir),
-			orBuiltin(*dataDir, builtinDataDir), *me, draft.Baseline(*baseline)); err != nil {
+			orBuiltin(*dataDir, builtinDataDir), *me, draft.Baseline(*baseline), draft.SetNames(*leans)); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}
@@ -380,8 +398,8 @@ func ownerNames(c *sleeper.Client, seasons []draft.SeasonData) (draft.Names, err
 //
 // Delegates to the same loader and builder the server uses, so the printed
 // board and the web board cannot disagree about anything.
-func buildSnapshot(leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline) (draft.Snapshot, error) {
-	static, err := loadStatic(leagueID, configDir, dataDir, ownerID, baseline)
+func buildSnapshot(leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) (draft.Snapshot, error) {
+	static, err := loadStatic(leagueID, configDir, dataDir, ownerID, baseline, leanSets)
 	if err != nil {
 		return draft.Snapshot{}, err
 	}
@@ -402,8 +420,8 @@ func buildSnapshot(leagueID, configDir, dataDir, ownerID string, baseline draft.
 }
 
 // runBoard prints the draft board.
-func runBoard(leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline, limit int) error {
-	snap, err := buildSnapshot(leagueID, configDir, dataDir, ownerID, baseline)
+func runBoard(leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline, limit int, leanSets []string) error {
+	snap, err := buildSnapshot(leagueID, configDir, dataDir, ownerID, baseline, leanSets)
 	if err != nil {
 		return err
 	}
@@ -438,8 +456,8 @@ func runBoard(leagueID, configDir, dataDir, ownerID string, baseline draft.Basel
 }
 
 // runShapes compares roster archetypes against the live board.
-func runShapes(leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline) error {
-	static, err := loadStatic(leagueID, configDir, dataDir, ownerID, baseline)
+func runShapes(leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) error {
+	static, err := loadStatic(leagueID, configDir, dataDir, ownerID, baseline, leanSets)
 	if err != nil {
 		return err
 	}

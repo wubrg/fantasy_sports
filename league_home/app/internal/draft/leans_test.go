@@ -181,10 +181,17 @@ func TestOvercommittedCatchesABudgetYouCannotFieldARosterWith(t *testing.T) {
 
 // TestShippedMyGuysFileParses guards the file in the repo, since a typo
 // there would surface at 8pm on draft night.
+//
+// Asserts it is non-empty as well as valid: a missing lean file is not an
+// error by design, so a rename would otherwise leave this passing over
+// nothing at all.
 func TestShippedMyGuysFileParses(t *testing.T) {
-	got, err := LoadLeans("data/my-guys.csv")
+	got, err := LoadLeans("data/leans/mine.csv")
 	if err != nil {
-		t.Fatalf("the shipped my-guys.csv must always parse: %v", err)
+		t.Fatalf("the shipped mine.csv must always parse: %v", err)
+	}
+	if len(got) == 0 {
+		t.Fatal("data/leans/mine.csv read as empty — has it moved?")
 	}
 	for _, pl := range got {
 		if pl.Cap < 0 {

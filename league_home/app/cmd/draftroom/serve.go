@@ -199,9 +199,9 @@ func writeJSON(w http.ResponseWriter, v interface{}) {
 }
 
 // runServe serves the draft board over HTTP.
-func runServe(addr, leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline) error {
+func runServe(addr, leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) error {
 	log.Printf("loading draft history and sources...")
-	static, err := loadStatic(leagueID, configDir, dataDir, ownerID, baseline)
+	static, err := loadStatic(leagueID, configDir, dataDir, ownerID, baseline, leanSets)
 	if err != nil {
 		return err
 	}
