@@ -73,3 +73,11 @@ league_home/app/internal/draft/data/normalized/
 .DS_Store
 __pycache__/
 *.pyc
+
+# Wagering framework source captures. These are browser print-to-PDF exports of
+# Gemini share pages: ~118 MB total, and URPS-v3.pdf alone is 74 MB, close to
+# GitHub's 100 MB per-file limit. Their text layer is unusable anyway (subsetted
+# web fonts with no /ToUnicode maps), which is why the transcribed Markdown in
+# edge/docs/frameworks/ is the tracked artifact. Keep the PDFs locally as the
+# originals; each transcript records its source share URL.
+/*.pdf
