@@ -191,6 +191,21 @@ func bestPointsAt(players []PlayerSignals, pos string) float64 {
 // is stated as the 33rd running back coming off the board.
 const cielyRBCutoff = 33
 
+// rb33WarningLead is how much of the window to keep in hand when warning,
+// as a fraction of it.
+//
+// Without a lead the warning arrives exactly as the last back you can
+// afford to wait for is leaving, which is too late to do anything about in
+// an auction: you still have to win the bidding. A tenth of the window is
+// roughly three backs of notice.
+const rb33WarningLead = 0.10
+
+// rb33Lead is the warning lead in whole backs.
+func rb33Lead() int {
+	lead := float64(cielyRBCutoff) * rb33WarningLead
+	return int(lead + 0.5)
+}
+
 // rb33Pivot encodes Ciely's rule: lock up backs before the 33rd comes off
 // the board, because after that every receiver you take while the room
 // chases running backs builds an edge.
@@ -214,16 +229,16 @@ func rb33Pivot(scarcity map[string]PositionScarcity, me MyState) []Pivot {
 	}
 
 	if left := cielyRBCutoff - s.Gone; left > 0 {
-		// Still inside the window. Only worth saying once you can no longer
-		// expect to fill your backfield before it shuts.
-		if left > need {
+		// Still inside the window. Worth saying once the backs left before
+		// it shuts no longer cover what you need, plus the lead time.
+		if left > need+rb33Lead() {
 			return nil
 		}
 		return []Pivot{{
 			Name:     "RB33",
 			Position: "RB",
-			Reason: fmt.Sprintf("%d backs before Ciely's 33rd comes off and you still need %d — lock one up now",
-				left, need),
+			Reason: fmt.Sprintf("%s before Ciely's 33rd comes off and you still need %d — lock one up now",
+				plural(left, "back"), need),
 			Priority: priorityRB33,
 		}}
 	}
@@ -231,8 +246,8 @@ func rb33Pivot(scarcity map[string]PositionScarcity, me MyState) []Pivot {
 	return []Pivot{{
 		Name:     "RB33",
 		Position: "RB",
-		Reason: fmt.Sprintf("%d backs gone, past Ciely's 33rd — every receiver you take while the room chases backs builds an edge",
-			s.Gone),
+		Reason: fmt.Sprintf("%s gone, past Ciely's 33rd — every receiver you take while the room chases backs builds an edge",
+			plural(s.Gone, "back")),
 		Priority: priorityRB33,
 	}}
 }
@@ -306,4 +321,13 @@ func Top(pivots []Pivot) (Pivot, bool) {
 		return Pivot{}, false
 	}
 	return pivots[0], true
+}
+
+// plural renders a count with its noun, so a pivot that fires on the last
+// player does not read "1 backs" at the moment you are reading it fastest.
+func plural(n int, noun string) string {
+	if n == 1 {
+		return fmt.Sprintf("%d %s", n, noun)
+	}
+	return fmt.Sprintf("%d %ss", n, noun)
 }

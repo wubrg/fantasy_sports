@@ -105,6 +105,14 @@ func TestTierCliffNeedsAMeaningfulDrop(t *testing.T) {
 	}
 }
 
+// TestRB33WarningLead pins the lead itself, since it is the part that says
+// how much notice you get rather than what the rule means.
+func TestRB33WarningLead(t *testing.T) {
+	if got := rb33Lead(); got != 3 {
+		t.Errorf("lead = %d backs, want 3 (a tenth of the 33-back window)", got)
+	}
+}
+
 // TestRB33 encodes Ciely's rule and, importantly, that it stays quiet
 // while backs are plentiful.
 func TestRB33(t *testing.T) {
@@ -115,7 +123,19 @@ func TestRB33(t *testing.T) {
 		t.Errorf("early in the draft should not fire RB33: %+v", got)
 	}
 
-	// One back left before the window shuts and one still needed.
+	// The warning carries a lead: with one back still needed it opens four
+	// backs out from the cutoff, not one.
+	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 14, StartersLeft: 20, Gone: 28, TopScarcityPct: 85}
+	for _, p := range Pivots(nil, scarce, healthyState(), DraftTempo{}) {
+		if p.Name == "RB33" {
+			t.Errorf("five backs out is still too early: %+v", p)
+		}
+	}
+	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 13, StartersLeft: 20, Gone: 29, TopScarcityPct: 85}
+	if _, fired := Top(Pivots(nil, scarce, healthyState(), DraftTempo{})); !fired {
+		t.Error("four backs out, with a 3-back lead and 1 needed, should warn")
+	}
+
 	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 12, StartersLeft: 20, Gone: 32, TopScarcityPct: 85}
 	top, fired := Top(Pivots(nil, scarce, healthyState(), DraftTempo{}))
 	if !fired || top.Name != "RB33" {
