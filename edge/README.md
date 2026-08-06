@@ -76,16 +76,77 @@ example in them satisfies it.
 That 90.9% is a **ceiling at fair odds**. Real longshot markets carry heavy hold, so realised
 conversion lands nearer 60–80%.
 
+## Scenario betting
+
+A hit rate asks whether a player's *baseline* rate beats the price. At a season's
+sample size it essentially never does — clearing a −110 hurdle at 95% confidence needs 13 of 17.
+Fitting a distribution and simulating does not rescue it: measured, it narrows the interval about
+10% at a standard line while losing calibration in the tail, where nominal 95% coverage falls to
+86% even when the fitted family is exactly right.
+
+But a narrative wager was never a claim about baseline. It claims *this week differs* — a role
+change, a target funnel, a forced game script. So the question changes from "is my edge real?" to
+**"what would I have to believe?"**
+
+```
+$ ./edgectl scenario -name shootout -total 44 -threshold 50 \
+    -belief 0.40 -q 0.40 -r 0.08 -price 450 -label "Player A — 100+ rec yds"
+
+SCENARIO  shootout (total > 50.0) p=0.274 [derived-from-line]
+  market says 27.4%   you say 40.0%   (you are +12.6 points apart)
+
+  REQUIRES  believing the scenario is at least 31.8% likely
+  VERDICT   DISAGREEMENT-REQUIRED
+  your read is what carries this. Margin over the requirement: +8.2 pts
+
+  SENSITIVITY  s* moves -0.99 pts per point of q, -2.13 per point of r
+  the conclusion is driven most by r
+```
+
+With `P(hit) = q·s + r·(1−s)`, the price's breakeven `p*` gives `s* = (p* − r) / (q − r)`. The game
+total and spread supply the market's own view of `s`, so the disagreement is explicit rather than
+implied — and the verdict says where the expectation actually comes from:
+
+| Verdict | Meaning |
+|---|---|
+| `market-alone` | +EV on the market's own read. Usually the prop and the game line disagree — a real edge, but also the likeliest place to have mis-set `q` or `r`. Flagged, not celebrated. |
+| `disagreement-required` | Your read carries it. The normal case for a narrative bet. |
+| `beyond-your-read` | Not even your own belief justifies the price. |
+
+`-rungs line:price:q:r,...` runs an alternate-line ladder, ranked by how much room your belief has
+over each requirement rather than by EV — orderings survive misspecification that probability levels
+do not.
+
+## The calibration log
+
+```
+$ ./edgectl scenario ... -log bets.jsonl     # records the prediction
+$ ./edgectl log settle -file bets.jsonl -id <id> -result won
+$ ./edgectl log score  -file bets.jsonl
+```
+
+Nothing in the source frameworks does this, and it is the only thing that will ever tell you whether
+the narrative adjustments are worth anything. A claim that is never checked is indistinguishable
+from a hunch.
+
+The file is an append-only event stream. Settling appends a settlement rather than rewriting the
+bet, so **a prediction cannot be edited once the outcome is known** — hindsight is the failure mode
+a calibration log exists to prevent. Scoring reports predicted versus realised hit rate, excludes
+pushes and voids, honours the bankroll rules, and splits by where each scenario probability came
+from, so you can find out whether your reads or the line-derived ones were better.
+
 ## Layout
 
 ```
 edge/
   README.md
-  docs/frameworks/    transcribed source material + operative template
+  docs/frameworks/     transcribed source material + operative template
   app/
-    Makefile          build / test / vet / fmt / lint / check
-    cmd/edgectl/      CLI
-    internal/wager/   odds conversion, vig, de-vigging, EV
+    Makefile           build / test / vet / fmt / lint / check
+    cmd/edgectl/       CLI
+    internal/wager/    odds, vig, de-vigging, EV, hit rate, belief decomposition
+    internal/scenario/ game line -> scenario probability
+    internal/betlog/    append-only prediction log and calibration
 ```
 
 `app` is the third Go module in this repo, alongside `league_home/app` and `canton/app`, and is

@@ -33,6 +33,10 @@ func main() {
 		err = cardCmd(os.Args[2:])
 	case "hitrate":
 		err = hitrateCmd(os.Args[2:])
+	case "scenario":
+		err = scenarioCmd(os.Args[2:])
+	case "log":
+		err = logCmd(os.Args[2:])
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -70,6 +74,16 @@ func usage() {
         Minimum acceptable price for a cash wager. With -lo, shows the
         threshold your uncertainty can actually support alongside the one your
         point estimate claims.
+
+  edgectl scenario -total <n> -threshold <n> -belief <p> -q <p> -r <p> -price <american>
+        What you would have to believe for a wager to be +EV, against what the
+        game line already implies. Add -rungs line:price:q:r,... for a ladder,
+        or -log <path> to record the prediction.
+
+  edgectl log list|settle|score -file <path>
+        The calibration log. Predictions are recorded before the outcome and
+        settled by appending, never by rewriting, so nothing can be re-predicted
+        after the fact.
 
 edgectl never fetches prices and never guesses one. Bad input is an error, not
 a zero.
