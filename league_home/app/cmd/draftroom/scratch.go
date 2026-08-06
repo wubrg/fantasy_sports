@@ -159,12 +159,10 @@ func toScratchSpot(s draft.RosterSpot) ScratchSpot {
 }
 
 // scoringBaselines are the pinned VOLS baselines every roster is measured
-// against, computed once and cached since the projection set never changes.
+// against. Owned by staticData so the scratch roster, the archetypes and
+// the scarcity counts all measure against one set.
 func (s *server) scoringBaselines() map[string]float64 {
-	s.baselineOnce.Do(func() {
-		s.baselines = draft.ScoringBaselines(s.static.projections, s.static.shape)
-	})
-	return s.baselines
+	return s.static.baselines
 }
 
 // scratchResponse pairs the untouched live board with the scratch view, so

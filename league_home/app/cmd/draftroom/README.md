@@ -128,6 +128,64 @@ projection and costs $44 in real drafts — that $20 is the market pricing the
 Kubiak scheme change, which a median cannot see. Collapsing them into one
 "price" hides the only decision worth making.
 
+### Position scarcity
+
+```
+POS  STARTABLE  STARTERS STILL NEEDED  COVER    PS% AT TOP  NEXT CLIFF
+QB   8          11                     0.73x !  83%         34 pts
+RB   26         21                     1.24x    92%         35 pts
+WR   45         37                     1.22x    78%         31 pts
+TE   14         12                     1.17x    52%         15 pts
+```
+
+**`STARTABLE` counts players good enough to start, not bodies.** A raw count
+is worse than no count: 182 receivers remain against 43 starting spots, which
+reads as the deepest position on the board, while the players anyone would
+actually start are far fewer.
+
+The bar is **the median projection of the tier the last starting slot falls
+in** — not the projection of the player sitting in that slot. Those differ,
+and the difference is the whole measure.
+
+A single player is a knife edge: whoever happens to land at rank 42 sets the
+line, and he is one projection revision away from being someone else. A tier
+is the cluster he belongs to, and asking what its typical member projects for
+asks the real question — how good is the player you end up with in the last
+starting slot, and how many players are that good?
+
+**Where the slot falls inside its tier is what makes the answer move:**
+
+| | last starting slot | its tier | tier median | startable | slots |
+|---|---|---|---|---|---|
+| QB | Dart, 317 (rank 12) | ranks 4–12 | 322 | **8** | 12 |
+| WR | Robinson, 152 (rank 42) | ranks 41–50 | 148 | **45** | 42 |
+
+The last starting quarterback sits at the *bottom* of his tier, so the tier's
+typical member is better than he is and only eight quarterbacks clear the bar
+against twelve slots. The last starting receiver sits in the *middle* of a
+long flat band, so forty-five receivers clear that band's median against
+forty-two slots. Same league, opposite conclusions, and a point estimate at
+the slot itself reports neither.
+
+A tier straddling the slot is one tier — half of it landing on the bench is a
+fact about roster rules, not about the players. Where the marginal starter
+has a break on both sides he is his own tier, and the measure falls back to
+the point estimate; that is how tight end behaves this season.
+
+Tiers are read from **pinned pre-draft** projections. Against a bar
+recomputed from the pool that remains, the line sinks as the pool empties and
+the count above it barely moves — a scarcity number that cannot fall has
+nothing to say.
+
+Supply and demand are counted at the same line. Demand is taken at VOLS
+depth, which is the starting spots themselves with no bench rounds behind
+them.
+
+`COVER` is startable over spots. Below 1 the room cannot field the position
+from players worth starting — **QB is at 0.73x before a single pick**, which
+means three or four teams are going to start a quarterback nobody wanted.
+`NEXT CLIFF` and `PS% AT TOP` remain the quality measures during a run.
+
 Flags: `MUST` `+` `-` `DND` (your leans) · `vs <set>` (another lean set
 reads him the opposite way) · `ecr+` `ecr-` `split` (industry deviation;
 `split` means contested in both directions) · `swing$N` (value moves $N

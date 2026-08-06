@@ -134,7 +134,7 @@ func scarcityPivots(scarcity map[string]PositionScarcity, me MyState) []Pivot {
 			continue
 		}
 		s, ok := scarcity[pos]
-		if !ok || s.Remaining == 0 {
+		if !ok || s.Startable == 0 {
 			continue
 		}
 		if s.TopScarcityPct > 0 && s.TopScarcityPct < scarcityBreakThreshold {
@@ -190,19 +190,29 @@ func bestPointsAt(players []PlayerSignals, pos string) float64 {
 // rb33Pivot encodes Ciely's rule: lock up backs before the 33rd comes off
 // the board, because after that every receiver you take while the room
 // chases running backs builds an edge.
+//
+// The trigger is startable backs against the backs the room still has to
+// start, not a raw count. Against a raw count this could never fire: 108
+// players are listed at running back and a 12-team draft makes 168 picks in
+// total, so "fewer than 33 backs left on the board" was unreachable. The
+// count that moves is the one that ignores waiver fodder.
+//
+// Cover below 1 is Ciely's moment stated in this league's terms — fewer
+// backs worth starting than starting spots left to fill, so from here the
+// room is bidding on replacement level and the receivers are the edge.
 func rb33Pivot(scarcity map[string]PositionScarcity, me MyState) []Pivot {
 	s, ok := scarcity["RB"]
 	if !ok || me.StartersNeeded["RB"] <= 0 {
 		return nil
 	}
-	const cielyRBCutoff = 33
-	if s.Remaining > cielyRBCutoff || s.Remaining == 0 {
+	if s.Startable == 0 || s.Cover >= 1 {
 		return nil
 	}
 	return []Pivot{{
 		Name:     "RB33",
 		Position: "RB",
-		Reason:   fmt.Sprintf("%d backs left inside Ciely's top-33 window and you still need %d — after this the WR/RB gap swings your way", s.Remaining, me.StartersNeeded["RB"]),
+		Reason: fmt.Sprintf("%d startable backs left for %d starting spots and you still need %d — after this the WR/RB gap swings your way",
+			s.Startable, s.StartersLeft, me.StartersNeeded["RB"]),
 		Priority: priorityRB33,
 	}}
 }

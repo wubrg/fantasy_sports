@@ -119,7 +119,7 @@ func TestWriteBoardLimit(t *testing.T) {
 func TestWriteScarcityAndGaps(t *testing.T) {
 	var sb strings.Builder
 	if err := WriteScarcity(&sb, map[string]PositionScarcity{
-		"RB": {Position: "RB", Remaining: 40, StartersLeft: 20, TopScarcityPct: 85, Cliff: 22},
+		"RB": {Position: "RB", Startable: 40, StartersLeft: 20, Cover: 2, TopScarcityPct: 85, Cliff: 22},
 	}); err != nil {
 		t.Fatal(err)
 	}

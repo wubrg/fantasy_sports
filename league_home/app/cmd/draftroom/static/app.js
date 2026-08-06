@@ -105,7 +105,13 @@ function draw() {
     .map(([pos, v]) => [pos, signed(Math.round(v))]));
   drawMini("scarcity", Object.entries(snap.scarcity || {})
     .sort((a, b) => a[1].TopScarcityPct - b[1].TopScarcityPct)
-    .map(([pos, s]) => [pos, `${s.Remaining} left · ${Math.round(s.TopScarcityPct)}%`]));
+    .map(([pos, s]) => {
+      // Startable against starting spots: below 1.0 the room is about to
+      // start replacement level at the position.
+      const cover = s.Cover ? s.Cover.toFixed(2) + "x" : "—";
+      const thin = s.Cover > 0 && s.Cover < 1 ? " bad" : "";
+      return [pos, `<span class="${thin.trim()}">${s.Startable} startable · ${cover}</span>`];
+    }));
   drawSold();
   drawScratch();
 

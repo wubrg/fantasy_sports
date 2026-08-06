@@ -14,10 +14,10 @@ func healthyState() MyState {
 
 func roomyScarcity() map[string]PositionScarcity {
 	return map[string]PositionScarcity{
-		"RB": {Position: "RB", Remaining: 60, StartersLeft: 20, TopScarcityPct: 85},
-		"WR": {Position: "WR", Remaining: 90, StartersLeft: 30, TopScarcityPct: 90},
-		"QB": {Position: "QB", Remaining: 25, StartersLeft: 8, TopScarcityPct: 70},
-		"TE": {Position: "TE", Remaining: 25, StartersLeft: 8, TopScarcityPct: 70},
+		"RB": {Position: "RB", Startable: 40, StartersLeft: 20, Cover: 2, TopScarcityPct: 85},
+		"WR": {Position: "WR", Startable: 60, StartersLeft: 30, Cover: 2, TopScarcityPct: 90},
+		"QB": {Position: "QB", Startable: 16, StartersLeft: 8, Cover: 2, TopScarcityPct: 70},
+		"TE": {Position: "TE", Startable: 16, StartersLeft: 8, Cover: 2, TopScarcityPct: 70},
 	}
 }
 
@@ -51,7 +51,7 @@ func TestQuietWhenNothingIsWrong(t *testing.T) {
 func TestBudgetPaceOutranksEverything(t *testing.T) {
 	me := MyState{Budget: 6, OpenSlots: 5, StartersNeeded: map[string]int{"RB": 2, "WR": 1}}
 	scarce := roomyScarcity()
-	scarce["RB"] = PositionScarcity{Position: "RB", Remaining: 3, TopScarcityPct: 5}
+	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 3, StartersLeft: 20, Cover: 0.15, TopScarcityPct: 5}
 
 	pivots := Pivots(nil, scarce, me, DraftTempo{})
 	top, fired := Top(pivots)
@@ -68,7 +68,7 @@ func TestBudgetPaceOutranksEverything(t *testing.T) {
 
 func TestScarcityBreakFiresOnlyForPositionsYouNeed(t *testing.T) {
 	scarce := roomyScarcity()
-	scarce["TE"] = PositionScarcity{Position: "TE", Remaining: 4, TopScarcityPct: 8}
+	scarce["TE"] = PositionScarcity{Position: "TE", Startable: 4, StartersLeft: 8, Cover: 0.5, TopScarcityPct: 8}
 
 	// TE is thin, but the lineup is already set there.
 	me := MyState{Budget: 120, OpenSlots: 6, StartersNeeded: map[string]int{"RB": 1}}
@@ -92,13 +92,13 @@ func TestTierCliffNeedsAMeaningfulDrop(t *testing.T) {
 	scarce := roomyScarcity()
 
 	// A 5-point drop off a 300-point player is noise.
-	scarce["RB"] = PositionScarcity{Position: "RB", Remaining: 40, TopScarcityPct: 85, Cliff: 5}
+	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 40, StartersLeft: 20, Cover: 2, TopScarcityPct: 85, Cliff: 5}
 	if got := Pivots(players, scarce, healthyState(), DraftTempo{}); len(got) != 0 {
 		t.Errorf("a trivial drop should not fire: %+v", got)
 	}
 
 	// A 60-point drop is a chasm.
-	scarce["RB"] = PositionScarcity{Position: "RB", Remaining: 40, TopScarcityPct: 85, Cliff: 60}
+	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 40, StartersLeft: 20, Cover: 2, TopScarcityPct: 85, Cliff: 60}
 	top, fired := Top(Pivots(players, scarce, healthyState(), DraftTempo{}))
 	if !fired || top.Name != "TIER CLIFF" {
 		t.Fatalf("expected a tier cliff, got %+v", top)
@@ -110,16 +110,25 @@ func TestTierCliffNeedsAMeaningfulDrop(t *testing.T) {
 func TestRB33(t *testing.T) {
 	scarce := roomyScarcity()
 	if got := Pivots(nil, scarce, healthyState(), DraftTempo{}); len(got) != 0 {
-		t.Errorf("60 backs left should not fire RB33: %+v", got)
+		t.Errorf("twice as many startable backs as spots should not fire RB33: %+v", got)
 	}
 
-	scarce["RB"] = PositionScarcity{Position: "RB", Remaining: 30, TopScarcityPct: 85}
+	// Fewer backs worth starting than starting spots left to fill.
+	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 12, StartersLeft: 20, Cover: 0.6, TopScarcityPct: 85}
 	top, fired := Top(Pivots(nil, scarce, healthyState(), DraftTempo{}))
 	if !fired || top.Name != "RB33" {
-		t.Fatalf("expected RB33 inside the window, got %+v", top)
+		t.Fatalf("expected RB33 once cover drops below 1, got %+v", top)
 	}
-	if !strings.Contains(top.Reason, "30") {
-		t.Errorf("reason should say how many are left: %q", top.Reason)
+	if !strings.Contains(top.Reason, "12") {
+		t.Errorf("reason should say how many are startable: %q", top.Reason)
+	}
+
+	// Exactly enough is not yet scarce.
+	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 20, StartersLeft: 20, Cover: 1, TopScarcityPct: 85}
+	for _, p := range Pivots(nil, scarce, healthyState(), DraftTempo{}) {
+		if p.Name == "RB33" {
+			t.Errorf("cover of exactly 1 should not fire RB33: %+v", p)
+		}
 	}
 }
 
@@ -186,7 +195,7 @@ func TestTempoRatioHandlesEmptyBoard(t *testing.T) {
 // same as no advice.
 func TestOnlyOneBannerShows(t *testing.T) {
 	scarce := roomyScarcity()
-	scarce["RB"] = PositionScarcity{Position: "RB", Remaining: 20, TopScarcityPct: 5, Cliff: 80}
+	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 20, StartersLeft: 20, Cover: 1, TopScarcityPct: 5, Cliff: 80}
 	players := []PlayerSignals{{Name: "RB1", Position: "RB", CielyPoints: 300}}
 	me := MyState{Budget: 100, OpenSlots: 6, StartersNeeded: map[string]int{"RB": 1}}
 

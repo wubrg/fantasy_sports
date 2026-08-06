@@ -198,16 +198,29 @@ func sourceLabel(gaps []Gap) string {
 // WriteScarcity renders how thin each position has become.
 func WriteScarcity(w io.Writer, s map[string]PositionScarcity) error {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(tw, "POS\tLEFT\tSTARTERS STILL NEEDED\tPS% AT TOP\tNEXT CLIFF")
+	fmt.Fprintln(tw, "POS\tSTARTABLE\tSTARTERS STILL NEEDED\tCOVER\tPS% AT TOP\tNEXT CLIFF")
 	for _, pos := range []string{"QB", "RB", "WR", "TE"} {
 		v, ok := s[pos]
 		if !ok {
 			continue
 		}
-		fmt.Fprintf(tw, "%s\t%d\t%d\t%.0f%%\t%.0f pts\n",
-			pos, v.Remaining, v.StartersLeft, v.TopScarcityPct, v.Cliff)
+		fmt.Fprintf(tw, "%s\t%d\t%d\t%s\t%.0f%%\t%.0f pts\n",
+			pos, v.Startable, v.StartersLeft, formatCover(v.Cover), v.TopScarcityPct, v.Cliff)
 	}
 	return tw.Flush()
+}
+
+// formatCover marks the line where the room runs out of startable players,
+// since that is the only threshold in the column that changes a decision.
+func formatCover(cover float64) string {
+	if cover == 0 {
+		return "—"
+	}
+	short := ""
+	if cover < 1 {
+		short = " !"
+	}
+	return fmt.Sprintf("%.2fx%s", cover, short)
 }
 
 // WriteShapes renders the archetype comparison.
