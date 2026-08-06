@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script>
+// Behind tailscale serve --set-path, the mount prefix is stripped before
+// reaching this app, so every asset/API reference below is relative with
+// no leading slash. That only resolves correctly if the address bar ends
+// in "/". Normalize with replace() so it doesn't add a history entry.
+if (!location.pathname.endsWith("/")) {
+  location.replace(location.pathname + "/" + location.search + location.hash);
+}
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Draft Room</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="strip">
+  <div class="stat"><span class="label">budget</span><span class="value" id="budget">—</span></div>
+  <div class="stat"><span class="label">slots</span><span class="value" id="slots">—</span></div>
+  <div class="stat"><span class="label">max bid</span><span class="value" id="maxbid">—</span></div>
+  <div class="stat"><span class="label">safe ceiling</span><span class="value" id="ceiling">—</span></div>
+  <div class="stat wide"><span class="label">still starting</span><span class="value" id="needs">—</span></div>
+  <div class="stat wide right"><span class="label">pool</span><span class="value" id="pool">—</span></div>
+</header>
+
+<div id="pivot" class="pivot hidden"></div>
+<div id="musthaves" class="musthaves hidden"></div>
+
+<main>
+  <section class="board">
+    <div class="searchbar">
+      <input id="search" type="search" placeholder="filter players &mdash; press / to focus" autocomplete="off">
+      <label class="toggle"><input type="checkbox" id="affordable"> only what I can afford</label>
+      <span class="hint" id="hint"></span>
+    </div>
+    <table id="board">
+      <thead>
+        <tr>
+          <th>Player</th><th>Pos</th>
+          <th class="num">Cost</th><th class="num">Value</th>
+          <th class="num">Edge</th><th class="num">vs Pos</th>
+          <th class="num">My Max</th><th class="num">PS%</th>
+          <th>Flags</th><th class="sold-col"></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </section>
+
+  <aside>
+    <section>
+      <h2>Positional bias</h2>
+      <table class="mini" id="bias"></table>
+      <p class="note">How much of every edge is about the position, not the
+      player. Subtracted in the <strong>vs Pos</strong> column.</p>
+    </section>
+    <section>
+      <h2>Scarcity</h2>
+      <table class="mini" id="scarcity"></table>
+      <p class="note">PS% is the share of value left at a position after its
+      best remaining player goes.</p>
+    </section>
+    <section>
+      <h2>Recorded sales</h2>
+      <ul class="sold" id="soldlist"><li class="empty">none yet</li></ul>
+      <button id="undoall" class="undo">clear all</button>
+    </section>
+  </aside>
+</main>
+
+<footer>
+  <span id="status">loading&hellip;</span>
+  <span class="keys"><kbd>/</kbd> filter &middot; <kbd>Esc</kbd> clear &middot;
+  click <kbd>me</kbd> or <kbd>them</kbd> to record a sale</span>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -12,6 +12,10 @@
 | Def | 1 | 3 |
 | Kicker | 0 | 0 |
 
+**Sleeper enforces these position limits during the draft and on waivers** —
+a roster at its maximum for a position cannot add another, so the caps are
+hard constraints rather than guidance.
+
 ### Bench
 
 There will be 5 bench slots for you to fill.

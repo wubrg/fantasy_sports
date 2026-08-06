@@ -55,8 +55,21 @@ canton/app/cantonctl
 league_home/app/leaguectl
 league_home/app/leaguebot
 league_home/app/leagueweb
+league_home/app/draftroom
 
 # Local SQLite DB (regenerate with: cantonctl import ../data/canton_data.json)
 canton/data/canton.db
 canton/data/canton.db-shm
 canton/data/canton.db-wal
+
+# Draft room source data. Raw vendor exports and their normalized form are
+# subscriber content (The Athletic / Ciely, FantasyPoints, Late-Round,
+# Peaked) and must not be redistributed via this repo. The extractor code,
+# the manifest, and the league's own rulings are tracked; the data is not.
+league_home/app/internal/draft/data/raw/
+league_home/app/internal/draft/data/normalized/
+
+# macOS + Python cruft in the draft room tools
+.DS_Store
+__pycache__/
+*.pyc
