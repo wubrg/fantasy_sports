@@ -128,6 +128,45 @@ projection and costs $44 in real drafts — that $20 is the market pricing the
 Kubiak scheme change, which a median cannot see. Collapsing them into one
 "price" hides the only decision worth making.
 
+### Position scarcity
+
+```
+POS  STARTABLE  STARTERS STILL NEEDED  COVER  PS% AT TOP  NEXT CLIFF
+QB   11         11                     1.00x  83%         34 pts
+RB   27         21                     1.29x  92%         35 pts
+WR   41         37                     1.11x  78%         31 pts
+TE   13         12                     1.08x  52%         15 pts
+```
+
+**`STARTABLE` counts players above replacement level, not bodies.** A raw
+count is worse than no count: 182 receivers remain against 43 starting
+spots, which reads as the deepest position on the board, while only 41 of
+them project above replacement. The other 140 are waiver fodder whose
+presence says nothing except that the NFL employs a lot of receivers.
+
+Replacement here is the **pinned pre-draft** baseline — the same one rosters
+are scored against. Pinning is what makes the count mean anything. Measured
+against replacement recomputed from the pool that remains, the line sinks as
+the pool empties and the count above it barely moves; a scarcity number that
+cannot fall has nothing to say.
+
+Supply and demand are counted at the same line. The baseline is VOLS, whose
+depth is the starting spots themselves, so `STARTERS STILL NEEDED` carries no
+bench rounds behind it — otherwise the table would compare a VOLS count
+against a BEER+ requirement and report a shortage that is only the two curves
+disagreeing about where replacement sits.
+
+`COVER` is a **surplus gauge, not an alarm.** It starts near 1 because the
+baseline sits at the last starter, and then tends to rise: a drafted starter
+takes one off both sides, while a drafted scrub takes one off demand alone.
+So below 1 is rare and means something has gone badly wrong at the position.
+For picked-over, read `NEXT CLIFF` and `PS% AT TOP` — those are the quality
+measures, and they are what actually move during a run.
+
+The striking pre-draft reading this season is **QB at 1.00x**: exactly as
+many startable quarterbacks as quarterback spots, so every QB taken puts
+somebody on a replacement starter.
+
 Flags: `MUST` `+` `-` `DND` (your leans) · `vs <set>` (another lean set
 reads him the opposite way) · `ecr+` `ecr-` `split` (industry deviation;
 `split` means contested in both directions) · `swing$N` (value moves $N

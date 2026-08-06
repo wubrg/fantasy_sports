@@ -474,7 +474,7 @@ func runShapes(leagueID, configDir, dataDir, ownerID string, baseline draft.Base
 		Slots:     snap.Me.OpenSlots,
 		Price:     draft.BoardPrice,
 		Shape:     static.shape,
-		Baselines: draft.ScoringBaselines(static.projections, static.shape),
+		Baselines: static.baselines,
 	})
 	return draft.WriteShapes(os.Stdout, shapes, snap.Me.Budget)
 }

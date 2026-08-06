@@ -261,10 +261,28 @@ func absF(f float64) float64 {
 // PositionScarcity summarizes how thin a position has become.
 type PositionScarcity struct {
 	Position string
-	// Remaining is how many players at the position are still on the board.
-	Remaining int
+	// Startable is how many players still on the board project above
+	// replacement level at the position.
+	//
+	// Bodies are not the measure. 182 receivers remain in a room that needs
+	// 43 more starters, which reads as the deepest position on the board;
+	// only 40 of them project above replacement, which is the opposite
+	// reading. The other 140 are waiver fodder whose presence says nothing
+	// except that the NFL employs a lot of receivers.
+	Startable int
 	// StartersLeft is how many starting spots the league still has to fill.
 	StartersLeft int
+	// Cover is Startable over StartersLeft: below 1 the room cannot field
+	// this position from players worth starting.
+	//
+	// Read it as a surplus gauge rather than an alarm. It starts near 1 —
+	// the baseline is drawn at the last starter, so supply and demand begin
+	// level — and then tends to rise, because a drafted player takes one
+	// off both sides while a drafted scrub takes one off demand alone. A
+	// reading below 1 is therefore rare and means something has gone badly
+	// wrong at the position, not that it is getting picked over. For
+	// picked-over, read Cliff and TopScarcityPct.
+	Cover float64
 	// TopScarcityPct is the lowest PS% among the position's best remaining
 	// players — how little value is left behind them.
 	TopScarcityPct float64
@@ -272,22 +290,47 @@ type PositionScarcity struct {
 	Cliff float64
 }
 
-// Scarcity measures each position's remaining depth, which is what the
-// pivot triggers watch.
-func Scarcity(players []PlayerSignals, state PoolState) map[string]PositionScarcity {
+// Scarcity measures how many players worth starting are left at each
+// position, which is what the pivot triggers watch.
+//
+// baselines are the pinned pre-draft replacement points — the same ones
+// rosters are scored against. Pinned matters here more than anywhere else:
+// replacement level computed against the pool that remains moves down as
+// the pool empties, so the count of players above it barely changes, and a
+// scarcity measure that cannot fall has nothing to say. Against a fixed
+// baseline the count decays as the position is picked over, which is the
+// entire signal.
+func Scarcity(players []PlayerSignals, state PoolState, baselines map[string]float64) map[string]PositionScarcity {
 	byPos := map[string][]PlayerSignals{}
 	for _, p := range players {
 		byPos[p.Position] = append(byPos[p.Position], p)
 	}
-	depth := replacementDepth(state)
+	// Demand is counted at the same line as supply. The baselines are
+	// pinned to VOLS, whose depth is the starting spots themselves with no
+	// bench rounds behind them; measuring startable players against the
+	// active curve's deeper line would compare a VOLS count to a BEER+
+	// requirement and report a shortage that is only the two curves
+	// disagreeing about where replacement sits.
+	starting := state
+	starting.Baseline = BaselineVOLS
+	depth := replacementDepth(starting)
 
 	out := map[string]PositionScarcity{}
 	for pos, list := range byPos {
 		sort.SliceStable(list, func(i, j int) bool { return list[i].CielyPoints > list[j].CielyPoints })
+		startable := 0
+		for _, p := range list {
+			if p.CielyPoints > baselines[pos] {
+				startable++
+			}
+		}
 		s := PositionScarcity{
 			Position:     pos,
-			Remaining:    len(list),
+			Startable:    startable,
 			StartersLeft: depth[pos],
+		}
+		if depth[pos] > 0 {
+			s.Cover = float64(startable) / float64(depth[pos])
 		}
 		if len(list) > 0 {
 			s.TopScarcityPct = list[0].ScarcityPct

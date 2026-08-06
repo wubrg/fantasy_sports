@@ -211,11 +211,13 @@ func TestScarcityMeasuresDepthAndCliff(t *testing.T) {
 		{Name: "WR1", Position: "WR", CielyPoints: 300, ScarcityPct: 95},
 	}
 	state := HitOrMissPool()
-	got := Scarcity(players, state)
+	// A pinned replacement level of 260 makes RB3 waiver fodder.
+	baselines := map[string]float64{"RB": 260, "WR": 260}
+	got := Scarcity(players, state, baselines)
 
 	rb := got["RB"]
-	if rb.Remaining != 3 {
-		t.Errorf("RB remaining = %d, want 3", rb.Remaining)
+	if rb.Startable != 2 {
+		t.Errorf("RB startable = %d, want 2 — RB3 sits below replacement", rb.Startable)
 	}
 	// The cliff is the biggest single drop among the top few: 315 -> 250.
 	if rb.Cliff != 65 {
@@ -226,6 +228,55 @@ func TestScarcityMeasuresDepthAndCliff(t *testing.T) {
 	}
 	if got["WR"].Cliff != 0 {
 		t.Errorf("a lone player has no cliff, got %v", got["WR"].Cliff)
+	}
+}
+
+// TestScarcityCountsStartableNotBodies is the point of the measure.
+//
+// A position can hold a hundred players and still be empty: the ones below
+// replacement are waiver fodder, and counting them makes the thinnest
+// position on the board read as the deepest.
+func TestScarcityCountsStartableNotBodies(t *testing.T) {
+	players := []PlayerSignals{{Name: "WR1", Position: "WR", CielyPoints: 300}}
+	for i := 0; i < 150; i++ {
+		players = append(players, PlayerSignals{Name: "scrub", Position: "WR", CielyPoints: 40})
+	}
+	got := Scarcity(players, HitOrMissPool(), map[string]float64{"WR": 180})
+
+	wr := got["WR"]
+	if wr.Startable != 1 {
+		t.Errorf("startable = %d, want 1 despite 151 bodies", wr.Startable)
+	}
+	if wr.StartersLeft <= wr.Startable {
+		t.Fatalf("fixture needs more demand than supply, got %d spots", wr.StartersLeft)
+	}
+	if wr.Cover >= 1 {
+		t.Errorf("cover = %v, want below 1 with one startable player", wr.Cover)
+	}
+}
+
+// TestScarcityFallsAsAPositionIsPickedOver — measured against a pinned
+// baseline the count decays, which is the whole signal. Against a baseline
+// recomputed from the remaining pool it could not.
+func TestScarcityFallsAsAPositionIsPickedOver(t *testing.T) {
+	baselines := map[string]float64{"RB": 200}
+	full := []PlayerSignals{
+		{Name: "RB1", Position: "RB", CielyPoints: 320},
+		{Name: "RB2", Position: "RB", CielyPoints: 300},
+		{Name: "RB3", Position: "RB", CielyPoints: 260},
+		{Name: "RB4", Position: "RB", CielyPoints: 120},
+	}
+	before := Scarcity(full, HitOrMissPool(), baselines)["RB"]
+	after := Scarcity(full[2:], HitOrMissPool(), baselines)["RB"]
+
+	if before.Startable != 3 {
+		t.Errorf("before = %d startable, want 3", before.Startable)
+	}
+	if after.Startable != 1 {
+		t.Errorf("after two backs went = %d startable, want 1", after.Startable)
+	}
+	if after.Cover >= before.Cover {
+		t.Errorf("cover must fall as the position empties: %v -> %v", before.Cover, after.Cover)
 	}
 }
 
