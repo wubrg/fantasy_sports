@@ -280,6 +280,43 @@ func TestScarcityFallsAsAPositionIsPickedOver(t *testing.T) {
 	}
 }
 
+// TestScarcityCarriesTheThresholdItCounted — the draft board filters rows
+// on Threshold and prints Startable next to them. If the two ever came from
+// different lines the board would show "8 startable" above a list of nine,
+// and the number that is supposed to be reassuring becomes the thing you
+// stop trusting mid-auction.
+func TestScarcityCarriesTheThresholdItCounted(t *testing.T) {
+	players := []PlayerSignals{
+		{Name: "RB1", Position: "RB", CielyPoints: 320},
+		{Name: "RB2", Position: "RB", CielyPoints: 260},
+		// Exactly at the line: meet-or-exceed counts him, so a consumer
+		// filtering with >= has to land on the same answer.
+		{Name: "RB3", Position: "RB", CielyPoints: 200},
+		{Name: "RB4", Position: "RB", CielyPoints: 199},
+		{Name: "WR1", Position: "WR", CielyPoints: 300},
+		{Name: "WR2", Position: "WR", CielyPoints: 100},
+	}
+	thresholds := map[string]float64{"RB": 200, "WR": 180}
+	got := Scarcity(players, HitOrMissPool(), thresholds)
+
+	for pos, want := range thresholds {
+		s := got[pos]
+		if s.Threshold != want {
+			t.Errorf("%s threshold = %v, want %v", pos, s.Threshold, want)
+		}
+		above := 0
+		for _, p := range players {
+			if p.Position == pos && p.CielyPoints >= s.Threshold {
+				above++
+			}
+		}
+		if s.Startable != above {
+			t.Errorf("%s: startable = %d but %d players sit at or above the "+
+				"reported threshold %v", pos, s.Startable, above, s.Threshold)
+		}
+	}
+}
+
 // biasFixture is a board where one whole position is lifted by a source
 // artifact, plus one player who is genuinely better than his position.
 func biasFixture() []PlayerSignals {

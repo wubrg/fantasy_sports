@@ -302,6 +302,17 @@ type PositionScarcity struct {
 	TopScarcityPct float64
 	// Cliff is the points drop from the best available to the next tier.
 	Cliff float64
+	// Threshold is the projection a player must meet to be counted in
+	// Startable — the median of the tier the last starting slot falls in.
+	// See ScarcityThresholds for why the tier's median rather than the
+	// player sitting in the slot.
+	//
+	// Carried on the summary so a consumer can sort players against the
+	// same bar the count was taken at. Without it a board showing "8
+	// startable quarterbacks" cannot say *which* eight, and anything that
+	// re-derived the line from the remaining pool would draw it somewhere
+	// else — the pinned threshold is the whole reason the count decays.
+	Threshold float64
 }
 
 // Scarcity measures how many players worth starting are left at each
@@ -344,6 +355,7 @@ func Scarcity(players []PlayerSignals, state PoolState, thresholds map[string]fl
 			Startable:    startable,
 			StartersLeft: depth[pos],
 			Gone:         state.Filled[pos],
+			Threshold:    thresholds[pos],
 		}
 		if depth[pos] > 0 {
 			s.Cover = float64(startable) / float64(depth[pos])

@@ -85,6 +85,7 @@ main {
 
 .searchbar {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
   margin-bottom: 0.7rem;
@@ -103,6 +104,47 @@ main {
 #search:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 
 .toggle, .hint { color: var(--dim); font-size: 0.85rem; }
+
+/* The count line gets the whole width and its own row, so it sits in the
+   same place no matter how the controls above it wrap. You look here to
+   find out what the board is hiding, and it has to be findable without
+   reading. */
+.hint {
+  flex-basis: 100%;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  min-height: 1.3em;
+}
+.hint .trunc { color: var(--warn); }
+
+/* Position toggles carry the same colours as the Pos column, so the pill
+   you pressed and the rows it let through read as the same thing. Off is
+   an outline, on is filled: at a couple of feet the fill is the signal and
+   the label is confirmation. */
+.posfilter { display: flex; gap: 0.3rem; }
+
+.posfilter .pospill {
+  --pos: var(--dim);
+  padding: 0.28rem 0.6rem;
+  font: 600 0.95rem/1 inherit;
+  letter-spacing: 0.04em;
+  background: transparent;
+  color: var(--pos);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.posfilter .pospill.pos-QB { --pos: #c4b5fd; }
+.posfilter .pospill.pos-RB { --pos: #fca5a5; }
+.posfilter .pospill.pos-WR { --pos: #93c5fd; }
+.posfilter .pospill.pos-TE { --pos: #fcd34d; }
+
+.posfilter .pospill:hover { border-color: var(--pos); }
+.posfilter .pospill.on {
+  background: var(--pos);
+  border-color: var(--pos);
+  color: var(--bg);
+}
 
 table { width: 100%; border-collapse: collapse; }
 
