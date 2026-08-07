@@ -223,12 +223,33 @@ func formatCover(cover float64) string {
 	return fmt.Sprintf("%.2fx%s", cover, short)
 }
 
+// writeShapeRows renders one family of shapes as a table.
+func writeShapeRows(tw *tabwriter.Writer, shapes []Shape) {
+	fmt.Fprintln(tw, "SHAPE\tPOPR\tSPEND\tQB\tRB\tWR\tTE\tMY GUYS\tNOTES")
+	for _, s := range shapes {
+		note := ""
+		if s.BlockedBy != "" {
+			note = fmt.Sprintf("ruled out by keeping %s", s.BlockedBy)
+		} else if !s.Achieved && !s.Possible {
+			note = "the board cannot supply this shape"
+		} else if !s.Achieved {
+			note = "possible, but the greedy fill did not reach it"
+		} else if s.Metrics.Injured > 0 {
+			note = fmt.Sprintf("%d carrying an injury designation", s.Metrics.Injured)
+		}
+		sp := s.Metrics.SpendPosition
+		fmt.Fprintf(tw, "%s\t%.0f\t$%d\t$%d\t$%d\t$%d\t$%d\t%d\t%s\n",
+			s.Archetype.Name, s.Metrics.POPR, s.Metrics.Spend,
+			sp["QB"], sp["RB"], sp["WR"], sp["TE"], s.Metrics.MyGuys, note)
+	}
+}
+
 // WriteShapes renders the archetype comparison.
 //
 // The shapes are illustrations, not recommendations. The fill is greedy and
 // the thresholds are first guesses, so the report says so rather than
 // letting a POPR ranking imply one shape is correct.
-func WriteShapes(w io.Writer, shapes []Shape, budget int, held []RosterSpot) error {
+func WriteShapes(w io.Writer, money, traits []Shape, budget int, held []RosterSpot) error {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 
 	fmt.Fprintf(tw, "ROSTER SHAPES — $%d\n", budget)
@@ -250,28 +271,28 @@ func WriteShapes(w io.Writer, shapes []Shape, budget int, held []RosterSpot) err
 	}
 	fmt.Fprintln(tw)
 
-	fmt.Fprintln(tw, "SHAPE\tPOPR\tSPEND\tQB\tRB\tWR\tTE\tMY GUYS\tNOTES")
-	for _, s := range shapes {
-		note := ""
-		if s.BlockedBy != "" {
-			note = fmt.Sprintf("ruled out by keeping %s", s.BlockedBy)
-		} else if !s.Achieved && !s.Possible {
-			note = "the board cannot supply this shape"
-		} else if !s.Achieved {
-			note = "possible, but the greedy fill did not reach it"
-		} else if s.Metrics.Injured > 0 {
-			note = fmt.Sprintf("%d carrying an injury designation", s.Metrics.Injured)
-		}
-		sp := s.Metrics.SpendPosition
-		fmt.Fprintf(tw, "%s\t%.0f\t$%d\t$%d\t$%d\t$%d\t$%d\t%d\t%s\n",
-			s.Archetype.Name, s.Metrics.POPR, s.Metrics.Spend,
-			sp["QB"], sp["RB"], sp["WR"], sp["TE"], s.Metrics.MyGuys, note)
+	if len(traits) > 0 {
+		fmt.Fprintln(tw, "BY MONEY — how to divide the budget")
+	}
+	writeShapeRows(tw, money)
+	if len(traits) > 0 {
+		fmt.Fprintf(tw, "\nBY PLAYER TYPE — what kind of players the money buys\n")
+		writeShapeRows(tw, traits)
 	}
 
-	for _, s := range shapes {
+	for _, s := range append(append([]Shape{}, money...), traits...) {
 		fmt.Fprintf(tw, "\n%s — %s\n", s.Archetype.Name, s.Archetype.Why)
 		if s.Archetype.Seen != "" {
 			fmt.Fprintf(tw, "  built %s\n", s.Archetype.Seen)
+		}
+		if counts := TraitCounts(s.Roster); len(counts) > 0 {
+			var parts []string
+			for _, t := range TraitNames {
+				if n := counts[t]; n > 0 {
+					parts = append(parts, fmt.Sprintf("%d %s", n, t.Label()))
+				}
+			}
+			fmt.Fprintf(tw, "  starters: %s\n", strings.Join(parts, ", "))
 		}
 		fmt.Fprintln(tw, "  SLOT\tPLAYER\tPOS\tPRICE\tPTS")
 		for _, spot := range s.Roster.Starters() {

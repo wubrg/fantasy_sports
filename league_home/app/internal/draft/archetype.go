@@ -33,6 +33,9 @@ type Archetype struct {
 	// shape, as opposed to merely never violating it. "At least three
 	// backs over $25" cannot be checked player by player.
 	Satisfied func(r Roster) bool
+	// Trait is set on the shapes made of kinds of players rather than
+	// sizes of bid, so a report can group the two families.
+	Trait Trait
 	// Seen records how often this league has actually built the shape, so
 	// a threshold carries the evidence that set it rather than looking
 	// like a number somebody liked.
@@ -56,6 +59,24 @@ type Anchor struct {
 	Position string
 	MinPrice int
 	Count    int
+	// Trait, when set, requires the player to be of that kind. The trait
+	// shapes are built entirely out of these: a shape about what sort of
+	// players you own cannot be expressed as a price at all, and a per-pick
+	// veto could only ever refuse the wrong ones rather than go and find
+	// the right ones.
+	Trait Trait
+}
+
+// matches reports whether a player satisfies this anchor's requirements
+// other than price.
+func (a Anchor) matches(p PlayerSignals) bool {
+	if a.Position != "" && p.Position != a.Position {
+		return false
+	}
+	if a.Trait != "" && !p.Traits.Has(a.Trait) {
+		return false
+	}
+	return true
 }
 
 // Archetypes are the shapes worth comparing.
@@ -292,7 +313,7 @@ func Fill(a Archetype, available []PlayerSignals, opts FillOptions) Shape {
 		// A held player already over the anchor price is that anchor.
 		start := 0
 		for _, h := range opts.Held {
-			if (anchor.Position == "" || h.Player.Position == anchor.Position) && h.Price >= anchor.MinPrice {
+			if anchor.matches(h.Player) && h.Price >= anchor.MinPrice {
 				start++
 			}
 		}
@@ -305,6 +326,7 @@ func Fill(a Archetype, available []PlayerSignals, opts FillOptions) Shape {
 			}
 			price := opts.Price(pool[pick])
 			r.Add(pool[pick], price)
+			r.Players[len(r.Players)-1].Anchored = true
 			budget -= price
 		}
 	}
@@ -367,6 +389,9 @@ func Fill(a Archetype, available []PlayerSignals, opts FillOptions) Shape {
 		budget -= price
 	}
 
+	// Score first: it assigns the lineup, and the trait shapes are counted
+	// over starters. Satisfied on an unscored roster would see nobody
+	// starting and report every trait shape unachieved.
 	metrics := Score(&r, opts.Baselines, opts.Shape)
 	return Shape{
 		Archetype: a,
@@ -422,10 +447,7 @@ func anchorsAffordable(a Archetype, pool []PlayerSignals, opts FillOptions) bool
 	for _, anchor := range a.Anchors {
 		need := anchor.Count
 		for _, h := range opts.Held {
-			if anchor.Position != "" && h.Player.Position != anchor.Position {
-				continue
-			}
-			if h.Price >= anchor.MinPrice {
+			if anchor.matches(h.Player) && h.Price >= anchor.MinPrice {
 				need--
 			}
 		}
@@ -435,7 +457,7 @@ func anchorsAffordable(a Archetype, pool []PlayerSignals, opts FillOptions) bool
 		found := 0
 		cheapest := 0
 		for _, p := range pool {
-			if anchor.Position != "" && p.Position != anchor.Position {
+			if !anchor.matches(p) {
 				continue
 			}
 			if price := opts.Price(p); price >= anchor.MinPrice {
@@ -460,7 +482,7 @@ func bestAnchor(a Archetype, r Roster, pool []PlayerSignals, anchor Anchor, opts
 		if r.Has(p.PlayerID) {
 			continue
 		}
-		if anchor.Position != "" && p.Position != anchor.Position {
+		if !anchor.matches(p) {
 			continue
 		}
 		price := opts.Price(p)
@@ -544,7 +566,7 @@ func bestUpgrade(a Archetype, r Roster, pool []PlayerSignals, opts FillOptions, 
 		// and a fill that traded one away would price a roster nobody can
 		// actually own.
 		for j, held := range r.Players {
-			if held.Held || held.Player.Position != p.Position {
+			if held.Held || held.Anchored || held.Player.Position != p.Position {
 				continue
 			}
 			trimmed := r
@@ -579,6 +601,20 @@ func isFlexEligible(shape PoolState, pos string) bool {
 func CompareShapes(available []PlayerSignals, opts FillOptions) []Shape {
 	out := make([]Shape, 0, len(Archetypes()))
 	for _, a := range Archetypes() {
+		s := Fill(a, available, opts)
+		if !s.Achieved {
+			s.BlockedBy = blamedOnKeepers(a, available, opts)
+		}
+		out = append(out, s)
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Metrics.POPR > out[j].Metrics.POPR })
+	return out
+}
+
+// CompareTraitShapes fills every trait shape against the same board.
+func CompareTraitShapes(available []PlayerSignals, opts FillOptions) []Shape {
+	out := make([]Shape, 0, len(TraitArchetypes()))
+	for _, a := range TraitArchetypes() {
 		s := Fill(a, available, opts)
 		if !s.Achieved {
 			s.BlockedBy = blamedOnKeepers(a, available, opts)

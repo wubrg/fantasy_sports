@@ -43,6 +43,8 @@ type staticData struct {
 	subvert     []draft.SourceRow
 
 	availability map[string]string
+	// traits label what kind of player each man is; see ClassifyTraits.
+	traits map[string]draft.TraitSet
 	// baselines are the pinned pre-draft replacement points that rosters
 	// are scored against; thresholds are the pinned tier medians scarcity
 	// is counted against. Both computed once, because the projection set
@@ -165,6 +167,7 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	// recomputed: replacement level measured against the pool that remains
 	// falls as the pool empties, so a count above it could never drop.
 	s.baselines = draft.ScoringBaselines(s.projections, s.shape)
+	s.traits = classifyTraits(ciely, sv, info, s.shape)
 	s.thresholds = draft.ScarcityThresholds(s.projections, s.shape)
 
 	for _, r := range sv {
@@ -268,7 +271,7 @@ func (s *staticData) Build(taken map[string]gone) (draft.Snapshot, error) {
 	players := draft.BuildSignals(draft.SignalInputs{
 		Values: values, Costs: costs, Subvertadown: s.subvert,
 		CielyPoints: s.points, Availability: s.availability,
-		Leans: s.leans, RecommendedBid: recommended,
+		Leans: s.leans, Traits: s.traits, RecommendedBid: recommended,
 	})
 	snap := draft.Assemble(s.season, state, me, players, s.leans, s.tempo(taken, costs), s.thresholds, s.warnings)
 	snap.LeanSets = s.leanSets

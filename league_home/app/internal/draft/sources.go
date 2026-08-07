@@ -92,6 +92,47 @@ type SourceRow struct {
 	ECRUp, ECRDown bool
 	// PlayerID is the resolved Sleeper ID, empty until Resolve runs.
 	PlayerID string
+	// Components is the projection broken into the pieces it was built
+	// from, where the source publishes them. Present for Ciely, absent for
+	// sources that ship a point total alone.
+	//
+	// Worth carrying because the pieces say what kind of player he is in a
+	// way the total cannot: two backs projected for the same points are
+	// different propositions when one gets there on receptions and the
+	// other on touchdowns.
+	Components Components
+}
+
+// Components is a projection's constituent parts.
+type Components struct {
+	// HasParts reports whether the source published enough to decompose.
+	HasParts bool
+
+	PassYards, PassTD, Interceptions float64
+	RushYards, RushTD                float64
+	Targets, Receptions              float64
+	RecvYards, RecvTD                float64
+}
+
+// TouchdownPoints is what the projection earns from scoring plays, in this
+// league's scoring.
+func (c Components) TouchdownPoints() float64 {
+	return c.PassTD*4 + c.RushTD*6 + c.RecvTD*6
+}
+
+// ReceptionPoints is what it earns from catches alone, at half a point each.
+func (c Components) ReceptionPoints() float64 { return c.Receptions * 0.5 }
+
+// YardagePoints is what it earns from yards.
+func (c Components) YardagePoints() float64 {
+	return c.PassYards/25 + c.RushYards/10 + c.RecvYards/10
+}
+
+// Total is the projection rebuilt from its parts. It reconstructs Ciely's
+// published league points exactly, which is the check that the scoring
+// applied here matches the league's.
+func (c Components) Total() float64 {
+	return c.TouchdownPoints() + c.ReceptionPoints() + c.YardagePoints() - c.Interceptions
 }
 
 // ECRState summarizes the two ECR flags into the four cases that matter.
@@ -204,7 +245,23 @@ func ParseSourceCSV(r io.Reader) ([]SourceRow, error) {
 			}
 			return false
 		}
+		comp := Components{
+			PassYards:     num(pick(rec, "pass_yards")),
+			PassTD:        num(pick(rec, "pass_td")),
+			Interceptions: num(pick(rec, "interceptions")),
+			RushYards:     num(pick(rec, "rush_yards")),
+			RushTD:        num(pick(rec, "rush_td")),
+			Targets:       num(pick(rec, "targets")),
+			Receptions:    num(pick(rec, "receptions")),
+			RecvYards:     num(pick(rec, "recv_yards")),
+			RecvTD:        num(pick(rec, "recv_td")),
+		}
+		// A source that publishes none of these ships a total alone, and
+		// zeroed parts would read as a player who does nothing.
+		comp.HasParts = comp.PassYards+comp.RushYards+comp.RecvYards+comp.Receptions > 0
+
 		out = append(out, SourceRow{
+			Components:   comp,
 			Source:       pick(rec, "source"),
 			Player:       name,
 			Position:     strings.ToUpper(pick(rec, "position", "pos")),

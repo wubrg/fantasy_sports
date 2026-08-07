@@ -351,13 +351,13 @@ func playerInfo(c *sleeper.Client, priorSeason string) (map[string]draft.PlayerI
 		if name == "" {
 			name = id
 		}
-		gp := -1
+		gp, prior := -1, 0.0
 		if s, ok := stats[id]; ok {
-			gp = int(s["gp"])
+			gp, prior = int(s["gp"]), s["pts_half_ppr"]
 		}
 		out[id] = draft.PlayerInfo{
 			Name: name, Position: p.Position, Team: p.Team,
-			GamesPlayed: gp, Injury: p.InjuryStatus,
+			GamesPlayed: gp, PriorPoints: prior, Injury: p.InjuryStatus,
 		}
 	}
 	return out, nil
@@ -479,7 +479,7 @@ func runShapes(leagueID, configDir, dataDir, ownerID string, baseline draft.Base
 	}
 
 	held := static.heldRoster(ownerID)
-	shapes := draft.CompareShapes(snap.Players, draft.FillOptions{
+	opts := draft.FillOptions{
 		Budget: snap.Me.Budget,
 		// The whole roster, keepers included: a shape is a claim about the
 		// finished fourteen, not about the twelve still to buy.
@@ -488,8 +488,10 @@ func runShapes(leagueID, configDir, dataDir, ownerID string, baseline draft.Base
 		Price:     draft.BoardPrice,
 		Shape:     static.shape,
 		Baselines: static.baselines,
-	})
-	return draft.WriteShapes(os.Stdout, shapes, snap.Me.Budget, held)
+	}
+	money := draft.CompareShapes(snap.Players, opts)
+	traits := draft.CompareTraitShapes(snap.Players, opts)
+	return draft.WriteShapes(os.Stdout, money, traits, snap.Me.Budget, held)
 }
 
 // tail returns the last n entries, which for an edge list sorted best-first

@@ -253,6 +253,84 @@ history and the 5 MB player dictionary.
 To reach it from another device on your tailnet, the leagueweb pattern
 applies — see the `leagueweb-serve-*` targets for the shape.
 
+### Shapes by player type
+
+The money shapes ask how to divide a budget. That stops being the interesting
+question once keepers hand you a surplus — the distribution is half-settled by
+what you kept, and what's left to choose is *what kind of players* the rest
+buys. So `shapes` reports two families:
+
+```
+BY MONEY — how to divide the budget
+Stars & Scrubs  543  $200  $1  $36   $156  $7
+Hero RB         521  $200  $4  $103  $80   $13  ruled out by keeping De'Von Achane
+...
+
+BY PLAYER TYPE — what kind of players the money buys
+Target Volume    530  $200  $1  $37   $156  $6
+Red Zone Corner  530  $200  $1  $37   $145  $17
+Buy the Injuries 507  $199  $1  $103  $85   $10
+Bell Cows        502  $199  $1  $152  $42   $4
+Upside Swing     487  $200  $1  $90   $105  $4
+Floor Build      433  $200  $1  $98   $45   $56  ruled out by keeping De'Von Achane
+```
+
+Every shape's detail also lists what its lineup actually is, so you can read
+one against another:
+
+```
+Red Zone Corner — corner the touchdowns
+  starters: 1 high floor, 4 red-zone ace, 1 upside, 5 target hog, 1 bell cow
+```
+
+#### The traits
+
+All position-relative — a 27% touchdown share is ordinary for a back and high
+for a receiver, so an absolute cut would label whole positions rather than
+players. Only the contended range is labelled; a trait on someone nobody will
+roster is a label with nothing behind it.
+
+| Trait | What it means |
+|---|---|
+| **high floor** | touchdown share in the bottom 40% for the position, and real reception volume for pass catchers. Points from usage that repeats |
+| **red-zone ace** | touchdown share in the top quartile. The least predictable points in football, bought on purpose |
+| **upside** | the industry flags him above consensus, **or** he is projected past his own record |
+| **target hog** | projected targets in the top quartile — the stickiest thing a pass catcher has |
+| **bell cow** | a back with both the ground work and the passing downs, not a committee share |
+| **injury discount** | price suppressed by a designation; you buy the discount and the risk together |
+
+Floor and red-zone are opposite ends of one axis, so nobody is both.
+
+#### How the traits are derived
+
+Ciely publishes his projections' components, and they reconstruct his
+published league points **exactly** — so every player decomposes into
+touchdown, reception and yardage points with no fitting involved.
+
+**"Projected past his own record"** is measured **per game** against last
+season's half-PPR production. Per season would punish injury rather than
+measure ambition: a back who missed half a year looks like a huge projected
+leap on totals and no leap at all on rate. Under six games counts as unproven
+outright — four good games is not a season's evidence, however good it was.
+The threshold is 1.4x, where the league's own distribution puts the 90th
+percentile at 1.32.
+
+**A signal that didn't survive contact:** value spread across the BEER/BEER+/
+VOLS curves looked like a third upside signal and was not. It scales with
+price, so it flagged **100% of players over $45** and almost nothing under
+$10 — an expensiveness detector wearing the name of an upside one. The curve
+spread is still shown per player as `swing$N`, where it means what it says.
+
+#### Why trait shapes have no per-pick veto
+
+A shape about what you own is a floor to reach, not a ceiling to stay under,
+and a veto can only refuse. Vetoing every player without the trait would
+forbid the cheap ones needed to field a legal lineup and produce a roster with
+four red-zone aces and no quarterback. The anchors do the pursuing instead —
+and are immovable once bought, because the greedy upgrade pass will otherwise
+trade four red-zone aces for four better players who score nothing at the goal
+line, dismantling the shape it was asked to build.
+
 ### Shapes and your keepers
 
 A shape is a claim about the finished fourteen, so `-me` builds every shape

@@ -50,6 +50,8 @@ type PlayerSignals struct {
 	// Availability is Sleeper's injury designation. Meaningless in August,
 	// meaningful by draft day once cutdowns and practice reports land.
 	Availability string
+	// Traits are what kind of player he is — see ClassifyTraits.
+	Traits TraitSet
 }
 
 // Edge is value minus cost: how much production you get per dollar over
@@ -109,6 +111,8 @@ type SignalInputs struct {
 	Availability map[string]string
 	// Leans are the personal reads.
 	Leans Leans
+	// Traits label what kind of player each man is, keyed by player ID.
+	Traits map[string]TraitSet
 	// RecommendedBid is the most you can pay for any one player before the
 	// rest of your roster is at risk. Must-haves are priced at this rather
 	// than at a number picked by hand.
@@ -169,6 +173,7 @@ func BuildSignals(in SignalInputs) []PlayerSignals {
 		if s, ok := in.Availability[v.PlayerID]; ok {
 			p.Availability = s
 		}
+		p.Traits = in.Traits[v.PlayerID]
 		bid, lean, rule := in.Leans.WalkAway(v.Name, v.Price, in.RecommendedBid)
 		p.MyMaxBid, p.Lean, p.BidRule = bid, lean, rule
 		out = append(out, p)
