@@ -222,12 +222,10 @@ type Shape struct {
 	Metrics   RosterMetrics
 	// Achieved reports whether the finished roster met the shape.
 	Achieved bool
-	// BlockedBy names a held player who rules the shape out whatever the
-	// auction does. Keeping De'Von Achane at $35 is already a second back
-	// over $20, so Hero RB is settled before a bid is made — and reporting
-	// that as "the fill did not get there" would send you chasing a shape
-	// you cannot have.
-	BlockedBy string
+	// BlockedBy names the held players the fill could only reach this shape
+	// without. Evidence about the search, not proof of impossibility — see
+	// keepersInTheWay for why the distinction is load-bearing.
+	BlockedBy []string
 	// Possible reports whether the board could supply the shape at all,
 	// which is a different claim from whether this fill found it.
 	//
@@ -403,70 +401,72 @@ func Fill(a Archetype, available []PlayerSignals, opts FillOptions) Shape {
 	}
 }
 
-// blamedOnKeepers reports which held player, if any, is why a shape could
-// not be built — by building it again as though you never had him.
+// keepersInTheWay names the held players standing between this roster and a
+// shape, and says nothing stronger than the evidence supports.
 //
-// Asked as an experiment rather than by reading the constraint, because a
-// shape's per-pick rule is a fill heuristic and not its definition. Stars &
-// Scrubs refuses every mid-priced buy, so replaying a $35 keeper through it
-// says "blocked" when two stars are still perfectly affordable.
+// What can be established is narrow. Building the shape with a keeper set
+// aside proves it is reachable without him. The greedy fill failing while he
+// is held proves nothing at all — the fill is greedy, so its failure is a
+// statement about the search, not about the board. An earlier version read
+// that failure as proof and reported "ruled out by keeping X"; three blames
+// in twenty-eight were false, and one of them told you to abandon Robust RB
+// while a roster reaching it with that keeper existed at the same $200.
 //
-// The counterfactual has to remove him from the board as well as from the
-// roster. Refunding his price and leaving him in the pool does not ask
-// "would this shape work without him" — it asks "would it work if you
-// rebought him at market", and the fill duly did: Floor Build was reported
-// ruled out by keeping De'Von Achane, who is himself a floor player and the
-// best asset that shape had. The roster proving he blocked it contained him,
-// twelve dollars dearer.
+// So the claim is now about the fill rather than about possibility, and the
+// caller renders it that way. Overclaiming here is worse than saying less:
+// BlockedBy outranks every other note, so the weakest evidence in the system
+// was producing the most actionable sentence on the screen.
 //
-// His money comes back, because not keeping him really would leave you the
-// cash — and a shape you cannot afford *because* of what a keeper costs is
-// ruled out by that keeper as surely as one he violates by type. Price is a
-// reason, not a confound.
+// Two counterfactual shapes, and the difference matters. A keeper is
+// individually implicated when the shape fails with him as the only keeper
+// held — that catches the case where two keepers are each independently
+// fatal, which a leave-one-out test misses entirely, because removing either
+// one leaves the other still breaking it. Only when no keeper is
+// individually implicated does the pair get named together.
 //
-// An earlier version tried to separate the two by refilling with him still
-// held and his refund added, and reporting no blame if that reached the
-// shape. It was wrong twice over. That state cannot exist — you never hold
-// him and have his money back — so succeeding in it says nothing. And it
-// silenced exactly the common case: any keeper blocking a shape through his
-// price was rescued by the phantom refund, so the report fell through to
-// "the greedy fill did not find it", which is the one message that sends you
-// chasing a shape you cannot have.
-func blamedOnKeepers(a Archetype, available []PlayerSignals, opts FillOptions) string {
+// The dropped keeper leaves the board as well as the roster. Refunding his
+// price and leaving him buyable asks "would this work if you rebought him at
+// market", and the fill duly did, naming De'Von Achane for a shape whose
+// proving roster contained him twelve dollars dearer.
+//
+// His money does come back, because not keeping him really would leave you
+// the cash. A shape you cannot afford because of what a keeper costs is one
+// he stands in the way of; price is a reason, not a confound.
+func keepersInTheWay(a Archetype, available []PlayerSignals, opts FillOptions) []string {
 	if len(opts.Held) == 0 {
-		return ""
-	}
-	for _, drop := range opts.Held {
-		without := opts
-		without.Held = nil
-		without.Budget = opts.Budget
-		for _, h := range opts.Held {
-			if h.Player.PlayerID != drop.Player.PlayerID {
-				without.Held = append(without.Held, h)
-			} else {
-				without.Budget += h.Price
-			}
-		}
-		// Gone entirely: not yours, and not available to buy back.
-		pool := make([]PlayerSignals, 0, len(available))
-		for _, p := range available {
-			if p.PlayerID != drop.Player.PlayerID {
-				pool = append(pool, p)
-			}
-		}
-		if Fill(a, pool, without).Achieved {
-			return drop.Player.Name
-		}
+		return nil
 	}
 
-	// No single keeper is responsible, but the pair together may still be.
-	// Without this the report falls through to "the greedy fill did not find
-	// it" for a shape that no fill could ever reach — the same misdirection
-	// in a rarer case.
-	if len(opts.Held) > 1 && Fill(a, poolWithout(available, opts.Held), freed(opts)).Achieved {
-		return "your keepers together"
+	// Reachable with nobody kept? If not, the keepers are not the story and
+	// there is nothing to say about them.
+	if !Fill(a, poolWithout(available, opts.Held), freed(opts)).Achieved {
+		return nil
 	}
-	return ""
+
+	var implicated []string
+	for _, only := range opts.Held {
+		// Him and nobody else. Each keeper judged on his own, so two that
+		// are each fatal are both named rather than cancelling out.
+		alone := freed(opts)
+		alone.Held = []RosterSpot{only}
+		alone.Budget -= only.Price
+		if !Fill(a, poolWithout(available, alone.Held), alone).Achieved {
+			implicated = append(implicated, only.Player.Name)
+		}
+	}
+	if len(implicated) > 0 {
+		return implicated
+	}
+
+	// Every keeper survives alone, yet together they do not. That is a real
+	// state and it used to fall through to "the greedy fill did not find
+	// it", which is the message that sends you chasing a shape you cannot
+	// reach.
+	names := make([]string, 0, len(opts.Held))
+	for _, h := range opts.Held {
+		names = append(names, h.Player.Name)
+	}
+	return names
 }
 
 // poolWithout is the board with the named players taken off it.
@@ -663,7 +663,7 @@ func CompareShapes(available []PlayerSignals, opts FillOptions) []Shape {
 	for _, a := range Archetypes() {
 		s := Fill(a, available, opts)
 		if !s.Achieved {
-			s.BlockedBy = blamedOnKeepers(a, available, opts)
+			s.BlockedBy = keepersInTheWay(a, available, opts)
 		}
 		out = append(out, s)
 	}
@@ -677,12 +677,33 @@ func CompareTraitShapes(available []PlayerSignals, opts FillOptions) []Shape {
 	for _, a := range TraitArchetypes() {
 		s := Fill(a, available, opts)
 		if !s.Achieved {
-			s.BlockedBy = blamedOnKeepers(a, available, opts)
+			s.BlockedBy = keepersInTheWay(a, available, opts)
 		}
 		out = append(out, s)
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Metrics.POPR > out[j].Metrics.POPR })
 	return out
+}
+
+// blockedNote phrases what the keeper experiment found.
+//
+// Deliberately a claim about the fill rather than about the board. "Ruled
+// out by keeping X" reads as settled and stops you bidding; what was
+// actually established is that a roster reaching this shape exists without
+// him and the fill could not find one with him. Where the shape is truly
+// impossible — Hero RB behind a $35 back — this still points at the right
+// player, and where it is merely hard it no longer lies.
+func blockedNote(names []string) string {
+	switch len(names) {
+	case 0:
+		return ""
+	case 1:
+		return fmt.Sprintf("only reached without %s", names[0])
+	case 2:
+		return fmt.Sprintf("only reached without %s and %s", names[0], names[1])
+	}
+	return fmt.Sprintf("only reached without %s and %d others",
+		names[0], len(names)-1)
 }
 
 // Summary is a one-line description of how a shape turned out.
@@ -694,8 +715,8 @@ func CompareTraitShapes(available []PlayerSignals, opts FillOptions) []Shape {
 func (s Shape) Summary() string {
 	note := ""
 	switch {
-	case s.BlockedBy != "":
-		note = fmt.Sprintf("  (ruled out by keeping %s)", s.BlockedBy)
+	case len(s.BlockedBy) > 0:
+		note = fmt.Sprintf("  (%s)", blockedNote(s.BlockedBy))
 	case !s.Achieved && !s.Possible:
 		note = "  (the board cannot supply this shape)"
 	case !s.Achieved:

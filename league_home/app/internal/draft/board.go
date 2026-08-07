@@ -228,8 +228,8 @@ func writeShapeRows(tw *tabwriter.Writer, shapes []Shape) {
 	fmt.Fprintln(tw, "SHAPE\tPOPR\tSPEND\tQB\tRB\tWR\tTE\tMY GUYS\tNOTES")
 	for _, s := range shapes {
 		note := ""
-		if s.BlockedBy != "" {
-			note = fmt.Sprintf("ruled out by keeping %s", s.BlockedBy)
+		if len(s.BlockedBy) > 0 {
+			note = blockedNote(s.BlockedBy)
 		} else if !s.Achieved && !s.Possible {
 			note = "the board cannot supply this shape"
 		} else if !s.Achieved {

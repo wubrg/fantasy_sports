@@ -262,17 +262,19 @@ buys. So `shapes` reports two families:
 
 ```
 BY MONEY — how to divide the budget
-Stars & Scrubs  543  $200  $1  $36   $156  $7
-Hero RB         521  $200  $4  $103  $80   $13  ruled out by keeping De'Von Achane
-...
+Stars & Scrubs  543  $200  $1   $36   $156  $7
+Hero RB         521  $200  $4   $103  $80   $13  only reached without De'Von Achane
+Balanced        506  $199  $13  $53   $106  $27
+Zero RB         506  $199  $13  $53   $106  $27
+Robust RB       502  $199  $1   $152  $42   $4
 
 BY PLAYER TYPE — what kind of players the money buys
-Target Volume    530  $200  $1  $37   $156  $6
+Target Volume    543  $200  $1  $36   $156  $7
 Red Zone Corner  530  $200  $1  $37   $145  $17
+Bell Cows        521  $200  $4  $103  $80   $13
 Buy the Injuries 507  $199  $1  $103  $85   $10
-Bell Cows        502  $199  $1  $152  $42   $4
-Upside Swing     487  $200  $1  $90   $105  $4
-Floor Build      433  $200  $1  $98   $45   $56  ruled out by keeping De'Von Achane
+Upside Swing     492  $200  $1  $90   $102  $7
+Floor Build      422  $200  $1  $98   $44   $57
 ```
 
 Every shape's detail also lists what its lineup actually is, so you can read
@@ -280,7 +282,7 @@ one against another:
 
 ```
 Red Zone Corner — corner the touchdowns
-  starters: 1 high floor, 4 red-zone ace, 1 upside, 5 target hog, 1 bell cow
+  starters: 2 high floor, 4 red-zone ace, 2 upside, 7 target hog, 2 bell cow
 ```
 
 #### The traits
@@ -352,7 +354,7 @@ Every shape is built around your keepers — Puka Nacua WR $35, De'Von Achane RB
 
 SHAPE           POPR  SPEND  QB   RB    WR    TE   NOTES
 Stars & Scrubs  543   $200   $1   $36   $156  $7
-Hero RB         521   $200   $4   $103  $80   $13  ruled out by keeping De'Von Achane
+Hero RB         521   $200   $4   $103  $80   $13  only reached without De'Von Achane
 Balanced        506   $199   $13  $53   $106  $27
 ```
 
@@ -361,16 +363,25 @@ for anyone holding a back:
 
 | shape | keeper-blind | truth |
 |---|---|---|
-| Hero RB | achieved | **impossible** — Achane at $35 is already a second back over $20 |
+| Hero RB | achieved | **impossible** — Achane at $35 is already a second back over $20. The note says only "only reached without" him, because the code cannot prove impossibility in general even where it happens to hold |
 | Zero RB | achieved at $27 on backs | $62 with the keeper, over the $61 ceiling |
 | Robust RB | "did not reach it" at $62 | the keeper had already carried it past the line |
 
-**"Ruled out by keeping X"** is decided by experiment, not by reading the
-constraint: the shape is built again with that keeper set aside, and if it
-succeeds then he is why. Reading it off each shape's per-pick veto looked
-easier and was wrong — a veto is a fill heuristic, not the shape's definition,
-so Stars & Scrubs (which refuses every mid-priced buy) reported a $35 keeper
-as blocking it while two stars were still perfectly affordable.
+**"only reached without X"** is decided by experiment, not by reading the
+constraint: the shape is built again with that keeper set aside — and off the
+board, so the fill cannot rebuy him — and if it succeeds then he is in the
+way. Two keepers are judged one at a time rather than by leaving each out,
+because two that are *each* fatal would otherwise cancel: remove either and
+the other still breaks it, so neither looks responsible.
+
+The wording is deliberately weak. What the experiment establishes is that a
+roster exists without him and the greedy fill could not find one with him —
+which is a fact about the search, not about the board. An earlier version
+read that as proof and said "ruled out by keeping X"; three blames in
+twenty-eight were false, and one told you to abandon Robust RB while a
+roster reaching it with that keeper existed at the same $200. Since this note
+outranks every other on the row, overclaiming here is the most expensive
+mistake the report can make.
 
 Keepers cannot be sold to make room, so the upgrade pass may not swap one out.
 The scratch roster on the web board starts with them for the same reason —

@@ -1,6 +1,9 @@
 package draft
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // heldBack is a keeper priced where it changes what shapes are reachable:
 // over Hero RB's second-back cap of $20, under its hero line of $40.
@@ -130,8 +133,8 @@ func TestKeeperRulingOutAShapeIsNamed(t *testing.T) {
 	if hero.Achieved {
 		t.Fatal("Hero RB cannot be achieved while holding a $35 back")
 	}
-	if hero.BlockedBy != "Kept Back" {
-		t.Errorf("BlockedBy = %q, want the keeper responsible", hero.BlockedBy)
+	if len(hero.BlockedBy) != 1 || hero.BlockedBy[0] != "Kept Back" {
+		t.Errorf("BlockedBy = %v, want the one keeper standing in the way", hero.BlockedBy)
 	}
 }
 
@@ -147,8 +150,8 @@ func TestAKeeperIsNotBlamedForAShapeItDoesNotBlock(t *testing.T) {
 		if s.Archetype.Name != "Stars & Scrubs" {
 			continue
 		}
-		if s.BlockedBy != "" {
-			t.Errorf("Stars & Scrubs blamed on %q, but a $35 keeper leaves the budget for stars",
+		if len(s.BlockedBy) > 0 {
+			t.Errorf("Stars & Scrubs named %v, but a $35 keeper leaves the budget for stars",
 				s.BlockedBy)
 		}
 		if !s.Achieved {
@@ -280,7 +283,7 @@ func TestAKeeperIsNotBlamedForTheShapeHeIsMadeFor(t *testing.T) {
 		t.Fatalf("fixture no longer fails: Floor Build was reached, so there is no blame to test (%+v)",
 			floor.Metrics)
 	}
-	if floor.BlockedBy != "" {
+	if len(floor.BlockedBy) > 0 {
 		t.Errorf("Floor Build blamed on %q, who is himself a floor player and the best one held",
 			floor.BlockedBy)
 	}
@@ -320,7 +323,7 @@ func TestHeldPlayersAreNotChargedTwice(t *testing.T) {
 // TestNoKeepersBehavesAsBefore — the generic view, with no owner given.
 func TestNoKeepersBehavesAsBefore(t *testing.T) {
 	for _, s := range CompareShapes(marketPool(), fillOpts()) {
-		if s.BlockedBy != "" {
+		if len(s.BlockedBy) > 0 {
 			t.Errorf("%s blamed on %q with no keepers held", s.Archetype.Name, s.BlockedBy)
 		}
 	}
@@ -362,9 +365,10 @@ func TestAKeeperIsBlamedWhenHisPriceIsWhatBlocks(t *testing.T) {
 			continue // affordable at this price; nothing to blame
 		}
 		blocked++
-		if name := blamedOnKeepers(floor, pool, opts); name != "Kept Passer" {
-			t.Errorf("at $%d Floor Build is unreachable and blame is %q, want the keeper whose price blocks it",
-				price, name)
+		named := keepersInTheWay(floor, pool, opts)
+		if len(named) != 1 || named[0] != "Kept Passer" {
+			t.Errorf("at $%d the fill cannot reach Floor Build and it names %v, want the keeper whose price stands in the way",
+				price, named)
 		}
 	}
 	if blocked == 0 {
@@ -410,7 +414,47 @@ func TestPoolRemovalIsWhatStopsTheFalseBlame(t *testing.T) {
 
 	// And with him gone the shape is one floor player short of its five, so
 	// there is nothing to blame him for.
-	if name := blamedOnKeepers(floor, pool, opts); name != "" {
-		t.Errorf("blamed %q, but the only roster that reaches this shape without him is one that rebuys him", name)
+	if got := keepersInTheWay(floor, pool, opts); len(got) != 0 {
+		t.Errorf("named %v, but the only roster reaching this shape without him is one that rebuys him", got)
+	}
+}
+
+// TestTwoKeepersEachIndividuallyFatalAreBothNamed is the overdetermination
+// case a leave-one-out test cannot see.
+//
+// Balanced forbids anyone over $35. Two keepers at $36 each break it, and
+// each breaks it alone — so removing either still leaves the shape broken,
+// no single keeper looks responsible, and the report used to fall through to
+// "no single keeper is responsible, but the pair may be". Both are
+// responsible, individually, and the reader is owed both names.
+func TestTwoKeepersEachIndividuallyFatalAreBothNamed(t *testing.T) {
+	balanced := shapeNamed("Balanced")
+	opts := withHeld(heldBack(36), heldWR(36))
+
+	got := keepersInTheWay(balanced, marketPool(), opts)
+	if len(got) != 2 {
+		t.Fatalf("named %v, want both keepers — each breaks the $35 ceiling on his own", got)
+	}
+	seen := map[string]bool{got[0]: true, got[1]: true}
+	if !seen["Kept Back"] || !seen["Kept Wideout"] {
+		t.Errorf("named %v, want Kept Back and Kept Wideout", got)
+	}
+	if note := blockedNote(got); note != "only reached without Kept Back and Kept Wideout" {
+		t.Errorf("note = %q", note)
+	}
+}
+
+// TestTheNoteDoesNotOverclaim — the phrasing is the fix, as much as the
+// logic. A greedy fill failing is not proof a roster does not exist, and
+// "ruled out" told people to stop bidding on shapes they could still build.
+func TestTheNoteDoesNotOverclaim(t *testing.T) {
+	note := blockedNote([]string{"Kept Back"})
+	for _, banned := range []string{"ruled out", "impossible", "cannot"} {
+		if strings.Contains(note, banned) {
+			t.Errorf("note %q claims %q, which a greedy failure cannot establish", note, banned)
+		}
+	}
+	if !strings.Contains(note, "Kept Back") {
+		t.Errorf("note %q does not name the keeper", note)
 	}
 }
