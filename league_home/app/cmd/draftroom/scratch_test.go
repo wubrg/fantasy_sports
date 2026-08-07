@@ -170,7 +170,7 @@ func TestScratchClear(t *testing.T) {
 }
 
 // TestScratchAssignsLineupSlots — the panel has to show where a player
-// actually plays, and it goes through the same scorer the archetypes use.
+// actually plays, and it goes through the same scorer the live board uses.
 func TestScratchAssignsLineupSlots(t *testing.T) {
 	srv := scratchServer(t)
 	// testStatic holds one RB, one WR and one TE.

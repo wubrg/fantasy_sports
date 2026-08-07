@@ -21,7 +21,7 @@ import (
 // do with how anybody drafts now.
 const minSpendForUsableSeason = 180
 
-// runCalibrate measures the archetype thresholds against completed drafts.
+// runCalibrate asks what past drafts say about spending and results.
 //
 // Asks one question of the league's own history: does the way a manager
 // divides a budget have any relationship to how the season goes? Across
