@@ -116,6 +116,10 @@ func (s Scenario) String() string {
 
 // Validate reports whether the scenario is usable.
 func (s Scenario) Validate() error {
+	if !isFinite(s.Prob) || !isFinite(s.Threshold) {
+		return fmt.Errorf("scenario %q: probability %v / threshold %v must be real numbers",
+			s.Name, s.Prob, s.Threshold)
+	}
 	if s.Name == "" {
 		return fmt.Errorf("scenario: unnamed scenario")
 	}
@@ -124,6 +128,10 @@ func (s Scenario) Validate() error {
 	}
 	return nil
 }
+
+// isFinite reports whether f is a real number. NaN defeats ordinary range
+// checks -- `p < 0 || p > 1` is false for NaN -- so finiteness is tested first.
+func isFinite(f float64) bool { return !math.IsNaN(f) && !math.IsInf(f, 0) }
 
 // normalCDF is the standard normal distribution function.
 func normalCDF(z float64) float64 {
@@ -157,6 +165,10 @@ func StateProb(name string, basis Basis, threshold, prob float64) (Scenario, err
 // This is the "shootout" construction: a 52.5 total against a 50-point
 // threshold gives about 57%, a 41 total about 22%.
 func FromTotal(name string, total, threshold, sigma float64) (Scenario, error) {
+	if !isFinite(total) || !isFinite(threshold) || !isFinite(sigma) {
+		return Scenario{}, fmt.Errorf(
+			"scenario: total %v / threshold %v / sigma %v must be real numbers", total, threshold, sigma)
+	}
 	if total <= 0 {
 		return Scenario{}, fmt.Errorf("scenario: game total %v must be positive", total)
 	}
@@ -196,6 +208,10 @@ func FromTotal(name string, total, threshold, sigma float64) (Scenario, error) {
 // Pass sigma = 0 for the fitted empirical distribution; a positive sigma
 // selects the normal approximation, as with FromTotal.
 func FromSpread(name string, spread, threshold, sigma float64) (Scenario, error) {
+	if !isFinite(spread) || !isFinite(threshold) || !isFinite(sigma) {
+		return Scenario{}, fmt.Errorf(
+			"scenario: spread %v / threshold %v / sigma %v must be real numbers", spread, threshold, sigma)
+	}
 	if sigma < 0 {
 		return Scenario{}, fmt.Errorf("scenario: sigma %v must not be negative", sigma)
 	}

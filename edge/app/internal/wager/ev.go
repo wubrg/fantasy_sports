@@ -1,10 +1,33 @@
 package wager
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
+
+// finite reports whether f is a real number.
+//
+// This exists because NaN defeats every ordinary range check: `p < 0 || p > 1`
+// is FALSE for NaN, so a NaN sailed through every validator in this package and
+// came out the far end as a printed price of -9223372036854775808. An audit
+// found it reachable from the command line, since strconv.ParseFloat accepts
+// "NaN" and "Inf" and every numeric flag goes through it.
+//
+// Range checks must therefore test finiteness first, not after.
+func finite(f float64) bool { return !math.IsNaN(f) && !math.IsInf(f, 0) }
+
+// errNotReal is the shared message for a non-finite input, so every validator
+// in this package reports the same failure the same way.
+func errNotReal(name string, v float64) error {
+	return fmt.Errorf("wager: %s = %v is not a real number", name, v)
+}
 
 // validProb rejects anything that is not a probability. A caller who has no
 // estimate must not pass 0 — that is a claim the event never happens.
 func validProb(p float64) error {
+	if !finite(p) {
+		return errNotReal("probability", p)
+	}
 	if p < 0 || p > 1 {
 		return fmt.Errorf("wager: probability %v out of range [0,1]", p)
 	}
@@ -12,6 +35,9 @@ func validProb(p float64) error {
 }
 
 func validStake(stake float64) error {
+	if !finite(stake) {
+		return errNotReal("stake", stake)
+	}
 	if stake <= 0 {
 		return fmt.Errorf("wager: stake %v must be positive", stake)
 	}

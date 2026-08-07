@@ -48,6 +48,12 @@ const (
 	Void   Result = "void"
 )
 
+// settleable reports whether a result is one a settlement may record. Load
+// rejects anything else rather than silently filing it as excluded.
+func (r Result) settleable() bool {
+	return r == Won || r == Lost || r == Pushed || r == Void
+}
+
 // Counts reports whether a result should be scored. Pushes and voids are
 // excluded from calibration: no prediction was tested.
 func (r Result) Counts() bool { return r == Won || r == Lost }
@@ -229,6 +235,23 @@ func Load(path string) ([]Settled, error) {
 			if !ok {
 				return nil, fmt.Errorf("betlog: %s line %d: settlement for unknown bet %q",
 					path, line, e.ID)
+			}
+			// Append-only bytes are not the same as append-only meaning. Taking
+			// the last write here would let a second settlement silently rewrite
+			// the outcome -- an audit swung one bet's ROI from -100% to +90.9%
+			// that way, with three valid lines on disk and no error. Hindsight is
+			// exactly what this log exists to prevent, so a double settlement is
+			// a corrupt log.
+			if b.Result != Open {
+				return nil, fmt.Errorf(
+					"betlog: %s line %d: bet %q was already settled as %q and cannot be "+
+						"re-settled as %q — correcting a mis-settled wager means voiding it "+
+						"and recording a new one, not editing history",
+					path, line, e.ID, b.Result, e.Result)
+			}
+			if !e.Result.settleable() {
+				return nil, fmt.Errorf("betlog: %s line %d: %q is not a valid result",
+					path, line, e.Result)
 			}
 			b.Result = e.Result
 			b.SettleAt = e.Time

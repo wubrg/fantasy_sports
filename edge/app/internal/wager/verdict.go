@@ -65,6 +65,9 @@ type Classification struct {
 // than assumed.
 func Classify(req BeliefRequirement, sMarket, sYours float64) (Classification, error) {
 	for name, v := range map[string]float64{"sMarket": sMarket, "sYours": sYours} {
+		if !finite(v) {
+			return Classification{}, errNotReal(name, v)
+		}
 		if v < 0 || v > 1 {
 			return Classification{}, fmt.Errorf("wager: %s = %v out of range [0,1]", name, v)
 		}

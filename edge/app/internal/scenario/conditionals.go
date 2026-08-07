@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
 
@@ -230,6 +231,11 @@ func (c *Conditionals) findCell(scenario string, occurred bool, projTargets, tre
 func (c *Conditionals) Lookup(scenario string, occurred bool, projTargets, trend, line, confidence float64) (Conditional, error) {
 	if err := c.checkValidated(scenario); err != nil {
 		return Conditional{}, err
+	}
+	for name, v := range map[string]float64{"projTargets": projTargets, "trend": trend, "line": line, "confidence": confidence} {
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			return Conditional{}, fmt.Errorf("scenario: %s = %v is not a real number", name, v)
+		}
 	}
 	cell, err := c.findCell(scenario, occurred, projTargets, trend)
 	if err != nil {

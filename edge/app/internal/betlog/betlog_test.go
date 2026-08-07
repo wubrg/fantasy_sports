@@ -309,3 +309,46 @@ func mustLoad(t *testing.T, path string) []Settled {
 }
 
 func closeTo(a, b, eps float64) bool { return math.Abs(a-b) <= eps }
+
+// TestCannotResettle is the integrity property the package doc claims and did
+// not have.
+//
+// Append-only bytes are not append-only meaning. Load used to take the last
+// write, so a second settlement silently rewrote the outcome: one bet's ROI
+// swung from -100% to +90.9% with three valid lines on disk and no error.
+// Hindsight is exactly what a calibration log exists to prevent.
+func TestCannotResettle(t *testing.T) {
+	path := tmpLog(t)
+	id := mustPlace(t, path, Bet{
+		Selection: "x", Price: -110, Bankroll: "real money", Stake: 100, Predicted: 0.5,
+	})
+	if err := Settle(path, id, Lost, ""); err != nil {
+		t.Fatal(err)
+	}
+	before := mustLoad(t, path)
+	if before[0].Result != Lost {
+		t.Fatalf("setup: result = %v", before[0].Result)
+	}
+
+	// The append itself may succeed -- the file is a raw event stream -- but the
+	// log must not READ as though the outcome changed.
+	_ = Settle(path, id, Won, "changed my mind")
+	if _, err := Load(path); err == nil {
+		t.Error("a second settlement must make the log fail loudly, not silently rewrite the outcome")
+	}
+}
+
+// TestUnknownResultIsRejected: a bogus result used to load without error and be
+// filed as "excluded", quietly dropping the bet from calibration.
+func TestUnknownResultIsRejected(t *testing.T) {
+	path := tmpLog(t)
+	id := mustPlace(t, path, Bet{
+		Selection: "x", Price: -110, Bankroll: "real money", Stake: 1, Predicted: 0.5,
+	})
+	if err := Append(path, Entry{Kind: KindSettle, ID: id, Result: Result("WON")}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(path); err == nil {
+		t.Error("an unrecognised result must be rejected, not silently excluded")
+	}
+}

@@ -37,6 +37,14 @@ func scenarioCmd(args []string) error {
 		return err
 	}
 
+	// A flag default of 0 is indistinguishable from "-spread 0", which is a
+	// legitimate pick'em. Without this, omitting -spread entirely produced a
+	// fabricated pick'em, printed "market says 19.1%", labelled it
+	// derived-from-line and wrote it to the bet log as s_market. Track what was
+	// actually supplied instead of inferring it from the value.
+	supplied := map[string]bool{}
+	fs.Visit(func(f *flag.Flag) { supplied[f.Name] = true })
+
 	if *belief < 0 {
 		return fmt.Errorf("-belief is required: this tool prices your read, it does not supply one")
 	}
@@ -51,6 +59,14 @@ func scenarioCmd(args []string) error {
 	}
 
 	// Establish the market's view of the scenario.
+	if basisVal == scenario.Margin && !supplied["spread"] && *sMarket < 0 {
+		return fmt.Errorf(
+			"-basis margin needs an explicit -spread (or -smarket): without one the market's " +
+				"view would be a fabricated pick'em, reported as if it came from a real line")
+	}
+	if basisVal == scenario.Total && !supplied["total"] && *sMarket < 0 {
+		return fmt.Errorf("-basis total needs an explicit -total (or -smarket)")
+	}
 	sc, err := marketScenario(*name, basisVal, *total, *spread, *threshold, *sigma, *sMarket)
 	if err != nil {
 		return err
@@ -154,6 +170,11 @@ func scenarioCmd(args []string) error {
 func resolveConditionals(name string, q, r, projTargets, trend, line, confidence float64) (float64, float64, string, error) {
 	if q >= 0 && r >= 0 {
 		return q, r, "stated", nil
+	}
+	if q >= 0 || r >= 0 {
+		return 0, 0, "", fmt.Errorf(
+			"-q and -r must be supplied together: one alone would be silently dropped in " +
+				"favour of the fitted grid, and you would never be told")
 	}
 	if projTargets <= 0 || line <= 0 {
 		return 0, 0, "", fmt.Errorf(
