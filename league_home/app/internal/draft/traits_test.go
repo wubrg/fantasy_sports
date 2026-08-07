@@ -1,6 +1,10 @@
 package draft
 
-import "testing"
+import (
+	"math"
+	"os"
+	"testing"
+)
 
 // catcher builds a pass catcher from the pieces a projection is made of.
 func catcher(id, pos string, rec, recYds, recTD, targets float64) TraitInput {
@@ -27,10 +31,12 @@ func traitShapePool() PoolState {
 	return s
 }
 
-// TestComponentsRebuildTheProjection — the decomposition is the foundation
-// everything else stands on, and it reconstructs Ciely's published totals
-// exactly on the real file.
-func TestComponentsRebuildTheProjection(t *testing.T) {
+// TestComponentsScoringIsTheLeagueRulebook restates the league's scoring
+// once, by hand, so a change to Total() has to be a deliberate one.
+//
+// This says nothing about the real projections — see
+// TestComponentsRebuildTheRealProjections for that.
+func TestComponentsScoringIsTheLeagueRulebook(t *testing.T) {
 	c := Components{
 		HasParts: true, PassYards: 4000, PassTD: 30, Interceptions: 10,
 		RushYards: 400, RushTD: 4, Receptions: 0,
@@ -42,6 +48,69 @@ func TestComponentsRebuildTheProjection(t *testing.T) {
 	if got := c.TouchdownPoints(); got != 30*4+4*6 {
 		t.Errorf("td points = %v", got)
 	}
+}
+
+// TestComponentsRebuildTheRealProjections measures the decomposition against
+// the file it claims to decompose.
+//
+// Every trait is a statement about the parts — what share of a player's
+// points come from catches, from touchdowns, from yardage. If the parts do
+// not add back up to the total the source published, then the traits are
+// describing a player the projection never was, and nothing downstream can
+// notice: a shape made of player types would keep sorting rosters
+// confidently on a scoring rule that had quietly diverged.
+//
+// The signed mean is the assertion that matters. Both columns are rounded,
+// so individual rows are always a little off and the max error alone cannot
+// tell rounding from a real mismatch. A systematic difference — a reception
+// worth one point instead of half, an interception scored the wrong way —
+// pushes the errors to one side and shows up in the mean immediately, while
+// rounding cancels out to roughly nothing.
+func TestComponentsRebuildTheRealProjections(t *testing.T) {
+	root, err := ResolveDataRoot("")
+	if err != nil {
+		// The projections are subscriber content and live in a private
+		// repo; most machines running this suite will not have them.
+		t.Skipf("no private data root: %v", err)
+	}
+	path := root.Normalized("ciely-2026.csv")
+	if _, err := os.Stat(path); err != nil {
+		t.Skipf("no ciely projections at %s", path)
+	}
+	rows, err := LoadSourceCSV(path)
+	if err != nil {
+		t.Fatalf("loading %s: %v", path, err)
+	}
+
+	var n int
+	var maxErr, sumAbs, sumSigned float64
+	worst := ""
+	for _, r := range rows {
+		if !r.Components.HasParts {
+			continue
+		}
+		n++
+		d := r.Components.Total() - r.Points
+		sumSigned += d
+		sumAbs += math.Abs(d)
+		if math.Abs(d) > maxErr {
+			maxErr, worst = math.Abs(d), r.Player
+		}
+	}
+	if n == 0 {
+		t.Fatalf("%s has no rows with published components", path)
+	}
+	meanAbs, meanSigned := sumAbs/float64(n), sumSigned/float64(n)
+
+	if maxErr >= 0.10 {
+		t.Errorf("worst reconstruction is %.4f off (%s) over %d rows; mean abs %.4f, mean signed %.2e",
+			maxErr, worst, n, meanAbs, meanSigned)
+	}
+	if math.Abs(meanSigned) >= 0.01 {
+		t.Errorf("mean signed error %.4f over %d rows: the errors lean one way, so this is a scoring mismatch and not rounding (max %.4f on %s, mean abs %.4f)",
+			meanSigned, n, maxErr, worst, meanAbs)
+	}
+	t.Logf("%d rows: max %.4f, mean abs %.4f, mean signed %.2e", n, maxErr, meanAbs, meanSigned)
 }
 
 // TestFloorAndRedZoneAreOppositeEnds — one axis, so a player cannot be both,

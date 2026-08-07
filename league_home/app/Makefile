@@ -11,7 +11,11 @@ build: ## Build leaguectl, leaguebot, leagueweb, and draftroom binaries
 	go build -o leagueweb ./cmd/leagueweb
 	go build -o draftroom ./cmd/draftroom
 
-test: ## Run go test ./...
+# The extractors are part of the suite, so they hang off `test` rather than
+# off `check`: the root Makefile forwards individual targets (fmt-check, vet,
+# test) into this one rather than calling `make check` here, so anything
+# reachable only from `check` never runs from the repo root.
+test: extractor-test ## Run go test ./... plus the Python extractor tests
 	go test ./...
 
 vet: ## Run go vet ./...
@@ -32,8 +36,15 @@ lint: ## Run golangci-lint
 clean: ## Remove built binaries
 	rm -f $(BINS)
 
+# Skipped only when python3 is genuinely absent — a machine with no
+# interpreter cannot run them at all. A failing extractor test fails the
+# build like any other.
 extractor-test: ## Run the Python source-extractor tests (internal/draft/data/tools)
-	@cd internal/draft/data && python3 tools/test_extractors.py
+	@if command -v python3 >/dev/null 2>&1; then \
+		cd internal/draft/data && python3 tools/test_extractors.py; \
+	else \
+		echo "skipping extractor tests: python3 is not installed"; \
+	fi
 
 ## --- draft room ---------------------------------------------------------
 ## The private data repo holds every proprietary source. Override its
@@ -103,7 +114,7 @@ data-status: ## Show how stale each source snapshot is
 	@echo "normalized:"
 	@ls -l $(DATA)/normalized 2>/dev/null | awk 'NR>1 {printf "  %-34s %s %s %s\n", $$9, $$6, $$7, $$8}'
 
-check: fmt-check vet test extractor-test ## Run fmt-check + vet + test + extractor tests (the pre-commit bundle)
+check: fmt-check vet test ## Run fmt-check + vet + test, extractor tests included (the pre-commit bundle)
 
 list: ## List available targets
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_.-]+:.*?## /{printf "  %-26s %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
