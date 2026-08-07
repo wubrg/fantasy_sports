@@ -117,6 +117,28 @@ implied — and the verdict says where the expectation actually comes from:
 over each requirement rather than by EV — orderings survive misspecification that probability levels
 do not.
 
+## Where q and r come from
+
+`-q` and `-r` can be stated, or looked up from a grid fitted on 27,288 player-games:
+
+```
+$ ./edgectl scenario -name shootout -total 49 -threshold 50 -belief 0.55 \
+    -targets 7.5 -trend 0.07 -line 52.5 -price 250
+
+  CONDITIONALS from the fitted grid (receiving_yards, 2014-2025)
+    7.5 projected targets, +7.0 pt trend, line 52.5
+    q = 56.5%  [48.7-63.5]  n=169   median 59 yds  (scenario occurred)
+    r = 44.5%  [39.5-49.5]  n=378   median 49 yds  (it did not)
+```
+
+Three axes: **projected targets** (volume over efficiency — every measurement here has agreed that
+opportunity drives yards more than per-target skill), **role trend** (with the boundary at the
+measured +6-share-point actionability threshold), and **game script** (the axis that separates `q`
+from `r` at all).
+
+Stated values always win. The grid cannot see a cast on the left tackle. But both sources are
+recorded and scored separately, so a season tells you which of you is better at what.
+
 ## The calibration log
 
 ```

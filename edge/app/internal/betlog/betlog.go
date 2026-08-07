@@ -60,14 +60,22 @@ type Bet struct {
 	Bankroll  string         `json:"bankroll"`
 	Stake     float64        `json:"stake"`
 
-	Scenario       string  `json:"scenario,omitempty"`
-	ScenarioSource string  `json:"scenario_source,omitempty"`
-	SMarket        float64 `json:"s_market"`
-	SYours         float64 `json:"s_yours"`
-	Q              float64 `json:"q"`
-	R              float64 `json:"r"`
-	SStar          float64 `json:"s_star"`
-	EdgeSource     string  `json:"edge_source,omitempty"`
+	Scenario       string `json:"scenario,omitempty"`
+	ScenarioSource string `json:"scenario_source,omitempty"`
+
+	// ConditionalSource records where q and r came from -- an operator's read
+	// or the fitted pooled grid. Kept separate from ScenarioSource because the
+	// two are independently right or wrong: you can be good at judging game
+	// scripts and bad at judging conditional hit rates, or the reverse, and
+	// only separate records can tell you which.
+	ConditionalSource string `json:"conditional_source,omitempty"`
+
+	SMarket    float64 `json:"s_market"`
+	SYours     float64 `json:"s_yours"`
+	Q          float64 `json:"q"`
+	R          float64 `json:"r"`
+	SStar      float64 `json:"s_star"`
+	EdgeSource string  `json:"edge_source,omitempty"`
 
 	// Predicted is the blended P(hit) implied by SYours, Q and R. It is the
 	// number calibration is scored against.
@@ -317,24 +325,34 @@ func Score(bets []Settled, filter func(Settled) bool) (Calibration, error) {
 // This is why Source is recorded at all: after a season it answers whether your
 // stated reads or the line-derived ones were better calibrated.
 func BySource(bets []Settled) (map[string]Calibration, error) {
-	sources := map[string]bool{}
-	for _, b := range bets {
-		s := b.Bet.ScenarioSource
-		if s == "" {
-			s = "unspecified"
+	return groupBy(bets, func(b Settled) string { return b.Bet.ScenarioSource })
+}
+
+// ByConditionalSource scores bets grouped by where q and r came from.
+//
+// Separate from BySource because the two are independently right or wrong. A
+// season could show your game-script reads beating the line while your
+// conditional hit rates lose to the fitted grid, or the reverse, and only
+// separate tallies can distinguish those.
+func ByConditionalSource(bets []Settled) (map[string]Calibration, error) {
+	return groupBy(bets, func(b Settled) string { return b.Bet.ConditionalSource })
+}
+
+func groupBy(bets []Settled, key func(Settled) string) (map[string]Calibration, error) {
+	norm := func(b Settled) string {
+		if k := key(b); k != "" {
+			return k
 		}
-		sources[s] = true
+		return "unspecified"
+	}
+	seen := map[string]bool{}
+	for _, b := range bets {
+		seen[norm(b)] = true
 	}
 	out := map[string]Calibration{}
-	for s := range sources {
+	for s := range seen {
 		want := s
-		c, err := Score(bets, func(b Settled) bool {
-			got := b.Bet.ScenarioSource
-			if got == "" {
-				got = "unspecified"
-			}
-			return got == want
-		})
+		c, err := Score(bets, func(b Settled) bool { return norm(b) == want })
 		if err != nil {
 			return nil, err
 		}

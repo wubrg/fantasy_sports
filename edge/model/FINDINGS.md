@@ -104,6 +104,56 @@ everything, and prefer recency only where dispersion drifts.
 
 ---
 
+## 3. Pooled conditionals: shootout confirmed, "trash time" reversed
+
+`fit_conditionals.py` · 27,288 player-games, 2014–2025 · 64 cells published, 16 dropped for n < 100
+
+`q` and `r` were operator guesses. They are now looked up from a grid pooled across player-games
+sharing an opportunity band, a role-trend band, and a game script — cells of hundreds to thousands of
+observations, which is the sample size the per-player route never had.
+
+### Shootout behaves as the corpus predicts
+
+Median receiving yards, scenario occurred vs not:
+
+| projected targets | delta |
+|---|---|
+| 0–4 | +3 to +4 |
+| 4–6 | +4 to +8 |
+| 6–8 | +9 to +11 |
+| 8–11 | +13 to +23 |
+
+Positive in every cell, and growing with volume — alphas benefit from a shootout far more than
+rotational players do. This is the clean case.
+
+### "Trash time correlation" is backwards as measured
+
+Edge of Vigor's Tier 3 predicts a garbage-time boost: a team down 14 must throw, so its receivers see
+more work. **Measured on final margin, every cell is negative** — −1 to −13 yards.
+
+The reason is the end-state proxy. Final margin conflates "trailed and threw a lot" with "was simply
+bad," and the second dominates: losing by more than a touchdown mostly identifies offenses that did
+not function, which swamps the late-game volume.
+
+**This does not refute the garbage-time mechanism. It refutes final margin as a proxy for it.**
+Separating them needs play-by-play — time remaining crossed with score differential — which is out of
+scope here. The scenario is named `blowout_loss` rather than `trailing` so the artifact says what it
+measures, and `TestBlowoutLossHurts` pins the sign so that a future play-by-play definition flipping
+it is a deliberate, visible change.
+
+Usefully, the negative direction exercises machinery that already existed: when `q < r` the belief
+requirement flips from a floor to a ceiling, and the decomposition has handled that since it was
+written.
+
+### How uncertainty travels
+
+Each cell stores a quantile table rather than a single probability, so `P(yards > L)` is answered at
+any line. The cell's `n` becomes a Wilson interval at query time, reusing the hit-rate layer's code —
+so a pooled estimate and an empirical one report uncertainty the same way, and a thin cell says so
+instead of looking confident.
+
+---
+
 ## Data note
 
 `target_share` in nflverse only starts in 2009, but raw `targets` reaches back to 2005, so share is
