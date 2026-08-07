@@ -196,10 +196,12 @@ type shapeMetric struct {
 	of   func(TeamSeason) float64
 }
 
-// shapeMetrics are the continuous forms of what the archetypes carve into
-// buckets. Worth reporting alongside: a bucket of six rosters can look
-// striking by accident, while a rank correlation over all of them cannot
-// hide behind a small denominator.
+// shapeMetrics describe how a budget was divided, as continuous quantities.
+//
+// Continuous on purpose. Cutting the same information into named buckets was
+// what the roster shapes did, and a bucket of nine rosters can look striking
+// by accident where a rank correlation over all of them cannot hide behind a
+// small denominator.
 func shapeMetrics() []shapeMetric {
 	nth := func(pos string, n int) func(TeamSeason) float64 {
 		return func(t TeamSeason) float64 {

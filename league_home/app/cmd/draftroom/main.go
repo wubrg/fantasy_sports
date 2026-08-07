@@ -96,7 +96,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  board     price the live pool and print the draft board\n")
 		fmt.Fprintf(os.Stderr, "  serve     serve the board as a web page for a second monitor\n")
 		fmt.Fprintf(os.Stderr, "  leans     show the merged lean sets, or -generate to rebuild them\n")
-		fmt.Fprintf(os.Stderr, "  calibrate measure the archetype thresholds against past drafts\n\n")
+		fmt.Fprintf(os.Stderr, "  calibrate ask whether spending shape predicted results, from past drafts\n\n")
 		fs.PrintDefaults()
 	}
 
@@ -465,8 +465,6 @@ func runBoard(leagueID, configDir, dataDir, ownerID string, baseline draft.Basel
 	fmt.Printf("\n\nPAYING UP — the market likes them more than their position's baseline explains\n")
 	return draft.WriteEdges(os.Stdout, tail(ranked, 10), snap.Bias, 10)
 }
-
-// runShapes compares roster archetypes against the live board.
 
 // tail returns the last n entries, which for an edge list sorted best-first
 // are the players the market prices furthest above their median value.

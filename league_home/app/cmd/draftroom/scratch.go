@@ -108,9 +108,8 @@ type ScratchView struct {
 
 // scratchView scores the scratchpad against a board.
 //
-// Uses the same Score and ScoringBaselines the archetypes use, so a roster
-// built by hand and one produced by a shape are directly comparable — which
-// is the whole point of having both.
+// Uses the same Score and ScoringBaselines the board does, so the roster
+// you assemble here is measured exactly as the live one is.
 func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 	order, picks := s.scratch.contents()
 	view := ScratchView{Empty: len(order) == 0}
@@ -203,8 +202,8 @@ func toScratchSpot(s draft.RosterSpot) ScratchSpot {
 }
 
 // scoringBaselines are the pinned VOLS baselines every roster is measured
-// against. Owned by staticData so the scratch roster, the archetypes and
-// the scarcity counts all measure against one set.
+// against. Owned by staticData so the scratch roster and the scarcity
+// counts measure against one set.
 func (s *server) scoringBaselines() map[string]float64 {
 	return s.static.baselines
 }
