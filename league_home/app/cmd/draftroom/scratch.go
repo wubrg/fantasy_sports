@@ -96,6 +96,11 @@ type ScratchView struct {
 	MaxBid int `json:"maxBid"`
 	// Unfilled names the starting slots this roster cannot yet cover.
 	Unfilled []string `json:"unfilled"`
+	// Traits is the lineup's composition: how many starters are each kind
+	// of player. The question the roster shapes were built to answer, asked
+	// of the roster you are actually assembling rather than of a
+	// hypothetical one a greedy search had to go and find.
+	Traits map[string]int `json:"traits"`
 	// Dropped names players who left the real board while sitting here.
 	Dropped []string `json:"dropped"`
 	Empty   bool     `json:"empty"`
@@ -138,6 +143,11 @@ func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 
 	view.Metrics = draft.Score(r, s.scoringBaselines(), s.static.shape)
 	view.Unfilled = view.Metrics.Unfilled
+	// After Score: it assigns the lineup, and composition counts starters.
+	view.Traits = map[string]int{}
+	for t, n := range draft.TraitCounts(*r) {
+		view.Traits[string(t)] = n
+	}
 
 	for _, spot := range r.Starters() {
 		view.Starters = append(view.Starters, toScratchSpot(spot))

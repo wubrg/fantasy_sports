@@ -7,6 +7,16 @@ type Roster struct {
 	Players []RosterSpot
 }
 
+// BoardPrice is what the cost board says a player will go for, floored at a
+// dollar. The only pricing mode there is; kept as a function because a
+// hypothetical roster has to price players the same way the live board does.
+func BoardPrice(p PlayerSignals) int {
+	if p.Cost > 0 {
+		return p.Cost
+	}
+	return 1
+}
+
 // RosterSpot is one player and the price paid for him.
 type RosterSpot struct {
 	Player PlayerSignals

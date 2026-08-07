@@ -23,9 +23,10 @@ const minSpendForUsableSeason = 180
 
 // runCalibrate measures the archetype thresholds against completed drafts.
 //
-// Exists so the numbers in Archetypes() carry their derivation. A threshold
-// nobody can re-derive is a number somebody liked, and the previous set
-// described Zero RB rosters this league had built once in three years.
+// Asks one question of the league's own history: does the way a manager
+// divides a budget have any relationship to how the season goes? Across
+// 2023-2025 the answer was no, and every correlation sat under 0.21 — which
+// is why the named roster shapes this once calibrated are gone.
 func runCalibrate(leagueID, configDir, dataDir string, seasons []string, includeAll, seasonsNamed bool) error {
 	c := sleeper.New()
 	c.HTTPClient = &http.Client{Timeout: 180 * time.Second}
@@ -43,7 +44,7 @@ func runCalibrate(leagueID, configDir, dataDir string, seasons []string, include
 	if len(history) == 0 {
 		return fmt.Errorf("no usable completed drafts found for league %s", leagueID)
 	}
-	return draft.WriteCalibration(os.Stdout, history, draft.Archetypes())
+	return draft.WriteCalibration(os.Stdout, history)
 }
 
 // loadTeamSeasons walks the league chain and pairs each completed draft with

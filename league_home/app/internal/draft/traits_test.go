@@ -259,41 +259,25 @@ func TestOnlyContendedPlayersAreLabelled(t *testing.T) {
 	}
 }
 
-// TestTraitShapesCountStarters — a bench full of one kind of player does not
-// change how a season goes.
-func TestTraitShapesCountStarters(t *testing.T) {
+// TestTraitCountsReadTheLineupOnly — a bench stacked with one kind of player
+// says nothing about how a season goes, so the composition shown against a
+// roster has to come from the starters.
+func TestTraitCountsReadTheLineupOnly(t *testing.T) {
 	var r Roster
 	for i := 0; i < 4; i++ {
 		r.Players = append(r.Players, RosterSpot{
-			Player:   PlayerSignals{Position: "WR", Traits: TraitSet{TraitRedZone}},
-			Starting: false,
+			Player: PlayerSignals{Position: "WR", Traits: TraitSet{TraitRedZone}},
 		})
 	}
-	if n := startersWith(r, TraitRedZone); n != 0 {
-		t.Errorf("counted %d bench players as starters", n)
+	if n := TraitCounts(r)[TraitRedZone]; n != 0 {
+		t.Errorf("counted %d bench players into the lineup's composition", n)
 	}
 	r.Players[0].Starting = true
-	if n := startersWith(r, TraitRedZone); n != 1 {
-		t.Errorf("counted %d, want 1", n)
+	r.Players[1].Starting = true
+	if n := TraitCounts(r)[TraitRedZone]; n != 2 {
+		t.Errorf("counted %d, want the 2 who start", n)
 	}
-}
-
-// TestEveryTraitShapeIsBuildable guards the registry.
-func TestEveryTraitShapeIsBuildable(t *testing.T) {
-	for _, a := range TraitArchetypes() {
-		if a.Trait == "" {
-			t.Errorf("%s carries no trait", a.Name)
-		}
-		if a.Satisfied == nil || a.Allows == nil {
-			t.Errorf("%s is not fillable", a.Name)
-		}
-		if len(a.Anchors) == 0 {
-			t.Errorf("%s has nothing to pursue, so the fill will never seek it", a.Name)
-		}
-		for _, anchor := range a.Anchors {
-			if anchor.Trait != a.Trait {
-				t.Errorf("%s anchors on %q rather than its own trait", a.Name, anchor.Trait)
-			}
-		}
+	if _, ok := TraitCounts(r)[TraitFloor]; ok {
+		t.Error("a trait nobody carries should be absent, not zero")
 	}
 }

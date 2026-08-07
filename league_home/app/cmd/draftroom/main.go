@@ -95,7 +95,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  keepers   reconcile keeper prices against Sleeper and show budgets\n")
 		fmt.Fprintf(os.Stderr, "  board     price the live pool and print the draft board\n")
 		fmt.Fprintf(os.Stderr, "  serve     serve the board as a web page for a second monitor\n")
-		fmt.Fprintf(os.Stderr, "  shapes    compare roster archetypes at current prices\n")
 		fmt.Fprintf(os.Stderr, "  leans     show the merged lean sets, or -generate to rebuild them\n")
 		fmt.Fprintf(os.Stderr, "  calibrate measure the archetype thresholds against past drafts\n\n")
 		fs.PrintDefaults()
@@ -120,12 +119,6 @@ func main() {
 	case "board":
 		if err := runBoard(*leagueID, orBuiltin(*configDir, builtinConfigDir), orBuiltin(*dataDir, builtinDataDir),
 			*me, draft.Baseline(*baseline), *limit, draft.SetNames(*leans)); err != nil {
-			log("draftroom: %v", err)
-			os.Exit(1)
-		}
-	case "shapes":
-		if err := runShapes(*leagueID, orBuiltin(*configDir, builtinConfigDir),
-			orBuiltin(*dataDir, builtinDataDir), *me, draft.Baseline(*baseline), draft.SetNames(*leans)); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}
@@ -474,34 +467,6 @@ func runBoard(leagueID, configDir, dataDir, ownerID string, baseline draft.Basel
 }
 
 // runShapes compares roster archetypes against the live board.
-func runShapes(leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) error {
-	static, err := loadStatic(leagueID, configDir, dataDir, ownerID, baseline, leanSets)
-	if err != nil {
-		return err
-	}
-	snap, err := static.Build(map[string]gone{})
-	if err != nil {
-		return err
-	}
-	for _, w := range snap.Warnings {
-		fmt.Fprintf(os.Stderr, "note: %s\n", w)
-	}
-
-	held := static.heldRoster(ownerID)
-	opts := draft.FillOptions{
-		Budget: snap.Me.Budget,
-		// The whole roster, keepers included: a shape is a claim about the
-		// finished fourteen, not about the twelve still to buy.
-		Slots:     snap.Me.OpenSlots + len(held),
-		Held:      held,
-		Price:     draft.BoardPrice,
-		Shape:     static.shape,
-		Baselines: static.baselines,
-	}
-	money := draft.CompareShapes(snap.Players, opts)
-	traits := draft.CompareTraitShapes(snap.Players, opts)
-	return draft.WriteShapes(os.Stdout, money, traits, snap.Me.Budget, held)
-}
 
 // tail returns the last n entries, which for an edge list sorted best-first
 // are the players the market prices furthest above their median value.

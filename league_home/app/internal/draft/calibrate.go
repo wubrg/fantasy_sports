@@ -65,72 +65,6 @@ func (t TeamSeason) CountOver(pos string, price int) int {
 	return n
 }
 
-// ArchetypeFit is how a shape's threshold holds up against real rosters.
-type ArchetypeFit struct {
-	Name string
-	// Seen is how many of the sampled rosters actually built the shape.
-	Seen  int
-	Total int
-	// MedianRank and MedianPoints are how those rosters finished.
-	MedianRank   float64
-	MedianPoints float64
-	// TopQuarter is how many finished in the top four of their season.
-	TopQuarter int
-}
-
-// Share is the fraction of sampled rosters matching the shape.
-func (f ArchetypeFit) Share() float64 {
-	if f.Total == 0 {
-		return 0
-	}
-	return float64(f.Seen) / float64(f.Total)
-}
-
-// FitArchetypes measures every shape against real rosters.
-//
-// The check is Satisfied, the same predicate the draft board uses to say a
-// shape was achieved, so a threshold that describes nothing real shows up
-// here as a shape nobody has ever built rather than as a number that looks
-// reasonable in the source.
-func FitArchetypes(seasons []TeamSeason, archetypes []Archetype) []ArchetypeFit {
-	out := make([]ArchetypeFit, 0, len(archetypes))
-	for _, a := range archetypes {
-		fit := ArchetypeFit{Name: a.Name, Total: len(seasons)}
-		var ranks, points []float64
-		for _, ts := range seasons {
-			if a.Satisfied == nil || !a.Satisfied(ts.Roster()) {
-				continue
-			}
-			fit.Seen++
-			ranks = append(ranks, float64(ts.Rank))
-			points = append(points, ts.Points)
-			if ts.Rank <= 4 {
-				fit.TopQuarter++
-			}
-		}
-		fit.MedianRank, fit.MedianPoints = median(ranks), median(points)
-		out = append(out, fit)
-	}
-	return out
-}
-
-// Roster renders a historical draft as a Roster, so the same Satisfied
-// predicates the board evaluates can be run against what really happened.
-//
-// Only price and position are populated; the shape checks read nothing
-// else, and inventing projections for past seasons would put numbers in
-// that no source ever produced.
-func (t TeamSeason) Roster() Roster {
-	var r Roster
-	for _, p := range t.Picks {
-		r.Players = append(r.Players, RosterSpot{
-			Player: PlayerSignals{Name: p.Name, Position: p.Position},
-			Price:  p.Price,
-		})
-	}
-	return r
-}
-
 // Spearman is the rank correlation between two equal-length series.
 //
 // Rank rather than linear because the question is whether spending more on
@@ -203,9 +137,15 @@ func ranks(xs []float64) []float64 {
 // than leaving the reader to judge a bare number.
 const significantRho = 0.33
 
-// WriteCalibration reports how the thresholds fit and what, if anything,
-// predicted results.
-func WriteCalibration(w io.Writer, seasons []TeamSeason, archetypes []Archetype) error {
+// WriteCalibration reports whether how a manager spent predicted how the
+// season went.
+//
+// It used to fit named roster shapes against history as well. Those are gone:
+// three seasons said none of them separated on results, and the machinery
+// that filled them was answering questions a greedy search cannot answer.
+// What survives is the question that never needed the shapes — whether the
+// distribution of a budget has any relationship to points at all.
+func WriteCalibration(w io.Writer, seasons []TeamSeason) error {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 
 	bySeason := map[string]int{}
@@ -219,22 +159,12 @@ func WriteCalibration(w io.Writer, seasons []TeamSeason, archetypes []Archetype)
 	sort.Strings(years)
 	fmt.Fprintf(tw, "CALIBRATION — %d rosters across %v\n\n", len(seasons), years)
 
-	fmt.Fprintln(tw, "SHAPE\tBUILT\tSHARE\tMED RANK\tMED PTS\tTOP 4")
-	for _, f := range FitArchetypes(seasons, archetypes) {
-		if f.Seen == 0 {
-			fmt.Fprintf(tw, "%s\t0\t—\t—\t—\tnever built\n", f.Name)
-			continue
-		}
-		fmt.Fprintf(tw, "%s\t%d\t%.0f%%\t%.1f\t%.0f\t%d of %d\n",
-			f.Name, f.Seen, f.Share()*100, f.MedianRank, f.MedianPoints, f.TopQuarter, f.Seen)
-	}
-
 	var pts []float64
 	for _, ts := range seasons {
 		pts = append(pts, ts.Points)
 	}
-	fmt.Fprintf(tw, "\nleague median\t%d\t100%%\t%.1f\t%.0f\t\n",
-		len(seasons), median(rankSeries(seasons)), median(pts))
+	fmt.Fprintf(tw, "median finish %.1f, median points %.0f\n",
+		median(rankSeries(seasons)), median(pts))
 
 	fmt.Fprintf(tw, "\nDOES SPENDING SHAPE PREDICT POINTS?\t(n=%d, |rho| > %.2f is p<0.05)\n",
 		len(seasons), significantRho)

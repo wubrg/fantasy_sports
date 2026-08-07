@@ -257,3 +257,30 @@ func within(ranked []TraitInput, playerID string) bool {
 	}
 	return false
 }
+
+// StartersWith counts the lineup players carrying a trait. Score must have
+// run first, since it is what assigns the lineup.
+func StartersWith(r Roster, t Trait) int {
+	n := 0
+	for _, s := range r.Players {
+		if s.Starting && s.Player.Traits.Has(t) {
+			n++
+		}
+	}
+	return n
+}
+
+// TraitCounts is the trait composition of a starting lineup.
+//
+// Counted over starters rather than the whole roster: a bench full of
+// high-floor players changes nothing about how a season goes, and counting
+// fourteen would let depth claim a character the lineup has not got.
+func TraitCounts(r Roster) map[Trait]int {
+	out := map[Trait]int{}
+	for _, t := range TraitNames {
+		if n := StartersWith(r, t); n > 0 {
+			out[t] = n
+		}
+	}
+	return out
+}

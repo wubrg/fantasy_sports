@@ -359,3 +359,8 @@ tr.in-scratch { background: #16233a; }
   border: 1px solid var(--line);
   border-radius: 3px;
 }
+
+/* What kind of player he is. Quieter than the lean and injury flags — a
+   trait is context you glance at, not a decision you act on. */
+.flag.trait { border-color: #3a4557; color: var(--dim); }
+.mix { margin: 0.4rem 0 0.2rem; line-height: 1.9; }

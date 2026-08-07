@@ -70,6 +70,10 @@ function flagHTML(p) {
     out.push(`<span class="flag vs" title="${esc(by)}">vs ${esc(by.split(" ")[0])}</span>`);
   }
 
+  for (const t of p.Traits || []) {
+    out.push(`<span class="flag trait trait-${esc(t)}">${esc(t)}</span>`);
+  }
+
   if (p.ECR === "contested") out.push(`<span class="flag split">split</span>`);
   else if (p.ECR === "upside") out.push(`<span class="flag">ecr+</span>`);
   else if (p.ECR === "downside") out.push(`<span class="flag">ecr-</span>`);
@@ -304,6 +308,13 @@ function drawScratch() {
       `<td class="drop" data-drop="${esc(s.name)}" title="remove">&times;</td></tr>`);
   }
   document.getElementById("s-lineup").innerHTML = rows.join("");
+
+  // What the lineup is made of. This is what the roster shapes were for,
+  // read off the roster you are building instead of one a search invented.
+  const mix = Object.entries(scratch.traits || {})
+    .map(([t, n]) => `<span class="flag trait trait-${esc(t)}">${n} ${esc(t)}</span>`)
+    .join(" ");
+  document.getElementById("s-mix").innerHTML = mix;
 
   const note = document.getElementById("s-note");
   if (scratch.empty) {

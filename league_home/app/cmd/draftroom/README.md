@@ -253,37 +253,23 @@ history and the 5 MB player dictionary.
 To reach it from another device on your tailnet, the leagueweb pattern
 applies — see the `leagueweb-serve-*` targets for the shape.
 
-### Shapes by player type
+### Player types on the board and the roster
 
-The money shapes ask how to divide a budget. That stops being the interesting
-question once keepers hand you a surplus — the distribution is half-settled by
-what you kept, and what's left to choose is *what kind of players* the rest
-buys. So `shapes` reports two families:
+Every contended player is labelled with what kind of player he is, and the
+scratch roster adds them up as you build it:
 
 ```
-BY MONEY — how to divide the budget
-Stars & Scrubs  543  $200  $1   $36   $156  $7
-Hero RB         521  $200  $4   $103  $80   $13  only reached without De'Von Achane
-Balanced        506  $199  $13  $53   $106  $27
-Zero RB         506  $199  $13  $53   $106  $27
-Robust RB       502  $199  $1   $152  $42   $4
-
-BY PLAYER TYPE — what kind of players the money buys
-Target Volume    543  $200  $1  $36   $156  $7
-Red Zone Corner  530  $200  $1  $37   $145  $17
-Bell Cows        521  $200  $4  $103  $80   $13
-Buy the Injuries 507  $199  $1  $103  $85   $10
-Upside Swing     492  $200  $1  $90   $102  $7
-Floor Build      422  $200  $1  $98   $44   $57
+composition: 2 floor · 2 redzone · 4 targets · 2 bellcow · 1 upside · 1 discounted
 ```
 
-Every shape's detail also lists what its lineup actually is, so you can read
-one against another:
+That count is over **starters**, not the whole roster: a bench stacked with
+one kind of player changes nothing about how a season goes.
 
-```
-Red Zone Corner — corner the touchdowns
-  starters: 2 high floor, 4 red-zone ace, 2 upside, 7 target hog, 2 bell cow
-```
+The labels appear on the web board's rows, where colour and space carry
+them. They are deliberately absent from `make board` — that table is the
+narrow one, six flags on a row reads as none while bidding, and `targets`
+sits on nearly every player at the top of it, so it separates nothing where
+the money is.
 
 #### The traits
 
@@ -294,31 +280,28 @@ roster is a label with nothing behind it.
 
 | Trait | What it means |
 |---|---|
-| **high floor** | touchdown share in the bottom 40% for the position, and real reception volume for pass catchers. Points from usage that repeats |
-| **red-zone ace** | touchdown share in the top quartile. The least predictable points in football, bought on purpose |
+| **floor** | touchdown share in the bottom 40% for the position, and real reception volume for pass catchers. Points from usage that repeats |
+| **redzone** | touchdown share in the top quartile. The least predictable points in football, bought on purpose |
 | **upside** | the industry flags him above consensus, **or** he is projected past his own record |
-| **target hog** | projected targets in the top quartile — the stickiest thing a pass catcher has |
-| **bell cow** | a back with both the ground work and the passing downs, not a committee share |
-| **injury discount** | price suppressed by a designation; you buy the discount and the risk together |
+| **targets** | projected targets in the top quartile — the stickiest thing a pass catcher has |
+| **bellcow** | a back with both the ground work and the passing downs, not a committee share |
+| **discounted** | price suppressed by an injury designation; you buy the discount and the risk together |
 
 Floor and red-zone are opposite ends of one axis, and nobody on this board is
-both — 0 of 446. That's a property of the data, not something the code
-enforces: the quantile index calculation can collapse the p40 and p75
-thresholds onto the same element when a position's window is very small, and
-both traits then fire on the same player.
+both — 0 of 446. That is a property of the data rather than something the
+code enforces: the quantile index calculation can collapse the two thresholds
+onto the same element when a position's window is very small, and both would
+then fire on one player.
 
 #### How the traits are derived
 
-Ciely publishes his projections' components. Of the 447 rows in
-`ciely-2026.csv`, 442 carry components; recomputing them reconstructs his
-published league points, over those 442 rows, to within **0.07 points** —
-mean absolute error 0.019, mean *signed* error +7.2e-05. 31 rows match at
-exact float equality and 52 match at any tolerance from 1e-12 to 1e-6; the
-rest is entirely consistent with rounding in the published columns
-(touchdowns at 2dp × 6 points, yards at 1dp), and the near-zero signed mean
-is what rules out a scoring mismatch rather than a rounding one. So every
-player with components decomposes into touchdown, reception and yardage
-points with no fitting involved.
+Ciely publishes his projections' components. Recomputing them across the 442
+of 447 rows that carry components reconstructs his published league points to
+within **0.07 points** — mean absolute error 0.019, mean *signed* error
++7.2e-05. Only 31 rows land at exact float equality and 52 within any
+tolerance from 1e-12 to 1e-6; the rest is rounding in the published columns
+(touchdowns at 2dp x 6 points, yards at 1dp). The near-zero signed mean is
+what rules out a scoring mismatch rather than a rounding one.
 
 **"Projected past his own record"** is measured **per game** against last
 season's half-PPR production. Per season would punish injury rather than
@@ -334,59 +317,29 @@ price, so it flagged **100% of players over $45** and almost nothing under
 $10 — an expensiveness detector wearing the name of an upside one. The curve
 spread is still shown per player as `swing$N`, where it means what it says.
 
-#### Why trait shapes have no per-pick veto
+### What happened to the roster shapes
 
-A shape about what you own is a floor to reach, not a ceiling to stay under,
-and a veto can only refuse. Vetoing every player without the trait would
-forbid the cheap ones needed to field a legal lineup and produce a roster with
-four red-zone aces and no quarterback. The anchors do the pursuing instead —
-and are immovable once bought, because the greedy upgrade pass will otherwise
-trade four red-zone aces for four better players who score nothing at the goal
-line, dismantling the shape it was asked to build.
+There were eleven of them — five ways to divide a budget, six made of player
+types — each filled greedily against the live board and compared. They are
+gone, and the reasons compound:
 
-### Shapes and your keepers
+- **They ranked nothing.** Three seasons of this league's own drafts say no
+  spending shape separates on results. Every correlation between shape and
+  points sits at or under about 0.2 at n=36.
+- **The fill could not answer the question asked of it.** "Is this shape
+  reachable?" needs a search; a greedy fill failing proves only that a greedy
+  fill failed. Three verification rounds each found a defect traceable to
+  reading that failure as an answer — a keeper falsely blamed for a shape he
+  was the best asset of, then true blames silenced, then shapes declared out
+  of reach while a roster reaching them existed at the same budget.
+- **Keepers had already settled most of it.** Once two keepers fix a third of
+  the roster, "how do I divide the budget" is largely answered before the
+  auction opens.
 
-A shape is a claim about the finished fourteen, so `-me` builds every shape
-**around the players you are keeping**:
-
-```
-Every shape is built around your keepers — Puka Nacua WR $35, De'Von Achane RB $35
-
-SHAPE           POPR  SPEND  QB   RB    WR    TE   NOTES
-Stars & Scrubs  543   $200   $1   $36   $156  $7
-Hero RB         521   $200   $4   $103  $80   $13  only reached without De'Von Achane
-Balanced        506   $199   $13  $53   $106  $27
-```
-
-Filling only the twelve slots you still have to buy got every RB shape wrong
-for anyone holding a back:
-
-| shape | keeper-blind | truth |
-|---|---|---|
-| Hero RB | achieved | **impossible** — Achane at $35 is already a second back over $20. The note says only "only reached without" him, because the code cannot prove impossibility in general even where it happens to hold |
-| Zero RB | achieved at $27 on backs | $62 with the keeper, over the $61 ceiling |
-| Robust RB | "did not reach it" at $62 | the keeper had already carried it past the line |
-
-**"only reached without X"** is decided by experiment, not by reading the
-constraint: the shape is built again with that keeper set aside — and off the
-board, so the fill cannot rebuy him — and if it succeeds then he is in the
-way. Two keepers are judged one at a time rather than by leaving each out,
-because two that are *each* fatal would otherwise cancel: remove either and
-the other still breaks it, so neither looks responsible.
-
-The wording is deliberately weak. What the experiment establishes is that a
-roster exists without him and the greedy fill could not find one with him —
-which is a fact about the search, not about the board. An earlier version
-read that as proof and said "ruled out by keeping X"; three blames in
-twenty-eight were false, and one told you to abandon Robust RB while a
-roster reaching it with that keeper existed at the same $200. Since this note
-outranks every other on the row, overclaiming here is the most expensive
-mistake the report can make.
-
-Keepers cannot be sold to make room, so the upgrade pass may not swap one out.
-The scratch roster on the web board starts with them for the same reason —
-otherwise it understates POPR and disagrees with this report about the same
-roster.
+What they were reaching for survives without any of the machinery: the
+composition of the lineup you are actually building. `draftroom calibrate`
+still asks the one question that never needed the shapes — whether how a
+manager spends predicts how the season goes.
 
 ### `draftroom calibrate`
 
