@@ -26,11 +26,11 @@ const minSpendForUsableSeason = 180
 // Exists so the numbers in Archetypes() carry their derivation. A threshold
 // nobody can re-derive is a number somebody liked, and the previous set
 // described Zero RB rosters this league had built once in three years.
-func runCalibrate(leagueID, configDir, dataDir string, seasons []string, includeAll bool) error {
+func runCalibrate(leagueID, configDir, dataDir string, seasons []string, includeAll, seasonsNamed bool) error {
 	c := sleeper.New()
 	c.HTTPClient = &http.Client{Timeout: 180 * time.Second}
 
-	history, skipped, err := loadTeamSeasons(c, leagueID, seasons, includeAll)
+	history, skipped, err := loadTeamSeasons(c, leagueID, seasons, includeAll, seasonsNamed)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func runCalibrate(leagueID, configDir, dataDir string, seasons []string, include
 
 // loadTeamSeasons walks the league chain and pairs each completed draft with
 // how that season finished.
-func loadTeamSeasons(c *sleeper.Client, leagueID string, want []string, includeAll bool) ([]draft.TeamSeason, []string, error) {
+func loadTeamSeasons(c *sleeper.Client, leagueID string, want []string, includeAll, seasonsNamed bool) ([]draft.TeamSeason, []string, error) {
 	players, err := c.Players()
 	if err != nil {
 		return nil, nil, fmt.Errorf("loading player dictionary: %w", err)
@@ -57,11 +57,15 @@ func loadTeamSeasons(c *sleeper.Client, leagueID string, want []string, includeA
 	for _, s := range want {
 		keep[s] = true
 	}
-	// -all means every season, so it has to clear the season list too.
-	// Left in place, the default 2023,2024,2025 dropped 2022 as "not
-	// requested" before the spend test ran, and -all was never consulted —
-	// the flag documented as "include 2022 as well" did nothing at all.
-	if includeAll {
+	// -all has to widen the season list or it does nothing: the default
+	// 2023,2024,2025 dropped 2022 as "not requested" before the spend test
+	// ran, so the flag documented as "include 2022 as well" was never
+	// consulted at all.
+	//
+	// Only the default, though. A season list the user typed is a choice,
+	// and -all alongside it means "these, even if their prices do not
+	// compare" — clearing it would discard the request without a word.
+	if includeAll && !seasonsNamed {
 		keep = nil
 	}
 

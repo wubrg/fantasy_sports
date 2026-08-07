@@ -136,8 +136,17 @@ func main() {
 			os.Exit(1)
 		}
 	case "calibrate":
+		// Whether -seasons was typed, not just what it holds. -all has to
+		// widen the default season list or it does nothing, but widening one
+		// the user chose themselves would silently discard their choice.
+		named := false
+		fs.Visit(func(f *flag.Flag) {
+			if f.Name == "seasons" {
+				named = true
+			}
+		})
 		if err := runCalibrate(*leagueID, orBuiltin(*configDir, builtinConfigDir),
-			orBuiltin(*dataDir, builtinDataDir), draft.SetNames(*seasons), *includeAll); err != nil {
+			orBuiltin(*dataDir, builtinDataDir), draft.SetNames(*seasons), *includeAll, named); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}
