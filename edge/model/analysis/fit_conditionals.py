@@ -159,7 +159,7 @@ def build(rows, games) -> list[dict]:
         by_player[(r["player"], r["season"])].append(r)
 
     obs = []
-    for _, g in by_player.items():
+    for (player, _season), g in by_player.items():
         g.sort(key=lambda x: x["week"])
         for i, x in enumerate(g):
             if i < MIN_PRIOR_GAMES:
@@ -178,6 +178,7 @@ def build(rows, games) -> list[dict]:
             game_total, margin = ctx
             obs.append(
                 {
+                    "player": player,
                     "proj_targets": baseline * team_vol,
                     "trend": recent - baseline,
                     "yards": x["yards"],
@@ -207,6 +208,51 @@ def quantiles(values: list[float]) -> list[list[float]]:
     return out
 
 
+def effective_n(values: list[float], players: list[str]) -> tuple[float, float]:
+    """Effective sample size after accounting for repeat players.
+
+    A cell pools many games from the same player, and those observations are not
+    independent -- a target hog contributes twenty correlated rows. Feeding the
+    raw count into a Wilson interval therefore claims more precision than the
+    data supports.
+
+    The correction is the standard design effect, deff = 1 + (m0 - 1) * ICC,
+    with ICC estimated by one-way ANOVA over players within the cell. Measured
+    across the published grid the design effect runs 1.0 to about 1.4, so this
+    widens intervals by roughly 9% typically rather than transforming them --
+    cells pool 42 to 847 distinct players, which is what keeps the problem small.
+
+    Returns (n_eff, icc).
+    """
+    n = len(values)
+    groups: dict[str, list[float]] = defaultdict(list)
+    for v, p in zip(values, players):
+        groups[p].append(v)
+    k = len(groups)
+    if k < 2 or n <= k:
+        return float(n), 0.0
+
+    grand = st.mean(values)
+    # Between- and within-group mean squares.
+    ss_between = sum(len(g) * (st.mean(g) - grand) ** 2 for g in groups.values())
+    ss_within = sum((v - st.mean(g)) ** 2 for g in groups.values() for v in g)
+    ms_between = ss_between / (k - 1)
+    ms_within = ss_within / (n - k)
+    if ms_within <= 0:
+        return float(n), 0.0
+
+    # m0 is the size-corrected mean cluster size, not the plain mean.
+    sum_sq = sum(len(g) ** 2 for g in groups.values())
+    m0 = (n - sum_sq / n) / (k - 1)
+    if m0 <= 1:
+        return float(n), 0.0
+
+    icc = (ms_between - ms_within) / (ms_between + (m0 - 1) * ms_within)
+    icc = max(0.0, min(icc, 1.0))
+    deff = 1 + (m0 - 1) * icc
+    return n / deff if deff > 0 else float(n), icc
+
+
 def main(argv):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--report", action="store_true", help="print cells, write nothing")
@@ -233,6 +279,7 @@ def main(argv):
                         dropped += 1
                         continue
                     ys = [o["yards"] for o in sel]
+                    n_eff, icc = effective_n(ys, [o["player"] for o in sel])
                     cells.append(
                         {
                             "scenario": scenario,
@@ -242,6 +289,9 @@ def main(argv):
                             "trend_min": ra,
                             "trend_max": rb,
                             "n": len(sel),
+                            "n_eff": round(n_eff, 1),
+                            "players": len({o["player"] for o in sel}),
+                            "icc": round(icc, 4),
                             "median": round(st.median(ys), 1),
                             "quantiles": quantiles(ys),
                         }

@@ -19,6 +19,13 @@ Held out on 2022–2025, seasons the fit never saw:
 | total | 4.30 pts | **0.78 pts** | mean absolute calibration gap |
 | margin | 3.80 pts | **1.89 pts** | |
 
+> **Caveat on those two numbers.** The calibration thresholds were chosen by hand. Re-running the
+> whole selection-and-holdout pipeline under 11 alternative threshold grids, the empirical model
+> beats the normal one on **every** grid — the direction is not an artifact — but the shipped grid
+> happens to produce the best total figure of any tested (range 0.78–1.37, median ≈ 1.0). The honest
+> headline for totals is **~1.0**, with 0.78 being roughly 0.25 points optimistic from grid choice.
+> Margin ranges 1.60–2.59 across grids against a shipped 1.89.
+
 The old model claimed 7.5% where reality was 14.7%, and 73.6% where reality was 57.4% — overconfident
 in both tails, exactly as a too-small σ predicts.
 
@@ -36,11 +43,29 @@ in both tails, exactly as a too-small σ predicts.
   fitting from 2019 has too few games and hurts more. Chosen by rolling-origin CV — a single
   two-season fold proved unstable, picking a 534-game window that scored 1.02 on the fold and 2.20
   on the real holdout.
+  - **For totals this selects on real signal** (CV scores range 2.40 → 1.22 across candidate starts).
+  - **For margins it does not.** Five of six candidates fall within a 0.15-point spread, and the
+    "chosen" window swings across 2005/2008/2012/2014 under alternative threshold grids. Calling the
+    margin window "selected by CV" is technically true and practically meaningless — it is selecting
+    on noise. Harmless, since margin dispersion is flat across those windows anyway, but the
+    provenance claim overstated what happened.
 
 ### The push atom
 
-The empirical distribution represents something a normal cannot: **2.41% of games land exactly on the
-spread** (0.80% on the total). A continuous distribution assigns that event probability zero.
+The empirical distribution represents something a normal cannot: games landing exactly on the line.
+A continuous distribution assigns that event probability zero.
+
+| sample | n | spread push | total push |
+|---|---|---|---|
+| **2005–2025** | 5,698 | **2.56%** | **1.49%** |
+| 2016–2021 (total fit window) | 1,622 | 2.22% | 0.80% |
+| 2014–2021 (margin fit window) | 2,156 | 2.41% | 0.97% |
+
+> **Correction.** This previously read "2.41% … (0.80% on the total)" under a heading citing 5,698
+> games from 2005–2025. Those two figures come from two *different* fit windows, neither of them the
+> sample named. On the cited sample the values are 2.56% and 1.49% — the total-push atom is nearly
+> twice what was claimed, so the error understated the case for the empirical model rather than
+> inflating it. Conditional on an integer line the rates are 4.82% and 2.86%.
 
 That event is the push that forfeits a FanDuel bonus bet outright — the rule `CheckBonusMarket` has
 guarded against since it was written. The model can now price it.
@@ -126,10 +151,23 @@ Median receiving yards, scenario occurred vs not:
 Positive in every cell, and growing with volume — alphas benefit from a shootout far more than
 rotational players do. This is the clean case.
 
-### "Trash time correlation" is backwards as measured
+### "Trash time correlation" is backwards as measured — with one exception
 
 Edge of Vigor's Tier 3 predicts a garbage-time boost: a team down 14 must throw, so its receivers see
-more work. **Measured on final margin, every cell is negative** — −1 to −13 yards.
+more work. **Measured on final margin, 14 of 15 cells are negative** — −1 to −13 yards.
+
+> **Correction.** This section previously read "every cell is negative." That was wrong, and an
+> adversarial audit caught it. The exception is `0–4 projected targets` with a declining trend:
+> **+2.0** (median 13.0 with the blowout vs 11.0 without). At that volume the medians are 11–13
+> yards and a two-yard gap is noise, but the claim as written was false, and
+> `TestBlowoutLossHurts` passed only because it probed a single point rather than the grid. It has
+> been rewritten to assert over every cell and to require that positive cells stay confined to the
+> lowest-volume band.
+>
+> The audit also refit on 2014–2021 and evaluated on 2022–2025: the shootout sign survives **14/14**
+> cells, blowout_loss only **10/13**, with roughly **2.7 points** of non-noise held-out error on `q`
+> against a 2.4-point vig cushion at −110. **Treat any blowout_loss verdict with under ~3 points of
+> margin as unproven.** Shootout carries ~1.1 points and is fine.
 
 The reason is the end-state proxy. Final margin conflates "trailed and threw a lot" with "was simply
 bad," and the second dominates: losing by more than a touchdown mostly identifies offenses that did
@@ -148,9 +186,20 @@ written.
 ### How uncertainty travels
 
 Each cell stores a quantile table rather than a single probability, so `P(yards > L)` is answered at
-any line. The cell's `n` becomes a Wilson interval at query time, reusing the hit-rate layer's code —
-so a pooled estimate and an empirical one report uncertainty the same way, and a thin cell says so
-instead of looking confident.
+any line, and the interval is computed at query time reusing the hit-rate layer's Wilson code.
+
+Two corrections from the audit, both now in effect:
+
+- **Intervals are built on effective sample size, not raw count.** Cells pool repeat players, so
+  rows are not independent. Each cell now carries a measured design effect (ANOVA ICC over players):
+  median **1.10**, max 1.67, so `n_eff/n ≈ 0.91`. Intervals widen ~9%, moving lower bounds down by a
+  median of 0.23 points. 55 of 64 cells are discounted. Real, but it changes essentially no verdicts
+  — an order of magnitude less important than the blowout_loss issue above.
+- **Probabilities are clamped inside what a finite sample supports.** A quantile table's endpoints
+  are the extreme values observed, so a line outside that range returned exactly 0 or 1 — and since
+  `hits` then equalled `n`, Wilson reported things like `[0.987, 1.000]` on a cell where 2% of
+  observations disagreed. Estimates are now bounded to `[1/(2n), 1 − 1/(2n)]`; mid-range values are
+  untouched.
 
 ---
 

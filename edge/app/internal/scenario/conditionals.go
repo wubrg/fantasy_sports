@@ -30,6 +30,29 @@ type Cell struct {
 	N          int         `json:"n"`
 	Median     float64     `json:"median"`
 	Quantiles  [][]float64 `json:"quantiles"` // [[probability, yards], ...]
+
+	// NEff is N discounted for repeat players. A cell pools many games from the
+	// same player and those rows are not independent, so the raw count claims
+	// more precision than the data supports. Fitting measures the design effect
+	// per cell (ANOVA ICC over players) and records the result here; intervals
+	// are built on NEff, not N.
+	NEff    float64 `json:"n_eff"`
+	Players int     `json:"players"`
+	ICC     float64 `json:"icc"`
+}
+
+// effectiveN is the sample size intervals should be built on.
+//
+// Falls back to N for artifacts predating the n_eff field rather than treating
+// a missing value as zero, which would make every interval maximally wide.
+func (c Cell) effectiveN() int {
+	if c.NEff <= 0 {
+		return c.N
+	}
+	if n := int(c.NEff + 0.5); n >= 1 {
+		return n
+	}
+	return 1
 }
 
 // Conditionals is the whole fitted grid.
@@ -91,10 +114,15 @@ func LoadConditionals() (*Conditionals, error) {
 // whole reason for pooling was to stop pretending a thin sample is a
 // probability.
 type Conditional struct {
-	Prob       float64
-	Lower      float64
-	Upper      float64
+	Prob  float64
+	Lower float64
+	Upper float64
+
+	// N is the raw cell count; NEff is what the interval was actually built on
+	// after discounting repeat players. Both are reported so the discount is
+	// visible rather than buried.
 	N          int
+	NEff       int
 	CellMedian float64
 	Cell       Cell
 }
@@ -160,19 +188,48 @@ func (c *Conditionals) Lookup(scenario string, occurred bool, projTargets, trend
 	if err != nil {
 		return Conditional{}, err
 	}
-	p := probAbove(cell.Quantiles, line)
+
+	n := cell.effectiveN()
+	p := clampToSupport(probAbove(cell.Quantiles, line), n)
 
 	// Reuse the interval the hit-rate layer already uses, so a pooled estimate
-	// and an empirical one report uncertainty the same way.
-	hits := int(p*float64(cell.N) + 0.5)
-	lower, upper, err := wager.WilsonInterval(hits, cell.N, confidence)
+	// and an empirical one report uncertainty the same way. Built on the
+	// effective sample size, so repeat players do not buy false precision.
+	hits := int(p*float64(n) + 0.5)
+	lower, upper, err := wager.WilsonInterval(hits, n, confidence)
 	if err != nil {
 		return Conditional{}, err
 	}
 	return Conditional{
 		Prob: p, Lower: lower, Upper: upper,
-		N: cell.N, CellMedian: cell.Median, Cell: cell,
+		N: cell.N, NEff: n, CellMedian: cell.Median, Cell: cell,
 	}, nil
+}
+
+// clampToSupport stops a finite sample from claiming certainty.
+//
+// The quantile table's endpoints are the smallest and largest values actually
+// observed, so a line outside that range makes probAbove return exactly 0 or 1.
+// That reads as impossibility or certainty, which no sample of n can establish
+// -- and it corrupts the interval too, since hits then equals n and Wilson
+// reports something like [0.987, 1.000] on a cell where 2% of observations
+// disagree.
+//
+// Half an observation is the most precision a sample of n supports, so the
+// estimate is bounded to [1/(2n), 1 - 1/(2n)]. Mid-range values are untouched;
+// only the endpoints move.
+func clampToSupport(p float64, n int) float64 {
+	if n < 1 {
+		return p
+	}
+	lo := 1 / (2 * float64(n))
+	if p < lo {
+		return lo
+	}
+	if p > 1-lo {
+		return 1 - lo
+	}
+	return p
 }
 
 // QR returns the conditional probabilities the belief decomposition needs:
