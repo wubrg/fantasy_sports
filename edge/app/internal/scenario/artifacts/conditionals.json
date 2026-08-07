@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-07T16:19:37Z",
+ "generated_at": "2026-08-07T21:19:55Z",
  "generated_by": "edge/model/analysis/fit_conditionals.py",
  "outcome": "receiving_yards",
  "seasons": [
@@ -7,6 +7,16 @@
   2025
  ],
  "min_cell": 100,
+ "scenario_status": {
+  "shootout": {
+   "validated": true,
+   "note": "positive in 15/15 cells, 10/15 bootstrap-resolved, 14/14 out of sample"
+  },
+  "blowout_loss": {
+   "validated": false,
+   "note": "direction inverts at common lines (q>r at 6.5/20.5/24.5 yards, 6-8 target band); only 3/15 cells bootstrap-resolved; 10/13 out of sample vs shootout's 14/14. Needs a play-by-play definition rather than final margin."
+  }
+ },
  "note": "quantiles are [[probability, yards], ...]; P(yards > L) is 1 minus the interpolated CDF. n supports a Wilson interval computed at query time.",
  "cells": [
   {

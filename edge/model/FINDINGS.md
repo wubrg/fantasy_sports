@@ -65,7 +65,13 @@ A continuous distribution assigns that event probability zero.
 > games from 2005–2025. Those two figures come from two *different* fit windows, neither of them the
 > sample named. On the cited sample the values are 2.56% and 1.49% — the total-push atom is nearly
 > twice what was claimed, so the error understated the case for the empirical model rather than
-> inflating it. Conditional on an integer line the rates are 4.82% and 2.86%.
+> inflating it. Conditional on an integer line, on that same 2005–2025 sample, the rates are
+> **4.65% and 3.01%**.
+>
+> **Second correction.** This paragraph originally closed with "4.82% and 2.86%" — the *1999–2025
+> whole-file* figures, attached to the 2005–2025 sample. A correction whose entire point was that
+> numbers had been quoted from the wrong window closed by quoting numbers from the wrong window.
+> Caught by a second audit.
 
 That event is the push that forfeits a FanDuel bonus bet outright — the rule `CheckBonusMarket` has
 guarded against since it was written. The model can now price it.
@@ -166,8 +172,34 @@ more work. **Measured on final margin, 14 of 15 cells are negative** — −1 to
 >
 > The audit also refit on 2014–2021 and evaluated on 2022–2025: the shootout sign survives **14/14**
 > cells, blowout_loss only **10/13**, with roughly **2.7 points** of non-noise held-out error on `q`
-> against a 2.4-point vig cushion at −110. **Treat any blowout_loss verdict with under ~3 points of
-> margin as unproven.** Shootout carries ~1.1 points and is fine.
+> against a 2.4-point vig cushion at −110.
+
+### blowout_loss is now gated off
+
+A second audit went further, and the scenario **cannot be priced any more**. `Lookup` and `QR` refuse
+it; `edgectl` prints the reason and lists what you can use instead. The cells still ship — the fit
+stays reproducible and the data remains available for the work that would validate it.
+
+Three independent failures, any one disqualifying:
+
+1. **The direction inverts at ordinary lines.** At 7 projected targets — the 6–8 band, *not* the
+   low-volume band the first correction confined it to — `q > r` at **6.5, 20.5 and 24.5** receiving
+   yards. Those are mainstream props. A wager priced there carries the opposite belief requirement
+   from the one the finding implies.
+2. **The sign is unresolved almost everywhere.** A player-level cluster bootstrap of the median delta
+   clears zero in only **3 of 15** cells. The lone positive cell's CI is [0.0, 4.0]. Twelve of
+   fifteen signs are noise.
+3. **It does not survive out of sample** — 10/13 against shootout's 14/14.
+
+The first correction to this section rewrote the *test* into median space, where all of this is
+invisible, and called the defect fixed. It was not: median-space and probability-space disagree, and
+`edgectl` consumes the latter. Moving a test away from the failure is worse than leaving it, because
+the failure then looks resolved.
+
+**What would un-gate it:** defining the scenario on play-by-play — time remaining crossed with score
+differential — rather than final margin. Which is precisely what this whole result argues for.
+
+Shootout passes all three: positive in 15/15, resolved in 10/15, 14/14 out of sample.
 
 The reason is the end-state proxy. Final margin conflates "trailed and threw a lot" with "was simply
 bad," and the second dominates: losing by more than a touchdown mostly identifies offenses that did

@@ -81,17 +81,57 @@ TREND_BANDS = [(-99.0, -0.03), (-0.03, 0.03), (0.03, 0.06), (0.06, 99.0)]
 #
 # In particular: this is "blowout_loss", NOT "trailing". The corpus predicts a
 # garbage-time volume boost -- a team down 14 must throw, so its receivers see
-# more work. Measured on final margin the effect comes out NEGATIVE in every
-# cell, because losing by more than a touchdown mostly identifies offenses that
+# more work. Measured on final margin the effect comes out negative in 14 of 15
+# cells, because losing by more than a touchdown mostly identifies offenses that
 # did not function, and that swamps the late-game volume.
 #
 # The measurement does not refute the garbage-time mechanism. It refutes final
-# margin as a proxy for it. Separating the two needs play-by-play (time
-# remaining crossed with score differential), which is deliberately out of scope
-# here -- see FINDINGS.md.
+# margin as a proxy for it.
 SCENARIOS = {
     "shootout": lambda game_total, team_margin: game_total > 50,
     "blowout_loss": lambda game_total, team_margin: team_margin < -7,
+}
+
+# Whether a scenario is fit to bet on. Cells are still emitted for unvalidated
+# scenarios -- the fit stays reproducible and the data stays available for the
+# work that would validate them -- but the Go lookup refuses to price a wager
+# from one.
+#
+# blowout_loss failed validation on three independent counts, any one of which
+# would be disqualifying:
+#
+#   1. The direction inverts at ordinary lines. At 7 projected targets, q > r at
+#      6.5, 20.5 and 24.5 receiving yards -- mainstream prop lines, in a
+#      volume-bearing band, contradicting the negative direction the medians
+#      show. A wager priced there would carry the opposite belief requirement
+#      from the one the finding implies.
+#   2. The sign is unresolved almost everywhere. A player-level cluster
+#      bootstrap of the median delta clears zero in only 3 of 15 cells; the one
+#      positive cell has a CI of [0.0, 4.0]. Twelve of fifteen signs are noise.
+#   3. It does not survive out of sample. Refit on 2014-2021 and evaluated on
+#      2022-2025, the sign holds in 10 of 13 cells against shootout's 14 of 14,
+#      with roughly 2.7 points of non-noise error on q -- larger than the
+#      2.4-point vig cushion at -110.
+#
+# shootout passes all three: positive in 15 of 15 cells, resolved in 10, and
+# 14 of 14 out of sample.
+#
+# What would un-gate blowout_loss: defining it on play-by-play (time remaining
+# crossed with score differential) rather than final margin, which is the
+# measurement this whole result argues for.
+SCENARIO_STATUS = {
+    "shootout": {
+        "validated": True,
+        "note": "positive in 15/15 cells, 10/15 bootstrap-resolved, 14/14 out of sample",
+    },
+    "blowout_loss": {
+        "validated": False,
+        "note": (
+            "direction inverts at common lines (q>r at 6.5/20.5/24.5 yards, 6-8 target band); "
+            "only 3/15 cells bootstrap-resolved; 10/13 out of sample vs shootout's 14/14. "
+            "Needs a play-by-play definition rather than final margin."
+        ),
+    },
 }
 
 QUANTILE_STEPS = 51  # p0..p100 in 2% steps
@@ -335,6 +375,7 @@ def main(argv):
                 "outcome": "receiving_yards",
                 "seasons": [FIRST, LAST],
                 "min_cell": MIN_CELL,
+                "scenario_status": SCENARIO_STATUS,
                 "note": (
                     "quantiles are [[probability, yards], ...]; P(yards > L) is "
                     "1 minus the interpolated CDF. n supports a Wilson interval "

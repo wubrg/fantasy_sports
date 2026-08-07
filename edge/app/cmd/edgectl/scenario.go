@@ -166,18 +166,25 @@ func resolveConditionals(name string, q, r, projTargets, trend, line, confidence
 	}
 	qc, rc, err := c.QR(name, projTargets, trend, line, confidence)
 	if err != nil {
-		return 0, 0, "", fmt.Errorf("%w\n  fitted scenarios: %s",
-			err, strings.Join(c.ScenarioNames(), ", "))
+		return 0, 0, "", fmt.Errorf("%w\n  scenarios you can price: %s",
+			err, strings.Join(c.ValidatedScenarioNames(), ", "))
 	}
 
 	fmt.Printf("  CONDITIONALS from the fitted grid (%s, %d-%d)\n",
 		c.Outcome, c.Seasons[0], c.Seasons[1])
 	fmt.Printf("    %.1f projected targets, %+.1f pt trend, line %.1f\n",
 		projTargets, trend*100, line)
-	fmt.Printf("    q = %.1f%%  [%.1f-%.1f]  n=%-5d median %.0f yds  (scenario occurred)\n",
-		qc.Prob*100, qc.Lower*100, qc.Upper*100, qc.N, qc.CellMedian)
-	fmt.Printf("    r = %.1f%%  [%.1f-%.1f]  n=%-5d median %.0f yds  (it did not)\n",
-		rc.Prob*100, rc.Lower*100, rc.Upper*100, rc.N, rc.CellMedian)
+	// n_eff is shown beside n, not instead of it. The interval is built on the
+	// smaller number, and printing only the raw count would overstate the
+	// evidence behind the interval printed next to it.
+	fmt.Printf("    q = %.1f%%  [%.1f-%.1f]  n=%d (eff %d)  median %.0f yds  (scenario occurred)\n",
+		qc.Prob*100, qc.Lower*100, qc.Upper*100, qc.N, qc.NEff, qc.CellMedian)
+	fmt.Printf("    r = %.1f%%  [%.1f-%.1f]  n=%d (eff %d)  median %.0f yds  (it did not)\n",
+		rc.Prob*100, rc.Lower*100, rc.Upper*100, rc.N, rc.NEff, rc.CellMedian)
+	if qc.NEff < qc.N || rc.NEff < rc.N {
+		fmt.Printf("    intervals use the effective count: cells pool repeat players,\n")
+		fmt.Printf("    so the raw n overstates how much independent evidence there is\n")
+	}
 
 	// A wide interval on either side means the requirement below is softer
 	// than its two decimal places suggest.

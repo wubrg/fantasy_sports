@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 
 	"edge/internal/wager"
@@ -55,14 +56,57 @@ func (c Cell) effectiveN() int {
 	return 1
 }
 
+// ScenarioStatus says whether a fitted scenario is fit to bet on.
+//
+// Cells are emitted for unvalidated scenarios too -- the fit stays reproducible
+// and the data remains available for the work that would validate them -- but
+// pricing a wager from one is refused. A scenario that is measurable is not the
+// same as a scenario that is usable.
+type ScenarioStatus struct {
+	Validated bool   `json:"validated"`
+	Note      string `json:"note"`
+}
+
 // Conditionals is the whole fitted grid.
 type Conditionals struct {
-	GeneratedAt string `json:"generated_at"`
-	GeneratedBy string `json:"generated_by"`
-	Outcome     string `json:"outcome"`
-	Seasons     []int  `json:"seasons"`
-	MinCell     int    `json:"min_cell"`
-	Cells       []Cell `json:"cells"`
+	GeneratedAt    string                    `json:"generated_at"`
+	GeneratedBy    string                    `json:"generated_by"`
+	Outcome        string                    `json:"outcome"`
+	Seasons        []int                     `json:"seasons"`
+	MinCell        int                       `json:"min_cell"`
+	ScenarioStatus map[string]ScenarioStatus `json:"scenario_status"`
+	Cells          []Cell                    `json:"cells"`
+}
+
+// checkValidated refuses to price a wager from a scenario that failed
+// validation.
+//
+// An unknown scenario is also refused rather than assumed good: a typo must not
+// silently inherit the benefit of the doubt.
+func (c *Conditionals) checkValidated(scenario string) error {
+	st, ok := c.ScenarioStatus[scenario]
+	if !ok {
+		return fmt.Errorf(
+			"scenario: %q has no recorded validation status, so it cannot be priced "+
+				"(fitted scenarios: %s)", scenario, strings.Join(c.ScenarioNames(), ", "))
+	}
+	if !st.Validated {
+		return fmt.Errorf(
+			"scenario: %q is fitted but NOT validated, so it cannot be priced.\n  %s",
+			scenario, st.Note)
+	}
+	return nil
+}
+
+// ValidatedScenarioNames lists only the scenarios that may be priced.
+func (c *Conditionals) ValidatedScenarioNames() []string {
+	var out []string
+	for _, name := range c.ScenarioNames() {
+		if st, ok := c.ScenarioStatus[name]; ok && st.Validated {
+			out = append(out, name)
+		}
+	}
+	return out
 }
 
 var (
@@ -184,6 +228,9 @@ func (c *Conditionals) findCell(scenario string, occurred bool, projTargets, tre
 
 // Lookup returns P(yards > line) for one side of a scenario.
 func (c *Conditionals) Lookup(scenario string, occurred bool, projTargets, trend, line, confidence float64) (Conditional, error) {
+	if err := c.checkValidated(scenario); err != nil {
+		return Conditional{}, err
+	}
 	cell, err := c.findCell(scenario, occurred, projTargets, trend)
 	if err != nil {
 		return Conditional{}, err
@@ -195,7 +242,7 @@ func (c *Conditionals) Lookup(scenario string, occurred bool, projTargets, trend
 	// Reuse the interval the hit-rate layer already uses, so a pooled estimate
 	// and an empirical one report uncertainty the same way. Built on the
 	// effective sample size, so repeat players do not buy false precision.
-	hits := int(p*float64(n) + 0.5)
+	hits := clampHits(p, n)
 	lower, upper, err := wager.WilsonInterval(hits, n, confidence)
 	if err != nil {
 		return Conditional{}, err
@@ -218,6 +265,32 @@ func (c *Conditionals) Lookup(scenario string, occurred bool, projTargets, trend
 // Half an observation is the most precision a sample of n supports, so the
 // estimate is bounded to [1/(2n), 1 - 1/(2n)]. Mid-range values are untouched;
 // only the endpoints move.
+// clampHits converts a probability to a success count for the interval, keeping
+// the strictness clampToSupport just established.
+//
+// Rounding to nearest silently undoes the clamp. At the upper bound
+// p = 1 - 1/(2n), so p*n + 0.5 is EXACTLY n and int() returns n -- handing back
+// the half observation the clamp bought and putting Wilson right back at an
+// upper bound of 1.0000. That defect shipped once already, described in the
+// commit message as fixed, because the test checked the probability and never
+// looked at the interval.
+//
+// The count therefore carries the same invariant as the probability: strictly
+// inside (0, n) whenever n allows it.
+func clampHits(p float64, n int) int {
+	hits := int(p*float64(n) + 0.5)
+	if n < 2 {
+		return hits
+	}
+	if hits >= n {
+		hits = n - 1
+	}
+	if hits < 1 {
+		hits = 1
+	}
+	return hits
+}
+
 func clampToSupport(p float64, n int) float64 {
 	if n < 1 {
 		return p
