@@ -325,3 +325,92 @@ func TestNoKeepersBehavesAsBefore(t *testing.T) {
 		}
 	}
 }
+
+// heldPasser is a keeper who competes for no slot the shape cares about and
+// carries none of its traits. All he does is cost money.
+func heldPasser(price int) RosterSpot {
+	return RosterSpot{
+		Player: PlayerSignals{
+			PlayerID: "keeper-qb", Name: "Kept Passer", Position: "QB",
+			CielyPoints: 300,
+		},
+		Price: price,
+	}
+}
+
+// TestAKeeperIsBlamedWhenHisPriceIsWhatBlocks is the case that refuted the
+// first attempt at separating cost from composition.
+//
+// A shape you cannot afford because of what a keeper costs is ruled out by
+// that keeper as surely as one he violates by type. The guard that tried to
+// tell those apart refilled with him still held and his refund added — a
+// state that cannot exist — and so silenced every price-mediated block,
+// falling through to "the greedy fill did not find it" for shapes no fill
+// could ever reach.
+//
+// The passer here competes for nothing Floor Build wants and carries none of
+// its traits. Only his price stands between the roster and the shape.
+func TestAKeeperIsBlamedWhenHisPriceIsWhatBlocks(t *testing.T) {
+	floor := traitShapeNamed("Floor Build")
+	pool := floorMarket("RB10", "RB12", "WR10", "WR12", "TE10")
+
+	blocked := 0
+	for price := 52; price <= 70; price += 2 {
+		opts := withHeld(heldPasser(price))
+		got := Fill(floor, pool, opts)
+		if got.Achieved {
+			continue // affordable at this price; nothing to blame
+		}
+		blocked++
+		if name := blamedOnKeepers(floor, pool, opts); name != "Kept Passer" {
+			t.Errorf("at $%d Floor Build is unreachable and blame is %q, want the keeper whose price blocks it",
+				price, name)
+		}
+	}
+	if blocked == 0 {
+		t.Fatal("no price in the sweep blocked the shape, so this proves nothing")
+	}
+}
+
+// TestPoolRemovalIsWhatStopsTheFalseBlame pins the half of the fix that was
+// not independently guarded.
+//
+// The original false blame was not that a trait-carrying keeper got named —
+// a keeper can genuinely block a shape by costing more than he contributes,
+// trait or no trait. It was that the counterfactual *rebought him*: dropping
+// him refunded his keeper price and left him on the board at market, so the
+// roster proving he blocked the shape contained him, dearer.
+//
+// So the keeper here is a board player held below his market price, which is
+// exactly the shape of the real case (Achane kept at $35, board price $47).
+// Both halves of the original fix had to be reverted together before any
+// test noticed; this one fails on the pool half alone.
+func TestPoolRemovalIsWhatStopsTheFalseBlame(t *testing.T) {
+	floor := traitShapeNamed("Floor Build")
+	pool := floorMarket("RB10", "RB12", "WR10", "WR12", "TE10")
+
+	// Hold one of the board's own floor players, cheaply.
+	var keeper RosterSpot
+	for _, p := range pool {
+		if p.PlayerID == "WR10" {
+			keeper = RosterSpot{Player: p, Price: 8}
+		}
+	}
+	if keeper.Player.PlayerID == "" {
+		t.Fatal("fixture lost the player it holds")
+	}
+	opts := withHeld(keeper)
+
+	// The counterfactual must not be able to buy him back.
+	for _, p := range poolWithout(pool, opts.Held) {
+		if p.PlayerID == keeper.Player.PlayerID {
+			t.Fatal("the dropped keeper is still buyable, so the experiment can rebuy him")
+		}
+	}
+
+	// And with him gone the shape is one floor player short of its five, so
+	// there is nothing to blame him for.
+	if name := blamedOnKeepers(floor, pool, opts); name != "" {
+		t.Errorf("blamed %q, but the only roster that reaches this shape without him is one that rebuys him", name)
+	}
+}

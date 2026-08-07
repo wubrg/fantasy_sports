@@ -97,8 +97,9 @@ func TestComponentsRebuildTheRealProjections(t *testing.T) {
 			maxErr, worst = math.Abs(d), r.Player
 		}
 	}
-	if n == 0 {
-		t.Fatalf("%s has no rows with published components", path)
+	if n < 400 {
+		t.Fatalf("only %d rows had populated components in %s; the decomposition "+
+			"looks like it stopped being populated, not that the file shrank", n, path)
 	}
 	meanAbs, meanSigned := sumAbs/float64(n), sumSigned/float64(n)
 

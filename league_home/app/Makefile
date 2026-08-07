@@ -15,8 +15,9 @@ build: ## Build leaguectl, leaguebot, leagueweb, and draftroom binaries
 # off `check`: the root Makefile forwards individual targets (fmt-check, vet,
 # test) into this one rather than calling `make check` here, so anything
 # reachable only from `check` never runs from the repo root.
-test: extractor-test ## Run go test ./... plus the Python extractor tests
+test: ## Run go test ./... plus the Python extractor tests
 	go test ./...
+	$(MAKE) extractor-test
 
 vet: ## Run go vet ./...
 	go vet ./...

@@ -307,14 +307,16 @@ both traits then fire on the same player.
 
 #### How the traits are derived
 
-Ciely publishes his projections' components, and recomputing them across all
-447 rows of `ciely-2026.csv` reconstructs his published league points to
-within **0.07 points** — mean absolute error 0.019, mean *signed* error
-+7.2e-05. Only 41 rows land bit-exact; the rest is entirely consistent with
-rounding in the published columns (touchdowns at 2dp × 6 points, yards at
-1dp), and the near-zero signed mean is what rules out a scoring mismatch
-rather than a rounding one. So every player decomposes into touchdown,
-reception and yardage points with no fitting involved.
+Ciely publishes his projections' components. Of the 447 rows in
+`ciely-2026.csv`, 442 carry components; recomputing them reconstructs his
+published league points, over those 442 rows, to within **0.07 points** —
+mean absolute error 0.019, mean *signed* error +7.2e-05. 31 rows match at
+exact float equality and 52 match at any tolerance from 1e-12 to 1e-6; the
+rest is entirely consistent with rounding in the published columns
+(touchdowns at 2dp × 6 points, yards at 1dp), and the near-zero signed mean
+is what rules out a scoring mismatch rather than a rounding one. So every
+player with components decomposes into touchdown, reception and yardage
+points with no fitting involved.
 
 **"Projected past his own record"** is measured **per game** against last
 season's half-PPR production. Per season would punish injury rather than

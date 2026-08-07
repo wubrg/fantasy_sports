@@ -419,11 +419,19 @@ func Fill(a Archetype, available []PlayerSignals, opts FillOptions) Shape {
 // best asset that shape had. The roster proving he blocked it contained him,
 // twelve dollars dearer.
 //
-// His money still comes back, because not keeping him really would leave you
-// the cash. That does mean a shape failing purely on affordability can be
-// blamed on whichever refund tips it, so the money alone is not enough:
-// blame is only reported when removing him changes the shape's composition,
-// not merely its budget.
+// His money comes back, because not keeping him really would leave you the
+// cash — and a shape you cannot afford *because* of what a keeper costs is
+// ruled out by that keeper as surely as one he violates by type. Price is a
+// reason, not a confound.
+//
+// An earlier version tried to separate the two by refilling with him still
+// held and his refund added, and reporting no blame if that reached the
+// shape. It was wrong twice over. That state cannot exist — you never hold
+// him and have his money back — so succeeding in it says nothing. And it
+// silenced exactly the common case: any keeper blocking a shape through his
+// price was rescued by the phantom refund, so the report fell through to
+// "the greedy fill did not find it", which is the one message that sends you
+// chasing a shape you cannot have.
 func blamedOnKeepers(a Archetype, available []PlayerSignals, opts FillOptions) string {
 	if len(opts.Held) == 0 {
 		return ""
@@ -446,21 +454,45 @@ func blamedOnKeepers(a Archetype, available []PlayerSignals, opts FillOptions) s
 				pool = append(pool, p)
 			}
 		}
-		if !Fill(a, pool, without).Achieved {
-			continue
+		if Fill(a, pool, without).Achieved {
+			return drop.Player.Name
 		}
-		// The same money and slot, without removing him, must NOT be
-		// enough. Otherwise the shape was short of cash rather than held
-		// back by this player, and naming him would point at the wrong
-		// thing entirely.
-		richer := opts
-		richer.Budget += drop.Price
-		if Fill(a, available, richer).Achieved {
-			continue
-		}
-		return drop.Player.Name
+	}
+
+	// No single keeper is responsible, but the pair together may still be.
+	// Without this the report falls through to "the greedy fill did not find
+	// it" for a shape that no fill could ever reach — the same misdirection
+	// in a rarer case.
+	if len(opts.Held) > 1 && Fill(a, poolWithout(available, opts.Held), freed(opts)).Achieved {
+		return "your keepers together"
 	}
 	return ""
+}
+
+// poolWithout is the board with the named players taken off it.
+func poolWithout(available []PlayerSignals, held []RosterSpot) []PlayerSignals {
+	gone := make(map[string]bool, len(held))
+	for _, h := range held {
+		gone[h.Player.PlayerID] = true
+	}
+	out := make([]PlayerSignals, 0, len(available))
+	for _, p := range available {
+		if !gone[p.PlayerID] {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// freed is the same options with every keeper released: their money back,
+// their slots open, nobody held.
+func freed(opts FillOptions) FillOptions {
+	out := opts
+	out.Held = nil
+	for _, h := range opts.Held {
+		out.Budget += h.Price
+	}
+	return out
 }
 
 // anchorsAffordable reports whether the board holds enough players to meet
