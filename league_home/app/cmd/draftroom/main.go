@@ -88,13 +88,15 @@ func main() {
 	me := fs.String("me", envOr("DRAFTROOM_OWNER_ID", ""), "your Sleeper owner ID, so the board knows your budget")
 	leans := fs.String("leans", defaultLeanSets, "lean sets to apply, in precedence order: the first to name a player owns him")
 	generate := fs.Bool("generate", false, "leans: rebuild the generated sets from source data")
+	seasons := fs.String("seasons", "2023,2024,2025", "calibrate: seasons to measure, comma separated (empty for every usable one)")
+	includeAll := fs.Bool("all", false, "calibrate: measure every completed season, including ones whose prices are not comparable")
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: draftroom <command> [flags]\n\ncommands:\n")
 		fmt.Fprintf(os.Stderr, "  keepers   reconcile keeper prices against Sleeper and show budgets\n")
 		fmt.Fprintf(os.Stderr, "  board     price the live pool and print the draft board\n")
 		fmt.Fprintf(os.Stderr, "  serve     serve the board as a web page for a second monitor\n")
-		fmt.Fprintf(os.Stderr, "  shapes    compare roster archetypes at current prices\n")
-		fmt.Fprintf(os.Stderr, "  leans     show the merged lean sets, or -generate to rebuild them\n\n")
+		fmt.Fprintf(os.Stderr, "  leans     show the merged lean sets, or -generate to rebuild them\n")
+		fmt.Fprintf(os.Stderr, "  calibrate measure the archetype thresholds against past drafts\n\n")
 		fs.PrintDefaults()
 	}
 
@@ -120,15 +122,24 @@ func main() {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}
-	case "shapes":
-		if err := runShapes(*leagueID, orBuiltin(*configDir, builtinConfigDir),
-			orBuiltin(*dataDir, builtinDataDir), *me, draft.Baseline(*baseline), draft.SetNames(*leans)); err != nil {
-			log("draftroom: %v", err)
-			os.Exit(1)
-		}
 	case "leans":
 		if err := runLeans(orBuiltin(*configDir, builtinConfigDir),
 			orBuiltin(*dataDir, builtinDataDir), draft.SetNames(*leans), *generate); err != nil {
+			log("draftroom: %v", err)
+			os.Exit(1)
+		}
+	case "calibrate":
+		// Whether -seasons was typed, not just what it holds. -all has to
+		// widen the default season list or it does nothing, but widening one
+		// the user chose themselves would silently discard their choice.
+		named := false
+		fs.Visit(func(f *flag.Flag) {
+			if f.Name == "seasons" {
+				named = true
+			}
+		})
+		if err := runCalibrate(*leagueID, orBuiltin(*configDir, builtinConfigDir),
+			orBuiltin(*dataDir, builtinDataDir), draft.SetNames(*seasons), *includeAll, named); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}
@@ -342,13 +353,13 @@ func playerInfo(c *sleeper.Client, priorSeason string) (map[string]draft.PlayerI
 		if name == "" {
 			name = id
 		}
-		gp := -1
+		gp, prior := -1, 0.0
 		if s, ok := stats[id]; ok {
-			gp = int(s["gp"])
+			gp, prior = int(s["gp"]), s["pts_half_ppr"]
 		}
 		out[id] = draft.PlayerInfo{
 			Name: name, Position: p.Position, Team: p.Team,
-			GamesPlayed: gp, Injury: p.InjuryStatus,
+			GamesPlayed: gp, PriorPoints: prior, Injury: p.InjuryStatus,
 		}
 	}
 	return out, nil
@@ -456,28 +467,6 @@ func runBoard(leagueID, configDir, dataDir, ownerID string, baseline draft.Basel
 }
 
 // runShapes compares roster archetypes against the live board.
-func runShapes(leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) error {
-	static, err := loadStatic(leagueID, configDir, dataDir, ownerID, baseline, leanSets)
-	if err != nil {
-		return err
-	}
-	snap, err := static.Build(map[string]gone{})
-	if err != nil {
-		return err
-	}
-	for _, w := range snap.Warnings {
-		fmt.Fprintf(os.Stderr, "note: %s\n", w)
-	}
-
-	shapes := draft.CompareShapes(snap.Players, draft.FillOptions{
-		Budget:    snap.Me.Budget,
-		Slots:     snap.Me.OpenSlots,
-		Price:     draft.BoardPrice,
-		Shape:     static.shape,
-		Baselines: static.baselines,
-	})
-	return draft.WriteShapes(os.Stdout, shapes, snap.Me.Budget)
-}
 
 // tail returns the last n entries, which for an edge list sorted best-first
 // are the players the market prices furthest above their median value.
@@ -531,8 +520,25 @@ func myState(projected []draft.Entry, aav map[string]float64, ownerID string, bu
 		Budget: budget, OpenSlots: rosterSize,
 		StartersNeeded: map[string]int{"QB": 1, "RB": 2, "WR": 3, "TE": 1},
 	}
+	for _, e := range projectedKeepers(projected, aav, ownerID) {
+		me.Budget -= e.LeaguePrice
+		me.OpenSlots--
+		if n, ok := me.StartersNeeded[e.Position]; ok && n > 0 {
+			me.StartersNeeded[e.Position] = n - 1
+		}
+	}
+	return me
+}
+
+// projectedKeepers is who an owner is expected to keep: the players whose
+// market cost most exceeds what the league will charge, up to the limit.
+//
+// Split out from myState because the roster shapes need to know *who* is
+// kept, not just what it costs. A keeper is part of the finished roster and
+// the shape constraints have to see him.
+func projectedKeepers(projected []draft.Entry, aav map[string]float64, ownerID string) []draft.Entry {
 	if ownerID == "" {
-		return me
+		return nil
 	}
 	var mine []draft.Entry
 	for _, e := range projected {
@@ -542,15 +548,13 @@ func myState(projected []draft.Entry, aav map[string]float64, ownerID string, bu
 	}
 	surplus := func(e draft.Entry) float64 { return aav[e.PlayerID] - float64(e.LeaguePrice) }
 	sort.Slice(mine, func(i, j int) bool { return surplus(mine[i]) > surplus(mine[j]) })
+
+	var out []draft.Entry
 	for i := 0; i < maxKeepers && i < len(mine); i++ {
 		if surplus(mine[i]) <= 0 {
 			break
 		}
-		me.Budget -= mine[i].LeaguePrice
-		me.OpenSlots--
-		if n, ok := me.StartersNeeded[mine[i].Position]; ok && n > 0 {
-			me.StartersNeeded[mine[i].Position] = n - 1
-		}
+		out = append(out, mine[i])
 	}
-	return me
+	return out
 }

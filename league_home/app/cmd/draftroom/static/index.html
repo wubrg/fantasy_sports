@@ -32,8 +32,10 @@ if (!location.pathname.endsWith("/")) {
 <main>
   <section class="board">
     <div class="searchbar">
-      <input id="search" type="search" placeholder="filter players &mdash; press / to focus" autocomplete="off">
+      <input id="search" type="search" placeholder="search by name &mdash; press / to focus" autocomplete="off">
+      <span class="posfilter" id="posfilter"></span>
       <label class="toggle"><input type="checkbox" id="affordable"> only what I can afford</label>
+      <label class="toggle"><input type="checkbox" id="above"> only above replacement</label>
       <span class="hint" id="hint"></span>
     </div>
     <table id="board">
@@ -60,6 +62,7 @@ if (!location.pathname.endsWith("/")) {
         <div><span class="k">POPR</span><span class="v" id="s-popr">0</span></div>
       </div>
       <table class="mini lineup" id="s-lineup"></table>
+      <p class="mix" id="s-mix"></p>
       <p class="note" id="s-note">Click <kbd>+</kbd> on a row to try a player here.
       Nothing on this panel touches the live board.</p>
       <button id="s-clear" class="undo">clear roster</button>
@@ -74,7 +77,9 @@ if (!location.pathname.endsWith("/")) {
       <h2>Scarcity</h2>
       <table class="mini" id="scarcity"></table>
       <p class="note">PS% is the share of value left at a position after its
-      best remaining player goes.</p>
+      best remaining player goes. <em>Startable</em> counts the players above
+      the position's replacement bar &mdash; the same players
+      <em>only above replacement</em> leaves on the board.</p>
     </section>
     <section>
       <h2>Recorded sales</h2>
@@ -86,7 +91,7 @@ if (!location.pathname.endsWith("/")) {
 
 <footer>
   <span id="status">loading&hellip;</span>
-  <span class="keys"><kbd>/</kbd> filter &middot; <kbd>Esc</kbd> clear &middot;
+  <span class="keys"><kbd>/</kbd> search by name &middot; <kbd>Esc</kbd> clear every filter &middot;
   click <kbd>me</kbd> or <kbd>them</kbd> to record a sale</span>
 </footer>
 

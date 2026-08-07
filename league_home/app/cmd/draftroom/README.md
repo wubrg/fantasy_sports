@@ -253,6 +253,165 @@ history and the 5 MB player dictionary.
 To reach it from another device on your tailnet, the leagueweb pattern
 applies — see the `leagueweb-serve-*` targets for the shape.
 
+### Player types on the board and the roster
+
+Every contended player is labelled with what kind of player he is, and the
+scratch roster adds them up as you build it:
+
+```
+composition: 2 floor · 2 redzone · 4 targets · 2 bellcow · 1 upside · 1 discounted
+```
+
+That count is over **starters**, not the whole roster: a bench stacked with
+one kind of player changes nothing about how a season goes.
+
+The labels appear on the web board's rows, where colour and space carry
+them. They are deliberately absent from `make board` — that table is the
+narrow one, six flags on a row reads as none while bidding, and `targets`
+sits on nearly every player at the top of it, so it separates nothing where
+the money is.
+
+#### The traits
+
+All position-relative — a 27% touchdown share is ordinary for a back and high
+for a receiver, so an absolute cut would label whole positions rather than
+players. Only the contended range is labelled; a trait on someone nobody will
+roster is a label with nothing behind it.
+
+| Trait | What it means |
+|---|---|
+| **floor** | touchdown share in the bottom 40% for the position, and real reception volume for pass catchers. Points from usage that repeats |
+| **redzone** | touchdown share in the top quartile. The least predictable points in football, bought on purpose |
+| **upside** | the industry flags him above consensus, **or** he is projected past his own record |
+| **targets** | projected targets in the top quartile — the stickiest thing a pass catcher has |
+| **bellcow** | a back with both the ground work and the passing downs, not a committee share |
+| **discounted** | price suppressed by an injury designation; you buy the discount and the risk together |
+
+Floor and red-zone are opposite ends of one axis, and nobody on this board is
+both — 0 of 446. That is a property of the data rather than something the
+code enforces: the quantile index calculation can collapse the two thresholds
+onto the same element when a position's window is very small, and both would
+then fire on one player.
+
+#### How the traits are derived
+
+Ciely publishes his projections' components. Recomputing them across the 442
+of 447 rows that carry components reconstructs his published league points to
+within **0.07 points** — mean absolute error 0.019, mean *signed* error
++7.2e-05. Only 31 rows land at exact float equality and 52 within any
+tolerance from 1e-12 to 1e-6; the rest is rounding in the published columns
+(touchdowns at 2dp x 6 points, yards at 1dp). The near-zero signed mean is
+what rules out a scoring mismatch rather than a rounding one.
+
+**"Projected past his own record"** is measured **per game** against last
+season's half-PPR production. Per season would punish injury rather than
+measure ambition: a back who missed half a year looks like a huge projected
+leap on totals and no leap at all on rate. Under six games counts as unproven
+outright — four good games is not a season's evidence, however good it was.
+The threshold is 1.4x, where the league's own distribution puts the 90th
+percentile at 1.32.
+
+**A signal that didn't survive contact:** value spread across the BEER/BEER+/
+VOLS curves looked like a third upside signal and was not. It scales with
+price, so it flagged **100% of players over $45** and almost nothing under
+$10 — an expensiveness detector wearing the name of an upside one. The curve
+spread is still shown per player as `swing$N`, where it means what it says.
+
+### What happened to the roster shapes
+
+There were eleven of them — five ways to divide a budget, six made of player
+types — each filled greedily against the live board and compared. They are
+gone, and the reasons compound:
+
+- **They ranked nothing.** Three seasons of this league's own drafts say no
+  spending shape separates on results. Every correlation between shape and
+  points sits at or under about 0.2 at n=36.
+- **The fill could not answer the question asked of it.** "Is this shape
+  reachable?" needs a search; a greedy fill failing proves only that a greedy
+  fill failed. Three verification rounds each found a defect traceable to
+  reading that failure as an answer — a keeper falsely blamed for a shape he
+  was the best asset of, then true blames silenced, then shapes declared out
+  of reach while a roster reaching them existed at the same budget.
+- **Keepers had already settled most of it.** Once two keepers fix a third of
+  the roster, "how do I divide the budget" is largely answered before the
+  auction opens.
+
+What they were reaching for survives without any of the machinery: the
+composition of the lineup you are actually building. `draftroom calibrate`
+still asks the one question that never needed the shapes — whether how a
+manager spends predicts how the season goes.
+
+### `draftroom calibrate`
+
+Measures the archetype thresholds against completed drafts, so the numbers in
+`Archetypes()` carry their derivation instead of being numbers somebody liked.
+
+```sh
+draftroom calibrate                    # 2023-2025, the usable seasons
+draftroom calibrate -seasons ""        # every season whose prices compare
+draftroom calibrate -all               # every season with a complete draft,
+                                        # including ones whose prices don't compare
+```
+
+```
+CALIBRATION — 36 rosters across [2023 2024 2025]
+
+SHAPE           BUILT  SHARE  MED RANK  MED PTS  TOP 4
+Stars & Scrubs  10     28%    7.0       1458     4 of 10
+Balanced        10     28%    9.0       1406     3 of 10
+Hero RB         9      25%    8.0       1452     2 of 9
+Zero RB         7      19%    6.0       1495     2 of 7
+Robust RB       9      25%    4.0       1540     5 of 9
+league median   36     100%   6.5       1471
+
+DOES SPENDING SHAPE PREDICT POINTS?  (n=36, |rho| > 0.33 is p<0.05)
+top-2 concentration   rho +0.20   no signal
+RB total spend        rho +0.13   no signal
+best RB price         rho +0.17   no signal
+...
+```
+
+**Which seasons count.** 2022 is excluded automatically: the median team spent
+$157 of $200 because the league was still working out how keeper money came
+off the auction budget, so a third of every roster was bought with money that
+was never at stake. Including it drags every price threshold down for reasons
+unrelated to how anybody drafts now. 2021 is the inaugural Sleeper draft — one
+keeper, a full pool — so it is available but structurally a different game.
+The thresholds do **not** hold up on it as a holdout: `draftroom calibrate
+-seasons 2021` gives Stars & Scrubs 3 (25%), Balanced 0 — never built, Hero RB
+4 (33%), Zero RB 1 (8%), Robust RB 5 (42%). One shape describes zero rosters
+and two more sit well outside the 19–28% band. That is the expected result of
+a different auction rather than a failed calibration: with a full pool and
+only one keeper off the board, top prices ran higher and no team was forced
+under the $35 ceiling that Balanced requires. The thresholds are specific to
+the keeper era, not validated against 2021.
+
+**What the calibration changed.** The old thresholds were national-strategy
+numbers. Against this league they described almost nothing: Zero RB at "no
+back over $12" matched **one roster in three years**, Robust RB at "three
+backs over $25" matched **two**. Every shape now describes 19–28% of rosters.
+
+Two shapes were also reformulated, because per-player thresholds could not
+express what the strategies mean:
+
+- **Zero RB** needs both a cap and a total. On a total alone a single $55 back
+  passes, and that is Hero RB wearing the name; on a cap alone, three $19
+  backs read as both Zero RB *and* Robust RB at once.
+- **Robust RB** is a floor to reach rather than a ceiling to stay under, so it
+  has no per-pick veto — a veto can only forbid. Its anchors do the pursuing.
+
+**Hero RB had a real bug.** Its finished-roster check counted only the hero,
+while the per-pick rule capped the second back. A roster with a $60 back and a
+$45 back behind him passed a shape that is defined by not having one.
+
+**Nothing predicts results.** Every correlation between spending shape and
+points sits at or under about 0.2 at n=36 (the largest, top-2 concentration,
+is +0.2015), and the best-looking bucket is nine rosters.
+Robust RB's median rank of 4.0 is the eye-catcher, and at that sample it is
+p≈0.1 before correcting for having looked at five shapes. **The archetypes
+describe the space; they do not rank it.** Re-run this after 2026 — a fourth
+season is a 33% larger sample and the first real chance of a signal.
+
 ### `make leans`
 
 Shows the merged lean sets and what they disagree about, before draft night

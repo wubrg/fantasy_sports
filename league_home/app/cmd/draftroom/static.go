@@ -43,6 +43,8 @@ type staticData struct {
 	subvert     []draft.SourceRow
 
 	availability map[string]string
+	// traits label what kind of player each man is; see ClassifyTraits.
+	traits map[string]draft.TraitSet
 	// baselines are the pinned pre-draft replacement points that rosters
 	// are scored against; thresholds are the pinned tier medians scarcity
 	// is counted against. Both computed once, because the projection set
@@ -165,6 +167,7 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	// recomputed: replacement level measured against the pool that remains
 	// falls as the pool empties, so a count above it could never drop.
 	s.baselines = draft.ScoringBaselines(s.projections, s.shape)
+	s.traits = classifyTraits(ciely, sv, info, s.shape)
 	s.thresholds = draft.ScarcityThresholds(s.projections, s.shape)
 
 	for _, r := range sv {
@@ -268,7 +271,7 @@ func (s *staticData) Build(taken map[string]gone) (draft.Snapshot, error) {
 	players := draft.BuildSignals(draft.SignalInputs{
 		Values: values, Costs: costs, Subvertadown: s.subvert,
 		CielyPoints: s.points, Availability: s.availability,
-		Leans: s.leans, RecommendedBid: recommended,
+		Leans: s.leans, Traits: s.traits, RecommendedBid: recommended,
 	})
 	snap := draft.Assemble(s.season, state, me, players, s.leans, s.tempo(taken, costs), s.thresholds, s.warnings)
 	snap.LeanSets = s.leanSets
@@ -293,6 +296,39 @@ func (s *staticData) tempo(taken map[string]gone, costs map[string]int) draft.Dr
 		t.Picks++
 	}
 	return t
+}
+
+// heldRoster is the owner's projected keepers as roster spots, priced at
+// what the league will charge rather than at what they are worth.
+//
+// The charge is the number that matters to a shape: it is the money already
+// committed and the slot already filled.
+func (s *staticData) heldRoster(ownerID string) []draft.RosterSpot {
+	aav := map[string]float64{}
+	for _, m := range s.market {
+		aav[m.PlayerID] = m.AAV
+	}
+	var out []draft.RosterSpot
+	for _, e := range projectedKeepers(s.projected, aav, ownerID) {
+		out = append(out, draft.RosterSpot{
+			Player: draft.PlayerSignals{
+				PlayerID:    e.PlayerID,
+				Name:        e.Name,
+				Position:    e.Position,
+				CielyPoints: s.points[e.PlayerID],
+				Cost:        int(aav[e.PlayerID] + 0.5),
+				// Traits matter as much as the price. Without them a
+				// keeper occupies the slot and the money while being
+				// invisible to every shape made of player types, so a
+				// lineup measures as though two of its fourteen were
+				// blanks — and a keeper carrying the exact trait a shape
+				// wants gets reported as ruling that shape out.
+				Traits: s.traits[e.PlayerID],
+			},
+			Price: e.LeaguePrice,
+		})
+	}
+	return out
 }
 
 func (s *staticData) positionOf(playerID string) string {

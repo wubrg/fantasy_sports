@@ -106,6 +106,11 @@ func flagsFor(p PlayerSignals) []string {
 	case ECRDownside:
 		out = append(out, "ecr-")
 	}
+	// Traits deliberately absent here. This board is the narrow one — six
+	// flags on a row is the same as none while bidding, and "targets" sits
+	// on nearly every player at the top of it, so it separates nothing
+	// where the money is. The web board has the room and the colour for
+	// them, and the roster panel is where they add up to something.
 	if p.Availability != "" {
 		out = append(out, strings.ToLower(p.Availability))
 	}
@@ -221,56 +226,4 @@ func formatCover(cover float64) string {
 		short = " !"
 	}
 	return fmt.Sprintf("%.2fx%s", cover, short)
-}
-
-// WriteShapes renders the archetype comparison.
-//
-// The shapes are illustrations, not recommendations. The fill is greedy and
-// the thresholds are first guesses, so the report says so rather than
-// letting a POPR ranking imply one shape is correct.
-func WriteShapes(w io.Writer, shapes []Shape, budget int) error {
-	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-
-	fmt.Fprintf(tw, "ROSTER SHAPES — $%d\n", budget)
-	fmt.Fprintln(tw, strings.Repeat("=", 78))
-	fmt.Fprintf(tw, "What each strategy buys at current prices. POPR is the starting lineup's\n")
-	fmt.Fprintf(tw, "points above positional replacement, which cancels the projection source's\n")
-	fmt.Fprintf(tw, "positional skew. These are illustrations of a shape, not the best possible\n")
-	fmt.Fprintf(tw, "roster of it — the fill is greedy and the thresholds are first guesses.\n\n")
-
-	fmt.Fprintln(tw, "SHAPE\tPOPR\tSPEND\tQB\tRB\tWR\tTE\tMY GUYS\tNOTES")
-	for _, s := range shapes {
-		note := ""
-		if !s.Achieved && !s.Possible {
-			note = "the board cannot supply this shape"
-		} else if !s.Achieved {
-			note = "possible, but the greedy fill did not reach it"
-		} else if s.Metrics.Injured > 0 {
-			note = fmt.Sprintf("%d carrying an injury designation", s.Metrics.Injured)
-		}
-		sp := s.Metrics.SpendPosition
-		fmt.Fprintf(tw, "%s\t%.0f\t$%d\t$%d\t$%d\t$%d\t$%d\t%d\t%s\n",
-			s.Archetype.Name, s.Metrics.POPR, s.Metrics.Spend,
-			sp["QB"], sp["RB"], sp["WR"], sp["TE"], s.Metrics.MyGuys, note)
-	}
-
-	for _, s := range shapes {
-		fmt.Fprintf(tw, "\n%s — %s\n", s.Archetype.Name, s.Archetype.Why)
-		fmt.Fprintln(tw, "  SLOT\tPLAYER\tPOS\tPRICE\tPTS")
-		for _, spot := range s.Roster.Starters() {
-			fmt.Fprintf(tw, "  %s\t%s\t%s\t$%d\t%.0f\n",
-				spot.Slot, spot.Player.Name, spot.Player.Position, spot.Price, spot.Player.CielyPoints)
-		}
-		bench := s.Roster.Bench()
-		if len(bench) > 0 {
-			var names []string
-			cost := 0
-			for _, b := range bench {
-				names = append(names, fmt.Sprintf("%s $%d", b.Player.Name, b.Price))
-				cost += b.Price
-			}
-			fmt.Fprintf(tw, "  BN\t%s\t\t$%d\t%.0f\n", strings.Join(names, ", "), cost, s.Metrics.BenchPoints)
-		}
-	}
-	return tw.Flush()
 }

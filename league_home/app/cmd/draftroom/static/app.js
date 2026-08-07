@@ -9,10 +9,26 @@
 // this often costs no Sleeper traffic at all.
 const POLL_MS = 2000;
 
+// The positions the board filters on, in lineup order rather than
+// alphabetical: mid-auction the toggles are found by their place in the
+// row, not by reading them.
+const POSITIONS = ["QB", "RB", "WR", "TE"];
+
+// A repaint budget, not a filter. 446 rows re-rendered every two seconds
+// is wasted work nobody scrolls to — but a cap that hides rows silently is
+// worse than no cap, so drawRows says on screen whenever it binds.
+const ROW_CAP = 120;
+
 let snap = null;
 let scratch = null;
 let filter = "";
 let affordableOnly = false;
+
+// Filter state lives here, not in the DOM, because the poll rebuilds the
+// table every two seconds and would otherwise reset what you asked for
+// mid-bid.
+let positions = new Set();
+let aboveReplacementOnly = false;
 
 // Player IDs currently on the scratch roster, so board rows can show it.
 function scratchIDs() {
@@ -52,6 +68,10 @@ function flagHTML(p) {
   // which read to go and check before the bidding starts.
   for (const by of (p.Lean && p.Lean.contestedBy) || []) {
     out.push(`<span class="flag vs" title="${esc(by)}">vs ${esc(by.split(" ")[0])}</span>`);
+  }
+
+  for (const t of p.Traits || []) {
+    out.push(`<span class="flag trait trait-${esc(t)}">${esc(t)}</span>`);
   }
 
   if (p.ECR === "contested") out.push(`<span class="flag split">split</span>`);
@@ -141,22 +161,39 @@ function drawMustHaves() {
     (thin ? "  — too thin to field a roster" : "");
 }
 
+// Above the bar the server drew. scarcity carries the same threshold the
+// Startable count was taken at, so a row that survives this is a row that
+// number counted — the sidebar and the board cannot disagree.
+function aboveReplacement(p) {
+  const s = (snap.scarcity || {})[p.Position];
+  // No summary for the position means no bar to judge him against. Showing
+  // him is the safe failure: hiding a player the server said nothing about
+  // is how you miss a nomination.
+  if (!s) return true;
+  return p.CielyPoints >= s.Threshold;
+}
+
+function anyFilter() {
+  return positions.size > 0 || filter !== "" || affordableOnly || aboveReplacementOnly;
+}
+
 function drawRows() {
   const tbody = document.getElementById("rows");
   const needle = filter.toLowerCase();
-  const rows = [];
 
-  for (const p of snap.players) {
-    if (needle && !p.Name.toLowerCase().includes(needle) &&
-        p.Position.toLowerCase() !== needle) continue;
-    const tooRich = p.MyMaxBid > snap.maxBid;
-    if (affordableOnly && tooRich) continue;
-    rows.push(p);
-    if (rows.length >= 120) break;
-  }
-
-  document.getElementById("hint").textContent =
-    needle ? `${rows.length} matching` : "";
+  // Filter first, cap second. The cap is a repaint budget, so it has to
+  // land on what you asked for rather than on the first 120 of everything.
+  const matched = snap.players.filter(p => {
+    if (positions.size && !positions.has(p.Position)) return false;
+    // Name only: the position toggles are the discoverable way to do what
+    // typing "RB" used to, and they can express two positions at once.
+    if (needle && !p.Name.toLowerCase().includes(needle)) return false;
+    if (affordableOnly && p.MyMaxBid > snap.maxBid) return false;
+    if (aboveReplacementOnly && !aboveReplacement(p)) return false;
+    return true;
+  });
+  const rows = matched.slice(0, ROW_CAP);
+  drawCounts(matched, rows.length);
 
   const inScratch = scratchIDs();
   tbody.innerHTML = rows.map(p => {
@@ -189,6 +226,39 @@ function drawRows() {
   }).join("");
 }
 
+// What you are looking at, always. The replacement bar is aggressive
+// enough to empty a position you still have to start, and the cap can bite
+// on top of it, so a hidden row is only acceptable while the board is
+// saying how many it hid.
+function drawCounts(matched, drawn) {
+  const parts = [];
+  if (anyFilter()) {
+    const inView = POSITIONS.filter(pos => !positions.size || positions.has(pos));
+    // The running total only earns its space when more than one position
+    // is in view; with one selected the per-position line already says it.
+    if (inView.length > 1) {
+      parts.push(`${matched.length} of ${snap.players.length}`);
+    }
+    for (const pos of inView) {
+      const total = snap.players.filter(p => p.Position === pos).length;
+      if (!total) continue;
+      const shown = matched.filter(p => p.Position === pos).length;
+      parts.push(`<span class="pos-${pos}">${pos}</span> ` +
+        `<span class="${shown === 0 ? "bad" : ""}">${shown}</span>/${total}`);
+    }
+  }
+  if (drawn < matched.length) {
+    parts.push(`<span class="trunc">showing first ${drawn} of ${matched.length}</span>`);
+  }
+  document.getElementById("hint").innerHTML = parts.join(" · ");
+}
+
+function drawPosFilter() {
+  document.getElementById("posfilter").innerHTML = POSITIONS.map(pos =>
+    `<button class="pospill pos-${pos}${positions.has(pos) ? " on" : ""}"` +
+    ` data-pos="${pos}">${pos}</button>`).join("");
+}
+
 function drawMini(id, pairs) {
   document.getElementById(id).innerHTML = pairs
     .map(([k, v]) => `<tr><td>${esc(k)}</td><td class="num">${v}</td></tr>`)
@@ -217,6 +287,13 @@ function drawScratch() {
 
   const rows = [];
   for (const s of scratch.starters || []) {
+    // A keeper is already yours: no price to imagine, nothing to remove.
+    if (s.kept) {
+      rows.push(`<tr class="kept"><td class="slot">${esc(s.slot)}</td>` +
+        `<td>${esc(s.name)} <span class="tag">kept</span></td>` +
+        `<td class="price">$${s.price}</td><td></td></tr>`);
+      continue;
+    }
     rows.push(`<tr><td class="slot">${esc(s.slot)}</td><td>${esc(s.name)}</td>` +
       `<td class="price" data-reprice="${esc(s.name)}" title="click to change the price">$${s.price}</td>` +
       `<td class="drop" data-drop="${esc(s.name)}" title="remove">&times;</td></tr>`);
@@ -232,9 +309,16 @@ function drawScratch() {
   }
   document.getElementById("s-lineup").innerHTML = rows.join("");
 
+  // What the lineup is made of. This is what the roster shapes were for,
+  // read off the roster you are building instead of one a search invented.
+  const mix = Object.entries(scratch.traits || {})
+    .map(([t, n]) => `<span class="flag trait trait-${esc(t)}">${n} ${esc(t)}</span>`)
+    .join(" ");
+  document.getElementById("s-mix").innerHTML = mix;
+
   const note = document.getElementById("s-note");
   if (scratch.empty) {
-    note.textContent = "Click + on a row to try a player here. Nothing on this panel touches the live board.";
+    note.textContent = "Your keepers are already here. Click + on a row to try a player alongside them; nothing on this panel touches the live board.";
   } else {
     const bits = [`${m.MyGuys || 0} of your guys`];
     if (m.Injured) bits.push(`${m.Injured} carrying an injury designation`);
@@ -331,6 +415,22 @@ document.getElementById("affordable").addEventListener("change", ev => {
   drawRows();
 });
 
+document.getElementById("above").addEventListener("change", ev => {
+  aboveReplacementOnly = ev.target.checked;
+  drawRows();
+});
+
+// Multi-select: deciding between a back and a receiver is the normal case,
+// and a single needle could never show both lists at once.
+document.getElementById("posfilter").addEventListener("click", ev => {
+  const pill = ev.target.closest("button[data-pos]");
+  if (!pill) return;
+  const pos = pill.dataset.pos;
+  if (positions.has(pos)) positions.delete(pos); else positions.add(pos);
+  drawPosFilter();
+  drawRows();
+});
+
 document.addEventListener("keydown", ev => {
   const search = document.getElementById("search");
   if (ev.key === "/" && document.activeElement !== search) {
@@ -338,12 +438,22 @@ document.addEventListener("keydown", ev => {
     search.focus();
     search.select();
   } else if (ev.key === "Escape") {
+    // Everything, not just the text. Escape is the one key you hit when a
+    // name is called and the board is showing the wrong slice of players.
     search.value = "";
     filter = "";
+    positions.clear();
+    affordableOnly = false;
+    aboveReplacementOnly = false;
+    document.getElementById("affordable").checked = false;
+    document.getElementById("above").checked = false;
     search.blur();
+    drawPosFilter();
     drawRows();
   }
 });
+
+drawPosFilter();
 
 // ---- polling ---------------------------------------------------------
 

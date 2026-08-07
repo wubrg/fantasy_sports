@@ -23,6 +23,11 @@ type PlayerInfo struct {
 	// GamesPlayed is the prior season's game count, used for the
 	// keeper-eligibility rule. Negative means unknown.
 	GamesPlayed int
+	// PriorPoints is last season's half-PPR total. Sleeper's own scoring
+	// rather than this league's, which is close enough to ask whether a
+	// projection outruns a player's record and not close enough to price
+	// anybody with.
+	PriorPoints float64
 	// Injury is Sleeper's designation (PUP, IR, Questionable, Out).
 	//
 	// It carries almost no information in August, when PUP is a roster

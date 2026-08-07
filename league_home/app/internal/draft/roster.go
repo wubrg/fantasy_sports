@@ -7,6 +7,16 @@ type Roster struct {
 	Players []RosterSpot
 }
 
+// BoardPrice is what the cost board says a player will go for, floored at a
+// dollar. The only pricing mode there is; kept as a function because a
+// hypothetical roster has to price players the same way the live board does.
+func BoardPrice(p PlayerSignals) int {
+	if p.Cost > 0 {
+		return p.Cost
+	}
+	return 1
+}
+
 // RosterSpot is one player and the price paid for him.
 type RosterSpot struct {
 	Player PlayerSignals
@@ -16,6 +26,17 @@ type RosterSpot struct {
 	// Slot is the lineup position he fills, "FLEX" for the flex spot and
 	// "BN" for a bench player.
 	Slot string
+	// Held marks a player already owned — a keeper. He cannot be sold to
+	// make room, so no fill may swap him out.
+	Held bool
+	// Anchored marks a player bought specifically to satisfy an anchor.
+	//
+	// Also immovable, for a different reason: he is the shape. The upgrade
+	// pass maximizes points per dollar and will happily trade four red-zone
+	// aces for four better players who score nothing at the goal line,
+	// dismantling the shape it was asked to build and then reporting it
+	// unreachable.
+	Anchored bool
 }
 
 // Add puts a player on the roster at a price.
