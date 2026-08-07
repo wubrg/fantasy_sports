@@ -34,11 +34,14 @@ func runCalibrate(leagueID, configDir, dataDir string, seasons []string, include
 	if err != nil {
 		return err
 	}
-	if len(history) == 0 {
-		return fmt.Errorf("no usable completed drafts found for league %s", leagueID)
-	}
+	// Before any error return: the notes carry the reason a season was
+	// dropped, and an empty result with the explanation thrown away is the
+	// least useful thing this command could print.
 	for _, s := range skipped {
 		fmt.Fprintf(os.Stderr, "note: %s\n", s)
+	}
+	if len(history) == 0 {
+		return fmt.Errorf("no usable completed drafts found for league %s", leagueID)
 	}
 	return draft.WriteCalibration(os.Stdout, history, draft.Archetypes())
 }
@@ -53,6 +56,13 @@ func loadTeamSeasons(c *sleeper.Client, leagueID string, want []string, includeA
 	keep := map[string]bool{}
 	for _, s := range want {
 		keep[s] = true
+	}
+	// -all means every season, so it has to clear the season list too.
+	// Left in place, the default 2023,2024,2025 dropped 2022 as "not
+	// requested" before the spend test ran, and -all was never consulted —
+	// the flag documented as "include 2022 as well" did nothing at all.
+	if includeAll {
+		keep = nil
 	}
 
 	var out []draft.TeamSeason

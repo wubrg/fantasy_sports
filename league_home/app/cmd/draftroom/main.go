@@ -89,7 +89,7 @@ func main() {
 	leans := fs.String("leans", defaultLeanSets, "lean sets to apply, in precedence order: the first to name a player owns him")
 	generate := fs.Bool("generate", false, "leans: rebuild the generated sets from source data")
 	seasons := fs.String("seasons", "2023,2024,2025", "calibrate: seasons to measure, comma separated (empty for every usable one)")
-	includeAll := fs.Bool("all", false, "calibrate: include seasons whose prices are not comparable")
+	includeAll := fs.Bool("all", false, "calibrate: measure every completed season, including ones whose prices are not comparable")
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "usage: draftroom <command> [flags]\n\ncommands:\n")
 		fmt.Fprintf(os.Stderr, "  keepers   reconcile keeper prices against Sleeper and show budgets\n")

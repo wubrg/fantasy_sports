@@ -84,7 +84,7 @@ func (a Anchor) matches(p PlayerSignals) bool {
 // The thresholds are calibrated against this league's own 2023-2025 drafts
 // — 36 rosters — rather than borrowed from national strategy writing, and
 // `draftroom calibrate` re-derives them. Each one now describes a real,
-// populated region: between 14% and 28% of rosters built each shape, where
+// populated region: between 19% and 28% of rosters built each shape, where
 // before Zero RB described one roster in three years and Robust RB two.
 //
 // They describe the space; they do not rank it. Nothing in three seasons
@@ -115,7 +115,7 @@ func Archetypes() []Archetype {
 	return []Archetype{
 		{
 			Name: "Stars & Scrubs",
-			Why:  "three elite players and a dollar bench; wins the weeks your stars play",
+			Why:  "two elite players and a dollar bench; wins the weeks your stars play",
 			Allows: func(r Roster, p PlayerSignals, price int) bool {
 				if price > 40 {
 					return countOver(r, "", 40) < 3
@@ -404,14 +404,26 @@ func Fill(a Archetype, available []PlayerSignals, opts FillOptions) Shape {
 }
 
 // blamedOnKeepers reports which held player, if any, is why a shape could
-// not be built — by building it again without him.
+// not be built — by building it again as though you never had him.
 //
 // Asked as an experiment rather than by reading the constraint, because a
 // shape's per-pick rule is a fill heuristic and not its definition. Stars &
 // Scrubs refuses every mid-priced buy, so replaying a $35 keeper through it
-// says "blocked" when two stars are still perfectly affordable. Filling the
-// same shape with the keeper set aside answers the question that was
-// actually asked: would this have been available to somebody else?
+// says "blocked" when two stars are still perfectly affordable.
+//
+// The counterfactual has to remove him from the board as well as from the
+// roster. Refunding his price and leaving him in the pool does not ask
+// "would this shape work without him" — it asks "would it work if you
+// rebought him at market", and the fill duly did: Floor Build was reported
+// ruled out by keeping De'Von Achane, who is himself a floor player and the
+// best asset that shape had. The roster proving he blocked it contained him,
+// twelve dollars dearer.
+//
+// His money still comes back, because not keeping him really would leave you
+// the cash. That does mean a shape failing purely on affordability can be
+// blamed on whichever refund tips it, so the money alone is not enough:
+// blame is only reported when removing him changes the shape's composition,
+// not merely its budget.
 func blamedOnKeepers(a Archetype, available []PlayerSignals, opts FillOptions) string {
 	if len(opts.Held) == 0 {
 		return ""
@@ -424,13 +436,29 @@ func blamedOnKeepers(a Archetype, available []PlayerSignals, opts FillOptions) s
 			if h.Player.PlayerID != drop.Player.PlayerID {
 				without.Held = append(without.Held, h)
 			} else {
-				// His money comes back with him; the slot stays open.
 				without.Budget += h.Price
 			}
 		}
-		if Fill(a, available, without).Achieved {
-			return drop.Player.Name
+		// Gone entirely: not yours, and not available to buy back.
+		pool := make([]PlayerSignals, 0, len(available))
+		for _, p := range available {
+			if p.PlayerID != drop.Player.PlayerID {
+				pool = append(pool, p)
+			}
 		}
+		if !Fill(a, pool, without).Achieved {
+			continue
+		}
+		// The same money and slot, without removing him, must NOT be
+		// enough. Otherwise the shape was short of cash rather than held
+		// back by this player, and naming him would point at the wrong
+		// thing entirely.
+		richer := opts
+		richer.Budget += drop.Price
+		if Fill(a, available, richer).Achieved {
+			continue
+		}
+		return drop.Player.Name
 	}
 	return ""
 }
@@ -626,13 +654,20 @@ func CompareTraitShapes(available []PlayerSignals, opts FillOptions) []Shape {
 }
 
 // Summary is a one-line description of how a shape turned out.
+//
+// The precedence has to match the board's: a keeper ruling a shape out is
+// the first thing to say, because "the fill did not find it" sends you
+// chasing something you cannot have. This is the same order writeShapeRows
+// uses, and the two must not drift.
 func (s Shape) Summary() string {
 	note := ""
-	if !s.Achieved {
+	switch {
+	case s.BlockedBy != "":
+		note = fmt.Sprintf("  (ruled out by keeping %s)", s.BlockedBy)
+	case !s.Achieved && !s.Possible:
 		note = "  (the board cannot supply this shape)"
-		if s.Possible {
-			note = "  (the board could supply this; the greedy fill did not find it)"
-		}
+	case !s.Achieved:
+		note = "  (the board could supply this; the greedy fill did not find it)"
 	}
 	return fmt.Sprintf("%.0f POPR · $%d spent · %d my guys%s",
 		s.Metrics.POPR, s.Metrics.Spend, s.Metrics.MyGuys, note)

@@ -299,13 +299,22 @@ roster is a label with nothing behind it.
 | **bell cow** | a back with both the ground work and the passing downs, not a committee share |
 | **injury discount** | price suppressed by a designation; you buy the discount and the risk together |
 
-Floor and red-zone are opposite ends of one axis, so nobody is both.
+Floor and red-zone are opposite ends of one axis, and nobody on this board is
+both — 0 of 446. That's a property of the data, not something the code
+enforces: the quantile index calculation can collapse the p40 and p75
+thresholds onto the same element when a position's window is very small, and
+both traits then fire on the same player.
 
 #### How the traits are derived
 
-Ciely publishes his projections' components, and they reconstruct his
-published league points **exactly** — so every player decomposes into
-touchdown, reception and yardage points with no fitting involved.
+Ciely publishes his projections' components, and recomputing them across all
+447 rows of `ciely-2026.csv` reconstructs his published league points to
+within **0.07 points** — mean absolute error 0.019, mean *signed* error
++7.2e-05. Only 41 rows land bit-exact; the rest is entirely consistent with
+rounding in the published columns (touchdowns at 2dp × 6 points, yards at
+1dp), and the near-zero signed mean is what rules out a scoring mismatch
+rather than a rounding one. So every player decomposes into touchdown,
+reception and yardage points with no fitting involved.
 
 **"Projected past his own record"** is measured **per game** against last
 season's half-PPR production. Per season would punish injury rather than
@@ -374,7 +383,8 @@ Measures the archetype thresholds against completed drafts, so the numbers in
 ```sh
 draftroom calibrate                    # 2023-2025, the usable seasons
 draftroom calibrate -seasons ""        # every season whose prices compare
-draftroom calibrate -all               # include 2022 as well
+draftroom calibrate -all               # every season with a complete draft,
+                                        # including ones whose prices don't compare
 ```
 
 ```
@@ -401,7 +411,14 @@ off the auction budget, so a third of every roster was bought with money that
 was never at stake. Including it drags every price threshold down for reasons
 unrelated to how anybody drafts now. 2021 is the inaugural Sleeper draft — one
 keeper, a full pool — so it is available but structurally a different game.
-The thresholds hold up on it as a holdout.
+The thresholds do **not** hold up on it as a holdout: `draftroom calibrate
+-seasons 2021` gives Stars & Scrubs 3 (25%), Balanced 0 — never built, Hero RB
+4 (33%), Zero RB 1 (8%), Robust RB 5 (42%). One shape describes zero rosters
+and two more sit well outside the 19–28% band. That is the expected result of
+a different auction rather than a failed calibration: with a full pool and
+only one keeper off the board, top prices ran higher and no team was forced
+under the $35 ceiling that Balanced requires. The thresholds are specific to
+the keeper era, not validated against 2021.
 
 **What the calibration changed.** The old thresholds were national-strategy
 numbers. Against this league they described almost nothing: Zero RB at "no
@@ -422,7 +439,8 @@ while the per-pick rule capped the second back. A roster with a $60 back and a
 $45 back behind him passed a shape that is defined by not having one.
 
 **Nothing predicts results.** Every correlation between spending shape and
-points sits under 0.2 at n=36, and the best-looking bucket is nine rosters.
+points sits at or under about 0.2 at n=36 (the largest, top-2 concentration,
+is +0.2015), and the best-looking bucket is nine rosters.
 Robust RB's median rank of 4.0 is the eye-catcher, and at that sample it is
 p≈0.1 before correcting for having looked at five shapes. **The archetypes
 describe the space; they do not rank it.** Re-run this after 2026 — a fourth

@@ -317,6 +317,13 @@ func (s *staticData) heldRoster(ownerID string) []draft.RosterSpot {
 				Position:    e.Position,
 				CielyPoints: s.points[e.PlayerID],
 				Cost:        int(aav[e.PlayerID] + 0.5),
+				// Traits matter as much as the price. Without them a
+				// keeper occupies the slot and the money while being
+				// invisible to every shape made of player types, so a
+				// lineup measures as though two of its fourteen were
+				// blanks — and a keeper carrying the exact trait a shape
+				// wants gets reported as ruling that shape out.
+				Traits: s.traits[e.PlayerID],
 			},
 			Price: e.LeaguePrice,
 		})
