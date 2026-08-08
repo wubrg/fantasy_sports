@@ -230,7 +230,14 @@ type gone struct {
 
 // Build recomputes the whole board from the cached statics plus whatever
 // has been drafted. Pure computation — no network, microseconds.
-func (s *staticData) Build(taken map[string]gone) (draft.Snapshot, error) {
+// Build assembles the whole board. edits are personal reads made since
+// startup, overriding the loaded lean sets per player; nil for callers with
+// none.
+//
+// Passed in rather than stored, because staticData is shared and immutable
+// by contract — see the type comment. Threading them through the one seam
+// that consumes them keeps that true and keeps the dependency visible.
+func (s *staticData) Build(taken map[string]gone, edits draft.Leans) (draft.Snapshot, error) {
 	// Start from the projected keeper set, then remove anyone already off
 	// the board for real.
 	aav := map[string]float64{}
@@ -287,12 +294,17 @@ func (s *staticData) Build(taken map[string]gone) (draft.Snapshot, error) {
 	}
 
 	recommended := me.MaxRecommendedBid(state.LeaguePerStarter(), draft.DefaultRiskFloor)
+	// Resolved once and used by both consumers below. Passing the raw set
+	// to either would put a read on the board that the must-have budget
+	// line does not know about — the two would disagree about the same
+	// player on the same screen.
+	leans := s.effectiveLeans(edits)
 	players := draft.BuildSignals(draft.SignalInputs{
 		Values: values, Costs: costs, Subvertadown: s.subvert,
 		CielyPoints: s.points, Availability: s.availability,
-		Leans: s.leans, Traits: s.traits, RecommendedBid: recommended,
+		Leans: leans, Traits: s.traits, RecommendedBid: recommended,
 	})
-	snap := draft.Assemble(s.season, state, me, players, s.leans, s.tempo(taken, costs), s.thresholds, s.warnings)
+	snap := draft.Assemble(s.season, state, me, players, leans, s.tempo(taken, costs), s.thresholds, s.warnings)
 	snap.LeanSets = s.leanSets
 	return snap, nil
 }
@@ -315,6 +327,31 @@ func (s *staticData) tempo(taken map[string]gone, costs map[string]int) draft.Dr
 		t.Picks++
 	}
 	return t
+}
+
+// effectiveLeans is the loaded sets with any live edits laid over the top.
+//
+// Copies rather than mutating: s.leans is shared with every other reader of
+// this staticData, and a board rebuild must not be able to change what the
+// next one starts from.
+func (s *staticData) effectiveLeans(edits draft.Leans) draft.Leans {
+	if len(edits) == 0 {
+		return s.leans
+	}
+	out := make(draft.Leans, len(s.leans)+len(edits))
+	for k, v := range s.leans {
+		out[k] = v
+	}
+	for k, v := range edits {
+		if v.Lean == "" {
+			// An edit back to nothing removes the read rather than leaving
+			// a blank one, which WalkAway would treat as an unknown lean.
+			delete(out, k)
+			continue
+		}
+		out[k] = v
+	}
+	return out
 }
 
 // heldRoster is the owner's projected keepers as roster spots, priced at

@@ -364,3 +364,12 @@ tr.in-scratch { background: #16233a; }
    trait is context you glance at, not a decision you act on. */
 .flag.trait { border-color: #3a4557; color: var(--dim); }
 .mix { margin: 0.4rem 0 0.2rem; line-height: 1.9; }
+
+/* A control with nothing to do says so rather than swallowing the click. */
+.undo[disabled] { opacity: 0.4; cursor: default; border-color: var(--line); }
+.undo[disabled]:hover { color: var(--dim); border-color: var(--line); }
+
+/* The lean flag is the control for setting one. Unset reads as a dot so the
+   affordance is in the same place on every row. */
+.flag.lean-set { cursor: pointer; }
+.flag.lean-set:hover { border-color: var(--accent); color: var(--accent); }
