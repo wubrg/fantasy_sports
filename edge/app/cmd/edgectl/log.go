@@ -143,12 +143,22 @@ func logScore(args []string) error {
 		fmt.Printf("  the gap above is mostly noise until this number is in the hundreds.\n")
 	}
 
-	by, err := betlog.BySource(bets)
-	if err != nil {
-		return err
+	groups := []struct {
+		title string
+		fn    func([]betlog.Settled) (map[string]betlog.Calibration, error)
+	}{
+		{"BY SCENARIO SOURCE (who judged the game script)", betlog.BySource},
+		{"BY CONDITIONAL SOURCE (who supplied q and r)", betlog.ByConditionalSource},
 	}
-	if len(by) > 1 {
-		fmt.Println("\n  BY SCENARIO SOURCE")
+	for _, g := range groups {
+		by, err := g.fn(bets)
+		if err != nil {
+			return err
+		}
+		if len(by) < 2 {
+			continue
+		}
+		fmt.Printf("\n  %s\n", g.title)
 		fmt.Printf("  %-24s %8s %10s %10s\n", "source", "settled", "predicted", "realised")
 		for _, k := range betlog.SortedSources(by) {
 			c := by[k]

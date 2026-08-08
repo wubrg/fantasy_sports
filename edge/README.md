@@ -117,6 +117,28 @@ implied — and the verdict says where the expectation actually comes from:
 over each requirement rather than by EV — orderings survive misspecification that probability levels
 do not.
 
+## Where q and r come from
+
+`-q` and `-r` can be stated, or looked up from a grid fitted on 27,288 player-games:
+
+```
+$ ./edgectl scenario -name shootout -total 49 -threshold 50 -belief 0.55 \
+    -targets 7.5 -trend 0.07 -line 52.5 -price 250
+
+  CONDITIONALS from the fitted grid (receiving_yards, 2014-2025)
+    7.5 projected targets, +7.0 pt trend, line 52.5
+    q = 56.5%  [48.7-63.5]  n=169   median 59 yds  (scenario occurred)
+    r = 44.5%  [39.5-49.5]  n=378   median 49 yds  (it did not)
+```
+
+Three axes: **projected targets** (volume over efficiency — every measurement here has agreed that
+opportunity drives yards more than per-target skill), **role trend** (with the boundary at the
+measured +6-share-point actionability threshold), and **game script** (the axis that separates `q`
+from `r` at all).
+
+Stated values always win. The grid cannot see a cast on the left tackle. But both sources are
+recorded and scored separately, so a season tells you which of you is better at what.
+
 ## The calibration log
 
 ```
@@ -135,19 +157,122 @@ a calibration log exists to prevent. Scoring reports predicted versus realised h
 pushes and voids, honours the bankroll rules, and splits by where each scenario probability came
 from, so you can find out whether your reads or the line-derived ones were better.
 
+## Getting started
+
+```
+make help          # every target
+make demo          # the whole tool, worked end to end — no data needed
+make check         # Go tests
+make data          # ~185 MB of open NFL data, once, only if you want to refit
+```
+
+`make demo` is the fastest way to see what this does. Everything in it runs off
+committed artifacts, so it works on a fresh clone with no network.
+
+### A worked slate
+
+**1. The bonus card, printed once and kept on your phone.** Needs no data ever — a stake-not-returned
+wager is +EV at any price, so the only question is conversion, and that depends on price alone.
+
+```
+$ make -C edge build && ./edge/app/edgectl card bonus
+  YOUR FLOOR: +234  (for 70% conversion)
+  +300   25.0% wins   75.0% conversion   sweet spot
+```
+
+**2. Is there an edge in the player's own history?**
+
+```
+$ edgectl hitrate -line 52.5 -side over \
+    -values "61,58,55,72,39,58,44,66,71,49,63,57,80,41,54,68,45" -price -110
+
+over 52.5 — 12 of 17 games
+  point estimate   70.6%
+  95% interval     46.9% – 86.7%
+  offered -110 — hurdle 52.4% — UNPROVEN
+```
+
+70.6% over a full season and it still can't be separated from a coin flip. That is the normal
+answer, and it is why the scenario layer exists.
+
+**3. Ask the question that can be answered instead.** Not "is my edge real?" but "what would I have
+to believe?"
+
+```
+$ edgectl scenario -name shootout -total 49 -threshold 50 \
+    -belief 0.55 -targets 7.5 -trend 0.07 -line 52.5 -price +100
+
+  market says 45.6%   you say 55.0%   (you are +9.4 points apart)
+  q = 56.5%  [49.1-64.1]  n=169 (eff 164)   (scenario occurred)
+  r = 44.5%  [39.5-49.7]  n=378 (eff 359)   (it did not)
+
+  REQUIRES  believing the scenario is at least 45.8% likely
+  VERDICT   DISAGREEMENT-REQUIRED
+  your read is what carries this. Margin over the requirement: +9.2 pts
+```
+
+Three verdicts are possible and they mean different things. `disagreement-required` is the normal
+case for a narrative bet. `market-alone` means the game line already justifies it — a real edge, but
+also the likeliest place to have mis-set `q` or `r`. `beyond-your-read` means not even your own
+belief covers the price.
+
+**4. Which rung of a ladder needs the smallest leap.**
+
+```
+$ edgectl scenario ... -rungs "52.5:-110:0.72:0.48,75.5:145:0.55:0.26,100.5:450:0.40:0.08"
+
+  line     price  requires   margin       EV   verdict
+  52.5      -110     18.3%   +36.7%  +5.5636   market-alone
+  75.5      +145     51.1%    +3.9%  +6.0828   disagreement-required
+  100.5     +450     31.8%   +23.2%  +11.5200  market-alone
+```
+
+Ranked by margin, not EV — at these sample sizes the *ordering* of requirements survives what the
+probability levels do not.
+
+**5. Record it, then find out whether you were any good.** Add `-log bets.jsonl` to any scenario
+call, then:
+
+```
+$ edgectl log settle -file bets.jsonl -id <id> -result won
+$ edgectl log score  -file bets.jsonl
+```
+
+### Refitting the model
+
+```
+make verify-model   # re-run both fits read-only, print calibration
+make findings       # reproduce every claim in model/FINDINGS.md
+make fit            # REWRITES the committed artifacts
+```
+
+`make fit` changes what `edgectl` prices. Read the diff.
+
 ## Layout
 
 ```
 edge/
+  Makefile             working entry point: Go + the Python model pipeline
   README.md
   docs/frameworks/     transcribed source material + operative template
-  app/
+  app/                 Go, zero dependencies
     Makefile           build / test / vet / fmt / lint / check
     cmd/edgectl/       CLI
     internal/wager/    odds, vig, de-vigging, EV, hit rate, belief decomposition
-    internal/scenario/ game line -> scenario probability
-    internal/betlog/    append-only prediction log and calibration
+    internal/scenario/ game line -> scenario probability; pooled q/r grid
+      artifacts/       committed JSON, read via go:embed
+    internal/betlog/   append-only prediction log and calibration
+  model/               Python, stdlib only
+    FINDINGS.md        every measured claim, with the script that produced it
+    ingest/            nflverse -> local cache (gitignored)
+    analysis/          fits and validation; emits the artifacts above
+    data/raw/          the cache itself (gitignored, ~185 MB)
 ```
+
+Two Makefiles, deliberately. The **root** one builds `edge/app` alongside the other two Go modules,
+so `make check` at the repo root covers this app's Go code the same way it covers `canton` and
+`league_home`. The **`edge/` one** is the entry point for working on this app specifically, and is
+the only place that knows about the Python side.
 
 `app` is the third Go module in this repo, alongside `league_home/app` and `canton/app`, and is
 wired into the root `Makefile` delegator. `make check` from the repo root covers it.

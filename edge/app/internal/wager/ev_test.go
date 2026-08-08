@@ -1,6 +1,9 @@
 package wager
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 // TestProfitabilityMatrix pins all 14 cells of the "Profitability Matrix"
 // (edge-of-vigor.md p.8) as literal expected values. Every cell was verified
@@ -312,5 +315,62 @@ func TestNoSilentZeros(t *testing.T) {
 	// Report needs both sides of the market; it must not invent the other.
 	if _, err := Report(Market{A: -110, B: 0}, 0.55, 1); err == nil {
 		t.Error("Report must fail without a valid opposing price")
+	}
+}
+
+// TestNonFiniteInputsAreRejected closes the gap every other "rejects nonsense"
+// test in this package shared: they all used finite out-of-range values
+// (-0.1, 1.1, 2, -1) and none used NaN or Inf.
+//
+// NaN defeats an ordinary range check, because `p < 0 || p > 1` is FALSE for
+// NaN. An audit rode that through every validator here and out the far end as
+// a printed price of -9223372036854775808, reachable from the command line
+// since strconv.ParseFloat accepts "NaN".
+func TestNonFiniteInputsAreRejected(t *testing.T) {
+	nasty := []float64{math.NaN(), math.Inf(1), math.Inf(-1)}
+
+	for _, v := range nasty {
+		if _, err := EVRealMoney(v, -110, 1); err == nil {
+			t.Errorf("EVRealMoney accepted probability %v", v)
+		}
+		if _, err := EVBonusBet(v, -110, 1); err == nil {
+			t.Errorf("EVBonusBet accepted probability %v", v)
+		}
+		if _, err := EVRealMoney(0.5, -110, v); err == nil {
+			t.Errorf("EVRealMoney accepted stake %v", v)
+		}
+		if _, err := MinPrice(RealMoney, v, 0); err == nil {
+			t.Errorf("MinPrice accepted probability %v", v)
+		}
+		if _, err := MinPrice(RealMoney, 0.5, v); err == nil {
+			t.Errorf("MinPrice accepted target %v", v)
+		}
+		if _, err := MinPriceForConversion(v); err == nil {
+			t.Errorf("MinPriceForConversion accepted target %v", v)
+		}
+		if _, err := BlendedProb(v, 0.5, 0.3); err == nil {
+			t.Errorf("BlendedProb accepted s = %v", v)
+		}
+		if _, err := RequiredScenarioProb(-110, v, 0.3); err == nil {
+			t.Errorf("RequiredScenarioProb accepted q = %v", v)
+		}
+		if _, err := ComputeHitRate([]float64{1, v, 3}, 2, Over, 0.95); err == nil {
+			t.Errorf("ComputeHitRate accepted a game-log value of %v", v)
+		}
+		if _, err := ComputeHitRate([]float64{1, 2, 3}, 2, Over, v); err == nil {
+			t.Errorf("ComputeHitRate accepted confidence %v", v)
+		}
+	}
+
+	// Whatever a caller does, no price may come back that is not a real market
+	// price. MinInt64 used to, via American(math.Ceil(NaN)).
+	if err := American(math.MinInt64).validate(); err == nil {
+		t.Error("MinInt64 is not a price; -a overflows to itself and Decimal() returned 1.0")
+	}
+	if err := American(maxAmerican + 1).validate(); err == nil {
+		t.Error("an absurd price should be rejected")
+	}
+	if _, err := American(math.MinInt64).Decimal(); err == nil {
+		t.Error("Decimal must reject an unrepresentable price rather than return 1.0")
 	}
 }

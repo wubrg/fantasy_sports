@@ -45,6 +45,9 @@ func (h HitRate) Width() float64 { return h.Upper - h.Lower }
 
 // zFor returns the two-sided critical value for a confidence level.
 func zFor(confidence float64) (float64, error) {
+	if !finite(confidence) {
+		return 0, fmt.Errorf("scenario: confidence %v is not a real number", confidence)
+	}
 	if confidence <= 0 || confidence >= 1 {
 		return 0, fmt.Errorf("wager: confidence %v must be between 0 and 1", confidence)
 	}
@@ -90,6 +93,18 @@ func WilsonInterval(hits, n int, confidence float64) (lower, upper float64, err 
 func ComputeHitRate(values []float64, line float64, side Side, confidence float64) (HitRate, error) {
 	if len(values) == 0 {
 		return HitRate{}, fmt.Errorf("wager: no game-log values supplied")
+	}
+
+	if !finite(line) {
+		return HitRate{}, fmt.Errorf("wager: line %v is not a real number", line)
+	}
+	for i, v := range values {
+		// A NaN game satisfied none of the comparisons below, so it stayed in
+		// the denominator as a loss -- silently turning 3-of-4 into 3-of-5 and
+		// moving the acceptable price by 150 cents.
+		if !finite(v) {
+			return HitRate{}, fmt.Errorf("wager: game-log value %d is %v, not a real number", i, v)
+		}
 	}
 
 	var hits, pushes int

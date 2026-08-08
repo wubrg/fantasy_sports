@@ -22,6 +22,9 @@ import "fmt"
 // P(hit | no scenario).
 func BlendedProb(s, q, r float64) (float64, error) {
 	for name, v := range map[string]float64{"s": s, "q": q, "r": r} {
+		if !finite(v) {
+			return 0, errNotReal(name, v)
+		}
 		if v < 0 || v > 1 {
 			return 0, fmt.Errorf("wager: %s = %v out of range [0,1]", name, v)
 		}
@@ -61,6 +64,9 @@ type BeliefRequirement struct {
 // can be wrong in a way you would notice.
 func RequiredScenarioProb(price American, q, r float64) (BeliefRequirement, error) {
 	for name, v := range map[string]float64{"q": q, "r": r} {
+		if !finite(v) {
+			return BeliefRequirement{}, errNotReal(name, v)
+		}
 		if v < 0 || v > 1 {
 			return BeliefRequirement{}, fmt.Errorf("wager: %s = %v out of range [0,1]", name, v)
 		}

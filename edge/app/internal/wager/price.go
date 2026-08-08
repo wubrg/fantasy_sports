@@ -18,6 +18,9 @@ import (
 // Every American price has |value| >= 100, so there is no gap to fall into
 // around even money.
 func decimalToAmerican(d float64) (American, error) {
+	if !finite(d) {
+		return 0, fmt.Errorf("wager: decimal odds %v is not a real number", d)
+	}
 	if d <= 1 {
 		return 0, fmt.Errorf("wager: decimal odds %v imply no profit (must exceed 1)", d)
 	}
@@ -37,10 +40,15 @@ func decimalToAmerican(d float64) (American, error) {
 		exact = nearest
 	}
 
+	if !finite(exact) {
+		return 0, fmt.Errorf("wager: price computation produced %v", exact)
+	}
 	a := American(math.Ceil(exact))
 	if err := a.validate(); err != nil {
-		// Can only happen from float noise at the -100/+100 boundary.
-		return 100, nil
+		// Previously this returned a fabricated +100 with a nil error, on the
+		// reasoning that only float noise at the boundary could reach it. A NaN
+		// input reached it too, and the fabricated price was printed as advice.
+		return 0, fmt.Errorf("wager: no representable price meets this target: %w", err)
 	}
 	return a, nil
 }
@@ -68,6 +76,9 @@ func MinPrice(b Bankroll, p, targetROI float64) (American, error) {
 	}
 	if p == 0 {
 		return 0, fmt.Errorf("wager: no price makes a zero-probability wager profitable")
+	}
+	if !finite(targetROI) {
+		return 0, fmt.Errorf("wager: targetROI %v is not a real number", targetROI)
 	}
 	if targetROI < 0 {
 		return 0, fmt.Errorf("wager: targetROI %v must not be negative", targetROI)
@@ -97,6 +108,9 @@ func MinPrice(b Bankroll, p, targetROI float64) (American, error) {
 // heaviest on longshots -- so the overstatement is worst exactly where this
 // function points. Realised conversion typically lands at 60-80%.
 func MinPriceForConversion(target float64) (American, error) {
+	if !finite(target) {
+		return 0, fmt.Errorf("wager: conversion target %v is not a real number", target)
+	}
 	if target <= 0 || target >= 1 {
 		return 0, fmt.Errorf("wager: conversion target %v must be between 0 and 1", target)
 	}

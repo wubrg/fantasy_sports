@@ -74,6 +74,14 @@ league_home/app/internal/draft/data/normalized/
 .DS_Store
 __pycache__/
 *.pyc
+.venv/
+
+# nflverse cache: ~185 MB of open NFL data, fully regenerable with
+#   python3 edge/model/ingest/nflverse.py
+# The provenance that matters (source URLs, fetch dates, checksums) is copied
+# into the generated artifacts, which ARE tracked — so nothing is lost by
+# leaving the raw files out.
+edge/model/data/raw/
 
 # Wagering framework source captures. These are browser print-to-PDF exports of
 # Gemini share pages: ~118 MB total, and URPS-v3.pdf alone is 74 MB, close to

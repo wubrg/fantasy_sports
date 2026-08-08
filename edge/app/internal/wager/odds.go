@@ -24,11 +24,24 @@ var ErrNoData = errors.New("wager: required market data missing")
 // expressible (there is no such price), and are rejected.
 type American int
 
+// maxAmerican bounds a price to something a book could plausibly post.
+//
+// The upper bound is not cosmetic. Without it, American(math.MinInt64) negates
+// to itself under two's complement, and Decimal() then returned 1.0 -- a price
+// implying certainty and zero profit, accepted with a nil error. That value was
+// reachable, because MinPrice could produce it from a NaN input.
+const maxAmerican = 1_000_000
+
 func (a American) validate() error {
-	if a >= 100 || a <= -100 {
+	if a >= 100 && a <= maxAmerican {
 		return nil
 	}
-	return fmt.Errorf("wager: %d is not a valid American price (must be >= +100 or <= -100)", int(a))
+	if a <= -100 && a >= -maxAmerican {
+		return nil
+	}
+	return fmt.Errorf(
+		"wager: %d is not a valid American price (needs |price| >= 100 and <= %d)",
+		int(a), maxAmerican)
 }
 
 // Decimal converts to decimal odds: total return per unit staked, stake

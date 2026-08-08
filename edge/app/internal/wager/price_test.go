@@ -257,3 +257,34 @@ func TestMinPriceRejectsNonsense(t *testing.T) {
 		}
 	}
 }
+
+// TestBookRulesAreCaseInsensitiveAndClosed guards the push rule.
+//
+// Book is an unvalidated string type, so "FanDuel" and "fanduel" are different
+// values. Every rule used to answer "no" for anything but the exact constant,
+// which turned CheckBonusMarket -- the guard against forfeiting a bonus bet
+// outright -- into a silent no-op for any capitalisation slip or unknown book.
+func TestBookRulesAreCaseInsensitiveAndClosed(t *testing.T) {
+	for _, spelling := range []Book{"fanduel", "FanDuel", "FANDUEL", " fanduel "} {
+		if !spelling.BonusLostOnPush() {
+			t.Errorf("%q should be recognised as FanDuel", spelling)
+		}
+		if err := CheckBonusMarket(spelling, true); err == nil {
+			t.Errorf("%q on a pushable market must be refused", spelling)
+		}
+	}
+	for _, unknown := range []Book{"bovada", "", "caesars", "pinnacle"} {
+		if unknown.Known() {
+			t.Errorf("%q should not be a known book", unknown)
+		}
+		if err := CheckBonusMarket(unknown, true); err == nil {
+			t.Errorf("%q has no recorded rules and must not be cleared", unknown)
+		}
+		if err := CheckBonusMarket(unknown, false); err == nil {
+			t.Errorf("%q has no recorded rules and must not be cleared even without a push", unknown)
+		}
+	}
+	if err := CheckBonusMarket(DraftKings, true); err != nil {
+		t.Errorf("DraftKings returns the bonus on a push: %v", err)
+	}
+}

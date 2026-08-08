@@ -29,9 +29,21 @@ func scenarioCmd(args []string) error {
 	name := fs.String("name", "scenario", "name of the scenario")
 	logPath := fs.String("log", "", "append this wager to a bet log at this path")
 	rungs := fs.String("rungs", "", "ladder as line:price:q:r,... (replaces -price/-q/-r)")
+	projTargets := fs.Float64("targets", 0, "projected targets, to look up q and r from the fitted grid")
+	trend := fs.Float64("trend", 0, "two-game target-share trend, e.g. 0.06 for +6 points")
+	line := fs.Float64("line", 0, "the prop line in yards, required when looking up q and r")
+	confidence := fs.Float64("confidence", 0.95, "confidence level for looked-up intervals")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
+
+	// A flag default of 0 is indistinguishable from "-spread 0", which is a
+	// legitimate pick'em. Without this, omitting -spread entirely produced a
+	// fabricated pick'em, printed "market says 19.1%", labelled it
+	// derived-from-line and wrote it to the bet log as s_market. Track what was
+	// actually supplied instead of inferring it from the value.
+	supplied := map[string]bool{}
+	fs.Visit(func(f *flag.Flag) { supplied[f.Name] = true })
 
 	if *belief < 0 {
 		return fmt.Errorf("-belief is required: this tool prices your read, it does not supply one")
@@ -47,6 +59,14 @@ func scenarioCmd(args []string) error {
 	}
 
 	// Establish the market's view of the scenario.
+	if basisVal == scenario.Margin && !supplied["spread"] && *sMarket < 0 {
+		return fmt.Errorf(
+			"-basis margin needs an explicit -spread (or -smarket): without one the market's " +
+				"view would be a fabricated pick'em, reported as if it came from a real line")
+	}
+	if basisVal == scenario.Total && !supplied["total"] && *sMarket < 0 {
+		return fmt.Errorf("-basis total needs an explicit -total (or -smarket)")
+	}
 	sc, err := marketScenario(*name, basisVal, *total, *spread, *threshold, *sigma, *sMarket)
 	if err != nil {
 		return err
@@ -54,13 +74,15 @@ func scenarioCmd(args []string) error {
 
 	fmt.Printf("SCENARIO  %s\n", sc)
 	if sc.Source == scenario.DerivedFromLine {
+		method := "empirical residuals"
+		if *sigma > 0 {
+			method = fmt.Sprintf("normal, sigma %.1f", *sigma)
+		}
 		switch basisVal {
 		case scenario.Total:
-			fmt.Printf("  from a posted total of %.1f (sigma %.1f)\n",
-				*total, orDefault(*sigma, scenario.DefaultSigmaTotal))
+			fmt.Printf("  from a posted total of %.1f (%s)\n", *total, method)
 		case scenario.Margin:
-			fmt.Printf("  from a spread of %+.1f (sigma %.1f)\n",
-				*spread, orDefault(*sigma, scenario.DefaultSigmaMargin))
+			fmt.Printf("  from a spread of %+.1f (%s)\n", *spread, method)
 		}
 	}
 	fmt.Printf("  market says %.1f%%   you say %.1f%%   (you are %+.1f points apart)\n\n",
@@ -70,11 +92,17 @@ func scenarioCmd(args []string) error {
 		return ladderReport(*rungs, sc.Prob, *belief, b, *stake)
 	}
 
-	if *price == 0 || *q < 0 || *r < 0 {
-		return fmt.Errorf("-price, -q and -r are all required (or use -rungs)")
+	if *price == 0 {
+		return fmt.Errorf("-price is required (or use -rungs)")
 	}
 
-	req, err := wager.RequiredScenarioProb(wager.American(*price), *q, *r)
+	qv, rv, condSource, err := resolveConditionals(
+		*name, *q, *r, *projTargets, *trend, *line, *confidence)
+	if err != nil {
+		return err
+	}
+
+	req, err := wager.RequiredScenarioProb(wager.American(*price), qv, rv)
 	if err != nil {
 		return err
 	}
@@ -82,11 +110,11 @@ func scenarioCmd(args []string) error {
 	if err != nil {
 		return err
 	}
-	predicted, err := wager.BlendedProb(*belief, *q, *r)
+	predicted, err := wager.BlendedProb(*belief, qv, rv)
 	if err != nil {
 		return err
 	}
-	ev, err := wager.BlendedEV(b, *belief, *q, *r, wager.American(*price), *stake)
+	ev, err := wager.BlendedEV(b, *belief, qv, rv, wager.American(*price), *stake)
 	if err != nil {
 		return err
 	}
@@ -95,7 +123,7 @@ func scenarioCmd(args []string) error {
 		fmt.Printf("%s\n", *label)
 	}
 	fmt.Printf("  price %+d   hurdle %.1f%%   q %.1f%%   r %.1f%%\n",
-		*price, req.Breakeven*100, *q*100, *r*100)
+		*price, req.Breakeven*100, qv*100, rv*100)
 	fmt.Println()
 
 	printRequirement(req)
@@ -115,8 +143,9 @@ func scenarioCmd(args []string) error {
 			Selection: pick(*label, "unlabelled"), Price: wager.American(*price),
 			Bankroll: b.String(), Stake: *stake,
 			Scenario: sc.Name, ScenarioSource: sc.Source.String(),
-			SMarket: sc.Prob, SYours: *belief, Q: *q, R: *r,
-			SStar: req.Required, EdgeSource: class.Source.String(), Predicted: predicted,
+			SMarket: sc.Prob, SYours: *belief, Q: qv, R: rv,
+			ConditionalSource: condSource,
+			SStar:             req.Required, EdgeSource: class.Source.String(), Predicted: predicted,
 		})
 		if err != nil {
 			return err
@@ -124,6 +153,67 @@ func scenarioCmd(args []string) error {
 		fmt.Printf("\n  logged as %s\n", id)
 	}
 	return nil
+}
+
+// resolveConditionals supplies q and r, either from the operator or from the
+// fitted pooled grid.
+//
+// Operator values take precedence, always. The grid is pooled across thousands
+// of player-games with similar opportunity, which is what makes it estimable at
+// all, but it cannot see the things that make a specific week unusual -- an
+// injury to the man covering him, a coordinator change, a cast on the left
+// tackle. When you know something the grid does not, you should be able to say
+// so and have it win.
+//
+// The two sources are reported separately into the bet log so they can be
+// scored separately later.
+func resolveConditionals(name string, q, r, projTargets, trend, line, confidence float64) (float64, float64, string, error) {
+	if q >= 0 && r >= 0 {
+		return q, r, "stated", nil
+	}
+	if q >= 0 || r >= 0 {
+		return 0, 0, "", fmt.Errorf(
+			"-q and -r must be supplied together: one alone would be silently dropped in " +
+				"favour of the fitted grid, and you would never be told")
+	}
+	if projTargets <= 0 || line <= 0 {
+		return 0, 0, "", fmt.Errorf(
+			"supply both -q and -r, or -targets and -line to look them up from the fitted grid")
+	}
+
+	c, err := scenario.LoadConditionals()
+	if err != nil {
+		return 0, 0, "", err
+	}
+	qc, rc, err := c.QR(name, projTargets, trend, line, confidence)
+	if err != nil {
+		return 0, 0, "", fmt.Errorf("%w\n  scenarios you can price: %s",
+			err, strings.Join(c.ValidatedScenarioNames(), ", "))
+	}
+
+	fmt.Printf("  CONDITIONALS from the fitted grid (%s, %d-%d)\n",
+		c.Outcome, c.Seasons[0], c.Seasons[1])
+	fmt.Printf("    %.1f projected targets, %+.1f pt trend, line %.1f\n",
+		projTargets, trend*100, line)
+	// n_eff is shown beside n, not instead of it. The interval is built on the
+	// smaller number, and printing only the raw count would overstate the
+	// evidence behind the interval printed next to it.
+	fmt.Printf("    q = %.1f%%  [%.1f-%.1f]  n=%d (eff %d)  median %.0f yds  (scenario occurred)\n",
+		qc.Prob*100, qc.Lower*100, qc.Upper*100, qc.N, qc.NEff, qc.CellMedian)
+	fmt.Printf("    r = %.1f%%  [%.1f-%.1f]  n=%d (eff %d)  median %.0f yds  (it did not)\n",
+		rc.Prob*100, rc.Lower*100, rc.Upper*100, rc.N, rc.NEff, rc.CellMedian)
+	if qc.NEff < qc.N || rc.NEff < rc.N {
+		fmt.Printf("    intervals use the effective count: cells pool repeat players,\n")
+		fmt.Printf("    so the raw n overstates how much independent evidence there is\n")
+	}
+
+	// A wide interval on either side means the requirement below is softer
+	// than its two decimal places suggest.
+	if qc.Upper-qc.Lower > 0.15 || rc.Upper-rc.Lower > 0.15 {
+		fmt.Printf("    note: these cells are thin; treat s* as indicative\n")
+	}
+	fmt.Println()
+	return qc.Prob, rc.Prob, "pooled", nil
 }
 
 func printRequirement(req wager.BeliefRequirement) {

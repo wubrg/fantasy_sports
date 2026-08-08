@@ -10,16 +10,28 @@
 // them gives a baseline to disagree with -- and the disagreement, not the level,
 // is where an edge would live.
 //
-// # The assumption
+// # How the probabilities are produced
 //
-// Final totals and margins are modelled as normal. That is the single largest
-// modelling assumption here and it is wrong in the tails: NFL margins cluster on
-// 3 and 7 and have fatter tails than a normal. Calibrating sigma against real
-// moneylines bears this out -- a 3-point spread implies about 14.0 and a 7-point
-// spread about 11.6, which a single normal cannot reconcile.
+// By default this uses an EMPIRICAL residual distribution fitted from ~1,600
+// real games, embedded as artifacts/residuals.json. It assumes no shape at all.
 //
-// Read scenario probabilities near the middle of the distribution as reasonable
-// and extreme thresholds as indicative only.
+// It did originally assume normality, with sigma 10.0 for totals and 13.5 for
+// margins, and that turned out to be badly wrong for totals -- the real residual
+// sd is 13.3, not 10.0. Measured on games the fit never saw, the normal model's
+// mean absolute calibration gap was 4.30 points for totals and 3.80 for margins;
+// the empirical model gets 0.78 and 1.89. The old curve claimed 7.5% where
+// reality was 14.7%, and 73.6% where reality was 57.4%.
+//
+// The normal path is still reachable by passing an explicit sigma, so the two
+// can be compared rather than swapped on faith. Passing sigma = 0 selects the
+// empirical model, which is what callers should normally do.
+//
+// # What is still assumed
+//
+// One pooled residual distribution serves every line level and every game. That
+// is supported by measurement -- dispersion is flat across line level, 12.8 to
+// 13.9 in every bucket -- but it is still an assumption, and it means a game
+// with unusual conditions is priced like an average one.
 package scenario
 
 import (
@@ -104,6 +116,10 @@ func (s Scenario) String() string {
 
 // Validate reports whether the scenario is usable.
 func (s Scenario) Validate() error {
+	if !isFinite(s.Prob) || !isFinite(s.Threshold) {
+		return fmt.Errorf("scenario %q: probability %v / threshold %v must be real numbers",
+			s.Name, s.Prob, s.Threshold)
+	}
 	if s.Name == "" {
 		return fmt.Errorf("scenario: unnamed scenario")
 	}
@@ -112,6 +128,10 @@ func (s Scenario) Validate() error {
 	}
 	return nil
 }
+
+// isFinite reports whether f is a real number. NaN defeats ordinary range
+// checks -- `p < 0 || p > 1` is false for NaN -- so finiteness is tested first.
+func isFinite(f float64) bool { return !math.IsNaN(f) && !math.IsInf(f, 0) }
 
 // normalCDF is the standard normal distribution function.
 func normalCDF(z float64) float64 {
@@ -136,49 +156,86 @@ func StateProb(name string, basis Basis, threshold, prob float64) (Scenario, err
 }
 
 // FromTotal derives P(combined final points > threshold) from a posted game
-// total. Pass 0 for sigma to use DefaultSigmaTotal.
+// total.
+//
+// Pass sigma = 0 for the fitted empirical distribution, which is the calibrated
+// path and what callers should normally use. A positive sigma selects the older
+// normal approximation with that dispersion, kept so the two can be compared.
 //
 // This is the "shootout" construction: a 52.5 total against a 50-point
-// threshold gives about 60%, a 41 total gives about 18%.
+// threshold gives about 57%, a 41 total about 22%.
 func FromTotal(name string, total, threshold, sigma float64) (Scenario, error) {
+	if !isFinite(total) || !isFinite(threshold) || !isFinite(sigma) {
+		return Scenario{}, fmt.Errorf(
+			"scenario: total %v / threshold %v / sigma %v must be real numbers", total, threshold, sigma)
+	}
 	if total <= 0 {
 		return Scenario{}, fmt.Errorf("scenario: game total %v must be positive", total)
 	}
-	if sigma == 0 {
-		sigma = DefaultSigmaTotal
+	if sigma < 0 {
+		return Scenario{}, fmt.Errorf("scenario: sigma %v must not be negative", sigma)
 	}
-	if sigma <= 0 {
-		return Scenario{}, fmt.Errorf("scenario: sigma %v must be positive", sigma)
+	// The residual is actual minus expected; expected is the posted total.
+	residual := threshold - total
+
+	var prob float64
+	if sigma > 0 {
+		prob = 1 - normalCDF(residual/sigma)
+	} else {
+		m, err := Model()
+		if err != nil {
+			return Scenario{}, err
+		}
+		prob = m.Total.SurvivalAt(residual)
 	}
 	return Scenario{
 		Name:      name,
 		Basis:     Total,
 		Threshold: threshold,
-		Prob:      1 - normalCDF((threshold-total)/sigma),
+		Prob:      prob,
 		Source:    DerivedFromLine,
 	}, nil
 }
 
 // FromSpread derives P(favourite's final margin > threshold) from a posted
-// spread. Pass 0 for sigma to use DefaultSigmaMargin.
+// spread.
 //
 // spread is the favourite's handicap as posted, so -3 means favoured by three.
 // threshold is a margin in the same direction (favourite minus underdog) and
 // may be negative: threshold 0 asks how often the favourite simply wins,
 // threshold 10 asks how often it becomes a blowout.
+//
+// Pass sigma = 0 for the fitted empirical distribution; a positive sigma
+// selects the normal approximation, as with FromTotal.
 func FromSpread(name string, spread, threshold, sigma float64) (Scenario, error) {
-	if sigma == 0 {
-		sigma = DefaultSigmaMargin
+	if !isFinite(spread) || !isFinite(threshold) || !isFinite(sigma) {
+		return Scenario{}, fmt.Errorf(
+			"scenario: spread %v / threshold %v / sigma %v must be real numbers", spread, threshold, sigma)
 	}
-	if sigma <= 0 {
-		return Scenario{}, fmt.Errorf("scenario: sigma %v must be positive", sigma)
+	if sigma < 0 {
+		return Scenario{}, fmt.Errorf("scenario: sigma %v must not be negative", sigma)
 	}
-	expected := -spread // a -3 favourite is expected to win by 3
+	// This package posts a favourite as a negative number; the fitted residuals
+	// are indexed by actual-minus-expected and carry no convention of their own,
+	// so the conversion happens here and only here.
+	expected := -spread
+	residual := threshold - expected
+
+	var prob float64
+	if sigma > 0 {
+		prob = 1 - normalCDF(residual/sigma)
+	} else {
+		m, err := Model()
+		if err != nil {
+			return Scenario{}, err
+		}
+		prob = m.Margin.SurvivalAt(residual)
+	}
 	return Scenario{
 		Name:      name,
 		Basis:     Margin,
 		Threshold: threshold,
-		Prob:      1 - normalCDF((threshold-expected)/sigma),
+		Prob:      prob,
 		Source:    DerivedFromLine,
 	}, nil
 }

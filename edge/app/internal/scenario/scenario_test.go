@@ -9,7 +9,8 @@ import (
 
 func closeTo(a, b, eps float64) bool { return math.Abs(a-b) <= eps }
 
-// TestSpreadMatchesMoneyline is the check that the default sigma is not
+// TestSpreadMatchesMoneyline covers the NORMAL path, still reachable by
+// passing an explicit sigma. It checks that the old default was not
 // arbitrary: the win probability it implies for a favourite must line up with
 // what a real de-vigged moneyline says.
 //
@@ -17,7 +18,7 @@ func closeTo(a, b, eps float64) bool { return math.Abs(a-b) <= eps }
 // normal model says 58.8%. Agreement to within half a point is the reason to
 // trust the default at all.
 func TestSpreadMatchesMoneyline(t *testing.T) {
-	s, err := FromSpread("favourite wins", -3, 0, 0)
+	s, err := FromSpread("favourite wins", -3, 0, DefaultSigmaMargin)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +52,7 @@ func TestSpreadCurveShape(t *testing.T) {
 	}
 	var prev float64
 	for i, c := range cases {
-		s, err := FromSpread("fav wins", c.spread, 0, 0)
+		s, err := FromSpread("fav wins", c.spread, 0, DefaultSigmaMargin)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -65,7 +66,7 @@ func TestSpreadCurveShape(t *testing.T) {
 	}
 
 	// A pick'em is a coin flip.
-	s, err := FromSpread("fav wins", 0, 0, 0)
+	s, err := FromSpread("fav wins", 0, 0, DefaultSigmaMargin)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +86,7 @@ func TestFromTotal(t *testing.T) {
 		{52.5, 55, 0.401},
 	}
 	for _, c := range cases {
-		s, err := FromTotal("shootout", c.total, c.threshold, 0)
+		s, err := FromTotal("shootout", c.total, c.threshold, DefaultSigmaTotal)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -102,7 +103,7 @@ func TestFromTotal(t *testing.T) {
 	}
 
 	// The threshold equalling the total is a coin flip by construction.
-	s, err := FromTotal("shootout", 47, 47, 0)
+	s, err := FromTotal("shootout", 47, 47, DefaultSigmaTotal)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,7 +116,7 @@ func TestFromTotal(t *testing.T) {
 // back the win probability the default sigma produces must return that sigma.
 func TestCalibrateSigmaRecoversTheDefault(t *testing.T) {
 	for _, spread := range []float64{-3, -7, -10, -14} {
-		s, err := FromSpread("fav wins", spread, 0, 0)
+		s, err := FromSpread("fav wins", spread, 0, DefaultSigmaMargin)
 		if err != nil {
 			t.Fatal(err)
 		}
