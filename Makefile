@@ -5,7 +5,9 @@ CANTON_DIR     := canton/app
 	leagueweb-install leagueweb-load leagueweb-unload leagueweb-restart leagueweb-status \
 	leagueweb-serve-mount leagueweb-serve-unmount leagueweb-serve-status \
 	canton-install canton-load canton-unload canton-restart canton-status \
-	canton-serve-mount canton-serve-unmount canton-serve-status
+	canton-serve-mount canton-serve-unmount canton-serve-status \
+	draftroom-install draftroom-load draftroom-unload draftroom-restart draftroom-status \
+	draftroom-serve-mount draftroom-serve-unmount draftroom-serve-status
 
 # This repo holds two independent Go modules (league_home/app and
 # canton/app), each with its own Makefile. This root Makefile
@@ -94,6 +96,30 @@ canton-serve-mount: ## (macOS) Mount canton at /canton via tailscale serve
 
 canton-serve-unmount: ## (macOS) Remove the /canton tailscale serve mount
 	$(MAKE) -C $(CANTON_DIR) canton-serve-unmount
+
+draftroom-install: ## (macOS) Copy the draftroom plist template into ~/Library/LaunchAgents
+	$(MAKE) -C $(LEAGUEHOME_DIR) draftroom-install
+
+draftroom-load: ## (macOS) launchctl load the draftroom launch agent
+	$(MAKE) -C $(LEAGUEHOME_DIR) draftroom-load
+
+draftroom-unload: ## (macOS) launchctl unload the draftroom launch agent
+	$(MAKE) -C $(LEAGUEHOME_DIR) draftroom-unload
+
+draftroom-restart: ## (macOS) unload then load the draftroom launch agent
+	$(MAKE) -C $(LEAGUEHOME_DIR) draftroom-restart
+
+draftroom-status: ## (macOS) Show whether the draftroom launch agent is loaded
+	$(MAKE) -C $(LEAGUEHOME_DIR) draftroom-status
+
+draftroom-serve-mount: ## (macOS) Mount the draft board at /draftroom via tailscale serve
+	$(MAKE) -C $(LEAGUEHOME_DIR) draftroom-serve-mount
+
+draftroom-serve-unmount: ## (macOS) Remove the /draftroom tailscale serve mount
+	$(MAKE) -C $(LEAGUEHOME_DIR) draftroom-serve-unmount
+
+draftroom-serve-status: ## (macOS) Show current tailscale serve mappings
+	$(MAKE) -C $(LEAGUEHOME_DIR) draftroom-serve-status
 
 canton-serve-status: ## (macOS) Show current tailscale serve mappings
 	$(MAKE) -C $(CANTON_DIR) canton-serve-status

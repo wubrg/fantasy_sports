@@ -250,8 +250,39 @@ snapshot, so the page costs no Sleeper traffic at all; the server does the
 one live-picks call, because building a full snapshot walks five seasons of
 history and the 5 MB player dictionary.
 
-To reach it from another device on your tailnet, the leagueweb pattern
-applies — see the `leagueweb-serve-*` targets for the shape.
+### Running it on your tailnet
+
+Same shape as leagueweb and canton — a launch agent for persistence, and
+`tailscale serve` to mount it:
+
+```sh
+make draftroom            # build the binary the agent runs
+make draftroom-install    # plist into ~/Library/LaunchAgents
+make draftroom-load       # start it, and on every login
+make draftroom-serve-mount    # https://<your-machine>.<tailnet>/draftroom
+```
+
+`draftroom-status` says whether the agent is loaded, `draftroom-serve-status`
+shows the current mounts, and `draftroom-unload` / `draftroom-serve-unmount`
+undo each half.
+
+**`tailscale serve`, never `tailscale funnel`.** Serve is tailnet-only —
+your devices and nobody else's. Funnel would put this on the public
+internet, and this board carries your valuations, your leans, your keeper
+analysis and what you are willing to pay for whom. That is the whole edge,
+readable by anyone who found the URL.
+
+**Safe to leave mounted year-round.** The board polls Sleeper every two
+seconds while a draft is running and once a minute when one is not, decided
+per tick from the draft's own status. A flat two-second poll left up all
+year would be forty-three thousand requests a day for a draft that happens
+once; the idle cadence is fourteen hundred, and it snaps to two seconds
+within the minute of your commissioner starting.
+
+The plist pre-fills the config and data directories and your owner ID,
+because the binary in the checkout is built by `make draftroom`, which does
+not bake paths the way `make install` does. Without the owner ID the board
+reads every team as a flat $200 with no keepers deducted.
 
 ### Player types on the board and the roster
 

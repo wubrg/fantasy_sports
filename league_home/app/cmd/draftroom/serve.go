@@ -16,7 +16,16 @@ import (
 //go:embed static
 var staticFS embed.FS
 
-// pollInterval is how often the live draft is checked.
+// idleInterval is how often the draft is checked when it is not running.
+//
+// The board is a draft-night tool but it can be left mounted all year, and
+// a flat two-second poll would be forty-three thousand requests a day at
+// Sleeper for a draft that happens once. Outside the draft window there is
+// nothing to find, so it asks once a minute — enough to notice the
+// commissioner starting without pretending anything is happening.
+const idleInterval = 60 * time.Second
+
+// pollInterval is how often the live draft is checked while it is running.
 //
 // One request, about 130ms. Sleeper asks callers to stay under 1000 calls a
 // minute, so at 2s this uses 30 — three percent of the budget. The earlier
@@ -81,6 +90,24 @@ func (s *server) rebuildLocked() error {
 }
 
 // poll reads the live draft and folds any new picks into the board.
+// pollForever watches the draft, quickly while it runs and sparingly
+// otherwise. The cadence is re-decided on every tick, so a draft opening
+// while the board sits idle is picked up within the minute and everything
+// after it lands in two seconds.
+func (s *server) pollForever() {
+	for {
+		if s.static.Drafting() {
+			s.poll()
+			time.Sleep(pollInterval)
+			continue
+		}
+		// Still poll once on the slow cadence: picks can be entered before
+		// the status flips, and a stale board is worse than a slow one.
+		s.poll()
+		time.Sleep(idleInterval)
+	}
+}
+
 func (s *server) poll() {
 	picks, err := s.static.Picks()
 
@@ -210,11 +237,7 @@ func runServe(addr, leagueID, configDir, dataDir, ownerID string, baseline draft
 		log.Printf("note: %s", warning)
 	}
 
-	go func() {
-		for range time.Tick(pollInterval) {
-			srv.poll()
-		}
-	}()
+	go srv.pollForever()
 
 	content, err := fs.Sub(staticFS, "static")
 	if err != nil {
@@ -229,7 +252,11 @@ func runServe(addr, leagueID, configDir, dataDir, ownerID string, baseline draft
 	mux.HandleFunc("/api/scratch/view", srv.handleScratchView)
 
 	snap := srv.snapshot()
+	cadence := idleInterval
+	if static.Drafting() {
+		cadence = pollInterval
+	}
 	log.Printf("draft board on http://localhost%s  (%d available, $%d pool, polling every %s)",
-		addr, len(snap.Players), snap.Dollars, pollInterval)
+		addr, len(snap.Players), snap.Dollars, cadence)
 	return http.ListenAndServe(addr, mux)
 }
