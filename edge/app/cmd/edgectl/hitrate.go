@@ -23,6 +23,18 @@ func hitrateCmd(args []string) error {
 	if *values == "" {
 		return fmt.Errorf("-values is required: a hit rate needs a game log")
 	}
+	// -line defaults to 0, which is a real number a caller could mean, so
+	// absence has to be detected rather than inferred. Omitting it used to
+	// score every game against a line of zero and report a 100% hit rate.
+	lineSupplied := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "line" {
+			lineSupplied = true
+		}
+	})
+	if !lineSupplied {
+		return fmt.Errorf("-line is required: without it every game is scored against 0")
+	}
 
 	var side wager.Side
 	switch strings.ToLower(*sideFlag) {

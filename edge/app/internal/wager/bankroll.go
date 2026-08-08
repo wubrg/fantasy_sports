@@ -1,6 +1,9 @@
 package wager
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Bankroll distinguishes cash from promotional credit. The two use different
 // EV formulas and want opposite things from a price, so nothing in this
@@ -67,6 +70,25 @@ const (
 	Bet365     Book = "bet365"
 )
 
+// Known reports whether this is a book whose bonus-bet rules are recorded here.
+//
+// Book is an unvalidated string type, so "FanDuel" and "fanduel" are different
+// values. Before this existed, any capitalisation slip or unrecognised book
+// answered "no" to every rule question -- turning CheckBonusMarket, which
+// guards against forfeiting a bonus bet outright, into a silent no-op.
+func (b Book) Known() bool {
+	switch b.normalized() {
+	case FanDuel, DraftKings, BetMGM, Bet365:
+		return true
+	}
+	return false
+}
+
+func (b Book) normalized() Book { return Book(strings.ToLower(strings.TrimSpace(string(b)))) }
+
+// KnownBooks lists the books whose rules are recorded.
+func KnownBooks() []Book { return []Book{FanDuel, DraftKings, BetMGM, Bet365} }
+
 // BonusLostOnPush reports whether a bonus bet is forfeited when the wager
 // pushes (ties).
 //
@@ -74,14 +96,14 @@ const (
 // wager a push is a neutral non-event, so this rule is easy to overlook -- but
 // for a FanDuel bonus bet a push is a total loss of the asset.
 func (b Book) BonusLostOnPush() bool {
-	return b == FanDuel
+	return b.normalized() == FanDuel
 }
 
 // BonusSplittable reports whether a bonus bet may be wagered in parts.
 // FanDuel allows it; DraftKings requires the token be used whole, which
 // creates a liquidity problem when hedging a large denomination.
 func (b Book) BonusSplittable() bool {
-	return b == FanDuel
+	return b.normalized() == FanDuel
 }
 
 // CheckBonusMarket rejects bonus bets on markets that can push at books which
@@ -91,6 +113,15 @@ func (b Book) BonusSplittable() bool {
 // This is a hard eligibility rule rather than a preference. The downside is
 // not a reduced conversion rate, it is losing the entire asset for nothing.
 func CheckBonusMarket(b Book, marketCanPush bool) error {
+	// An unknown book cannot be cleared. Answering "fine" for a book whose
+	// rules are not recorded is exactly the failure this check exists to
+	// prevent, and it is what happened for any value that was not one of the
+	// four constants -- including a differently capitalised one.
+	if !b.Known() {
+		return fmt.Errorf(
+			"wager: bonus-bet rules are not recorded for book %q, so this wager cannot be "+
+				"cleared (known: %v)", b, KnownBooks())
+	}
 	if marketCanPush && b.BonusLostOnPush() {
 		return fmt.Errorf(
 			"wager: %s forfeits the bonus bet on a push, and this market can push "+

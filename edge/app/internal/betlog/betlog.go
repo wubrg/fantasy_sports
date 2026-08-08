@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"sort"
 	"strings"
@@ -47,6 +48,27 @@ const (
 	Pushed Result = "push"
 	Void   Result = "void"
 )
+
+// ParseBankroll maps a recorded bankroll string to the typed value.
+//
+// Matching used to be a substring test for "bonus", which quietly gave cash
+// accounting to anything else -- including "snr", which the CLI accepts as a
+// bonus-bet alias. A losing bonus bet costs nothing and a losing cash bet costs
+// the stake, so the two differ by the whole stake on every loss.
+//
+// Only the canonical forms written by wager.Bankroll.String() are accepted.
+// Anything else is an error, not a default.
+func ParseBankroll(s string) (wager.Bankroll, error) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "real money":
+		return wager.RealMoney, nil
+	case "bonus bet":
+		return wager.BonusBet, nil
+	}
+	return wager.RealMoney, fmt.Errorf(
+		"betlog: %q is not a recognised bankroll (want %q or %q)",
+		s, wager.RealMoney.String(), wager.BonusBet.String())
+}
 
 // settleable reports whether a result is one a settlement may record. Load
 // rejects anything else rather than silently filing it as excluded.
@@ -178,9 +200,27 @@ func PlaceBet(path string, b Bet) (string, error) {
 	if _, err := b.Price.Breakeven(); err != nil {
 		return "", fmt.Errorf("betlog: %w", err)
 	}
+	if _, err := ParseBankroll(b.Bankroll); err != nil {
+		return "", err
+	}
+	// A non-positive stake used to be accepted, then counted in calibration
+	// while vanishing from ROI -- Score incremented Scored before skipping it.
+	if b.Stake <= 0 || math.IsNaN(b.Stake) || math.IsInf(b.Stake, 0) {
+		return "", fmt.Errorf("betlog: stake %v must be a positive real number", b.Stake)
+	}
+	if b.Book != "" && !b.Book.Known() {
+		return "", fmt.Errorf(
+			"betlog: %q is not a known sportsbook; bonus-bet rules differ by book "+
+				"and an unrecognised one would silently get the permissive default", b.Book)
+	}
 	now := time.Now()
 	id := NewID(now, b.Selection)
-	return id, Append(path, Entry{Kind: KindBet, ID: id, Time: now, Bet: &b})
+	if err := Append(path, Entry{Kind: KindBet, ID: id, Time: now, Bet: &b}); err != nil {
+		// Returning an id alongside an error would let a caller record an id
+		// that is not in the file.
+		return "", err
+	}
+	return id, nil
 }
 
 // Settle appends an outcome for a previously recorded bet.
@@ -314,15 +354,21 @@ func Score(bets []Settled, filter func(Settled) bool) (Calibration, error) {
 		}
 
 		stake := b.Bet.Stake
-		if stake <= 0 {
-			continue
+		if stake <= 0 || math.IsNaN(stake) || math.IsInf(stake, 0) {
+			return Calibration{}, fmt.Errorf(
+				"betlog: bet %s has stake %v; it would count toward calibration while "+
+					"contributing nothing to ROI", b.ID, stake)
 		}
 		c.Staked += stake
 		profit, err := b.Bet.Price.ProfitMultiple()
 		if err != nil {
 			return Calibration{}, fmt.Errorf("betlog: bet %s: %w", b.ID, err)
 		}
-		bonus := strings.Contains(strings.ToLower(b.Bet.Bankroll), "bonus")
+		bankroll, err := ParseBankroll(b.Bet.Bankroll)
+		if err != nil {
+			return Calibration{}, fmt.Errorf("betlog: bet %s: %w", b.ID, err)
+		}
+		bonus := bankroll == wager.BonusBet
 		switch {
 		case b.Result == Won:
 			c.Profit += stake * profit
