@@ -3,7 +3,9 @@ BINS := leaguectl leaguebot leagueweb draftroom
 .PHONY: build test vet fmt fmt-check lint clean check list \
 	draftroom keepers board serve install refresh data-status extractor-test \
 	leagueweb-install leagueweb-load leagueweb-unload leagueweb-restart leagueweb-status \
-	leagueweb-serve-mount leagueweb-serve-unmount leagueweb-serve-status
+	leagueweb-serve-mount leagueweb-serve-unmount leagueweb-serve-status \
+	draftroom-install draftroom-load draftroom-unload draftroom-restart draftroom-status \
+	draftroom-serve-mount draftroom-serve-unmount draftroom-serve-status
 
 build: ## Build leaguectl, leaguebot, leagueweb, and draftroom binaries
 	go build -o leaguectl ./cmd/leaguectl
@@ -119,6 +121,42 @@ check: fmt-check vet test ## Run fmt-check + vet + test, extractor tests include
 
 list: ## List available targets
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_.-]+:.*?## /{printf "  %-26s %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
+
+## --- macOS-only: draftroom persistence via launchd + tailscale serve ---
+## Same shape as the leagueweb targets below. The board polls Sleeper once a
+## minute when no draft is running and every two seconds once one opens, so
+## it is safe to leave mounted year-round rather than loaded on the night.
+##
+## `tailscale serve` is tailnet-only. This board carries your valuations,
+## your leans and your keeper analysis, so it must never be `tailscale
+## funnel`, which would put all of that on the public internet.
+
+DRAFT_PLIST := com.draftroom.serve.plist
+DRAFT_PLIST_DEST := $(HOME)/Library/LaunchAgents/$(DRAFT_PLIST)
+
+draftroom-install: ## (macOS) Copy the draftroom plist template into ~/Library/LaunchAgents
+	cp com.draftroom.serve.plist.template $(DRAFT_PLIST_DEST)
+	@echo "$(DRAFT_PLIST_DEST) copied. Paths and your owner ID are pre-filled for this checkout; edit if either differs, then: make draftroom-load"
+
+draftroom-load: ## (macOS) launchctl load the draftroom launch agent
+	launchctl load $(DRAFT_PLIST_DEST)
+
+draftroom-unload: ## (macOS) launchctl unload the draftroom launch agent
+	launchctl unload $(DRAFT_PLIST_DEST)
+
+draftroom-restart: draftroom-unload draftroom-load ## (macOS) unload then load the draftroom launch agent
+
+draftroom-status: ## (macOS) Show whether the draftroom launch agent is loaded
+	launchctl list | grep com.draftroom.serve || echo "not loaded"
+
+draftroom-serve-mount: ## (macOS) Mount the draft board at /draftroom via tailscale serve
+	tailscale serve --bg --set-path=/draftroom localhost:8083
+
+draftroom-serve-unmount: ## (macOS) Remove the /draftroom tailscale serve mount
+	tailscale serve --set-path=/draftroom off
+
+draftroom-serve-status: ## (macOS) Show current tailscale serve mappings
+	tailscale serve status
 
 ## --- macOS-only: leagueweb persistence via launchd + tailscale serve ---
 ## Not exercised by `check`. See ../../league_home/README.md ("Running it

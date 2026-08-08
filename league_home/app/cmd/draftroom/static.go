@@ -203,6 +203,25 @@ func (s *staticData) Picks() ([]sleeper.DraftPick, error) {
 	return s.client.DraftPicks(s.draftID)
 }
 
+// Drafting reports whether the draft is actually under way.
+//
+// One small call, and it decides how hard the poll loop works. Sleeper's
+// draft status is "pre_draft" until the commissioner starts it and
+// "complete" when it ends, so outside that window there is nothing to
+// discover by asking every two seconds.
+func (s *staticData) Drafting() bool {
+	if s.draftID == "" {
+		return false
+	}
+	d, err := s.client.Draft(s.draftID)
+	if err != nil {
+		// Unknown is treated as live: a blip must not stall the board on
+		// the one night it matters.
+		return true
+	}
+	return d.Status == "drafting"
+}
+
 // gone describes a player who has left the board, and what it cost.
 type gone struct {
 	price int
