@@ -427,7 +427,7 @@ func buildSnapshot(leagueID, configDir, dataDir, ownerID string, baseline draft.
 			}
 		}
 	}
-	return static.Build(taken)
+	return static.Build(taken, nil)
 }
 
 // runBoard prints the draft board.

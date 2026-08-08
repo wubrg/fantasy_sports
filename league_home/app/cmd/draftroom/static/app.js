@@ -56,13 +56,26 @@ function esc(s) {
 }
 
 // Flags carry meaning, so they get colour rather than being dumped as text.
+// The lean cycle, matching leanCycle in leanedit.go. Clicking steps through
+// it, so setting one and undoing it are the same gesture — which is what you
+// want with a few seconds on the clock.
+const LEAN_CYCLE = ["", "must", "up", "down", "dnd"];
+
+function nextLean(current) {
+  const i = LEAN_CYCLE.indexOf(current || "");
+  return LEAN_CYCLE[(i < 0 ? 0 : i + 1) % LEAN_CYCLE.length];
+}
+
 function flagHTML(p) {
   const out = [];
-  const lean = p.Lean && p.Lean.Lean;
-  if (lean === "must") out.push(`<span class="flag must">MUST</span>`);
-  if (lean === "dnd") out.push(`<span class="flag dnd">DND</span>`);
-  if (lean === "up") out.push(`<span class="flag">+</span>`);
-  if (lean === "down") out.push(`<span class="flag">-</span>`);
+  const lean = (p.Lean && p.Lean.Lean) || "";
+  // Always rendered, even when unset, so every row has the same control in
+  // the same place. An empty one is a dot you can click rather than a gap
+  // you have to know about.
+  const label = { must: "MUST", dnd: "DND", up: "+", down: "-" }[lean] || "·";
+  const cls = { must: "flag must", dnd: "flag dnd" }[lean] || "flag";
+  out.push(`<span class="${cls} lean-set" data-lean="${esc(p.Name)}"` +
+    ` data-next="${nextLean(lean)}" title="click: ${nextLean(lean) || "no read"}">${label}</span>`);
 
   // Naming the dissenting set, not just flagging dissent: you want to know
   // which read to go and check before the bidding starts.
@@ -316,6 +329,12 @@ function drawScratch() {
     .join(" ");
   document.getElementById("s-mix").innerHTML = mix;
 
+  // Nothing to clear means nothing to click. The button clears the players
+  // you are trying on, not the keepers, so with only keepers on the panel a
+  // live button would visibly do nothing — which is exactly how a working
+  // one gets reported as broken.
+  document.getElementById("s-clear").disabled = !!scratch.empty;
+
   const note = document.getElementById("s-note");
   if (scratch.empty) {
     note.textContent = "Your keepers are already here. Click + on a row to try a player alongside them; nothing on this panel touches the live board.";
@@ -328,6 +347,17 @@ function drawScratch() {
     }
     note.textContent = bits.join(" \u00b7 ");
   }
+}
+
+// setLean records a personal read. The response is the rebuilt board, so
+// MY MAX and the must-have line move with it in the same paint.
+async function setLean(player, lean) {
+  snap = await fetchJSON("api/lean", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ player, lean }),
+  });
+  draw();
 }
 
 async function scratchAction(action, player, price) {
@@ -376,6 +406,11 @@ document.addEventListener("click", async ev => {
   if (tryBtn) {
     const name = tryBtn.dataset.try;
     await scratchAction(tryBtn.dataset.in === "1" ? "remove" : "add", name);
+    return;
+  }
+  const leanEl = ev.target.closest("[data-lean]");
+  if (leanEl) {
+    await setLean(leanEl.dataset.lean, leanEl.dataset.next);
     return;
   }
   const reprice = ev.target.closest("[data-reprice]");

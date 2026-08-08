@@ -1,6 +1,7 @@
 package draft
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -197,5 +198,98 @@ func TestShippedMyGuysFileParses(t *testing.T) {
 		if pl.Cap < 0 {
 			t.Errorf("%s has a negative cap", pl.Player)
 		}
+	}
+}
+
+// TestWriteLeansRoundTrips — what is written has to be what ParseLeans
+// reads, or a read set at the board comes back as something else on restart.
+func TestWriteLeansRoundTrips(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "mine.csv")
+	in := Leans{
+		normalizeName("Ashton Jeanty"): {Player: "Ashton Jeanty", Lean: LeanMust, Cap: 48, Note: "Kubiak"},
+		normalizeName("Kyle Pitts"):    {Player: "Kyle Pitts", Lean: LeanDND},
+		normalizeName("De'Von Achane"): {Player: "De'Von Achane", Lean: LeanUp},
+	}
+	if err := WriteLeans(path, in); err != nil {
+		t.Fatal(err)
+	}
+	back, err := LoadLeans(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(back) != len(in) {
+		t.Fatalf("wrote %d reads, read back %d", len(in), len(back))
+	}
+	for key, want := range in {
+		got, ok := back[key]
+		if !ok {
+			t.Fatalf("%s did not survive", want.Player)
+		}
+		if got.Lean != want.Lean || got.Cap != want.Cap || got.Note != want.Note {
+			t.Errorf("%s came back as %+v, want %s/%d/%q",
+				want.Player, got, want.Lean, want.Cap, want.Note)
+		}
+	}
+}
+
+// TestWriteLeansDoesNotMarkTheFileGenerated is the guard that protects
+// hand-written reads.
+//
+// isGenerated decides whether `leans -generate` may overwrite a file. If a
+// board-saved mine.csv carried the marker, the next generation would be
+// entitled to destroy every read in it.
+func TestWriteLeansDoesNotMarkTheFileGenerated(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "mine.csv")
+	if err := WriteLeans(path, Leans{normalizeName("X"): {Player: "X", Lean: LeanUp}}); err != nil {
+		t.Fatal(err)
+	}
+	if isGenerated(path) {
+		t.Error("a board-saved lean file reads as generated, so -generate could overwrite it")
+	}
+}
+
+// TestWriteLeansLeavesNoTemporaryFiles — the write goes via a temp file in
+// the same directory so a crash cannot truncate the real one. That temp must
+// not survive, or the leans directory fills with debris that LoadLeanSet
+// would eventually try to read.
+func TestWriteLeansLeavesNoTemporaryFiles(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "mine.csv")
+	if err := WriteLeans(path, Leans{normalizeName("X"): {Player: "X", Lean: LeanUp}}); err != nil {
+		t.Fatal(err)
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].Name() != "mine.csv" {
+		var names []string
+		for _, e := range entries {
+			names = append(names, e.Name())
+		}
+		t.Errorf("directory holds %v, want only mine.csv", names)
+	}
+}
+
+// TestWriteLeansIsStable — two saves of the same reads produce identical
+// bytes, so the file does not churn in git every time the board touches it.
+func TestWriteLeansIsStable(t *testing.T) {
+	dir := t.TempDir()
+	in := Leans{
+		normalizeName("B Player"): {Player: "B Player", Lean: LeanUp},
+		normalizeName("A Player"): {Player: "A Player", Lean: LeanDown},
+	}
+	first := filepath.Join(dir, "one.csv")
+	second := filepath.Join(dir, "two.csv")
+	if err := WriteLeans(first, in); err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteLeans(second, in); err != nil {
+		t.Fatal(err)
+	}
+	a, _ := os.ReadFile(first)
+	b, _ := os.ReadFile(second)
+	if string(a) != string(b) {
+		t.Errorf("two writes differ:\n%s\n---\n%s", a, b)
 	}
 }
