@@ -190,19 +190,31 @@ func (l Leans) MustHaves(budget, openSlots int, bids map[string]int) MustHaveCos
 // formats its extension names. A missing file is not an error — no leans
 // recorded just means the board runs on model prices alone.
 func LoadLeans(path string) (Leans, error) {
+	leans, _, err := LoadLeansFile(path)
+	return leans, err
+}
+
+// LoadLeansFile is LoadLeans, also returning the players listed with no read
+// yet.
+//
+// Anything that reads a file in order to write it back must use this rather
+// than LoadLeans. The undecided names live only in the file, not in Leans,
+// so a read-modify-write that drops them deletes part of the file on the
+// next save without touching a read.
+func LoadLeansFile(path string) (Leans, []string, error) {
 	f, err := os.Open(path)
 	if os.IsNotExist(err) {
-		return Leans{}, nil
+		return Leans{}, nil, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("draft: opening leans %s: %w", path, err)
+		return nil, nil, fmt.Errorf("draft: opening leans %s: %w", path, err)
 	}
 	defer f.Close()
-	leans, _, err := parserFor(path)(f)
+	leans, undecided, err := parserFor(path)(f)
 	if err != nil {
-		return nil, fmt.Errorf("draft: %s: %w", path, err)
+		return nil, nil, fmt.Errorf("draft: %s: %w", path, err)
 	}
-	return leans, nil
+	return leans, undecided, nil
 }
 
 // parserFor picks a reader by extension, defaulting to the row-per-player
@@ -231,14 +243,23 @@ func parserFor(path string) func(io.Reader) (Leans, []string, error) {
 // so an interrupted save leaves the previous file whole rather than a
 // truncated one. Same directory because rename is only atomic within a
 // filesystem.
-func WriteLeans(path string, leans Leans) error {
+func WriteLeans(path string, leans Leans, undecided []string) error {
 	rows := make([]PlayerLean, 0, len(leans))
 	for _, pl := range leans {
 		rows = append(rows, pl)
 	}
 	sort.Slice(rows, func(i, j int) bool { return rows[i].Player < rows[j].Player })
 
-	body, err := formatLeans(path, rows)
+	// A name that has since been ruled on is no longer undecided; keeping it
+	// in both places would make the file contradict itself and fail to load.
+	kept := undecided[:0:0]
+	for _, name := range undecided {
+		if _, decided := leans[normalizeName(name)]; !decided {
+			kept = append(kept, name)
+		}
+	}
+
+	body, err := formatLeans(path, rows, kept)
 	if err != nil {
 		return err
 	}
@@ -246,10 +267,10 @@ func WriteLeans(path string, leans Leans) error {
 }
 
 // formatLeans renders the rows in the format path names.
-func formatLeans(path string, rows []PlayerLean) (string, error) {
+func formatLeans(path string, rows []PlayerLean, undecided []string) (string, error) {
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".yaml", ".yml":
-		doc, err := FormatLeansYAML(rows, nil)
+		doc, err := FormatLeansYAML(rows, undecided)
 		return string(doc), err
 	}
 
@@ -267,6 +288,12 @@ func formatLeans(path string, rows []PlayerLean) (string, error) {
 			return "", fmt.Errorf("draft: writing leans: %w", err)
 		}
 	}
+	// A blank lean is how the row-per-player form says "not decided yet".
+	for _, name := range undecided {
+		if err := w.Write([]string{name, "", "", ""}); err != nil {
+			return "", fmt.Errorf("draft: writing leans: %w", err)
+		}
+	}
 	w.Flush()
 	if err := w.Error(); err != nil {
 		return "", fmt.Errorf("draft: writing leans: %w", err)
@@ -277,8 +304,21 @@ func formatLeans(path string, rows []PlayerLean) (string, error) {
 // replaceFile writes body to path via a temporary file in the same
 // directory, so an interrupted save leaves the previous file whole rather
 // than a truncated one.
+//
+// A symlink is resolved first and the target written instead. Renaming over
+// the link would replace it with a real file, and a set symlinked into a
+// notes vault would go on being edited there with nothing reaching the
+// board — the same trap `leans -convert` refuses to set.
 func replaceFile(path, body string) error {
-	tmp, err := os.CreateTemp(filepath.Dir(path), ".leans-*")
+	if target, err := filepath.EvalSymlinks(path); err == nil {
+		path = target
+	}
+	dir := filepath.Dir(path)
+	// The lean directory may not exist yet on a config that predates it.
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("draft: writing leans: %w", err)
+	}
+	tmp, err := os.CreateTemp(dir, ".leans-*")
 	if err != nil {
 		return fmt.Errorf("draft: writing leans: %w", err)
 	}

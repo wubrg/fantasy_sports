@@ -291,7 +291,7 @@ Keyboard: `/` focuses the filter, `Esc` clears it. Typing a position
 must → up → down → dnd → none. `MY MAX` and the must-have budget line move in
 the same paint.
 
-It is written straight back to `leans/mine.csv`, so a read set mid-auction is
+It is written straight back to `leans/mine.yaml`, so a read set mid-auction is
 still there next time the board starts. The save is a read-modify-write of
 that file rather than a dump of what the server is holding: you edit it by
 hand too, and may have it open, so anything added since startup normally

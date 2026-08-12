@@ -59,7 +59,7 @@ const (
 // builtinConfigDir and builtinDataDir are baked in by `make install` so an
 // installed binary works from any directory without environment variables.
 // They are only fallbacks: an explicit flag or env var still wins, and the
-// files themselves are read at runtime, so editing leans/mine.csv takes effect
+// files themselves are read at runtime, so editing leans/mine.yaml takes effect
 // without rebuilding.
 var (
 	builtinConfigDir string

@@ -45,6 +45,19 @@ func loadLeanSets(cfg string, names []string) (draft.Leans, []draft.LeanSet, err
 	return draft.MergeLeans(set), []draft.LeanSet{set}, nil
 }
 
+// writableSetPath is the file a read set on the board belongs in: the one
+// the highest-precedence set was actually loaded from.
+//
+// Falls back to where "mine" would be created, for the case where no set
+// loaded at all. Never guesses when a real path is available — the reader's
+// fallbacks are not reproducible from the config directory alone.
+func writableSetPath(cfg string, sets []draft.LeanSet) string {
+	if len(sets) > 0 && sets[0].Path != "" {
+		return sets[0].Path
+	}
+	return draft.LeanSetPath(cfg, "mine")
+}
+
 // runLeans shows the merged lean sets, or rebuilds the generated ones.
 //
 // Worth having as its own command because a merge you cannot inspect is a
