@@ -11,6 +11,15 @@ Ashton Jeanty,must,,"the risk ceiling sets the bid, not a guess"
 `lean` is `must`, `up`, `down`, or `dnd`. `cap` is optional and only ever
 tightens a must-have. Lines beginning `#` are comments.
 
+Column order does not matter — the header names the columns, so a set may
+write `lean,player,cap,note` if that is easier to type.
+
+**Leaving `lean` blank is allowed** and means "listed, not decided yet". The
+row records no read, and `draftroom leans` prints the undecided names so a
+name you have not ruled on cannot pass for one you have. A lean that is
+present but misspelled is still an error — that one is a typo hiding a read
+you think you have.
+
 ## Why more than one file
 
 The opinions have different standing. Yours are convictions you will act on;

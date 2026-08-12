@@ -173,7 +173,7 @@ func TestGeneratedMarkerIsRead(t *testing.T) {
 
 // TestCommentsAreSkipped — generated files carry a provenance header.
 func TestCommentsAreSkipped(t *testing.T) {
-	got, err := ParseLeans(strings.NewReader(mentonCSV))
+	got, _, err := ParseLeans(strings.NewReader(mentonCSV))
 	if err != nil {
 		t.Fatal(err)
 	}

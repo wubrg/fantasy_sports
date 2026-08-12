@@ -198,7 +198,7 @@ func LoadLeans(path string) (Leans, error) {
 		return nil, fmt.Errorf("draft: opening leans %s: %w", path, err)
 	}
 	defer f.Close()
-	leans, err := ParseLeans(f)
+	leans, _, err := ParseLeans(f)
 	if err != nil {
 		return nil, fmt.Errorf("draft: %s: %w", path, err)
 	}
@@ -258,8 +258,22 @@ func WriteLeans(path string, leans Leans) error {
 	return os.Rename(tmp.Name(), path)
 }
 
-// ParseLeans reads personal reads from any CSV source.
-func ParseLeans(r io.Reader) (Leans, error) {
+// ParseLeans reads personal reads from any CSV source, and also returns the
+// players listed with no lean yet, in file order.
+//
+// Those two results are deliberately separate. A row naming a player with an
+// empty lean is not a malformed row — it is you having written the name down
+// before deciding, which is the normal intermediate state in a file edited a
+// line at a time on a phone. Rejecting the file over it would throw away
+// every finished read in the same file. Returning the undecided names rather
+// than dropping them quietly keeps "not decided yet" distinguishable from
+// "decided and applied", which is the distinction that makes the file
+// trustworthy to edit away from the draft board.
+//
+// Undecided is not the same state as the "none" lean. A none row is a read —
+// you looked at him and hold no opinion — and it outranks a lower-precedence
+// set that does. An undecided row is the absence of one.
+func ParseLeans(r io.Reader) (Leans, []string, error) {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.TrimLeadingSpace = true
@@ -270,11 +284,12 @@ func ParseLeans(r io.Reader) (Leans, error) {
 
 	records, err := cr.ReadAll()
 	if err != nil {
-		return nil, fmt.Errorf("reading leans: %w", err)
+		return nil, nil, fmt.Errorf("reading leans: %w", err)
 	}
 	out := Leans{}
+	var undecided []string
 	if len(records) == 0 {
-		return out, nil
+		return out, nil, nil
 	}
 
 	cols := map[string]int{}
@@ -283,11 +298,11 @@ func ParseLeans(r io.Reader) (Leans, error) {
 	}
 	nameCol, ok := cols["player"]
 	if !ok {
-		return nil, fmt.Errorf("leans need a player column, have %v", records[0])
+		return nil, nil, fmt.Errorf("leans need a player column, have %v", records[0])
 	}
 	leanCol, ok := cols["lean"]
 	if !ok {
-		return nil, fmt.Errorf("leans need a lean column, have %v", records[0])
+		return nil, nil, fmt.Errorf("leans need a lean column, have %v", records[0])
 	}
 	at := func(row []string, name string) string {
 		i, ok := cols[name]
@@ -309,8 +324,16 @@ func ParseLeans(r io.Reader) (Leans, error) {
 		lean := Lean(strings.ToLower(strings.TrimSpace(row[leanCol])))
 		switch lean {
 		case LeanMust, LeanUp, LeanDown, LeanDND, LeanNone:
+		case "":
+			// Named but not yet decided. Recorded, not applied — and not
+			// grounds to reject the reads around it. Distinct from the none
+			// lean, which is a read that silences a lower-precedence set.
+			undecided = append(undecided, name)
+			continue
 		default:
-			return nil, fmt.Errorf("line %d: unknown lean %q for %s (use must, up, down, dnd, or none)",
+			// A value that is present but unrecognized is still a typo, and
+			// silently ignoring it would hide a read you believed you had.
+			return nil, nil, fmt.Errorf("line %d: unknown lean %q for %s (use must, up, down, dnd, or none)",
 				line, lean, name)
 		}
 
@@ -320,13 +343,13 @@ func ParseLeans(r io.Reader) (Leans, error) {
 		if raw := at(row, "cap"); raw != "" {
 			cap, err := strconv.Atoi(strings.TrimPrefix(raw, "$"))
 			if err != nil || cap < 1 {
-				return nil, fmt.Errorf("line %d: bad cap %q for %s (whole dollars, at least 1)", line, raw, name)
+				return nil, nil, fmt.Errorf("line %d: bad cap %q for %s (whole dollars, at least 1)", line, raw, name)
 			}
 			pl.Cap = cap
 		}
 		out[normalizeName(name)] = pl
 	}
-	return out, nil
+	return out, undecided, nil
 }
 
 // Marker is a short glyph for the board, so a lean reads at a glance.
