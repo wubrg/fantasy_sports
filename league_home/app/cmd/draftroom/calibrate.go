@@ -111,7 +111,16 @@ func loadTeamSeasons(c *sleeper.Client, leagueID string, want []string, includeA
 
 // seasonRosters pairs one league year's draft with its final standings.
 func seasonRosters(c *sleeper.Client, league sleeper.League, players map[string]sleeper.Player) (string, []draft.TeamSeason, error) {
-	drafts, err := c.Drafts(league.LeagueID)
+	// What each drafted player went on to score, so the report can ask
+	// whether the money bought the finish. One call per season, the same
+	// one playerInfo uses for keeper eligibility.
+	stats, err := c.SeasonStats("regular", league.Season)
+	if err != nil {
+		return "", nil, fmt.Errorf("loading %s stats: %w", league.Season, err)
+	}
+
+	drafts, err2 := c.Drafts(league.LeagueID)
+	err = err2
 	if err != nil {
 		return "", nil, fmt.Errorf("loading drafts for %s: %w", league.Season, err)
 	}
@@ -150,6 +159,7 @@ func seasonRosters(c *sleeper.Client, league sleeper.League, players map[string]
 				Position: players[p.PlayerID].Position,
 				Price:    price,
 				Keeper:   p.IsKeeper,
+				Points:   stats[p.PlayerID]["pts_half_ppr"],
 			})
 		}
 	}

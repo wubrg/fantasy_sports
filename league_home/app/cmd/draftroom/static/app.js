@@ -56,13 +56,26 @@ function esc(s) {
 }
 
 // Flags carry meaning, so they get colour rather than being dumped as text.
+// The lean cycle, matching leanCycle in leanedit.go. Clicking steps through
+// it, so setting one and undoing it are the same gesture — which is what you
+// want with a few seconds on the clock.
+const LEAN_CYCLE = ["", "must", "up", "down", "dnd"];
+
+function nextLean(current) {
+  const i = LEAN_CYCLE.indexOf(current || "");
+  return LEAN_CYCLE[(i < 0 ? 0 : i + 1) % LEAN_CYCLE.length];
+}
+
 function flagHTML(p) {
   const out = [];
-  const lean = p.Lean && p.Lean.Lean;
-  if (lean === "must") out.push(`<span class="flag must">MUST</span>`);
-  if (lean === "dnd") out.push(`<span class="flag dnd">DND</span>`);
-  if (lean === "up") out.push(`<span class="flag">+</span>`);
-  if (lean === "down") out.push(`<span class="flag">-</span>`);
+  const lean = (p.Lean && p.Lean.Lean) || "";
+  // Always rendered, even when unset, so every row has the same control in
+  // the same place. An empty one is a dot you can click rather than a gap
+  // you have to know about.
+  const label = { must: "MUST", dnd: "DND", up: "+", down: "-" }[lean] || "·";
+  const cls = { must: "flag must", dnd: "flag dnd" }[lean] || "flag";
+  out.push(`<span class="${cls} lean-set" data-lean="${esc(p.Name)}"` +
+    ` data-next="${nextLean(lean)}" title="click: ${nextLean(lean) || "no read"}">${label}</span>`);
 
   // Naming the dissenting set, not just flagging dissent: you want to know
   // which read to go and check before the bidding starts.
@@ -132,6 +145,7 @@ function draw() {
       const thin = s.Cover > 0 && s.Cover < 1 ? " bad" : "";
       return [pos, `<span class="${thin.trim()}">${s.Startable} startable · ${cover}</span>`];
     }));
+  drawPriceLines();
   drawSold();
   drawScratch();
 
@@ -265,6 +279,42 @@ function drawMini(id, pairs) {
     .join("");
 }
 
+// What a bid buys, by position. Its own renderer rather than drawMini,
+// which only does two columns.
+//
+// The historical figure sits under the live one only where the two differ
+// enough to change a decision. Printing both on every cell doubles the ink
+// for rows where they agree, and the whole point of the panel is to be
+// readable in the second before you bid.
+function drawPriceLines() {
+  const lines = snap.priceLines || {};
+  const order = ["QB", "RB", "WR", "TE"];
+  const tiers = (lines.RB || lines.WR || {}).tiers || [];
+
+  const head = `<tr><td></td>` +
+    tiers.map(t => `<td class="num">top-${t}</td>`).join("") + `</tr>`;
+
+  const rows = order.filter(pos => lines[pos]).map(pos => {
+    const l = lines[pos];
+    const cells = l.live.map((v, i) => {
+      const past = (l.history || [])[i] || 0;
+      // Two conditions, because either alone gets it wrong. A ratio with no
+      // floor shouted about a $5-vs-$3 quarterback line; dividing by the
+      // live figure made the test lopsided, so $30-vs-$40 showed while
+      // $40-vs-$30 hid the same ten dollars. It was hiding the largest
+      // divergence on the board — an $11 gap at the top-five receiver line.
+      const gap = Math.abs(past - v);
+      const differs = past > 0 && v > 0 &&
+        gap >= 5 && gap / Math.max(past, v) >= 0.20;
+      const note = differs ? `<span class="was">${money(past)}</span>` : "";
+      return `<td class="num">${v ? money(v) : "—"}${note}</td>`;
+    }).join("");
+    return `<tr><td class="pos-${esc(pos)}">${esc(pos)}</td>${cells}</tr>`;
+  }).join("");
+
+  document.getElementById("pricelines").innerHTML = head + rows;
+}
+
 function drawSold() {
   const el = document.getElementById("soldlist");
   const entries = Object.entries(snap.__sold || {});
@@ -316,6 +366,12 @@ function drawScratch() {
     .join(" ");
   document.getElementById("s-mix").innerHTML = mix;
 
+  // Nothing to clear means nothing to click. The button clears the players
+  // you are trying on, not the keepers, so with only keepers on the panel a
+  // live button would visibly do nothing — which is exactly how a working
+  // one gets reported as broken.
+  document.getElementById("s-clear").disabled = !!scratch.empty;
+
   const note = document.getElementById("s-note");
   if (scratch.empty) {
     note.textContent = "Your keepers are already here. Click + on a row to try a player alongside them; nothing on this panel touches the live board.";
@@ -328,6 +384,17 @@ function drawScratch() {
     }
     note.textContent = bits.join(" \u00b7 ");
   }
+}
+
+// setLean records a personal read. The response is the rebuilt board, so
+// MY MAX and the must-have line move with it in the same paint.
+async function setLean(player, lean) {
+  snap = await fetchJSON("api/lean", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ player, lean }),
+  });
+  draw();
 }
 
 async function scratchAction(action, player, price) {
@@ -376,6 +443,11 @@ document.addEventListener("click", async ev => {
   if (tryBtn) {
     const name = tryBtn.dataset.try;
     await scratchAction(tryBtn.dataset.in === "1" ? "remove" : "add", name);
+    return;
+  }
+  const leanEl = ev.target.closest("[data-lean]");
+  if (leanEl) {
+    await setLean(leanEl.dataset.lean, leanEl.dataset.next);
     return;
   }
   const reprice = ev.target.closest("[data-reprice]");
