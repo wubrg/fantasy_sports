@@ -298,9 +298,14 @@ function drawPriceLines() {
     const l = lines[pos];
     const cells = l.live.map((v, i) => {
       const past = (l.history || [])[i] || 0;
-      // A third of a tier apart is where the room's habit is worth knowing;
-      // below that the two numbers are the same answer twice.
-      const differs = past > 0 && v > 0 && Math.abs(past - v) / Math.max(v, 1) >= 0.33;
+      // Two conditions, because either alone gets it wrong. A ratio with no
+      // floor shouted about a $5-vs-$3 quarterback line; dividing by the
+      // live figure made the test lopsided, so $30-vs-$40 showed while
+      // $40-vs-$30 hid the same ten dollars. It was hiding the largest
+      // divergence on the board — an $11 gap at the top-five receiver line.
+      const gap = Math.abs(past - v);
+      const differs = past > 0 && v > 0 &&
+        gap >= 5 && gap / Math.max(past, v) >= 0.20;
       const note = differs ? `<span class="was">${money(past)}</span>` : "";
       return `<td class="num">${v ? money(v) : "—"}${note}</td>`;
     }).join("");

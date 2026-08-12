@@ -70,9 +70,20 @@ func (t TeamSeason) CountOver(pos string, price int) int {
 	return n
 }
 
-// minLadderTop is the dearest-player price below which a position has no
-// price ladder to speak of, and so nothing to correlate.
-const minLadderTop = 10
+// minTopFiveLine is the top-five price below which a position has no ladder
+// worth correlating.
+//
+// Read at the fifth rank rather than the first because that is the line the
+// report is about. Judging by the dearest player was fitted to one glance at
+// one season and nearly broke: 2025's priciest defense went for exactly $10
+// against a $10 guard, so the whole position was excluded only by the
+// unrelated ten-player minimum, and one more drafted defense would have put
+// a rho of +0.02 into the headline.
+//
+// The fifth-rank line separates cleanly instead. Defenses sit at $1 or $2
+// there in every season on record; the cheapest real position is 2022
+// quarterback at $8.
+const minTopFiveLine = 5
 
 // PriceRankFit is how closely what a position cost tracked how it finished,
 // for one position in one season.
@@ -120,17 +131,11 @@ func FitPriceRanks(seasons []TeamSeason) []PriceRankFit {
 		}
 		sort.SliceStable(players, func(i, j int) bool { return players[i].Price > players[j].Price })
 
-		// A position nobody bids on cannot answer this question. Defenses
-		// go for a dollar or four here — eleven of them across a $3 spread
-		// and four distinct prices — so their "price rank" is mostly the
+		// A position nobody bids on cannot answer this question. Defenses go
+		// for a dollar or two here, so their "price rank" is mostly the
 		// order the picks happened in, and correlating that against a
-		// finish produces a number about nothing. Positions with a real
-		// ladder span thirty to sixty dollars.
-		//
-		// Stated as the dearest player rather than as variance because it
-		// is the same test the price lines themselves imply: a position
-		// whose best player costs $4 has no top-five line worth reading.
-		if players[0].Price < minLadderTop {
+		// finish produces a confident number about nothing.
+		if players[4].Price < minTopFiveLine {
 			continue
 		}
 

@@ -143,12 +143,30 @@ func (s *server) saveLeans() error {
 	}
 	for k, v := range s.leans.snapshot() {
 		if v.Lean == "" {
+			// Deleting a row that was never in this file changes nothing,
+			// and the read comes straight back from whichever set owns it.
+			// A none row is how mine.csv says "I have no opinion on him",
+			// and it outranks the set that does.
+			if _, inherited := s.static.leans[k]; inherited {
+				if _, ours := onDisk[k]; !ours {
+					merged[k] = draft.PlayerLean{Player: v.Player, Lean: draft.LeanNone}
+					continue
+				}
+			}
 			delete(merged, k)
 			continue
 		}
-		// Keep whatever cap and note the file already carried for him: the
-		// board cannot set them, so it must not erase them either.
+		// Keep whatever cap and note he came with: the board cannot set
+		// them, so it must not erase them either.
+		//
+		// Falling back to the startup state matters as much as reading the
+		// file. Cycling past "none" deletes the row, so by the time the
+		// cycle comes back around to a read there is nothing on disk left
+		// to preserve — and a $20 hard cap would be quietly dropped by
+		// four clicks that end where they began.
 		if old, ok := merged[k]; ok {
+			v.Cap, v.Note = old.Cap, old.Note
+		} else if old, ok := s.static.leans[k]; ok {
 			v.Cap, v.Note = old.Cap, old.Note
 		}
 		merged[k] = v

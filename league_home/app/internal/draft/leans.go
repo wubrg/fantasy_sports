@@ -33,6 +33,15 @@ const (
 	LeanUp   Lean = "up"
 	LeanDown Lean = "down"
 	LeanDND  Lean = "dnd"
+	// LeanNone is an explicit absence of a read, and it exists so a lower
+	// precedence set can be silenced.
+	//
+	// Clearing a lean the board inherited from an analyst set had nothing
+	// to write: deleting a row from mine.csv that was never in mine.csv
+	// changes nothing, and the read came straight back on restart. A none
+	// row says "I looked at him and I have no opinion", which outranks the
+	// set that does and survives a reload.
+	LeanNone Lean = "none"
 )
 
 // convictionFactor is how much up/down moves your value estimate.
@@ -299,9 +308,9 @@ func ParseLeans(r io.Reader) (Leans, error) {
 		}
 		lean := Lean(strings.ToLower(strings.TrimSpace(row[leanCol])))
 		switch lean {
-		case LeanMust, LeanUp, LeanDown, LeanDND:
+		case LeanMust, LeanUp, LeanDown, LeanDND, LeanNone:
 		default:
-			return nil, fmt.Errorf("line %d: unknown lean %q for %s (use must, up, down, or dnd)",
+			return nil, fmt.Errorf("line %d: unknown lean %q for %s (use must, up, down, dnd, or none)",
 				line, lean, name)
 		}
 

@@ -85,6 +85,9 @@ func linePick(id string, amount string) sleeper.DraftPick {
 	p := sleeper.DraftPick{PlayerID: id}
 	p.Metadata.Amount = amount
 	p.PickedBy = "owner-" + id
+	// Keepers, because the history guard skips the inaugural draft by
+	// counting them and a fixture of pure auction picks looks like 2021.
+	p.IsKeeper = true
 	return p
 }
 
@@ -206,5 +209,31 @@ func TestTiedFinishesDoNotInventAnOrder(t *testing.T) {
 	// the perfect relationship a fabricated order would produce.
 	if got[0].Rho > 0.85 {
 		t.Errorf("rho = %.2f — ten tied zeroes appear to be carrying an order", got[0].Rho)
+	}
+}
+
+// TestHistorySkipsTheInauguralDraft — 2021 ran with one keeper against
+// twenty-odd since, so every elite player was in the pool and the top of
+// each ladder priced accordingly. It passes the spend guard comfortably and
+// was quietly sitting in the reference line while the correlation printed
+// beside it covered 2023-2025 only.
+func TestHistorySkipsTheInauguralDraft(t *testing.T) {
+	posOf := func(string) string { return "RB" }
+	mk := func(year string, keepers bool, amounts ...string) SeasonData {
+		s := SeasonData{Year: year}
+		for i, a := range amounts {
+			p := linePick(year+string(rune('a'+i)), a)
+			p.IsKeeper = keepers
+			s.Picks = append(s.Picks, p)
+		}
+		return s
+	}
+	seasons := []SeasonData{
+		mk("2021", false, "200", "190", "180", "170", "160"), // no keepers
+		mk("2024", true, "60", "50", "40", "30", "20"),
+	}
+	got := HistoricalPriceLines(seasons, posOf, 0)["RB"]
+	if got[0] != 40 {
+		t.Errorf("top-3 line = $%d, want $40 from the keeper-era season alone", got[0])
 	}
 }

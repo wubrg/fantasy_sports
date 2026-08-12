@@ -365,7 +365,21 @@ func (s *staticData) effectiveLeans(edits draft.Leans) draft.Leans {
 			delete(out, k)
 			continue
 		}
-		out[k] = v
+		// Only the read changes. Replacing the whole record erased two
+		// things that were not the board's to erase: a hand-written cap,
+		// which quietly raised the ceiling on a must-have from $24 to $49
+		// with nothing on screen to say so, and the losing opinions from
+		// other sets, which is what the "vs menton" split flag is made of.
+		//
+		// It could not be avoided by care either — every route back around
+		// the cycle passes through the clear, so four clicks turned a $20
+		// hard cap into no cap at all.
+		merged, known := out[k]
+		if !known {
+			merged.Player = v.Player
+		}
+		merged.Lean, merged.Source = v.Lean, v.Source
+		out[k] = merged
 	}
 	return out
 }

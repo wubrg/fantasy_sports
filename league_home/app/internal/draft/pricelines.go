@@ -14,7 +14,7 @@ var RankTiers = []int{3, 5, 8, 12}
 // A statement about price, not about players. Paying the top-five line means
 // you are spending what top-five players cost — measured against this
 // league's own drafts, price rank and end-of-season finish rank correlate at
-// about +0.47, which is real and nowhere near a promise. Five of these lines
+// about +0.46, which is real and nowhere near a promise. Five of these lines
 // were tested against the seasons that followed and the top-five one landed
 // 28 times in 60.
 type PositionPriceLine struct {
@@ -101,6 +101,14 @@ func HistoricalPriceLines(seasons []SeasonData, positionOf func(playerID string)
 	perSeason := map[string][][]int{}
 
 	for _, s := range seasons {
+		// The inaugural draft is not comparable either. 2021 ran with one
+		// keeper against twenty-odd since, so every elite player was in the
+		// pool and the top of each ladder priced accordingly. It passes the
+		// spend guard comfortably and was quietly sitting in the reference
+		// line while the correlation beside it covered 2023-2025 only.
+		if keptShare(s) < minKeeperShare {
+			continue
+		}
 		byPos := map[string][]int{}
 		total := 0
 		teams := map[string]int{}
@@ -141,6 +149,27 @@ func HistoricalPriceLines(seasons []SeasonData, positionOf func(playerID string)
 		out[pos] = line
 	}
 	return out
+}
+
+// minKeeperShare separates the keeper era from the inaugural draft.
+//
+// A share rather than a count, so it does not quietly depend on how many
+// teams the league has. One keeper among 2021's picks is well under a
+// percent; every season since runs above ten.
+const minKeeperShare = 0.05
+
+// keptShare is the fraction of a season's picks that were keepers.
+func keptShare(s SeasonData) float64 {
+	if len(s.Picks) == 0 {
+		return 0
+	}
+	n := 0
+	for _, p := range s.Picks {
+		if p.IsKeeper {
+			n++
+		}
+	}
+	return float64(n) / float64(len(s.Picks))
 }
 
 // medianSpendOf is the median of what each team laid out.

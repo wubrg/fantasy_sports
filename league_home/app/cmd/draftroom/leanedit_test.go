@@ -22,7 +22,16 @@ func leanServer(t *testing.T, mine string) (*server, string) {
 	if err := os.WriteFile(path, []byte(mine), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	srv, err := newServer(testStatic(), cfg)
+	static := testStatic()
+	// Production loads staticData.leans from this same file at startup, so a
+	// fixture that leaves it empty tests a state the server cannot be in.
+	loaded, err := draft.LoadLeans(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	static.leans = loaded
+
+	srv, err := newServer(static, cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -206,5 +215,100 @@ func TestAnEditReachesTheMustHaveLine(t *testing.T) {
 	}
 	if !named {
 		t.Errorf("the must-have line does not know about him: %+v", snap.MustHaves.Players)
+	}
+}
+
+// TestCyclingBackDoesNotEatTheCap is the defect that mattered most.
+//
+// The overlay replaced the whole record instead of changing the read, so a
+// board click dropped a hand-written cap. It could not be avoided by care:
+// every route around the cycle passes through the clear, so four clicks
+// ending where they began turned a $20 hard cap into no cap — silently
+// doubling the ceiling on a must-have with nothing on screen to say so.
+//
+// Both halves are checked, because fixing the in-memory overlay alone left
+// the file wrong: the clear deletes the row, so by the time the cycle came
+// back to a read there was nothing on disk left to preserve.
+func TestCyclingBackDoesNotEatTheCap(t *testing.T) {
+	srv, path := leanServer(t,
+		"player,lean,cap,note\nJahmyr Gibbs,must,20,\"hard cap twenty\"\n")
+	key := draft.NormalizeName("Jahmyr Gibbs")
+
+	for _, lean := range []draft.Lean{draft.LeanUp, draft.LeanDown, draft.LeanDND, "", draft.LeanMust} {
+		srv.leans.set("Jahmyr Gibbs", lean)
+		if err := srv.saveLeans(); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// On the board.
+	live := srv.static.effectiveLeans(srv.leans.snapshot())[key]
+	if live.Lean != draft.LeanMust {
+		t.Errorf("lean = %q, want must", live.Lean)
+	}
+	if live.Cap != 20 {
+		t.Errorf("cap = %d after a full cycle, want the hand-written 20", live.Cap)
+	}
+
+	// And on disk.
+	back, err := draft.LoadLeans(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := back[key]; got.Cap != 20 || !strings.Contains(got.Note, "hard cap") {
+		t.Errorf("saved as cap %d note %q, want the file's own values kept", got.Cap, got.Note)
+	}
+}
+
+// TestAnEditKeepsTheOtherSetsOpinions — the overlay carried no Others, so
+// setting a read wiped the "vs menton" split flag. Worst on a player you set
+// against a set that says the opposite, which is exactly when you want it.
+func TestAnEditKeepsTheOtherSetsOpinions(t *testing.T) {
+	s := testStatic()
+	key := draft.NormalizeName("Jahmyr Gibbs")
+	s.leans = draft.Leans{key: {
+		Player: "Jahmyr Gibbs", Lean: draft.LeanMust, Source: "mine",
+		Others: []draft.PlayerLean{{Lean: draft.LeanDown, Source: "menton"}},
+	}}
+
+	got := s.effectiveLeans(draft.Leans{key: {
+		Player: "Jahmyr Gibbs", Lean: draft.LeanMust, Source: "board",
+	}})[key]
+
+	if !got.Contested() {
+		t.Error("the split flag went missing when the read was set from the board")
+	}
+	if got.Source != "board" {
+		t.Errorf("source = %q, want the edit to own the read", got.Source)
+	}
+}
+
+// TestClearingAnInheritedReadSticks — deleting a row that was never in
+// mine.csv changes nothing, so a read owned by a generated set came straight
+// back on restart. A none row is how the file says "no opinion" loudly
+// enough to outrank the set that has one.
+func TestClearingAnInheritedReadSticks(t *testing.T) {
+	srv, path := leanServer(t, "player,lean,cap,note\n")
+	key := draft.NormalizeName("Jahmyr Gibbs")
+	// He carries a read from somewhere other than mine.csv.
+	srv.static.leans = draft.Leans{key: {
+		Player: "Jahmyr Gibbs", Lean: draft.LeanDown, Source: "menton",
+	}}
+
+	srv.leans.set("Jahmyr Gibbs", "")
+	if err := srv.saveLeans(); err != nil {
+		t.Fatal(err)
+	}
+
+	back, err := draft.LoadLeans(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, ok := back[key]
+	if !ok {
+		t.Fatal("nothing was written, so the generated set's read returns on restart")
+	}
+	if got.Lean != draft.LeanNone {
+		t.Errorf("wrote %q, want an explicit none to silence the other set", got.Lean)
 	}
 }

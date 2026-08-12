@@ -293,3 +293,24 @@ func TestWriteLeansIsStable(t *testing.T) {
 		t.Errorf("two writes differ:\n%s\n---\n%s", a, b)
 	}
 }
+
+// TestANoneReadSilencesLowerPrecedenceSets — an explicit absence has to beat
+// a set that does have an opinion, and then get out of the way rather than
+// showing up as a read of its own.
+func TestANoneReadSilencesLowerPrecedenceSets(t *testing.T) {
+	mine := LeanSet{Name: "mine", Leans: leansFrom(t,
+		"player,lean,cap,note\nBreece Hall,none,,\n")}
+	menton := LeanSet{Name: "menton", Leans: leansFrom(t,
+		"player,lean,cap,note\nBreece Hall,down,,zero traits\n")}
+
+	got := MergeLeans(mine, menton)
+	if pl, still := got[normalizeName("Breece Hall")]; still {
+		t.Errorf("a silenced player is still on the board as %q", pl.Lean)
+	}
+
+	// And with nothing to silence, none is simply absent rather than a read.
+	alone := MergeLeans(mine)
+	if _, still := alone[normalizeName("Breece Hall")]; still {
+		t.Error("a lone none read should leave nothing behind")
+	}
+}

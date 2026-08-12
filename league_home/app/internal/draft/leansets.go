@@ -103,6 +103,16 @@ func LoadLeanSets(configDir string, names []string) (Leans, []LeanSet, error) {
 // the board can only say so if the disagreement survives the merge.
 func MergeLeans(sets ...LeanSet) Leans {
 	out := Leans{}
+	defer func() {
+		// A none that won the merge did its job by winning: it silenced the
+		// sets behind it. Leaving it in would put a read on the board for a
+		// player you explicitly have no read on.
+		for k, pl := range out {
+			if pl.Lean == LeanNone {
+				delete(out, k)
+			}
+		}
+	}()
 	for _, set := range sets {
 		for key, pl := range set.Leans {
 			pl.Source = set.Name
