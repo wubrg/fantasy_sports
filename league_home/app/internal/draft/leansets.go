@@ -28,6 +28,11 @@ type LeanSet struct {
 	Path string
 	// Leans are the reads in this set alone, before any merge.
 	Leans Leans
+	// Undecided names the players this set lists with no lean yet, in file
+	// order. They are carried rather than dropped so a name you wrote down
+	// and have not ruled on stays visible instead of looking like a read
+	// that landed.
+	Undecided []string
 	// Generated marks a set produced from source data rather than typed by
 	// hand, which decides whether `draftroom leans -generate` may rewrite
 	// it. Nothing regenerates a file you wrote yourself.
@@ -53,11 +58,11 @@ func LoadLeanSet(configDir, name string) (LeanSet, error) {
 	}
 	defer f.Close()
 
-	leans, err := ParseLeans(f)
+	leans, undecided, err := ParseLeans(f)
 	if err != nil {
 		return LeanSet{}, fmt.Errorf("draft: %s: %w", path, err)
 	}
-	set := LeanSet{Name: name, Path: path, Leans: leans, Generated: isGenerated(path)}
+	set := LeanSet{Name: name, Path: path, Leans: leans, Undecided: undecided, Generated: isGenerated(path)}
 	for key, pl := range set.Leans {
 		pl.Source = name
 		set.Leans[key] = pl

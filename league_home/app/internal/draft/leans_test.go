@@ -8,7 +8,7 @@ import (
 
 func leansFrom(t *testing.T, csv string) Leans {
 	t.Helper()
-	got, err := ParseLeans(strings.NewReader(csv))
+	got, _, err := ParseLeans(strings.NewReader(csv))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,14 +41,65 @@ func TestMustHaveNeedsNoCap(t *testing.T) {
 		t.Errorf("expected an uncapped must-have, got %+v", pl)
 	}
 	for _, bad := range []string{"0", "-5", "lots"} {
-		if _, err := ParseLeans(strings.NewReader("player,lean,cap\nAshton Jeanty,must," + bad + "\n")); err == nil {
+		if _, _, err := ParseLeans(strings.NewReader("player,lean,cap\nAshton Jeanty,must," + bad + "\n")); err == nil {
 			t.Errorf("expected an error for cap %q", bad)
 		}
 	}
 }
 
+// TestBlankLeanIsUndecidedRatherThanAnError — the file is typed on a phone,
+// a row at a time, and a player you have listed but not yet made up your mind
+// about is the normal intermediate state. Failing the whole file over it
+// throws away every read in it, including the ones you had finished.
+func TestBlankLeanIsUndecidedRatherThanAnError(t *testing.T) {
+	got := leansFrom(t, "lean,player,cap,note\n"+
+		"up,Chase Brown,,\n"+
+		",colston loveland,,\n"+
+		"up,tucker kraft,,\n")
+	if len(got) != 2 {
+		t.Fatalf("expected the 2 decided reads, got %d: %+v", len(got), got)
+	}
+	// The decided reads on either side of the blank must both survive.
+	for _, name := range []string{"Chase Brown", "tucker kraft"} {
+		if pl, ok := got[normalizeName(name)]; !ok || pl.Lean != LeanUp {
+			t.Errorf("%s should have survived the blank row: %+v %v", name, pl, ok)
+		}
+	}
+	if _, ok := got[normalizeName("colston loveland")]; ok {
+		t.Error("an undecided row should record no read")
+	}
+}
+
+// TestUndecidedRowsAreReportedNotSwallowed — silence would make a blank row
+// indistinguishable from a read that landed, which is the failure mode that
+// makes editing from a phone untrustworthy.
+func TestUndecidedRowsAreReportedNotSwallowed(t *testing.T) {
+	_, undecided, err := ParseLeans(strings.NewReader("lean,player\n" +
+		"up,Chase Brown\n,colston loveland\n,tucker kraft\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(undecided) != 2 {
+		t.Fatalf("expected 2 undecided rows, got %d: %v", len(undecided), undecided)
+	}
+	if undecided[0] != "colston loveland" || undecided[1] != "tucker kraft" {
+		t.Errorf("undecided should name the players in file order: %v", undecided)
+	}
+}
+
+// TestParseLeansTakesColumnsInAnyOrder — the phone-edited set writes
+// lean before player, and header-keyed lookup is what lets a second file
+// disagree about column order without a converter in between.
+func TestParseLeansTakesColumnsInAnyOrder(t *testing.T) {
+	got := leansFrom(t, "lean,player,cap,note\nmust,Ashton Jeanty,48,Kubiak scheme\n")
+	pl, ok := got[normalizeName("Ashton Jeanty")]
+	if !ok || pl.Lean != LeanMust || pl.Cap != 48 || pl.Note != "Kubiak scheme" {
+		t.Errorf("reordered header parsed wrong: %+v %v", pl, ok)
+	}
+}
+
 func TestParseLeansRejectsUnknownLean(t *testing.T) {
-	_, err := ParseLeans(strings.NewReader("player,lean\nCam Skattebo,maybe\n"))
+	_, _, err := ParseLeans(strings.NewReader("player,lean\nCam Skattebo,maybe\n"))
 	if err == nil {
 		t.Fatal("expected an error for an unrecognized lean")
 	}
