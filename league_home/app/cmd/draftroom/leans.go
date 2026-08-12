@@ -77,6 +77,17 @@ func runLeans(configDir, dataDir string, names []string, generate bool) error {
 		fmt.Printf("\nprecedence: %s — the first set to name a player owns him\n",
 			strings.Join(names, " > "))
 	}
+	// Players written down but not ruled on. Worth printing because the
+	// alternative is a name sitting in the file looking like a read that
+	// landed, which is exactly what you cannot check mid-draft.
+	for _, set := range sets {
+		if len(set.Undecided) == 0 {
+			continue
+		}
+		fmt.Printf("\n%s: %d listed with no lean yet — %s\n",
+			set.Name, len(set.Undecided), strings.Join(set.Undecided, ", "))
+	}
+	reportUnmatched(sets, dataDir)
 
 	rows := make([]draft.PlayerLean, 0, len(merged))
 	for _, pl := range merged {
@@ -148,6 +159,55 @@ func generateLeanSets(cfg, dataDir string) error {
 		fmt.Printf("%-10s %d reads (%d up, %d down)  %s\n", g.Name, len(leans), up, down, path)
 	}
 	return nil
+}
+
+// projectionSource is the normalized CSV whose spellings a lean has to
+// match, because the board names players from it — see the Projection built
+// in loadStatic.
+const projectionSource = "ciely-2026.csv"
+
+// reportUnmatched names the reads that can never fire, per set.
+//
+// A lean is applied by name, so one typed wrong is not an error and not a
+// warning — it is simply absent from the board, indistinguishable from a
+// read that landed. That is tolerable when the file is edited beside the
+// code and dangerous when it is edited on a phone, which is the whole point
+// of checking before the draft rather than discovering it during one.
+//
+// The check is deliberately best-effort. Anyone without the private data
+// repo still has a working `draftroom leans`, and a missing optional check
+// must never become a failed command.
+func reportUnmatched(sets []draft.LeanSet, dataDir string) {
+	root, err := draft.ResolveDataRoot(dataDir)
+	if err != nil {
+		fmt.Printf("\nskipped the name check: %v\n", err)
+		return
+	}
+	rows, err := draft.LoadSourceCSV(root.Normalized(projectionSource))
+	if err != nil {
+		fmt.Printf("\nskipped the name check: %v\n", err)
+		return
+	}
+	pool := make([]string, 0, len(rows))
+	for _, r := range rows {
+		pool = append(pool, r.Player)
+	}
+
+	for _, set := range sets {
+		bad := set.Leans.Unmatched(pool)
+		if len(bad) == 0 {
+			continue
+		}
+		fmt.Printf("\n%s: %d of %d name no player in %s\n",
+			set.Name, len(bad), len(set.Leans), projectionSource)
+		for _, u := range bad {
+			fix := "no close match — check the spelling"
+			if u.Suggestion != "" {
+				fix = "did you mean " + u.Suggestion + "?"
+			}
+			fmt.Printf("  %-24s %s\n", u.Lean.Player, fix)
+		}
+	}
 }
 
 // setNames lists loaded sets in precedence order.

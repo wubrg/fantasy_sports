@@ -1,8 +1,10 @@
 package main
 
 import (
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -93,4 +95,53 @@ func TestNamedSetMissingIsAnErrorEvenWithLegacyPresent(t *testing.T) {
 	if _, _, err := loadLeanSets(cfg, []string{"mine", "menton"}); err == nil {
 		t.Error("asking for a set that does not exist should fail")
 	}
+}
+
+// TestNameCheckIsSkippedNotFatalWithoutSourceData — the private data repo is
+// optional. Someone who cloned the public repo alone still gets their leans
+// listed; only the spelling check goes missing, and it says so.
+func TestNameCheckIsSkippedNotFatalWithoutSourceData(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "mine.csv"), []byte(someLeans), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out := captureStdout(t, func() {
+		if err := runLeans(cfg, filepath.Join(t.TempDir(), "absent"), []string{"mine"}, false); err != nil {
+			t.Fatalf("a missing data dir must not fail the command: %v", err)
+		}
+	})
+	if !strings.Contains(out, "skipped the name check") {
+		t.Errorf("the skip should be stated, not silent:\n%s", out)
+	}
+	// The reads themselves still have to be listed.
+	if !strings.Contains(out, "Kenneth Walker") {
+		t.Errorf("leans should still be reported:\n%s", out)
+	}
+}
+
+// captureStdout collects what fn prints, since these renderers write
+// straight to stdout rather than to an injected writer.
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	saved := os.Stdout
+	os.Stdout = w
+	done := make(chan string, 1)
+	go func() {
+		var b strings.Builder
+		io.Copy(&b, r)
+		done <- b.String()
+	}()
+	fn()
+	w.Close()
+	os.Stdout = saved
+	return <-done
 }
