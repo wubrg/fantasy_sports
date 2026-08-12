@@ -65,13 +65,22 @@ if (!location.pathname.endsWith("/")) {
       <p class="mix" id="s-mix"></p>
       <p class="note" id="s-note">Click <kbd>+</kbd> on a row to try a player here.
       Nothing on this panel touches the live board.</p>
-      <button id="s-clear" class="undo">clear roster</button>
+      <button id="s-clear" class="undo">clear tries</button>
     </section>
     <section>
       <h2>Positional bias</h2>
       <table class="mini" id="bias"></table>
       <p class="note">How much of every edge is about the position, not the
       player. Subtracted in the <strong>vs Pos</strong> column.</p>
+    </section>
+    <section>
+      <h2>Price lines</h2>
+      <table class="mini lines" id="pricelines"></table>
+      <p class="note">What a bid buys at each position. The muted figure is
+      what this league has paid for that finish in past drafts. It says what
+      the money buys, not how a player will do &mdash; price rank and finish
+      rank correlate about +0.46 here, and top-five money landed a top-five
+      finish 28 times in 60.</p>
     </section>
     <section>
       <h2>Scarcity</h2>

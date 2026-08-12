@@ -52,12 +52,20 @@ type server struct {
 	// scratch is a hypothetical roster, deliberately not part of the live
 	// state above. See scratch.go for why the separation is load-bearing.
 	scratch *scratchpad
+
+	// leans are personal reads made from the board since startup, laid over
+	// the sets loaded from disk. Its own lock, like scratch, because
+	// staticData is shared and does not change. See leanedit.go.
+	leans *leanEdits
+	// configDir is where the lean CSVs live, kept so a read set at the
+	// board can be written back to the file it came from.
+	configDir string
 }
 
-func newServer(s *staticData) (*server, error) {
+func newServer(s *staticData, configDir string) (*server, error) {
 	srv := &server{
 		static: s, taken: map[string]gone{}, manual: map[string]gone{},
-		scratch: newScratchpad(),
+		scratch: newScratchpad(), leans: newLeanEdits(), configDir: configDir,
 	}
 	return srv, srv.rebuild()
 }
@@ -78,7 +86,7 @@ func (s *server) rebuildLocked() error {
 	for id, g := range s.manual {
 		combined[id] = g
 	}
-	snap, err := s.static.Build(combined)
+	snap, err := s.static.Build(combined, s.leans.snapshot())
 	if err != nil {
 		return err
 	}
@@ -229,7 +237,11 @@ func runServe(addr, leagueID, configDir, dataDir, ownerID string, baseline draft
 	if err != nil {
 		return err
 	}
-	srv, err := newServer(static)
+	cfg, err := draft.ResolveConfigDir(configDir)
+	if err != nil {
+		return err
+	}
+	srv, err := newServer(static, cfg)
 	if err != nil {
 		return err
 	}
@@ -248,6 +260,7 @@ func runServe(addr, leagueID, configDir, dataDir, ownerID string, baseline draft
 	mux.HandleFunc("/api/board", srv.handleBoard)
 	mux.HandleFunc("/api/sold", srv.handleSold)
 	mux.HandleFunc("/api/undo", srv.handleUndo)
+	mux.HandleFunc("/api/lean", srv.handleLean)
 	mux.HandleFunc("/api/scratch", srv.handleScratch)
 	mux.HandleFunc("/api/scratch/view", srv.handleScratchView)
 
