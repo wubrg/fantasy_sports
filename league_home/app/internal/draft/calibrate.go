@@ -29,6 +29,11 @@ type DraftedPlayer struct {
 	Position string
 	Price    int
 	Keeper   bool
+	// Points is what he went on to score that season, in Sleeper's
+	// half-PPR scoring. Zero when unknown, which is how a player who never
+	// played reads — the same as one who played and scored nothing, and
+	// for the purpose of "was he worth the money" that is the right answer.
+	Points float64
 }
 
 // Spend totals what was paid at a position, or everywhere when pos is empty.
@@ -63,6 +68,109 @@ func (t TeamSeason) CountOver(pos string, price int) int {
 		}
 	}
 	return n
+}
+
+// minLadderTop is the dearest-player price below which a position has no
+// price ladder to speak of, and so nothing to correlate.
+const minLadderTop = 10
+
+// PriceRankFit is how closely what a position cost tracked how it finished,
+// for one position in one season.
+type PriceRankFit struct {
+	Season   string
+	Position string
+	N        int
+	// Rho is the rank correlation between price and finish.
+	Rho float64
+	// TopFive counts how many of the five most expensive went on to finish
+	// in the position's top five. The correlation says the relationship
+	// exists; this says how often it paid.
+	TopFive int
+}
+
+// FitPriceRanks measures whether paying more bought a better finish.
+//
+// The question underneath the price lines. Telling somebody a bid is
+// "top-five money" is only worth saying if top-five money has meant
+// anything, and the honest answer is that it means something loose: across
+// this league's drafts the correlation sits near +0.5, while the five
+// dearest at a position finish in its top five well under half the time.
+//
+// Keepers are included. A keeper is money committed at a price, which is
+// exactly what is being tested, and dropping them would throw away the
+// cheapest players on every roster and flatter the curve.
+func FitPriceRanks(seasons []TeamSeason) []PriceRankFit {
+	type key struct{ season, pos string }
+	grouped := map[key][]DraftedPlayer{}
+	for _, ts := range seasons {
+		for _, p := range ts.Picks {
+			if p.Price <= 0 || p.Position == "" {
+				continue
+			}
+			grouped[key{ts.Season, p.Position}] = append(grouped[key{ts.Season, p.Position}], p)
+		}
+	}
+
+	var out []PriceRankFit
+	for k, players := range grouped {
+		if len(players) < 10 {
+			// Too few to rank against each other; a four-man position
+			// produces a correlation that is an artifact of its size.
+			continue
+		}
+		sort.SliceStable(players, func(i, j int) bool { return players[i].Price > players[j].Price })
+
+		// A position nobody bids on cannot answer this question. Defenses
+		// go for a dollar or four here — eleven of them across a $3 spread
+		// and four distinct prices — so their "price rank" is mostly the
+		// order the picks happened in, and correlating that against a
+		// finish produces a number about nothing. Positions with a real
+		// ladder span thirty to sixty dollars.
+		//
+		// Stated as the dearest player rather than as variance because it
+		// is the same test the price lines themselves imply: a position
+		// whose best player costs $4 has no top-five line worth reading.
+		if players[0].Price < minLadderTop {
+			continue
+		}
+
+		// Raw values, not ranks computed here. Spearman does its own
+		// ranking with ties averaged, and handing it ranks of my own would
+		// throw that away — every player who did not play would get a
+		// distinct made-up finish instead of sharing last place with the
+		// others, which is a lot of invented ordering in a league where a
+		// dozen picks never score.
+		prices := make([]float64, len(players))
+		points := make([]float64, len(players))
+		for i, p := range players {
+			prices[i], points[i] = float64(p.Price), p.Points
+		}
+
+		fit := PriceRankFit{Season: k.season, Position: k.pos, N: len(players), Rho: Spearman(prices, points)}
+
+		// Whether the five dearest were among the five best. Ties in points
+		// are broken by the sort, which can only matter at the boundary and
+		// only between players who scored identically.
+		byFinish := append([]DraftedPlayer(nil), players...)
+		sort.SliceStable(byFinish, func(i, j int) bool { return byFinish[i].Points > byFinish[j].Points })
+		best := map[string]bool{}
+		for i := 0; i < 5 && i < len(byFinish); i++ {
+			best[byFinish[i].Name] = true
+		}
+		for i := 0; i < 5 && i < len(players); i++ {
+			if best[players[i].Name] {
+				fit.TopFive++
+			}
+		}
+		out = append(out, fit)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Season != out[j].Season {
+			return out[i].Season < out[j].Season
+		}
+		return out[i].Position < out[j].Position
+	})
+	return out
 }
 
 // Spearman is the rank correlation between two equal-length series.
@@ -166,6 +274,8 @@ func WriteCalibration(w io.Writer, seasons []TeamSeason) error {
 	fmt.Fprintf(tw, "median finish %.1f, median points %.0f\n",
 		median(rankSeries(seasons)), median(pts))
 
+	writePriceRankFit(tw, seasons)
+
 	fmt.Fprintf(tw, "\nDOES SPENDING SHAPE PREDICT POINTS?\t(n=%d, |rho| > %.2f is p<0.05)\n",
 		len(seasons), significantRho)
 	for _, m := range shapeMetrics() {
@@ -237,4 +347,39 @@ func shapeMetrics() []shapeMetric {
 		{"second RB price", nth("RB", 1)},
 		{"best WR price", nth("WR", 0)},
 	}
+}
+
+// writePriceRankFit reports whether price rank tracked finish rank, which is
+// what the board's price lines lean on.
+func writePriceRankFit(tw *tabwriter.Writer, seasons []TeamSeason) {
+	fits := FitPriceRanks(seasons)
+	if len(fits) == 0 {
+		return
+	}
+	fmt.Fprintf(tw, "\nDID PRICE RANK PREDICT FINISH RANK?\t(1.0 = perfectly, 0 = not at all)\n")
+
+	var rhos []float64
+	hits, of := 0, 0
+	for _, f := range fits {
+		fmt.Fprintf(tw, "%s %s\tn=%d\trho %+.2f\ttop-5 money finished top-5: %d of 5\n",
+			f.Season, f.Position, f.N, f.Rho, f.TopFive)
+		rhos = append(rhos, f.Rho)
+		hits += f.TopFive
+		of += 5
+	}
+	fmt.Fprintf(tw, "mean\t\trho %+.2f\t%d of %d\n", mean(rhos), hits, of)
+	fmt.Fprintf(tw, "\nReal, and loose. The board may say a bid is top-five money; it may not\n")
+	fmt.Fprintf(tw, "say the player will finish there.\n")
+}
+
+// mean of a slice, zero when empty.
+func mean(xs []float64) float64 {
+	if len(xs) == 0 {
+		return 0
+	}
+	var total float64
+	for _, x := range xs {
+		total += x
+	}
+	return total / float64(len(xs))
 }

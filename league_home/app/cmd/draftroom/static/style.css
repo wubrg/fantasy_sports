@@ -373,3 +373,14 @@ tr.in-scratch { background: #16233a; }
    affordance is in the same place on every row. */
 .flag.lean-set { cursor: pointer; }
 .flag.lean-set:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Price lines. The historical figure rides under the live one, quieter,
+   because it is context for the number you are acting on rather than the
+   number itself. */
+.lines td { padding: 0.18rem 0; }
+.lines .was {
+  display: block;
+  font-size: 0.66rem;
+  color: var(--dim);
+  line-height: 1.2;
+}

@@ -128,6 +128,64 @@ projection and costs $44 in real drafts — that $20 is the market pricing the
 Kubiak scheme change, which a median cannot see. Collapsing them into one
 "price" hides the only decision worth making.
 
+### Price lines
+
+What a bid buys at each position, in the sidebar:
+
+```
+PRICE LINES   top-3  top-5  top-8  top-12
+QB              $13    $10     $5     $5
+                $25    $15    $10     $3
+RB              $58    $49    $43    $36
+WR              $58    $52    $34    $26
+TE              $17     $6     $6     $3
+                       $16
+```
+
+The question during an auction is never really "what is he worth" — it is
+"is $40 on this back top-five money". The board answers in dollars and leaves
+you to translate at the moment you have the least time to do it.
+
+Worth showing because the same dollar means completely different things by
+position. **$35 buys you TE1 or RB12.** The ladder at running back runs $68
+down to $35 across twelve players; at tight end it runs $35 down to $2.
+
+**The muted second figure is what this league has actually paid** for that
+finish, median of 2023-2025, and it only appears where the room diverges from
+the board by a third or more. Above, that is quarterbacks across the board —
+this league pays $25 for QB3 where the cost model says $13 — and tight end at
+the top-five line. Those gaps are the room's habits, and they are the reason
+the reference comes from league history rather than from national AAV.
+
+The lines are **live**. A player already gone counts at the price he actually
+went for, so once four backs sell the top-three line moves to reflect them
+rather than describing whoever is left over.
+
+#### What it does not say
+
+It says what the money buys, not how a player will do. Measured against this
+league's own drafts, price rank and end-of-season finish rank correlate at
+**+0.46** across twelve position-seasons — real, and nowhere near a promise.
+The five dearest at a position finished in its top five **28 times in 60**.
+2024's five most expensive backs finished 45th, 4th, 1st, 3rd and 31st.
+
+`draftroom calibrate` re-derives all of that, so it stays a measurement rather
+than a number somebody wrote down once:
+
+```
+DID PRICE RANK PREDICT FINISH RANK?  (1.0 = perfectly, 0 = not at all)
+2023 QB   n=18  rho +0.49  top-5 money finished top-5: 3 of 5
+2023 RB   n=55  rho +0.44  top-5 money finished top-5: 1 of 5
+...
+mean            rho +0.46  28 of 60
+```
+
+Positions nobody bids on are left out of that table. Defenses go for a dollar
+or four here — eleven of them across a $3 spread — so their price rank is
+mostly the order the picks happened in, and correlating it against a finish
+produces a confident number about nothing. Sleeper does score defenses, so
+the exclusion is about whether a price ladder exists, not about missing data.
+
 ### Position scarcity
 
 ```

@@ -45,6 +45,10 @@ type staticData struct {
 	availability map[string]string
 	// traits label what kind of player each man is; see ClassifyTraits.
 	traits map[string]draft.TraitSet
+	// priceHistory is what each rank tier has cost in past drafts, the
+	// reference the live lines are read against. Computed from the seasons
+	// already loaded for the keeper ledger, so it costs no extra calls.
+	priceHistory map[string][]int
 	// baselines are the pinned pre-draft replacement points that rosters
 	// are scored against; thresholds are the pinned tier medians scarcity
 	// is counted against. Both computed once, because the projection set
@@ -168,6 +172,9 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	// falls as the pool empties, so a count above it could never drop.
 	s.baselines = draft.ScoringBaselines(s.projections, s.shape)
 	s.traits = classifyTraits(ciely, sv, info, s.shape)
+	s.priceHistory = draft.HistoricalPriceLines(seasons, func(id string) string {
+		return info[id].Position
+	}, minSpendForUsableSeason)
 	s.thresholds = draft.ScarcityThresholds(s.projections, s.shape)
 
 	for _, r := range sv {
@@ -306,6 +313,15 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans) (draft.Snap
 	})
 	snap := draft.Assemble(s.season, state, me, players, leans, s.tempo(taken, costs), s.thresholds, s.warnings)
 	snap.LeanSets = s.leanSets
+	// Players already gone price the curve at what they actually went for,
+	// which is why this is assembled here where taken is in scope.
+	sold := map[string][]int{}
+	for id, g := range taken {
+		if pos := s.positionOf(id); pos != "" && g.price > 0 {
+			sold[pos] = append(sold[pos], g.price)
+		}
+	}
+	snap.PriceLines = draft.PriceLines(players, sold, s.priceHistory)
 	return snap, nil
 }
 

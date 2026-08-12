@@ -145,6 +145,7 @@ function draw() {
       const thin = s.Cover > 0 && s.Cover < 1 ? " bad" : "";
       return [pos, `<span class="${thin.trim()}">${s.Startable} startable · ${cover}</span>`];
     }));
+  drawPriceLines();
   drawSold();
   drawScratch();
 
@@ -276,6 +277,37 @@ function drawMini(id, pairs) {
   document.getElementById(id).innerHTML = pairs
     .map(([k, v]) => `<tr><td>${esc(k)}</td><td class="num">${v}</td></tr>`)
     .join("");
+}
+
+// What a bid buys, by position. Its own renderer rather than drawMini,
+// which only does two columns.
+//
+// The historical figure sits under the live one only where the two differ
+// enough to change a decision. Printing both on every cell doubles the ink
+// for rows where they agree, and the whole point of the panel is to be
+// readable in the second before you bid.
+function drawPriceLines() {
+  const lines = snap.priceLines || {};
+  const order = ["QB", "RB", "WR", "TE"];
+  const tiers = (lines.RB || lines.WR || {}).tiers || [];
+
+  const head = `<tr><td></td>` +
+    tiers.map(t => `<td class="num">top-${t}</td>`).join("") + `</tr>`;
+
+  const rows = order.filter(pos => lines[pos]).map(pos => {
+    const l = lines[pos];
+    const cells = l.live.map((v, i) => {
+      const past = (l.history || [])[i] || 0;
+      // A third of a tier apart is where the room's habit is worth knowing;
+      // below that the two numbers are the same answer twice.
+      const differs = past > 0 && v > 0 && Math.abs(past - v) / Math.max(v, 1) >= 0.33;
+      const note = differs ? `<span class="was">${money(past)}</span>` : "";
+      return `<td class="num">${v ? money(v) : "—"}${note}</td>`;
+    }).join("");
+    return `<tr><td class="pos-${esc(pos)}">${esc(pos)}</td>${cells}</tr>`;
+  }).join("");
+
+  document.getElementById("pricelines").innerHTML = head + rows;
 }
 
 function drawSold() {
