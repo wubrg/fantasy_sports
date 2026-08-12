@@ -180,7 +180,7 @@ func TestGeneratedHeaderSaysWhereItCameFrom(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{generatedMarker, g.Source, "mine.csv"} {
+	for _, want := range []string{generatedMarker, g.Source, "mine.yaml"} {
 		if !strings.Contains(string(body), want) {
 			t.Errorf("the header does not mention %q:\n%s", want, body)
 		}

@@ -3,6 +3,7 @@ package draft
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -22,7 +23,7 @@ import (
 // statements about him, and seeing them side by side is more useful than
 // either one winning quietly.
 type LeanSet struct {
-	// Name is the file's stem: "mine" is data/leans/mine.csv.
+	// Name is the file's stem: "mine" is data/leans/mine.yaml.
 	Name string
 	// Path is where it was read from.
 	Path string
@@ -42,6 +43,40 @@ type LeanSet struct {
 // leansDir is where named sets live, under the config directory.
 const leansDir = "leans"
 
+// leanFormats are the extensions a set may use, in the order they are
+// tried. YAML is the format the tool writes and the one worth editing; the
+// row-per-player CSV is still read so an existing file keeps working
+// through the changeover, and `draftroom leans -convert` turns one into the
+// other when you are ready.
+var leanFormats = []struct {
+	ext   string
+	parse func(io.Reader) (Leans, []string, error)
+}{
+	{".yaml", ParseLeansYAML},
+	{".yml", ParseLeansYAML},
+	{".csv", ParseLeans},
+}
+
+// findLeanSet locates a named set and the parser for whichever format it is
+// written in. A set present in two formats resolves to the YAML one rather
+// than guessing, since that is the direction the changeover runs.
+func findLeanSet(configDir, name string) (string, func(io.Reader) (Leans, []string, error), error) {
+	dir := filepath.Join(configDir, leansDir)
+	for _, f := range leanFormats {
+		path := filepath.Join(dir, name+f.ext)
+		if _, err := os.Stat(path); err == nil {
+			return path, f.parse, nil
+		}
+	}
+	// Reported against the preferred extension so the error names the file
+	// you would create rather than the last one that was checked for.
+	return "", nil, &os.PathError{
+		Op:   "open",
+		Path: filepath.Join(dir, name+leanFormats[0].ext),
+		Err:  os.ErrNotExist,
+	}
+}
+
 // LoadLeanSet reads one named set from the config directory.
 func LoadLeanSet(configDir, name string) (LeanSet, error) {
 	name = strings.TrimSpace(name)
@@ -51,14 +86,17 @@ func LoadLeanSet(configDir, name string) (LeanSet, error) {
 	if name != filepath.Base(name) || strings.HasPrefix(name, ".") {
 		return LeanSet{}, fmt.Errorf("draft: %q is not a lean set name (use the file stem, like mine)", name)
 	}
-	path := filepath.Join(configDir, leansDir, name+".csv")
+	path, parse, err := findLeanSet(configDir, name)
+	if err != nil {
+		return LeanSet{}, err
+	}
 	f, err := os.Open(path)
 	if err != nil {
 		return LeanSet{}, err
 	}
 	defer f.Close()
 
-	leans, undecided, err := ParseLeans(f)
+	leans, undecided, err := parse(f)
 	if err != nil {
 		return LeanSet{}, fmt.Errorf("draft: %s: %w", path, err)
 	}

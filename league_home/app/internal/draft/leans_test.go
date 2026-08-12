@@ -237,12 +237,13 @@ func TestOvercommittedCatchesABudgetYouCannotFieldARosterWith(t *testing.T) {
 // error by design, so a rename would otherwise leave this passing over
 // nothing at all.
 func TestShippedMyGuysFileParses(t *testing.T) {
-	got, err := LoadLeans("data/leans/mine.csv")
+	set, err := LoadLeanSet("data", "mine")
 	if err != nil {
-		t.Fatalf("the shipped mine.csv must always parse: %v", err)
+		t.Fatalf("the shipped mine set must always parse: %v", err)
 	}
+	got := set.Leans
 	if len(got) == 0 {
-		t.Fatal("data/leans/mine.csv read as empty — has it moved?")
+		t.Fatalf("%s read as empty — has it moved?", set.Path)
 	}
 	for _, pl := range got {
 		if pl.Cap < 0 {

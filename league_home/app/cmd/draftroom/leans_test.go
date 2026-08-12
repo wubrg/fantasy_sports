@@ -111,7 +111,7 @@ func TestNameCheckIsSkippedNotFatalWithoutSourceData(t *testing.T) {
 	}
 
 	out := captureStdout(t, func() {
-		if err := runLeans(cfg, filepath.Join(t.TempDir(), "absent"), []string{"mine"}, false); err != nil {
+		if err := runLeans(cfg, filepath.Join(t.TempDir(), "absent"), []string{"mine"}, false, false); err != nil {
 			t.Fatalf("a missing data dir must not fail the command: %v", err)
 		}
 	})
