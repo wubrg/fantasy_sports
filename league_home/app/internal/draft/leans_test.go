@@ -238,12 +238,13 @@ func TestOvercommittedCatchesABudgetYouCannotFieldARosterWith(t *testing.T) {
 // error by design, so a rename would otherwise leave this passing over
 // nothing at all.
 func TestShippedMyGuysFileParses(t *testing.T) {
-	got, err := LoadLeans("data/leans/mine.csv")
+	set, err := LoadLeanSet("data", "mine")
 	if err != nil {
-		t.Fatalf("the shipped mine.csv must always parse: %v", err)
+		t.Fatalf("the shipped mine set must always parse: %v", err)
 	}
+	got := set.Leans
 	if len(got) == 0 {
-		t.Fatal("data/leans/mine.csv read as empty — has it moved?")
+		t.Fatalf("%s read as empty — has it moved?", set.Path)
 	}
 	for _, pl := range got {
 		if pl.Cap < 0 {
@@ -261,7 +262,7 @@ func TestWriteLeansRoundTrips(t *testing.T) {
 		normalizeName("Kyle Pitts"):    {Player: "Kyle Pitts", Lean: LeanDND},
 		normalizeName("De'Von Achane"): {Player: "De'Von Achane", Lean: LeanUp},
 	}
-	if err := WriteLeans(path, in); err != nil {
+	if err := WriteLeans(path, in, nil); err != nil {
 		t.Fatal(err)
 	}
 	back, err := LoadLeans(path)
@@ -291,7 +292,7 @@ func TestWriteLeansRoundTrips(t *testing.T) {
 // entitled to destroy every read in it.
 func TestWriteLeansDoesNotMarkTheFileGenerated(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "mine.csv")
-	if err := WriteLeans(path, Leans{normalizeName("X"): {Player: "X", Lean: LeanUp}}); err != nil {
+	if err := WriteLeans(path, Leans{normalizeName("X"): {Player: "X", Lean: LeanUp}}, nil); err != nil {
 		t.Fatal(err)
 	}
 	if isGenerated(path) {
@@ -306,7 +307,7 @@ func TestWriteLeansDoesNotMarkTheFileGenerated(t *testing.T) {
 func TestWriteLeansLeavesNoTemporaryFiles(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "mine.csv")
-	if err := WriteLeans(path, Leans{normalizeName("X"): {Player: "X", Lean: LeanUp}}); err != nil {
+	if err := WriteLeans(path, Leans{normalizeName("X"): {Player: "X", Lean: LeanUp}}, nil); err != nil {
 		t.Fatal(err)
 	}
 	entries, err := os.ReadDir(dir)
@@ -332,10 +333,10 @@ func TestWriteLeansIsStable(t *testing.T) {
 	}
 	first := filepath.Join(dir, "one.csv")
 	second := filepath.Join(dir, "two.csv")
-	if err := WriteLeans(first, in); err != nil {
+	if err := WriteLeans(first, in, nil); err != nil {
 		t.Fatal(err)
 	}
-	if err := WriteLeans(second, in); err != nil {
+	if err := WriteLeans(second, in, nil); err != nil {
 		t.Fatal(err)
 	}
 	a, _ := os.ReadFile(first)

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"sync"
 
 	"leaguehome/internal/draft"
@@ -18,7 +17,7 @@ import (
 // together at rebuild time and never writes back.
 //
 // Keyed the way ParseLeans keys its map — by normalized player name — so an
-// edit and a CSV row for the same player collide as they should.
+// edit and a row in the file for the same player collide as they should.
 type leanEdits struct {
 	mu    sync.Mutex
 	edits draft.Leans
@@ -29,7 +28,7 @@ func newLeanEdits() *leanEdits { return &leanEdits{edits: draft.Leans{}} }
 // set records a read, or clears one when lean is empty.
 //
 // A cleared read is kept in the map as a blank rather than deleted, because
-// it has to out-rank the CSV row it is overriding. effectiveLeans turns it
+// it has to out-rank the row in the file it is overriding. effectiveLeans turns it
 // into a deletion when the two are merged.
 func (l *leanEdits) set(name string, lean draft.Lean) {
 	l.mu.Lock()
@@ -57,7 +56,7 @@ func (l *leanEdits) snapshot() draft.Leans {
 //
 // A cycle rather than a menu: during an auction you have a few seconds, and
 // four taps back to where you started beats finding a control. Cap and note
-// are left to the CSV — the walk-away for a must-have comes from the risk
+// are left to the file — the walk-away for a must-have comes from the risk
 // ceiling, so a read set at the board never needs a number typed.
 var leanCycle = []draft.Lean{draft.LeanMust, draft.LeanUp, draft.LeanDown, draft.LeanDND, ""}
 
@@ -71,7 +70,7 @@ func nextLean(current draft.Lean) draft.Lean {
 	return leanCycle[0]
 }
 
-// handleLean records a personal read and writes it back to mine.csv.
+// handleLean records a personal read and writes it back to your lean set.
 //
 // Same shape as handleSold: lock, mutate, rebuild, unlock, return the board.
 // The file write happens outside the lock — it is the slow part, and the
@@ -124,16 +123,25 @@ func (s *server) handleLean(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, s.snapshot())
 }
 
-// saveLeans folds the live edits into mine.csv on disk.
+// saveLeans folds the live edits into your own lean set on disk.
 //
 // Read-modify-write rather than a dump of memory. That file is hand-edited
 // and may well be open in your editor; anything added to it since the server
 // started would be lost by a blind overwrite, and the whole point of saving
 // is that reads survive.
 func (s *server) saveLeans() error {
-	path := filepath.Join(s.configDir, "leans", "mine.csv")
+	// The file startup actually read, not one worked out from the config
+	// directory. Two formats are readable and the reader has fallbacks the
+	// writer cannot see, so a guessed path can be a real file the board
+	// never consults: the click looks saved and the read is gone on restart.
+	path := s.static.minePath
+	if path == "" {
+		path = draft.LeanSetPath(s.configDir, "mine")
+	}
 
-	onDisk, err := draft.LoadLeans(path)
+	// Undecided names live only in the file, never in Leans, so they have to
+	// be carried across the write or clicking one lean deletes the list.
+	onDisk, undecided, err := draft.LoadLeansFile(path)
 	if err != nil {
 		return err
 	}
@@ -145,7 +153,7 @@ func (s *server) saveLeans() error {
 		if v.Lean == "" {
 			// Deleting a row that was never in this file changes nothing,
 			// and the read comes straight back from whichever set owns it.
-			// A none row is how mine.csv says "I have no opinion on him",
+			// A none row is how your own set says "I have no opinion on him",
 			// and it outranks the set that does.
 			if _, inherited := s.static.leans[k]; inherited {
 				if _, ours := onDisk[k]; !ours {
@@ -171,5 +179,5 @@ func (s *server) saveLeans() error {
 		}
 		merged[k] = v
 	}
-	return draft.WriteLeans(path, merged)
+	return draft.WriteLeans(path, merged, undecided)
 }

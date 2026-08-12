@@ -312,3 +312,203 @@ func TestClearingAnInheritedReadSticks(t *testing.T) {
 		t.Errorf("wrote %q, want an explicit none to silence the other set", got.Lean)
 	}
 }
+
+// TestSavingReachesTheSetTheBoardActuallyReads — the board saves to the mine
+// set, and the loader picks the format. Writing one format while the loader
+// prefers another loses the read without a word: the click appears to work,
+// the file on disk is real, and the board comes back without it.
+func TestSavingReachesTheSetTheBoardActuallyReads(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// A mine set in the format the tool now writes.
+	if err := os.WriteFile(filepath.Join(dir, "mine.yaml"),
+		[]byte("up:\n  - Old Guy\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	static := testStatic()
+	set, err := draft.LoadLeanSet(cfg, "mine")
+	if err != nil {
+		t.Fatal(err)
+	}
+	static.leans = set.Leans
+
+	srv, err := newServer(static, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv.leans.set("Jahmyr Gibbs", draft.LeanMust)
+	if err := srv.saveLeans(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Re-read the way the board does at startup, not the way the save wrote.
+	back, err := draft.LoadLeanSet(cfg, "mine")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"Old Guy", "Jahmyr Gibbs"} {
+		if _, ok := back.Leans[draft.NormalizeName(name)]; !ok {
+			t.Errorf("%s did not survive the save; the board reads %s", name, back.Path)
+		}
+	}
+}
+
+// leanServerAt builds a server over a config directory as production does:
+// the reads and the writable path both come from whatever loadLeanSets
+// actually resolved, rather than from a filename the test picked.
+func leanServerAt(t *testing.T, cfg string) *server {
+	t.Helper()
+	merged, sets, err := loadLeanSets(cfg, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	static := testStatic()
+	static.leans = merged
+	static.minePath = writableSetPath(cfg, sets)
+	srv, err := newServer(static, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return srv
+}
+
+// TestSavingAnUnmigratedConfigWritesTheFileItRead — "mine" can resolve to
+// my-guys.csv outside the leans directory. A writer that works the path out
+// from the config directory instead of using the one startup read would put
+// the read somewhere nothing loads, and lose every read already in the
+// legacy file the next time the board starts.
+func TestSavingAnUnmigratedConfigWritesTheFileItRead(t *testing.T) {
+	cfg := t.TempDir()
+	legacy := filepath.Join(cfg, myGuysFile)
+	if err := os.WriteFile(legacy,
+		[]byte("player,lean,cap,note\nBrock Bowers,must,30,keep him\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	srv := leanServerAt(t, cfg)
+	srv.leans.set("Jahmyr Gibbs", draft.LeanMust)
+	if err := srv.saveLeans(); err != nil {
+		t.Fatalf("saving an unmigrated config must not fail: %v", err)
+	}
+
+	// Nothing may appear in leans/ to shadow the file actually in use.
+	if _, err := os.Stat(filepath.Join(cfg, "leans", "mine.yaml")); err == nil {
+		t.Error("the save invented leans/mine.yaml, which startup would then prefer")
+	}
+	back, _, err := loadLeanSets(cfg, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"Brock Bowers", "Jahmyr Gibbs"} {
+		if _, ok := back[draft.NormalizeName(name)]; !ok {
+			t.Errorf("%s is not there after a restart", name)
+		}
+	}
+	if pl := back[draft.NormalizeName("Brock Bowers")]; pl.Cap != 30 {
+		t.Errorf("the hand-written cap did not survive: %+v", pl)
+	}
+}
+
+// TestSavingDoesNotEatASymlinkedSet — a set is often a symlink into a notes
+// vault. Renaming over the link replaces it with a real file, and every
+// later edit in the vault stops reaching the board without a word.
+func TestSavingDoesNotEatASymlinkedSet(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	vault := filepath.Join(t.TempDir(), "mine.yaml")
+	if err := os.WriteFile(vault, []byte("up:\n  - Brock Bowers\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(dir, "mine.yaml")
+	if err := os.Symlink(vault, link); err != nil {
+		t.Fatal(err)
+	}
+
+	srv := leanServerAt(t, cfg)
+	srv.leans.set("Jahmyr Gibbs", draft.LeanMust)
+	if err := srv.saveLeans(); err != nil {
+		t.Fatal(err)
+	}
+
+	info, err := os.Lstat(link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode()&os.ModeSymlink == 0 {
+		t.Fatal("the save replaced the symlink with a real file")
+	}
+	// The write must have landed in the vault, where the next edit happens.
+	body, err := os.ReadFile(vault)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(body), "Jahmyr Gibbs") {
+		t.Errorf("the read did not reach the vault file:\n%s", body)
+	}
+}
+
+// TestSavingKeepsTheUndecidedList — undecided names live only in the file,
+// not in Leans, so a read-modify-write that forgets them deletes part of
+// the file every time you click a lean.
+func TestSavingKeepsTheUndecidedList(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "mine.yaml"),
+		[]byte("up:\n  - Brock Bowers\nundecided:\n  - Ja'Marr Chase\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	srv := leanServerAt(t, cfg)
+	srv.leans.set("Jahmyr Gibbs", draft.LeanMust)
+	if err := srv.saveLeans(); err != nil {
+		t.Fatal(err)
+	}
+
+	set, err := draft.LoadLeanSet(cfg, "mine")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(set.Undecided) != 1 || set.Undecided[0] != "Ja'Marr Chase" {
+		t.Errorf("the undecided list did not survive the save: %v", set.Undecided)
+	}
+}
+
+// TestDecidingAPlayerTakesHimOutOfUndecided — he cannot be in both, and a
+// file saying so does not load at all.
+func TestDecidingAPlayerTakesHimOutOfUndecided(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "mine.yaml"),
+		[]byte("undecided:\n  - Ja'Marr Chase\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	srv := leanServerAt(t, cfg)
+	srv.leans.set("Ja'Marr Chase", draft.LeanMust)
+	if err := srv.saveLeans(); err != nil {
+		t.Fatal(err)
+	}
+
+	set, err := draft.LoadLeanSet(cfg, "mine")
+	if err != nil {
+		t.Fatalf("the saved file must still load: %v", err)
+	}
+	if len(set.Undecided) != 0 {
+		t.Errorf("still listed as undecided after being ruled on: %v", set.Undecided)
+	}
+	if pl := set.Leans[draft.NormalizeName("Ja'Marr Chase")]; pl.Lean != draft.LeanMust {
+		t.Errorf("the read did not land: %+v", pl)
+	}
+}

@@ -61,6 +61,15 @@ type staticData struct {
 	// can say whose reads it is applying rather than leaving you to
 	// remember which flags you asked for.
 	leanSets []string
+	// minePath is the file the first set was actually read from, and it is
+	// where a read set on the board is written back.
+	//
+	// Carried rather than recomputed because the reader has fallbacks the
+	// writer cannot see: an unmigrated config resolves "mine" to my-guys.csv
+	// outside the leans directory entirely. A writer that guessed would put
+	// the read in a file that startup does not consult, and the board would
+	// come back without it.
+	minePath string
 	ownerID  string
 	season   string
 	warnings []string
@@ -150,6 +159,7 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 		client: c, ownerID: ownerID, season: season, warnings: warnings,
 		leans: leans, subvert: sv, points: map[string]float64{},
 		leanSets:     setNames(sets),
+		minePath:     writableSetPath(cfg, sets),
 		availability: map[string]string{}, keeperOf: map[string]int{},
 		projected: projected,
 	}

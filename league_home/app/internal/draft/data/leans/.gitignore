@@ -1,4 +1,6 @@
 # Generated lean sets are derived from the private source repo, so they stay
 # out of this public one. `draftroom leans -generate` rebuilds them locally.
 *.csv
-!mine.csv
+*.yaml
+*.yml
+!mine.yaml

@@ -40,9 +40,22 @@ func loadLeanSets(cfg string, names []string) (draft.Leans, []draft.LeanSet, err
 	}
 	fmt.Fprintf(os.Stderr,
 		"note: reading %s; move it to %s to use named lean sets\n",
-		legacy, filepath.Join(cfg, "leans", "mine.csv"))
+		legacy, filepath.Join(cfg, "leans", "mine.yaml"))
 	set := draft.LeanSet{Name: "mine", Path: legacy, Leans: old}
 	return draft.MergeLeans(set), []draft.LeanSet{set}, nil
+}
+
+// writableSetPath is the file a read set on the board belongs in: the one
+// the highest-precedence set was actually loaded from.
+//
+// Falls back to where "mine" would be created, for the case where no set
+// loaded at all. Never guesses when a real path is available — the reader's
+// fallbacks are not reproducible from the config directory alone.
+func writableSetPath(cfg string, sets []draft.LeanSet) string {
+	if len(sets) > 0 && sets[0].Path != "" {
+		return sets[0].Path
+	}
+	return draft.LeanSetPath(cfg, "mine")
 }
 
 // runLeans shows the merged lean sets, or rebuilds the generated ones.
@@ -51,13 +64,16 @@ func loadLeanSets(cfg string, names []string) (draft.Leans, []draft.LeanSet, err
 // merge you cannot trust: precedence decides which of two contradictory
 // reads reaches the board, and the only way to know it landed the way you
 // meant is to look at it before the draft rather than during.
-func runLeans(configDir, dataDir string, names []string, generate bool) error {
+func runLeans(configDir, dataDir string, names []string, generate, convert bool) error {
 	cfg, err := draft.ResolveConfigDir(configDir)
 	if err != nil {
 		return err
 	}
 	if generate {
 		return generateLeanSets(cfg, dataDir)
+	}
+	if convert {
+		return convertLeanSets(cfg, names)
 	}
 
 	merged, sets, err := loadLeanSets(cfg, names)
@@ -158,6 +174,69 @@ func generateLeanSets(cfg, dataDir string) error {
 		}
 		fmt.Printf("%-10s %d reads (%d up, %d down)  %s\n", g.Name, len(leans), up, down, path)
 	}
+	return nil
+}
+
+// convertLeanSets rewrites the named sets in the grouped YAML form,
+// leaving the original where it is.
+//
+// Nothing is deleted and nothing is overwritten. A lean set may be a
+// symlink into a notes vault that other things point at, and the file is
+// being edited right up to draft day; the conversion has to be something
+// you can look at and walk away from.
+func convertLeanSets(cfg string, names []string) error {
+	_, sets, err := loadLeanSets(cfg, names)
+	if err != nil {
+		return err
+	}
+	for _, set := range sets {
+		if strings.EqualFold(filepath.Ext(set.Path), ".yaml") ||
+			strings.EqualFold(filepath.Ext(set.Path), ".yml") {
+			fmt.Printf("%-10s already YAML  %s\n", set.Name, set.Path)
+			continue
+		}
+		// Sorted by lean then name so the generated file is stable, since
+		// a map has no order to preserve in the first place.
+		reads := make([]draft.PlayerLean, 0, len(set.Leans))
+		for _, pl := range set.Leans {
+			reads = append(reads, pl)
+		}
+		sort.Slice(reads, func(i, j int) bool {
+			if reads[i].Lean != reads[j].Lean {
+				return reads[i].Lean < reads[j].Lean
+			}
+			return reads[i].Player < reads[j].Player
+		})
+
+		doc, err := draft.FormatLeansYAML(reads, set.Undecided)
+		if err != nil {
+			return err
+		}
+		// A set is often a symlink into a notes vault so it can be edited
+		// from a phone. Writing the YAML beside the *link* would put a real
+		// file in front of it: the loader prefers YAML, so every later edit
+		// in the vault would stop reaching the board without saying so.
+		// Write beside the target instead, and leave re-pointing to you.
+		source, relink := set.Path, ""
+		if target, err := filepath.EvalSymlinks(set.Path); err == nil && target != set.Path {
+			source = target
+			relink = set.Path
+		}
+		out := strings.TrimSuffix(source, filepath.Ext(source)) + ".yaml"
+		if _, err := os.Stat(out); err == nil {
+			return fmt.Errorf("%s already exists; move it aside if you meant to replace it", out)
+		}
+		if err := os.WriteFile(out, doc, 0o644); err != nil {
+			return err
+		}
+		fmt.Printf("%-10s %d reads  %s\n", set.Name, len(reads), out)
+		if relink != "" {
+			fmt.Printf("%-10s is a symlink; point it at the new file when it looks right:\n"+
+				"           ln -sfn %q %s\n",
+				set.Name, out, strings.TrimSuffix(relink, filepath.Ext(relink))+".yaml")
+		}
+	}
+	fmt.Printf("\nthe originals are untouched; delete one once its .yaml looks right\n")
 	return nil
 }
 
