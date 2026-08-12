@@ -14,6 +14,10 @@ down:
 dnd:
   - Cam Akers
 
+# looked at him, no opinion — silences a lower-precedence set
+none:
+  - Jaylen Waddle
+
 # written down, not ruled on yet
 undecided:
   - Colston Loveland
@@ -42,6 +46,9 @@ median. `must` is acquisition: you are not leaving the draft without him,
 and you accept paying above your own estimate to do it. `dnd` is a refusal,
 not a discount.
 
+`none` and `undecided` are not the same. `none` is a read — you looked and
+hold no opinion — and it outranks a lower-precedence set that does hold one,
+which is how the board clears a lean it inherited from an analyst.
 `undecided` records a name without a read. It is a real state — you wrote
 him down before ruling on him — and `draftroom leans` prints those names so
 one you have not decided cannot pass for one you have.

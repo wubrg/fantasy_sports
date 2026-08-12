@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"sync"
 
 	"leaguehome/internal/draft"
@@ -131,7 +130,10 @@ func (s *server) handleLean(w http.ResponseWriter, r *http.Request) {
 // started would be lost by a blind overwrite, and the whole point of saving
 // is that reads survive.
 func (s *server) saveLeans() error {
-	path := filepath.Join(s.configDir, "leans", "mine.csv")
+	// Asked for rather than named. Two formats are readable and the loader
+	// prefers one; writing the other produces a real file the board never
+	// reads, so the click looks saved and the read is gone on restart.
+	path := draft.LeanSetPath(s.configDir, "mine")
 
 	onDisk, err := draft.LoadLeans(path)
 	if err != nil {

@@ -177,3 +177,46 @@ func TestYAMLRoundTrip(t *testing.T) {
 		t.Errorf("undecided lost in the round trip: %v", undecided)
 	}
 }
+
+// TestYAMLNoneIsAReadNotAnAbsence — none and undecided look alike and are
+// not. A none row silences the analyst set behind it; dropping it into
+// undecided on a rewrite would hand the player back to that set.
+func TestYAMLNoneIsAReadNotAnAbsence(t *testing.T) {
+	got, undecided := yamlLeansFrom(t, "none:\n  - Chase Brown\nundecided:\n  - Tucker Kraft\n")
+	if pl := got[normalizeName("Chase Brown")]; pl.Lean != LeanNone {
+		t.Errorf("none should parse as a read: %+v", pl)
+	}
+	if len(undecided) != 1 || undecided[0] != "Tucker Kraft" {
+		t.Errorf("undecided should hold only the undecided: %v", undecided)
+	}
+
+	// And it has to survive being written back out.
+	doc, err := FormatLeansYAML([]PlayerLean{{Player: "Chase Brown", Lean: LeanNone}}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(doc), "none:") {
+		t.Errorf("a none read must round-trip as none, got:\n%s", doc)
+	}
+	back, _, err := ParseLeansYAML(strings.NewReader(string(doc)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if back[normalizeName("Chase Brown")].Lean != LeanNone {
+		t.Errorf("none did not round-trip:\n%s", doc)
+	}
+}
+
+// TestYAMLNoneSilencesALowerSet — the behaviour none exists for, checked
+// through the merge rather than trusting the parse alone.
+func TestYAMLNoneSilencesALowerSet(t *testing.T) {
+	mine, _ := yamlLeansFrom(t, "none:\n  - Chase Brown\n")
+	analyst, _ := yamlLeansFrom(t, "up:\n  - Chase Brown\n")
+	merged := MergeLeans(
+		LeanSet{Name: "mine", Leans: mine},
+		LeanSet{Name: "menton", Leans: analyst},
+	)
+	if _, ok := merged[normalizeName("Chase Brown")]; ok {
+		t.Error("a none in the winning set should leave no read on the board")
+	}
+}

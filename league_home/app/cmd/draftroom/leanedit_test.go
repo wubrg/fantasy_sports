@@ -312,3 +312,46 @@ func TestClearingAnInheritedReadSticks(t *testing.T) {
 		t.Errorf("wrote %q, want an explicit none to silence the other set", got.Lean)
 	}
 }
+
+// TestSavingReachesTheSetTheBoardActuallyReads — the board saves to the mine
+// set, and the loader picks the format. Writing one format while the loader
+// prefers another loses the read without a word: the click appears to work,
+// the file on disk is real, and the board comes back without it.
+func TestSavingReachesTheSetTheBoardActuallyReads(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// A mine set in the format the tool now writes.
+	if err := os.WriteFile(filepath.Join(dir, "mine.yaml"),
+		[]byte("up:\n  - Old Guy\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	static := testStatic()
+	set, err := draft.LoadLeanSet(cfg, "mine")
+	if err != nil {
+		t.Fatal(err)
+	}
+	static.leans = set.Leans
+
+	srv, err := newServer(static, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv.leans.set("Jahmyr Gibbs", draft.LeanMust)
+	if err := srv.saveLeans(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Re-read the way the board does at startup, not the way the save wrote.
+	back, err := draft.LoadLeanSet(cfg, "mine")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"Old Guy", "Jahmyr Gibbs"} {
+		if _, ok := back.Leans[draft.NormalizeName(name)]; !ok {
+			t.Errorf("%s did not survive the save; the board reads %s", name, back.Path)
+		}
+	}
+}

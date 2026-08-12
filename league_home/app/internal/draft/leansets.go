@@ -77,6 +77,20 @@ func findLeanSet(configDir, name string) (string, func(io.Reader) (Leans, []stri
 	}
 }
 
+// LeanSetPath is where a named set lives, or where it would be created.
+//
+// Anything that writes a set has to go through this rather than naming a
+// file itself. Two formats are readable and the loader prefers one of them,
+// so a writer that picks its own extension can produce a real file on disk
+// that the board never reads — the save appears to work, and the read is
+// gone at the next restart.
+func LeanSetPath(configDir, name string) string {
+	if path, _, err := findLeanSet(configDir, name); err == nil {
+		return path
+	}
+	return filepath.Join(configDir, leansDir, name+leanFormats[0].ext)
+}
+
 // LoadLeanSet reads one named set from the config directory.
 func LoadLeanSet(configDir, name string) (LeanSet, error) {
 	name = strings.TrimSpace(name)

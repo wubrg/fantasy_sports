@@ -21,10 +21,15 @@ import (
 // a handful of entries against dozens of reads — and pushing them out of the
 // list keeps the common line to a name.
 type leanDoc struct {
-	Must      []string          `yaml:"must,omitempty"`
-	Up        []string          `yaml:"up,omitempty"`
-	Down      []string          `yaml:"down,omitempty"`
-	DND       []string          `yaml:"dnd,omitempty"`
+	Must []string `yaml:"must,omitempty"`
+	Up   []string `yaml:"up,omitempty"`
+	Down []string `yaml:"down,omitempty"`
+	DND  []string `yaml:"dnd,omitempty"`
+	// None is an explicit absence of a read, which outranks a
+	// lower-precedence set that does hold one. It is not the same as
+	// Undecided: none says "I looked and I have no opinion" and silences
+	// the analyst behind it, undecided says nothing at all.
+	None      []string          `yaml:"none,omitempty"`
 	Undecided []string          `yaml:"undecided,omitempty"`
 	Caps      map[string]int    `yaml:"caps,omitempty"`
 	Notes     map[string]string `yaml:"notes,omitempty"`
@@ -32,7 +37,7 @@ type leanDoc struct {
 
 // leanHeadings lists the headings that carry reads, in the order a report
 // should show them.
-var leanHeadings = []string{"must", "up", "down", "dnd", "undecided"}
+var leanHeadings = []string{"must", "up", "down", "dnd", "none", "undecided"}
 
 // ParseLeansYAML reads a lean set in the grouped YAML form, returning the
 // reads and the players listed as undecided.
@@ -68,6 +73,7 @@ func ParseLeansYAML(r io.Reader) (Leans, []string, error) {
 		{LeanUp, doc.Up},
 		{LeanDown, doc.Down},
 		{LeanDND, doc.DND},
+		{LeanNone, doc.None},
 	}
 	for _, g := range groups {
 		for _, name := range g.players {
@@ -165,6 +171,8 @@ func FormatLeansYAML(leans []PlayerLean, undecided []string) ([]byte, error) {
 			doc.Down = append(doc.Down, pl.Player)
 		case LeanDND:
 			doc.DND = append(doc.DND, pl.Player)
+		case LeanNone:
+			doc.None = append(doc.None, pl.Player)
 		default:
 			// No read is the undecided group, however it was expressed.
 			doc.Undecided = append(doc.Undecided, pl.Player)
