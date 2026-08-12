@@ -45,6 +45,10 @@ type staticData struct {
 	availability map[string]string
 	// traits label what kind of player each man is; see ClassifyTraits.
 	traits map[string]draft.TraitSet
+	// priceHistory is what each rank tier has cost in past drafts, the
+	// reference the live lines are read against. Computed from the seasons
+	// already loaded for the keeper ledger, so it costs no extra calls.
+	priceHistory map[string][]int
 	// baselines are the pinned pre-draft replacement points that rosters
 	// are scored against; thresholds are the pinned tier medians scarcity
 	// is counted against. Both computed once, because the projection set
@@ -168,6 +172,9 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	// falls as the pool empties, so a count above it could never drop.
 	s.baselines = draft.ScoringBaselines(s.projections, s.shape)
 	s.traits = classifyTraits(ciely, sv, info, s.shape)
+	s.priceHistory = draft.HistoricalPriceLines(seasons, func(id string) string {
+		return info[id].Position
+	}, minSpendForUsableSeason)
 	s.thresholds = draft.ScarcityThresholds(s.projections, s.shape)
 
 	for _, r := range sv {
@@ -230,7 +237,14 @@ type gone struct {
 
 // Build recomputes the whole board from the cached statics plus whatever
 // has been drafted. Pure computation — no network, microseconds.
-func (s *staticData) Build(taken map[string]gone) (draft.Snapshot, error) {
+// Build assembles the whole board. edits are personal reads made since
+// startup, overriding the loaded lean sets per player; nil for callers with
+// none.
+//
+// Passed in rather than stored, because staticData is shared and immutable
+// by contract — see the type comment. Threading them through the one seam
+// that consumes them keeps that true and keeps the dependency visible.
+func (s *staticData) Build(taken map[string]gone, edits draft.Leans) (draft.Snapshot, error) {
 	// Start from the projected keeper set, then remove anyone already off
 	// the board for real.
 	aav := map[string]float64{}
@@ -287,13 +301,27 @@ func (s *staticData) Build(taken map[string]gone) (draft.Snapshot, error) {
 	}
 
 	recommended := me.MaxRecommendedBid(state.LeaguePerStarter(), draft.DefaultRiskFloor)
+	// Resolved once and used by both consumers below. Passing the raw set
+	// to either would put a read on the board that the must-have budget
+	// line does not know about — the two would disagree about the same
+	// player on the same screen.
+	leans := s.effectiveLeans(edits)
 	players := draft.BuildSignals(draft.SignalInputs{
 		Values: values, Costs: costs, Subvertadown: s.subvert,
 		CielyPoints: s.points, Availability: s.availability,
-		Leans: s.leans, Traits: s.traits, RecommendedBid: recommended,
+		Leans: leans, Traits: s.traits, RecommendedBid: recommended,
 	})
-	snap := draft.Assemble(s.season, state, me, players, s.leans, s.tempo(taken, costs), s.thresholds, s.warnings)
+	snap := draft.Assemble(s.season, state, me, players, leans, s.tempo(taken, costs), s.thresholds, s.warnings)
 	snap.LeanSets = s.leanSets
+	// Players already gone price the curve at what they actually went for,
+	// which is why this is assembled here where taken is in scope.
+	sold := map[string][]int{}
+	for id, g := range taken {
+		if pos := s.positionOf(id); pos != "" && g.price > 0 {
+			sold[pos] = append(sold[pos], g.price)
+		}
+	}
+	snap.PriceLines = draft.PriceLines(players, sold, s.priceHistory)
 	return snap, nil
 }
 
@@ -315,6 +343,45 @@ func (s *staticData) tempo(taken map[string]gone, costs map[string]int) draft.Dr
 		t.Picks++
 	}
 	return t
+}
+
+// effectiveLeans is the loaded sets with any live edits laid over the top.
+//
+// Copies rather than mutating: s.leans is shared with every other reader of
+// this staticData, and a board rebuild must not be able to change what the
+// next one starts from.
+func (s *staticData) effectiveLeans(edits draft.Leans) draft.Leans {
+	if len(edits) == 0 {
+		return s.leans
+	}
+	out := make(draft.Leans, len(s.leans)+len(edits))
+	for k, v := range s.leans {
+		out[k] = v
+	}
+	for k, v := range edits {
+		if v.Lean == "" {
+			// An edit back to nothing removes the read rather than leaving
+			// a blank one, which WalkAway would treat as an unknown lean.
+			delete(out, k)
+			continue
+		}
+		// Only the read changes. Replacing the whole record erased two
+		// things that were not the board's to erase: a hand-written cap,
+		// which quietly raised the ceiling on a must-have from $24 to $49
+		// with nothing on screen to say so, and the losing opinions from
+		// other sets, which is what the "vs menton" split flag is made of.
+		//
+		// It could not be avoided by care either — every route back around
+		// the cycle passes through the clear, so four clicks turned a $20
+		// hard cap into no cap at all.
+		merged, known := out[k]
+		if !known {
+			merged.Player = v.Player
+		}
+		merged.Lean, merged.Source = v.Lean, v.Source
+		out[k] = merged
+	}
+	return out
 }
 
 // heldRoster is the owner's projected keepers as roster spots, priced at

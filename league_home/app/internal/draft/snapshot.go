@@ -33,6 +33,9 @@ type Snapshot struct {
 	// Bias is each position's median edge, the part of every edge that is
 	// about the position rather than the player.
 	Bias map[string]float64 `json:"bias"`
+	// PriceLines say what a dollar figure buys at each position — see
+	// PositionPriceLine. A statement about price, never about a player.
+	PriceLines map[string]PositionPriceLine `json:"priceLines"`
 	// Scarcity is how thin each position has become.
 	Scarcity map[string]PositionScarcity `json:"scarcity"`
 	// MustHaves totals what your declared must-haves commit you to.
