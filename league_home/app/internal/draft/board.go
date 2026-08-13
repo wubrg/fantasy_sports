@@ -90,6 +90,11 @@ func writeMustHaves(w io.Writer, m MustHaveCost) error {
 // change a decision earn a place here.
 func flagsFor(p PlayerSignals) []string {
 	var out []string
+	// Blocked leads: he is off your board, which changes the decision more
+	// than anything else a flag can say.
+	if p.BlockedReason != "" {
+		out = append(out, "blocked:"+p.BlockedReason)
+	}
 	if m := p.Lean.Marker(); m != "" {
 		out = append(out, m)
 	}
@@ -200,13 +205,30 @@ func sourceLabel(gaps []Gap) string {
 	return gaps[0].Source
 }
 
-// WriteScarcity renders how thin each position has become.
-func WriteScarcity(w io.Writer, s map[string]PositionScarcity) error {
+// WriteScarcity renders how thin each position has become. When eff is
+// non-empty it adds a YOURS column: the startable count over your own board,
+// once your preferences have taken the offenses you already own a piece of off
+// it. Empty eff hides the column, so a board with no preferences is unchanged.
+func WriteScarcity(w io.Writer, s, eff map[string]PositionScarcity) error {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(tw, "POS\tSTARTABLE\tSTARTERS STILL NEEDED\tCOVER\tPS% AT TOP\tNEXT CLIFF")
+	yours := len(eff) > 0
+	if yours {
+		fmt.Fprintln(tw, "POS\tSTARTABLE\tYOURS\tSTARTERS STILL NEEDED\tCOVER\tPS% AT TOP\tNEXT CLIFF")
+	} else {
+		fmt.Fprintln(tw, "POS\tSTARTABLE\tSTARTERS STILL NEEDED\tCOVER\tPS% AT TOP\tNEXT CLIFF")
+	}
 	for _, pos := range []string{"QB", "RB", "WR", "TE"} {
 		v, ok := s[pos]
 		if !ok {
+			continue
+		}
+		if yours {
+			y := "—"
+			if e, ok := eff[pos]; ok {
+				y = fmt.Sprintf("%d", e.Startable)
+			}
+			fmt.Fprintf(tw, "%s\t%d\t%s\t%d\t%s\t%.0f%%\t%.0f pts\n",
+				pos, v.Startable, y, v.StartersLeft, formatCover(v.Cover), v.TopScarcityPct, v.Cliff)
 			continue
 		}
 		fmt.Fprintf(tw, "%s\t%d\t%d\t%s\t%.0f%%\t%.0f pts\n",

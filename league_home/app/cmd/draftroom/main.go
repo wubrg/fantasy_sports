@@ -38,6 +38,9 @@ const (
 const (
 	rulingsFile = "rulings.csv"
 	aliasesFile = "aliases.csv"
+	// preferencesFile holds the personal one-per-offense / no-handcuff filters
+	// that make positional scarcity your own. Absent means the feature is off.
+	preferencesFile = "preferences.yaml"
 	// myGuysFile is the pre-lean-set filename, still read as a fallback so
 	// an older config directory does not silently lose every read.
 	myGuysFile = "my-guys.csv"
@@ -478,7 +481,7 @@ func runBoard(leagueID, configDir, dataDir, ownerID string, baseline draft.Basel
 	}
 
 	fmt.Printf("\n\nPOSITION SCARCITY\n")
-	if err := draft.WriteScarcity(os.Stdout, snap.Scarcity); err != nil {
+	if err := draft.WriteScarcity(os.Stdout, snap.Scarcity, snap.EffectiveScarcity); err != nil {
 		return err
 	}
 	fmt.Printf("\n\nPOSITIONAL BIAS — how much of every edge is about the position, not the player\n")

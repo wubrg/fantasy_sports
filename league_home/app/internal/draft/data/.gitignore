@@ -2,3 +2,7 @@
 # Personal strategy notes, symlinked into a private vault. Not this repo's
 # to publish, and a dangling link for anyone else.
 draftroom_2026.md
+
+# Your live one-per-offense / no-handcuff filters — personal strategy, kept
+# out of the public repo. `preferences.example.yaml` is the tracked template.
+preferences.yaml
