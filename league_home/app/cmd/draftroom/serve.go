@@ -60,6 +60,12 @@ type server struct {
 	// configDir is where the lean CSVs live, kept so a read set at the
 	// board can be written back to the file it came from.
 	configDir string
+
+	// keeperScenario is the research keeper scenario the board is showing:
+	// "" on the live draft-night board, or "none"/"locks"/"expected" while
+	// exploring the pool the league's keepers would leave. Guarded by mu with
+	// the rest of the live state, since changing it rebuilds the board.
+	keeperScenario string
 }
 
 func newServer(s *staticData, configDir string) (*server, error) {
@@ -86,7 +92,7 @@ func (s *server) rebuildLocked() error {
 	for id, g := range s.manual {
 		combined[id] = g
 	}
-	snap, err := s.static.Build(combined, s.leans.snapshot())
+	snap, err := s.static.Build(combined, s.leans.snapshot(), s.keeperScenario)
 	if err != nil {
 		return err
 	}
@@ -223,6 +229,42 @@ func (s *server) handleUndo(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, s.snapshot())
 }
 
+// keeperScenarios are the research keeper views the board can show. "" is the
+// live draft-night board; the rest take a projected keeper set off the pool.
+var keeperScenarios = map[string]bool{"": true, "none": true, "locks": true, "expected": true}
+
+// handleKeepers switches the board between the live view and a research keeper
+// scenario. It is the whole of "research mode" on the server: the same rebuild
+// path as recording a sale, just changing which keepers are assumed off.
+func (s *server) handleKeepers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST required", http.StatusMethodNotAllowed)
+		return
+	}
+	var body struct {
+		Scenario string `json:"scenario"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if !keeperScenarios[body.Scenario] {
+		http.Error(w, fmt.Sprintf("unknown keeper scenario %q", body.Scenario), http.StatusBadRequest)
+		return
+	}
+
+	s.mu.Lock()
+	s.keeperScenario = body.Scenario
+	err := s.rebuildLocked()
+	s.mu.Unlock()
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, s.snapshot())
+}
+
 func writeJSON(w http.ResponseWriter, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(v); err != nil {
@@ -264,6 +306,7 @@ func runServe(addr, leagueID, configDir, dataDir, ownerID string, baseline draft
 	mux.HandleFunc("/api/leans/reload", srv.handleLeanReload)
 	mux.HandleFunc("/api/scratch", srv.handleScratch)
 	mux.HandleFunc("/api/scratch/view", srv.handleScratchView)
+	mux.HandleFunc("/api/keepers", srv.handleKeepers)
 
 	snap := srv.snapshot()
 	cadence := idleInterval

@@ -59,6 +59,12 @@ const (
 	rosterSize = 14
 )
 
+// lockThreshold is the surplus (market cost less keeper price) above which a
+// projected keeper is a near-certainty rather than a coin-flip. It separates
+// the "locks only" research scenario from the fuller "expected" one. Tunable;
+// $15 is roughly a tier of auction value on a $200 budget.
+const lockThreshold = 15.0
+
 // builtinConfigDir and builtinDataDir are baked in by `make install` so an
 // installed binary works from any directory without environment variables.
 // They are only fallbacks: an explicit flag or env var still wins, and the
@@ -459,7 +465,9 @@ func buildSnapshot(leagueID, configDir, dataDir, ownerID string, baseline draft.
 			}
 		}
 	}
-	return static.Build(taken, nil)
+	// The terminal board is the live view; keeper scenarios are a research-mode
+	// feature of the web board only.
+	return static.Build(taken, nil, "")
 }
 
 // runBoard prints the draft board.
@@ -520,37 +528,70 @@ func tail(edges []draft.PlayerSignals, n int) []draft.PlayerSignals {
 // than a $10 receiver worth $30. Surplus is measured against AAV because it
 // is the only per-player market reference that does not depend on the pool
 // we are trying to compute.
-func poolAfterKeepers(projected []draft.Entry, aav map[string]float64, teams, budget int) (dollars, slots int, filled map[string]int) {
+// leagueKeepers is every team's projected keepers: each owner's top-2 by
+// surplus (market cost less the keeper price) whose surplus clears minSurplus.
+//
+// This is the one definition of "who is kept" — poolAfterKeepers, myState, and
+// the research-mode scenarios all resolve through it, so the money, the pool,
+// and your budget never disagree about the keeper set. minSurplus of 0 is the
+// standard projection ("expected"); a higher floor keeps only the near-certain
+// ones ("locks only").
+func leagueKeepers(projected []draft.Entry, aav map[string]float64, minSurplus float64) []draft.Entry {
 	byOwner := map[string][]draft.Entry{}
 	for _, e := range projected {
 		byOwner[e.OwnerID] = append(byOwner[e.OwnerID], e)
 	}
+	surplus := func(e draft.Entry) float64 { return aav[e.PlayerID] - float64(e.LeaguePrice) }
 
-	dollars, slots, filled = teams*budget, teams*rosterSize, map[string]int{}
-	for _, list := range byOwner {
-		surplus := func(e draft.Entry) float64 { return aav[e.PlayerID] - float64(e.LeaguePrice) }
-		sort.Slice(list, func(i, j int) bool { return surplus(list[i]) > surplus(list[j]) })
+	// Stable owner order so the result is deterministic for tests and the UI.
+	owners := make([]string, 0, len(byOwner))
+	for o := range byOwner {
+		owners = append(owners, o)
+	}
+	sort.Strings(owners)
+
+	var out []draft.Entry
+	for _, o := range owners {
+		list := byOwner[o]
+		sort.SliceStable(list, func(i, j int) bool { return surplus(list[i]) > surplus(list[j]) })
 		for i := 0; i < maxKeepers && i < len(list); i++ {
-			// A keeper worth less than he costs is not kept.
-			if surplus(list[i]) <= 0 {
+			// A keeper whose surplus does not clear the floor is not kept.
+			if surplus(list[i]) <= minSurplus {
 				break
 			}
-			dollars -= list[i].LeaguePrice
-			slots--
-			filled[list[i].Position]++
+			out = append(out, list[i])
 		}
+	}
+	return out
+}
+
+// poolFromKeepers is the league's auction money, open slots, and filled
+// positions once a given keeper set is off the board. The one place a keeper
+// set turns into pool numbers, so the standard projection and a research
+// scenario compute them identically.
+func poolFromKeepers(keepers []draft.Entry, teams, budget int) (dollars, slots int, filled map[string]int) {
+	dollars, slots, filled = teams*budget, teams*rosterSize, map[string]int{}
+	for _, e := range keepers {
+		dollars -= e.LeaguePrice
+		slots--
+		filled[e.Position]++
 	}
 	return dollars, slots, filled
 }
 
-// myState figures out what you personally bring to the auction, given the
-// keepers projected for your team.
-func myState(projected []draft.Entry, aav map[string]float64, ownerID string, budget int) draft.MyState {
+func poolAfterKeepers(projected []draft.Entry, aav map[string]float64, teams, budget int) (dollars, slots int, filled map[string]int) {
+	return poolFromKeepers(leagueKeepers(projected, aav, 0), teams, budget)
+}
+
+// myStateFrom is what you bring to the auction once a given set of your own
+// keepers is locked in. The one place your keepers turn into a budget and open
+// slots, shared by the standard projection and a research scenario.
+func myStateFrom(myKeepers []draft.Entry, budget int) draft.MyState {
 	me := draft.MyState{
 		Budget: budget, OpenSlots: rosterSize,
 		StartersNeeded: map[string]int{"QB": 1, "RB": 2, "WR": 3, "TE": 1},
 	}
-	for _, e := range projectedKeepers(projected, aav, ownerID) {
+	for _, e := range myKeepers {
 		me.Budget -= e.LeaguePrice
 		me.OpenSlots--
 		if n, ok := me.StartersNeeded[e.Position]; ok && n > 0 {
@@ -558,6 +599,12 @@ func myState(projected []draft.Entry, aav map[string]float64, ownerID string, bu
 		}
 	}
 	return me
+}
+
+// myState figures out what you personally bring to the auction, given the
+// keepers projected for your team.
+func myState(projected []draft.Entry, aav map[string]float64, ownerID string, budget int) draft.MyState {
+	return myStateFrom(projectedKeepers(projected, aav, ownerID), budget)
 }
 
 // projectedKeepers is who an owner is expected to keep: the players whose
@@ -570,21 +617,11 @@ func projectedKeepers(projected []draft.Entry, aav map[string]float64, ownerID s
 	if ownerID == "" {
 		return nil
 	}
-	var mine []draft.Entry
-	for _, e := range projected {
-		if e.OwnerID == ownerID {
-			mine = append(mine, e)
-		}
-	}
-	surplus := func(e draft.Entry) float64 { return aav[e.PlayerID] - float64(e.LeaguePrice) }
-	sort.Slice(mine, func(i, j int) bool { return surplus(mine[i]) > surplus(mine[j]) })
-
 	var out []draft.Entry
-	for i := 0; i < maxKeepers && i < len(mine); i++ {
-		if surplus(mine[i]) <= 0 {
-			break
+	for _, e := range leagueKeepers(projected, aav, 0) {
+		if e.OwnerID == ownerID {
+			out = append(out, e)
 		}
-		out = append(out, mine[i])
 	}
 	return out
 }

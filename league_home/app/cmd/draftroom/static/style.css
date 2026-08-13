@@ -413,3 +413,91 @@ tr.in-scratch { background: #16233a; }
   color: var(--dim);
   line-height: 1.2;
 }
+
+/* ---- research mode: keeper scenarios on a hypothetical pool ---- */
+
+#modebar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1.4rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.modes {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.mode-btn {
+  background: transparent;
+  color: var(--dim);
+  border: 0;
+  padding: 0.3rem 0.9rem;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.mode-btn:hover { color: var(--text); }
+.mode-btn.on { background: var(--accent); color: #0b1220; font-weight: 600; }
+body.research .mode-btn.on { background: var(--warn); color: #241a02; }
+
+#modebar .scenario {
+  font-size: 0.74rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+#keeper-scenario {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
+  font: inherit;
+  font-size: 0.85rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.research-badge {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--warn);
+  background: #33210a;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+}
+
+/* A hypothetical pool must never be mistaken for the live draft: warm the
+   chrome and frame the board while a scenario is applied. */
+body.research #modebar { background: #221a0a; border-bottom-color: var(--warn); }
+body.research #strip { border-bottom-color: var(--warn); }
+body.research main { box-shadow: inset 0 0 0 2px var(--warn); }
+
+.kept { border-color: var(--warn); }
+.kept h2 .count {
+  float: right;
+  font-size: 0.7rem;
+  color: var(--dim);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.kept-list td { font-size: 0.86rem; }
+.kept-list td.empty { color: var(--dim); }
+.kept-lock {
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  color: var(--warn);
+  background: #33210a;
+  padding: 0 0.3rem;
+  border-radius: 3px;
+}
