@@ -578,6 +578,45 @@ a half-typed file would be worse than the staleness it fixes.
 Precedence is left to right, so `mine` outranks a set listed after it; see
 [Lean sets](#lean-sets).
 
+### `draftroom sources`
+
+What each normalized source contributes, and which of its rows reach no
+Sleeper player.
+
+```sh
+draftroom sources             # counts per source, plus anything unresolved
+draftroom sources -unmatched  # only the rows that resolve to nobody
+```
+
+The board can only ever say *how many* rows failed. A count tells you
+something is wrong without telling you which player is missing, and a player
+missing from the pool is invisible until somebody nominates him — he cannot
+be leaned on, priced, or bid against.
+
+For each failed row it names the closest Sleeper player and prints the
+`aliases.csv` line that would fix it, so a nickname is a paste rather than a
+hunt for a player id:
+
+```
+ciely: 1 of 447 rows reach no Sleeper player
+
+  Hollywood Brown  WR PHI
+    no player with that name
+    closest: Marquise Brown (WR, PHI) id=5848
+    aliases.csv: Hollywood Brown,5848,ciely name for Marquise Brown
+```
+
+Two ways of finding a candidate, because the failures come in two kinds. A
+misspelling is close as a string, so edit distance finds it. A nickname is
+not close at all — "Hollywood Brown" and "Marquise Brown" share nothing but
+a surname — so the second pass uses the surname with the position and team
+the source already stated, and only when exactly one player fits. Where
+neither is decisive it says so rather than naming a guess: a wrong alias
+binds every read on that player to somebody else, silently.
+
+**It needs no league.** Resolving a name wants names, positions and teams,
+not the keeper ledger, so this is one Sleeper call and no `-league`.
+
 ### `make refresh`
 
 Re-runs every extractor against the newest snapshot in the private repo,

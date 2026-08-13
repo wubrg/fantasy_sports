@@ -61,26 +61,33 @@ that looks applied but is not.
   about lean sets moves during a draft. Loop documented in `cmd/draftroom/README.md`
   ("Editing leans away from the machine").
 
-- **`D2c` — `stripSuffix` over-strips a surname ending in `i`.** **S.**
-  `internal/draft/sources.go:321-331` guards only on length, so `Kyle Monangai II` normalizes to
-  `kylemonangaiii`, matches the `iii` suffix, and strips to `kylemonanga` — a miss rather than a
-  wrong match, and consistent across the report and the board, but it means those players cannot
-  be leaned on by their full name. Same for `Rasheen Ali II`, `Mike Gesicki II`. Predates the
-  lean matcher and affects vendor row resolution equally.
+- **`D2c` — `stripSuffix` over-strips a surname ending in `i`.** ✅ **Done 2026-08-12.**
+  Normalizing before stripping glued the suffix to the surname, so `Kyle Monangai II` became
+  `kylemonangaiii`, matched `iii`, and stripped to a player who does not exist. `stemName`
+  (`internal/draft/sources.go`) drops a trailing suffix *token* before normalizing, which cannot
+  make that mistake. Same fix covers `Rasheen Ali II` and `Mike Gesicki II`.
 
 ### Tier 1 — trust the data before doing research on it
 
-- **`D4` — `draftroom sources -unmatched` diagnostic.** **M.** Source rows that fail to resolve
-  to a Sleeper ID are dropped without a word: `internal/draft/signals.go:139-140` skips an empty
-  `PlayerID`, and `cmd/draftroom/main.go:272-273` calls `Resolve()` without capturing its
-  warnings. `aliases.csv` holds only 4 entries, so coverage is thin by construction. Name the
-  dropped rows, grouped by source, so aliases get filled deliberately instead of by accident.
-  Blocks any research whose conclusions depend on the pool being complete.
+- **`D4` — `draftroom sources` diagnostic.** ✅ **Done 2026-08-12.** Rows that failed to resolve
+  to a Sleeper id were counted, never named, so `aliases.csv` could only be filled by accident.
+  `draftroom sources -unmatched` names each one and prints the `aliases.csv` line that would fix
+  it. Two ways of finding a candidate, because failures come in two kinds: edit distance for a
+  misspelling, and surname + position + team for a nickname, which is not close as a string —
+  the latter only when exactly one player fits. Needs no `-league`: resolution wants names,
+  positions and teams, not the keeper ledger, so it is one Sleeper call.
+  `cmd/draftroom/sources.go`, `internal/draft/leancheck.go` `ClosestPlayer`.
+  Found the live case immediately: **Hollywood Brown → Marquise Brown, id 5848**, in both
+  sources. Note this supersedes `OPEN-QUESTIONS.md:118`, which recorded him as absent from
+  Sleeper's dictionary — he is there now.
 
-- **`D5` — Validate required columns on source CSVs.** **S.** Only a missing `player` column
-  fails loudly (`internal/draft/sources.go:218-220`). Every other missing column falls through
-  `pick()` → `num()` → `0` (`sources.go:209, 224-230`), so a renamed vendor column becomes a
-  column of zeros rather than an error. Silent zeros are worse than a crash here.
+- **`D5` — Validate required columns on source CSVs.** ✅ **Done 2026-08-12.** Only the player
+  column had to exist; everything else fell through `pick()` → `num()` → `0`, so a renamed vendor
+  column became a column of zeros and the board still rendered. Each source now declares the
+  columns whose absence would corrupt a number (`SourceSchema`, `CielyColumns`,
+  `SubvertadownColumns` in `internal/draft/sources.go`) and loading fails naming the missing one
+  and the header actually read. Accepted spellings mirror `pick()`, so the check cannot reject a
+  header the parser would have read; optional columns stay optional.
 
 ### Tier 2 — draft-day decision support
 

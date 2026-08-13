@@ -280,7 +280,7 @@ func reportUnmatched(sets []draft.LeanSet, cfg, dataDir string) {
 		fmt.Printf("\nskipped the name check: %v\n", err)
 		return
 	}
-	rows, err := draft.LoadSourceCSV(root.Normalized(projectionSource))
+	rows, err := draft.LoadSourceCSV(root.Normalized(projectionSource), draft.CielyColumns)
 	if err != nil {
 		fmt.Printf("\nskipped the name check: %v\n", err)
 		return

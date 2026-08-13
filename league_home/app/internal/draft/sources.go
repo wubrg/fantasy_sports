@@ -170,24 +170,99 @@ func (r SourceRow) ECR() ECRState {
 	return ECRConsensus
 }
 
-// LoadSourceCSV reads a normalized source CSV. Column order is read from
-// the header rather than assumed, because these files are produced by
-// several different extractors and hand-edited between drafts.
-func LoadSourceCSV(path string) ([]SourceRow, error) {
+// SourceSchema names the columns a source must carry.
+//
+// Per source rather than one shared list, because the two normalized files
+// hold different things: Ciely publishes a projection and a dollar value,
+// Subvertadown a baseline label and a market AAV. A list broad enough for
+// both would demand columns neither has.
+type SourceSchema struct {
+	// Name is the source, for the error message.
+	Name string
+	// Required is one entry per column that must exist, each listing the
+	// spellings that count. The spellings mirror what pick() accepts, so
+	// this check can never reject a header the parser would have read.
+	Required [][]string
+}
+
+// CielyColumns and SubvertadownColumns are what each extractor's output has
+// to carry for the board to mean anything.
+//
+// Only the columns whose absence would corrupt a number, not every column
+// the files happen to have. Losing ps_pct or an ECR flag costs a signal and
+// is survivable; losing the value column produces a board priced entirely
+// at zero that still renders and still looks like a board.
+var (
+	CielyColumns = SourceSchema{
+		Name: "ciely",
+		Required: [][]string{
+			{"player", "name", "player name"},
+			{"position", "pos"},
+			{"league_points", "points", "fps", "proj"},
+			{"auction_value", "auc$", "value", "auction"},
+		},
+	}
+	SubvertadownColumns = SourceSchema{
+		Name: "subvertadown",
+		Required: [][]string{
+			{"player", "name", "player name"},
+			{"position", "pos"},
+			{"baseline"},
+			{"aav"},
+			{"value", "auction_value", "auc$", "auction"},
+		},
+	}
+)
+
+// check reports the first required column the header does not satisfy.
+func (s SourceSchema) check(header []string, cols map[string]int) error {
+	for _, accepted := range s.Required {
+		found := false
+		for _, name := range accepted {
+			if _, ok := cols[name]; ok {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("%s is missing a %s column (have %v)",
+				s.Name, strings.Join(accepted, "/"), header)
+		}
+	}
+	return nil
+}
+
+// LoadSourceCSV reads a normalized source CSV and checks it carries what the
+// schema requires. Column order is read from the header rather than assumed,
+// because these files are produced by several different extractors and
+// hand-edited between drafts.
+func LoadSourceCSV(path string, schema SourceSchema) ([]SourceRow, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("draft: opening source %s: %w", path, err)
 	}
 	defer f.Close()
-	rows, err := ParseSourceCSV(f)
+	rows, err := ParseSourceCSVAs(f, schema)
 	if err != nil {
 		return nil, fmt.Errorf("draft: %s: %w", path, err)
 	}
 	return rows, nil
 }
 
-// ParseSourceCSV reads normalized source rows from any CSV reader.
+// ParseSourceCSV reads rows with no schema check, for callers that only
+// want whatever the file happens to hold.
 func ParseSourceCSV(r io.Reader) ([]SourceRow, error) {
+	return ParseSourceCSVAs(r, SourceSchema{})
+}
+
+// ParseSourceCSVAs reads normalized source rows, rejecting a file that does
+// not carry the columns its schema requires.
+//
+// Loudly, because the alternative is what this replaced: every column but
+// the player name fell through to zero when it was missing, so a renamed
+// vendor column became a column of zeros. Nothing downstream can tell a
+// real zero from an absent one, and the board renders either way.
+func ParseSourceCSVAs(r io.Reader, schema SourceSchema) ([]SourceRow, error) {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.TrimLeadingSpace = true
@@ -196,7 +271,13 @@ func ParseSourceCSV(r io.Reader) ([]SourceRow, error) {
 	if err != nil {
 		return nil, fmt.Errorf("reading csv: %w", err)
 	}
-	if len(records) < 2 {
+	if len(records) == 0 {
+		// No header at all. With a schema to satisfy there is nothing to
+		// check it against, and an empty file is exactly the shape a broken
+		// extractor leaves behind.
+		if len(schema.Required) > 0 {
+			return nil, fmt.Errorf("%s is empty", schema.Name)
+		}
 		return nil, nil
 	}
 
@@ -219,6 +300,9 @@ func ParseSourceCSV(r io.Reader) ([]SourceRow, error) {
 		if _, ok := cols["name"]; !ok {
 			return nil, fmt.Errorf("no player/name column (have %v)", records[0])
 		}
+	}
+	if err := schema.check(records[0], cols); err != nil {
+		return nil, err
 	}
 
 	num := func(s string) float64 {
@@ -313,13 +397,38 @@ func normalizeName(s string) string {
 // nameSuffixes are dropped when a direct match fails, since sources
 // disagree about whether to include them.
 //
-// Order matters: longest first, or "kennethwalkeriii" matches "ii" and
-// strips to "kennethwalkeri". A bare "v" is deliberately absent — real
+// A bare "v" is deliberately absent — real
 // surnames end in v (Popov, Asiasi) and stripping it would create false
 // matches, which are worse than the rare missed "V" suffix an alias can
 // cover instead.
 var nameSuffixes = []string{"iii", "iv", "ii", "jr", "sr"}
 
+// stemName normalizes a display name with a trailing generational suffix
+// dropped, treating it as a word rather than as trailing letters.
+//
+// The difference is not academic. Normalizing first glues the suffix to the
+// surname, so "Kyle Monangai II" becomes kylemonangaiii — which ends in
+// "iii" and stripped to "kylemonanga", a player who does not exist. Rasheen
+// Ali and Mike Gesicki have the same problem, and every one of them was
+// unresolvable by his own full name.
+//
+// Matching a whole token cannot make that mistake: "Monangai" is not a
+// suffix, and "II" is, whatever the surname before it happens to end with.
+func stemName(raw string) string {
+	fields := strings.Fields(raw)
+	if len(fields) > 1 {
+		last := strings.ToLower(strings.TrimSuffix(fields[len(fields)-1], "."))
+		for _, suffix := range nameSuffixes {
+			if last == suffix {
+				return normalizeName(strings.Join(fields[:len(fields)-1], " "))
+			}
+		}
+	}
+	return normalizeName(raw)
+}
+
+// stripSuffix is the string-ending form, kept for the one caller that has
+// only a normalized key and no name left to split. Prefer stemName.
 func stripSuffix(normalized string) string {
 	for _, suffix := range nameSuffixes {
 		if strings.HasSuffix(normalized, suffix) && len(normalized) > len(suffix)+3 {
@@ -421,7 +530,7 @@ func BuildPlayerIndexWithAliases(players map[string]PlayerInfo, aliases Aliases)
 		}
 		e := indexed{id: id, position: strings.ToUpper(p.Position), team: strings.ToUpper(p.Team)}
 		idx.byName[n] = append(idx.byName[n], e)
-		if s := stripSuffix(n); s != n {
+		if s := stemName(p.Name); s != n {
 			idx.byName[s] = append(idx.byName[s], e)
 		}
 	}
@@ -460,7 +569,7 @@ func (idx *PlayerIndex) Resolve(rows []SourceRow) []Unmatched {
 		}
 		cands := idx.byName[n]
 		if len(cands) == 0 {
-			cands = idx.byName[stripSuffix(n)]
+			cands = idx.byName[stemName(row.Player)]
 		}
 		switch len(cands) {
 		case 0:

@@ -89,6 +89,7 @@ func main() {
 	leans := fs.String("leans", defaultLeanSets, "lean sets to apply, in precedence order: the first to name a player owns him")
 	generate := fs.Bool("generate", false, "leans: rebuild the generated sets from source data")
 	convert := fs.Bool("convert", false, "leans: rewrite the named sets as YAML, leaving the originals in place")
+	unmatched := fs.Bool("unmatched", false, "sources: show only the rows that reach no Sleeper player")
 	seasons := fs.String("seasons", "2023,2024,2025", "calibrate: seasons to measure, comma separated (empty for every usable one)")
 	includeAll := fs.Bool("all", false, "calibrate: measure every completed season, including ones whose prices are not comparable")
 	fs.Usage = func() {
@@ -97,6 +98,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  board     price the live pool and print the draft board\n")
 		fmt.Fprintf(os.Stderr, "  serve     serve the board as a web page for a second monitor\n")
 		fmt.Fprintf(os.Stderr, "  leans     show the merged lean sets, or -generate to rebuild them\n")
+		fmt.Fprintf(os.Stderr, "  sources   what each source contributes, and which rows reach no Sleeper player\n")
 		fmt.Fprintf(os.Stderr, "  calibrate ask whether spending shape predicted results, from past drafts\n\n")
 		fs.PrintDefaults()
 	}
@@ -126,6 +128,12 @@ func main() {
 	case "leans":
 		if err := runLeans(orBuiltin(*configDir, builtinConfigDir),
 			orBuiltin(*dataDir, builtinDataDir), draft.SetNames(*leans), *generate, *convert); err != nil {
+			log("draftroom: %v", err)
+			os.Exit(1)
+		}
+	case "sources":
+		if err := runSources(orBuiltin(*configDir, builtinConfigDir),
+			orBuiltin(*dataDir, builtinDataDir), *unmatched); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}
@@ -257,11 +265,11 @@ func sourceBoards(dataDir, cfg string, info map[string]draft.PlayerInfo, teams, 
 	if err != nil {
 		return nil, nil, err
 	}
-	ciely, err := draft.LoadSourceCSV(root.Normalized("ciely-2026.csv"))
+	ciely, err := draft.LoadSourceCSV(root.Normalized("ciely-2026.csv"), draft.CielyColumns)
 	if err != nil {
 		return nil, nil, err
 	}
-	sv, err := draft.LoadSourceCSV(root.Normalized("subvertadown-2026.csv"))
+	sv, err := draft.LoadSourceCSV(root.Normalized("subvertadown-2026.csv"), draft.SubvertadownColumns)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -270,8 +278,13 @@ func sourceBoards(dataDir, cfg string, info map[string]draft.PlayerInfo, teams, 
 		return nil, nil, err
 	}
 	idx := draft.BuildPlayerIndexWithAliases(info, aliases)
-	idx.Resolve(ciely)
-	idx.Resolve(sv)
+	// Counted, not discarded. An unresolved row is a player this board never
+	// had, and saying nothing about it is how he stays invisible until
+	// somebody nominates him. `draftroom sources -unmatched` names them.
+	if bad := len(idx.Resolve(ciely)) + len(idx.Resolve(sv)); bad > 0 {
+		fmt.Fprintf(os.Stderr,
+			"note: %d source rows reach no Sleeper player; run `draftroom sources -unmatched` for the names\n", bad)
+	}
 
 	state := draft.HitOrMissPool()
 	state.Teams, state.Dollars, state.Slots = teams, teams*budget, teams*14
