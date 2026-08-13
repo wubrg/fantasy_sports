@@ -1,9 +1,12 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"leaguehome/internal/draft"
@@ -510,5 +513,216 @@ func TestDecidingAPlayerTakesHimOutOfUndecided(t *testing.T) {
 	}
 	if pl := set.Leans[draft.NormalizeName("Ja'Marr Chase")]; pl.Lean != draft.LeanMust {
 		t.Errorf("the read did not land: %+v", pl)
+	}
+}
+
+// TestReloadPicksUpAFileEditedAfterStartup — lean sets are read once at
+// startup, so a read added in a notes vault used to need a restart to reach
+// the board. This is the whole point of the reload control.
+func TestReloadPicksUpAFileEditedAfterStartup(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "mine.yaml")
+	if err := os.WriteFile(path, []byte("up:\n  - Brock Bowers\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	srv := leanServerAt(t, cfg)
+
+	// Edited elsewhere — a phone, an editor — after the board started.
+	if err := os.WriteFile(path,
+		[]byte("up:\n  - Brock Bowers\nmust:\n  - Jahmyr Gibbs\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// Not there yet: the board must not pick it up on its own.
+	if _, ok := srv.static.leans[draft.NormalizeName("Jahmyr Gibbs")]; ok {
+		t.Fatal("the board reloaded without being asked")
+	}
+
+	if err := srv.reloadLeans(); err != nil {
+		t.Fatal(err)
+	}
+	if pl, ok := srv.static.leans[draft.NormalizeName("Jahmyr Gibbs")]; !ok || pl.Lean != draft.LeanMust {
+		t.Errorf("the new read did not arrive: %+v %v", pl, ok)
+	}
+	if _, ok := srv.static.leans[draft.NormalizeName("Brock Bowers")]; !ok {
+		t.Error("the read that was already there went missing")
+	}
+}
+
+// TestReloadKeepsThePreviousReadsWhenTheFileIsBroken — a half-typed YAML
+// file must not cost you every read you hold. Reporting the error and
+// keeping what worked is the whole posture of this workflow.
+func TestReloadKeepsThePreviousReadsWhenTheFileIsBroken(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "mine.yaml")
+	if err := os.WriteFile(path, []byte("must:\n  - Brock Bowers\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	srv := leanServerAt(t, cfg)
+
+	if err := os.WriteFile(path, []byte("mustt:\n  - Jahmyr Gibbs\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := srv.reloadLeans(); err == nil {
+		t.Fatal("a broken lean file must be reported, not swallowed")
+	}
+	if pl, ok := srv.static.leans[draft.NormalizeName("Brock Bowers")]; !ok || pl.Lean != draft.LeanMust {
+		t.Errorf("the previous reads were lost to a typo: %+v %v", pl, ok)
+	}
+}
+
+// TestReloadKeepsReadsSetOnTheBoard — board edits and file reads are two
+// layers, and reloading the lower one must not drop the upper.
+func TestReloadKeepsReadsSetOnTheBoard(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "mine.yaml"),
+		[]byte("up:\n  - Brock Bowers\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	srv := leanServerAt(t, cfg)
+	srv.leans.set("Ja'Marr Chase", draft.LeanMust)
+
+	if err := srv.reloadLeans(); err != nil {
+		t.Fatal(err)
+	}
+	if pl, ok := srv.leans.snapshot()[draft.NormalizeName("Ja'Marr Chase")]; !ok || pl.Lean != draft.LeanMust {
+		t.Errorf("a read set on the board did not survive the reload: %+v %v", pl, ok)
+	}
+}
+
+// TestReloadAndSaveDoNotRace — the board writes your lean set and the reload
+// replaces the map it reads. Run with -race; without the locking in
+// saveLeans and reloadLeans this reports a data race on a live map.
+func TestReloadAndSaveDoNotRace(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "mine.yaml"),
+		[]byte("up:\n  - Brock Bowers\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	srv := leanServerAt(t, cfg)
+	srv.leans.set("Jahmyr Gibbs", draft.LeanMust)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 20; i++ {
+		wg.Add(2)
+		go func() { defer wg.Done(); _ = srv.saveLeans() }()
+		go func() { defer wg.Done(); _ = srv.reloadLeans() }()
+	}
+	wg.Wait()
+
+	// Whatever the interleaving, the read must still be on the board.
+	if pl, ok := srv.leans.snapshot()[draft.NormalizeName("Jahmyr Gibbs")]; !ok || pl.Lean != draft.LeanMust {
+		t.Errorf("the read was lost to concurrency: %+v %v", pl, ok)
+	}
+}
+
+// TestReloadRefreshesWhatTheStripSaysAboutLeans — a warning that survives
+// the edit that fixed it is worse than none: the strip becomes a list of
+// things that used to be true, and you stop reading it.
+func TestReloadRefreshesWhatTheStripSaysAboutLeans(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "mine.yaml")
+	// A read naming nobody the board has.
+	if err := os.WriteFile(path, []byte("up:\n  - Jahmyr Gibs\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	srv := leanServerAt(t, cfg)
+	srv.static.matcher = draft.NewPoolMatcher(poolNames(srv.static.projections), nil)
+	srv.static.refreshLeanWarnings()
+	if len(srv.static.leanWarnings) != 1 {
+		t.Fatalf("expected the bad read to be reported, got %v", srv.static.leanWarnings)
+	}
+
+	// Fix the spelling, the way you would after reading the warning.
+	if err := os.WriteFile(path, []byte("up:\n  - Jahmyr Gibbs\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := srv.reloadLeans(); err != nil {
+		t.Fatal(err)
+	}
+	if len(srv.static.leanWarnings) != 0 {
+		t.Errorf("the warning outlived the fix: %v", srv.static.leanWarnings)
+	}
+}
+
+// TestPrecedenceDecidesASpellingCollision — two sets spelling one player
+// differently used to collide after the merge, where nothing knew which set
+// outranked which. Your must-have losing to an analyst's up, on some starts
+// and not others, is the worst shape a bug can take here.
+func TestPrecedenceDecidesASpellingCollision(t *testing.T) {
+	mine := draft.LeanSet{Name: "mine", Leans: draft.Leans{
+		draft.NormalizeName("Jahmyr Gibbs"): {
+			Player: "Jahmyr Gibbs", Lean: draft.LeanMust, Cap: 20, Note: "hard cap", Source: "mine"},
+	}}
+	analyst := draft.LeanSet{Name: "menton", Leans: draft.Leans{
+		draft.NormalizeName("Jahmyr Gibbs Jr."): {
+			Player: "Jahmyr Gibbs Jr.", Lean: draft.LeanDND, Source: "menton"},
+	}}
+	m := draft.NewPoolMatcher([]string{"Jahmyr Gibbs"}, nil)
+
+	for i := 0; i < 200; i++ {
+		got := matchAndMerge([]draft.LeanSet{mine, analyst}, m)[draft.NormalizeName("Jahmyr Gibbs")]
+		if got.Lean != draft.LeanMust || got.Cap != 20 || got.Note != "hard cap" {
+			t.Fatalf("run %d: precedence lost — %+v", i, got)
+		}
+		// And the disagreement has to survive, or the board cannot mark it.
+		if !got.Contested() {
+			t.Fatalf("run %d: the analyst's opposing read vanished: %+v", i, got)
+		}
+	}
+}
+
+// TestLeanEndpointStoresTheBoardsSpelling — validation resolves a name
+// through the matcher, so the read must be keyed the same way. Otherwise the
+// request succeeds, the file gains the alternate spelling, and the read
+// reaches nobody.
+func TestLeanEndpointStoresTheBoardsSpelling(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "mine.yaml"), []byte("up:\n  - Brock Bowers\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	srv := leanServerAt(t, cfg)
+	srv.static.matcher = draft.NewPoolMatcher(poolNames(srv.static.projections), nil)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/lean",
+		strings.NewReader(`{"player":"Jahmyr Gibbs Jr.","lean":"must"}`))
+	rec := httptest.NewRecorder()
+	srv.handleLean(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d: %s", rec.Code, rec.Body.String())
+	}
+
+	// Accepted, so it has to have landed on the player it resolved to.
+	found := false
+	for _, p := range srv.snapshot().Players {
+		if p.Name == "Jahmyr Gibbs" && p.Lean.Lean == draft.LeanMust {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("the endpoint returned 200 but the read reached no row on the board")
 	}
 }

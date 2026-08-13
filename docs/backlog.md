@@ -42,19 +42,31 @@ that looks applied but is not.
   (`cmd/draftroom/static.go:163`), so no Sleeper fetch is needed. It degrades to a printed note
   when the private data repo is absent.
 
-- **`D2b` — Let leans use the alias and suffix machinery.** **S–M.** Vendor rows get
-  `PlayerIndex.Resolve` (`internal/draft/sources.go:443-480`), which applies `aliases.csv`,
-  `stripSuffix`, and positional disambiguation. Leans get none of it. So a lean must match the
-  projection source's exact spelling, and writing a player's more common name — the case
-  `aliases.csv` exists to handle — silently fails. `D2` reports this rather than fixing it,
-  which is the right order: the report shows how often it actually bites before anyone changes
-  how matching works.
+- **`D2b` — Let leans use the alias and suffix machinery.** ✅ **Done 2026-08-12.** A lean was
+  applied only on an exact spelling match against the projection source, while vendor rows got
+  `aliases.csv` and `stripSuffix` through `PlayerIndex.Resolve`. So the pool said
+  `Kenneth Walker` and a read saying `Kenneth Walker III` — Sleeper's spelling, and the natural
+  one to type — reached nothing. `PoolMatcher` (`internal/draft/leancheck.go`) resolves exact,
+  then suffix-stripped, then through names the alias file puts on one Sleeper id; two pool
+  players sharing a stem resolve to neither and stay in the unmatched report. Built offline from
+  the pool and alias file rather than from `PlayerIndex`, so `draftroom leans` and the board
+  agree exactly. `playerIDByName` goes through it too.
 
-- **`D3` — Document the vault → draftroom loop.** **S.** Partly done — `data/leans/README.md`
-  now covers blank leans and column order. Still missing: the round trip itself
-  (`make leans LEANS=mine,wubrg-lean` to check, `make serve LEANS=mine,wubrg-lean ME=<id>` to
-  run), that precedence is left-to-right so `mine` outranks the phone set, and that
-  `make leans` is now also the spelling check.
+- **`D3` — The vault → draftroom loop.** ✅ **Done 2026-08-12.** Lean sets were read once at
+  startup (`loadStatic` runs a single time), so a read edited in the vault reached the board
+  only after a restart, with nothing on screen to say the file and the board had diverged.
+  A **reload leans** button in the board footer re-reads the files and rebuilds — it is a button
+  on the page, so it works from the phone the edit was made on. A file that does not parse keeps
+  the reads already loaded and reports the error. Deliberately on demand, not a timer: nothing
+  about lean sets moves during a draft. Loop documented in `cmd/draftroom/README.md`
+  ("Editing leans away from the machine").
+
+- **`D2c` — `stripSuffix` over-strips a surname ending in `i`.** **S.**
+  `internal/draft/sources.go:321-331` guards only on length, so `Kyle Monangai II` normalizes to
+  `kylemonangaiii`, matches the `iii` suffix, and strips to `kylemonanga` — a miss rather than a
+  wrong match, and consistent across the report and the board, but it means those players cannot
+  be leaned on by their full name. Same for `Rasheen Ali II`, `Mike Gesicki II`. Predates the
+  lean matcher and affects vendor row resolution equally.
 
 ### Tier 1 — trust the data before doing research on it
 

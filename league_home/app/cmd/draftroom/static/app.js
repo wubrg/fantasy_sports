@@ -468,6 +468,26 @@ document.addEventListener("click", async ev => {
     await scratchAction("clear", "");
     return;
   }
+  if (ev.target.id === "reloadleans") {
+    const button = ev.target;
+    button.disabled = true;
+    try {
+      // What each player went for lives only on this page. Replacing the
+      // snapshot without carrying it forward would wipe the record of the
+      // draft so far, which reloading a lean file has no business doing.
+      const sold = snap && snap.__sold;
+      snap = await fetchJSON("api/leans/reload", { method: "POST", body: "{}" });
+      snap.__sold = sold || {};
+      draw();
+    } catch (err) {
+      // The reads on the board are still the ones that loaded, so say what
+      // happened rather than leaving the click looking like it worked.
+      document.getElementById("status").textContent = String(err);
+    } finally {
+      button.disabled = false;
+    }
+    return;
+  }
   if (ev.target.id === "undoall") {
     snap = await fetchJSON("api/undo", { method: "POST", body: "{}" });
     snap.__sold = {};

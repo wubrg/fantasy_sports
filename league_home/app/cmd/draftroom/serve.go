@@ -261,6 +261,7 @@ func runServe(addr, leagueID, configDir, dataDir, ownerID string, baseline draft
 	mux.HandleFunc("/api/sold", srv.handleSold)
 	mux.HandleFunc("/api/undo", srv.handleUndo)
 	mux.HandleFunc("/api/lean", srv.handleLean)
+	mux.HandleFunc("/api/leans/reload", srv.handleLeanReload)
 	mux.HandleFunc("/api/scratch", srv.handleScratch)
 	mux.HandleFunc("/api/scratch/view", srv.handleScratchView)
 

@@ -61,6 +61,10 @@ type staticData struct {
 	// can say whose reads it is applying rather than leaving you to
 	// remember which flags you asked for.
 	leanSets []string
+	// matcher resolves a written player name to the pool's own spelling, so
+	// a read spelled reasonably still lands. Kept so the lean-edit endpoint
+	// resolves names the same way the board did.
+	matcher *draft.PoolMatcher
 	// minePath is the file the first set was actually read from, and it is
 	// where a read set on the board is written back.
 	//
@@ -72,7 +76,15 @@ type staticData struct {
 	minePath string
 	ownerID  string
 	season   string
+	// warnings are problems fixed at load: source rows that did not resolve,
+	// and anything else that cannot change without a restart.
 	warnings []string
+	// leanWarnings are the ones that depend on the reads, so they are
+	// recomputed whenever the sets are reloaded. Kept apart from warnings
+	// precisely so a reload can replace them without disturbing the rest —
+	// a contested read that has since been resolved must stop being
+	// reported, or the strip becomes a list of things that used to be true.
+	leanWarnings []string
 }
 
 // loadStatic fetches everything that will not change during the draft.
@@ -140,14 +152,6 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 
 	idx := draft.BuildPlayerIndexWithAliases(info, aliases)
 	var warnings []string
-	for _, pl := range leans.Contested() {
-		var against []string
-		for _, o := range pl.Disagreement() {
-			against = append(against, fmt.Sprintf("%s says %s", o.Source, o.Lean))
-		}
-		warnings = append(warnings, fmt.Sprintf("%s: you say %s, %s",
-			pl.Player, pl.Lean, strings.Join(against, ", ")))
-	}
 	if bad := idx.Resolve(ciely); len(bad) > 0 {
 		warnings = append(warnings, fmt.Sprintf("%d Ciely rows unmatched", len(bad)))
 	}
@@ -177,6 +181,14 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 			PlayerID: r.PlayerID, Name: r.Player, Position: r.Position, Points: r.Points,
 		})
 	}
+	// Now that the pool exists, reads can be matched to it. A lean is
+	// applied by name, and the pool is spelled the projection source's way,
+	// so "Kenneth Walker III" — Sleeper's spelling and the natural one to
+	// type — had to be rewritten to reach the board at all.
+	s.matcher = draft.NewPoolMatcher(poolNames(s.projections), aliases)
+	s.leans = matchAndMerge(sets, s.matcher)
+	s.refreshLeanWarnings()
+
 	// Pinned now that the projection set is complete, and never
 	// recomputed: replacement level measured against the pool that remains
 	// falls as the pool empties, so a count above it could never drop.
@@ -321,7 +333,7 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans) (draft.Snap
 		CielyPoints: s.points, Availability: s.availability,
 		Leans: leans, Traits: s.traits, RecommendedBid: recommended,
 	})
-	snap := draft.Assemble(s.season, state, me, players, leans, s.tempo(taken, costs), s.thresholds, s.warnings)
+	snap := draft.Assemble(s.season, state, me, players, leans, s.tempo(taken, costs), s.thresholds, append(append([]string(nil), s.warnings...), s.leanWarnings...))
 	snap.LeanSets = s.leanSets
 	// Players already gone price the curve at what they actually went for,
 	// which is why this is assembled here where taken is in scope.
@@ -455,6 +467,13 @@ func (s *staticData) nameOf(playerID string) string {
 // playerIDByName resolves a board name to a Sleeper ID, normalizing so
 // punctuation in what the page rendered cannot defeat the match.
 func (s *staticData) playerIDByName(name string) string {
+	// Through the same matcher the board's reads went through, or the
+	// lean-edit endpoint would reject a name the board itself resolves.
+	if s.matcher != nil {
+		if canonical, ok := s.matcher.Canonical(name); ok {
+			name = canonical
+		}
+	}
 	want := draft.NormalizeName(name)
 	for _, p := range s.projections {
 		if draft.NormalizeName(p.Name) == want {
@@ -467,4 +486,47 @@ func (s *staticData) playerIDByName(name string) string {
 		}
 	}
 	return ""
+}
+
+// poolNames lists the projection source's spelling of every player, which
+// is what a lean has to match.
+func poolNames(projections []draft.Projection) []string {
+	out := make([]string, 0, len(projections))
+	for _, p := range projections {
+		out = append(out, p.Name)
+	}
+	return out
+}
+
+// refreshLeanWarnings recomputes everything the strip says about the reads.
+//
+// Called at load and again after every reload, because both facts it reports
+// move with the file: a disagreement can be settled by an edit, and a name
+// can be corrected.
+func (s *staticData) refreshLeanWarnings() {
+	var out []string
+	for _, pl := range s.leans.Contested() {
+		var against []string
+		for _, o := range pl.Disagreement() {
+			against = append(against, fmt.Sprintf("%s says %s", o.Source, o.Lean))
+		}
+		out = append(out, fmt.Sprintf("%s: you say %s, %s",
+			pl.Player, pl.Lean, strings.Join(against, ", ")))
+	}
+	// A read naming nobody on the board can never fire. `draftroom leans`
+	// reports this too, but it works from the source file alone and the
+	// board's pool is the smaller thing: a source row that failed to match a
+	// Sleeper id is in that file and not on this board. Only here is the
+	// difference knowable, so only here can it be said.
+	//
+	// One line per read rather than a count, because "2 leans unmatched"
+	// says a thing is wrong without saying which conviction you have lost.
+	for _, u := range s.leans.Unmatched(poolNames(s.projections), s.matcher) {
+		line := fmt.Sprintf("%s: %s reaches no player on the board", u.Lean.Player, u.Lean.Lean)
+		if u.Suggestion != "" {
+			line += fmt.Sprintf(" — did you mean %s?", u.Suggestion)
+		}
+		out = append(out, line)
+	}
+	s.leanWarnings = out
 }
