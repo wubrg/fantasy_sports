@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -41,6 +42,15 @@ type staticData struct {
 	market      []draft.MarketPrice
 	points      map[string]float64
 	subvert     []draft.SourceRow
+
+	// fpProjections is the FantasyPros second projection, re-solved into
+	// dollars against the live pool in Build so it is comparable to the Ciely
+	// value. fpRank and fpSharp are the consensus positional rank and the
+	// sharp-expert move, carried separately because they survive the solve
+	// unchanged. All three are empty when the FantasyPros source is absent.
+	fpProjections []draft.Projection
+	fpRank        map[string]int
+	fpSharp       map[string]int
 
 	availability map[string]string
 	// team maps a player ID to his NFL team abbreviation, from the Sleeper
@@ -170,6 +180,13 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	if bad := idx.Resolve(sv); len(bad) > 0 {
 		warnings = append(warnings, fmt.Sprintf("%d Subvertadown rows unmatched", len(bad)))
 	}
+	fp, fpWarn := loadFantasyPros(root.Normalized("fantasypros-2026.csv"))
+	if fpWarn != "" {
+		warnings = append(warnings, fpWarn)
+	}
+	if bad := idx.Resolve(fp); len(bad) > 0 {
+		warnings = append(warnings, fmt.Sprintf("%d FantasyPros rows unmatched", len(bad)))
+	}
 
 	s := &staticData{
 		client: c, ownerID: ownerID, season: season, warnings: warnings,
@@ -180,6 +197,7 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 		team:      map[string]string{},
 		prefs:     prefs,
 		projected: projected,
+		fpRank:    map[string]int{}, fpSharp: map[string]int{},
 	}
 	s.teams, s.budget = auctionShape(c, leagueID)
 	s.shape = draft.HitOrMissPool()
@@ -194,6 +212,23 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 		s.projections = append(s.projections, draft.Projection{
 			PlayerID: r.PlayerID, Name: r.Player, Position: r.Position, Points: r.Points,
 		})
+	}
+	// The FantasyPros consensus rows are the second projection. Only the
+	// consensus baseline carries the sharp-expert move against the top-10/20
+	// subsets; the subset rows themselves are that comparison's other half and
+	// are not put on the board. DST is excluded to match the Ciely set, so
+	// both projections apportion the same membership when re-solved.
+	for _, r := range fp {
+		if r.PlayerID == "" || r.Position == "DST" || strings.ToLower(r.Baseline) != "consensus" {
+			continue
+		}
+		s.fpProjections = append(s.fpProjections, draft.Projection{
+			PlayerID: r.PlayerID, Name: r.Player, Position: r.Position, Points: r.Points,
+		})
+		s.fpRank[r.PlayerID] = r.PosRank
+		if d := r.SharpDelta(); d != 0 {
+			s.fpSharp[r.PlayerID] = d
+		}
 	}
 	// Now that the pool exists, reads can be matched to it. A lean is
 	// applied by name, and the pool is spelled the projection source's way,
@@ -324,6 +359,28 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans) (draft.Snap
 		return draft.Snapshot{}, err
 	}
 
+	// The FantasyPros second projection, re-solved into dollars against the
+	// same pool and state so its value is directly comparable to Value above.
+	// Empty when the source was absent at load, which reads as no FP column.
+	fantasyPros := map[string]draft.FPRead{}
+	if len(s.fpProjections) > 0 {
+		fpAvailable := make([]draft.Projection, 0, len(s.fpProjections))
+		for _, p := range s.fpProjections {
+			if _, off := taken[p.PlayerID]; !off {
+				fpAvailable = append(fpAvailable, p)
+			}
+		}
+		fpValues, err := draft.Solve(fpAvailable, state)
+		if err != nil {
+			return draft.Snapshot{}, err
+		}
+		for _, v := range fpValues {
+			fantasyPros[v.PlayerID] = draft.FPRead{
+				Value: v.Price, Rank: s.fpRank[v.PlayerID], SharpDelta: s.fpSharp[v.PlayerID],
+			}
+		}
+	}
+
 	openMarket := make([]draft.MarketPrice, 0, len(s.market))
 	for _, m := range s.market {
 		if _, off := taken[m.PlayerID]; !off {
@@ -349,6 +406,7 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans) (draft.Snap
 		Values: values, Costs: costs, Subvertadown: s.subvert,
 		CielyPoints: s.points, Teams: s.team, Availability: s.availability,
 		Leans: leans, Traits: s.traits, RecommendedBid: recommended,
+		FantasyPros: fantasyPros,
 	})
 	snap := draft.Assemble(s.season, state, me, players, leans, s.tempo(taken, costs), s.thresholds, append(append([]string(nil), s.warnings...), s.leanWarnings...))
 	snap.LeanSets = s.leanSets
@@ -564,6 +622,25 @@ func poolNames(projections []draft.Projection) []string {
 		out = append(out, p.Name)
 	}
 	return out
+}
+
+// loadFantasyPros reads the FantasyPros second-projection source if present.
+//
+// Optional on purpose: unlike Ciely and Subvertadown the board renders without
+// it, losing only the FP column and the sharp-expert flags. A data snapshot
+// taken before this source was added must degrade to a warning rather than
+// fail the whole board on the one night it matters. It returns the warning to
+// surface rather than logging, so it rides the same strip as every other
+// load-time problem.
+func loadFantasyPros(path string) ([]draft.SourceRow, string) {
+	if _, err := os.Stat(path); err != nil {
+		return nil, "FantasyPros source absent — FP column and sharp flags off"
+	}
+	rows, err := draft.LoadSourceCSV(path, draft.FantasyProsColumns)
+	if err != nil {
+		return nil, fmt.Sprintf("FantasyPros source unreadable: %v", err)
+	}
+	return rows, ""
 }
 
 // refreshLeanWarnings recomputes everything the strip says about the reads.

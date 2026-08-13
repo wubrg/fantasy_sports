@@ -111,6 +111,15 @@ func flagsFor(p PlayerSignals) []string {
 	case ECRDownside:
 		out = append(out, "ecr-")
 	}
+	// The sharp-expert divergence: where the most-accurate experts disagree
+	// with the full field. Distinct from ecr+/- above, which is the wider
+	// industry — this is the subset that has been right before.
+	switch p.Sharp() {
+	case SharpUp:
+		out = append(out, "sharp+")
+	case SharpDown:
+		out = append(out, "sharp-")
+	}
 	// Traits deliberately absent here. This board is the narrow one — six
 	// flags on a row is the same as none while bidding, and "targets" sits
 	// on nearly every player at the top of it, so it separates nothing

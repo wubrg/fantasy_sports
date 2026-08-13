@@ -118,10 +118,13 @@ positive = the sharps rate him higher).
 
 Like Ciely, the point total is recomputed under league scoring so FantasyPros
 is a second projection, with the published total and the delta kept auditable.
-**One deliberate limitation:** the stats export ships no interception or fumble
-column, so the recompute omits the negative-play penalty — small for skill
-players (0–2 pts) but large for passers (~11–14), where `league_points` reads
-high. Ciely's INT-aware projection stays the QB source of record. Kickers are
+**Interceptions:** the stats export ships no interception column, and at −1
+each they move a passer's season ~11–14 points — enough to distort his value —
+so they are **estimated** from projected pass volume (attempts backed out of
+pass yards at a league yards-per-attempt, times a league interception rate) and
+recorded in `est_interceptions`. A league-average estimate, not a player
+projection, since FantasyPros projected none; skill players are untouched.
+Fumbles remain unmodelled (small and roughly position-flat). Kickers are
 dropped (no kicker slot); `JAC` is rewritten to Sleeper's `JAX` so the Jaguars
 DST resolves, while Washington stays `WAS` (Sleeper keys that defense under
 `WAS`, not the `WSH` it uses for skill players).

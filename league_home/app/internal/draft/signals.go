@@ -51,6 +51,26 @@ type PlayerSignals struct {
 	// CielyPoints is a median projection restated in league scoring. Used
 	// for ordering and corroboration, never as a dollar figure.
 	CielyPoints float64
+	// FPValue is the FantasyPros second projection re-solved into dollars
+	// against the same live pool as Value, so the two are directly
+	// comparable. Zero means FantasyPros did not cover him.
+	//
+	// A genuinely second opinion, kept beside Value rather than blended into
+	// it: where the two projection sources disagree is exactly what a single
+	// number would hide.
+	FPValue int
+	// ECRRank is the player's FantasyPros positional rank (his consensus
+	// expert-ranking within his position). Zero means FantasyPros did not
+	// cover him.
+	ECRRank int
+	// SharpRankDelta is how far the most-accurate-expert subset moves him
+	// against the full consensus: negative means the sharps rank him better
+	// than the field. Zero is agreement or no coverage. Rank-based, so it is
+	// unaffected by the FantasyPros points recompute.
+	//
+	// Distinct from ECR below, which is Subvertadown's industry-deviation
+	// flag. These two never share a code path.
+	SharpRankDelta int
 	// ScarcityPct is the fraction of positive value left at the position
 	// after this player goes. Lower means the position is drying up.
 	ScarcityPct float64
@@ -106,6 +126,37 @@ func (p PlayerSignals) BaselineSpread() float64 {
 // directions, which calls for a hard ceiling rather than a different price.
 func (p PlayerSignals) Contested() bool { return p.ECR == ECRContested }
 
+// sharpRankThreshold is how many positions the sharp subset must move a
+// player before it is worth a flag. Below it the move is noise — two expert
+// panels ordering the middle of a tier slightly differently — rather than a
+// disagreement about the player.
+const sharpRankThreshold = 5
+
+// SharpState is which way the most-accurate experts lean against consensus.
+type SharpState int
+
+const (
+	// SharpNone is no meaningful move, or no FantasyPros coverage.
+	SharpNone SharpState = iota
+	// SharpUp means the sharps rank him better than the full field.
+	SharpUp
+	// SharpDown means the sharps rank him worse than the full field.
+	SharpDown
+)
+
+// Sharp reports whether the most-accurate-expert subset moved this player far
+// enough against consensus to flag, and in which direction. A negative
+// SharpRankDelta is a move to a better (lower) rank, so it reads as up.
+func (p PlayerSignals) Sharp() SharpState {
+	switch {
+	case p.SharpRankDelta <= -sharpRankThreshold:
+		return SharpUp
+	case p.SharpRankDelta >= sharpRankThreshold:
+		return SharpDown
+	}
+	return SharpNone
+}
+
 // SignalInputs are the assembled sources a board is built from.
 type SignalInputs struct {
 	// Values come from Solve against the live pool.
@@ -116,6 +167,11 @@ type SignalInputs struct {
 	Subvertadown []SourceRow
 	// CielyPoints maps player ID to a projection in league scoring.
 	CielyPoints map[string]float64
+	// FantasyPros holds the second projection's read on each player, keyed by
+	// player ID: the dollar value it re-solves to, its positional rank, and
+	// the sharp-expert move. A player absent here carries no FantasyPros
+	// opinion, which the board leaves blank rather than showing as zero worth.
+	FantasyPros map[string]FPRead
 	// Teams maps player ID to an NFL team abbreviation, for the personal
 	// preference filter. A player absent here carries no team, which the
 	// filter treats as "no offense to be one-per".
@@ -130,6 +186,15 @@ type SignalInputs struct {
 	// rest of your roster is at risk. It is the hard ceiling on a must-have's
 	// swing-based default cap — see WalkAway — not the must-have price itself.
 	RecommendedBid int
+}
+
+// FPRead is the FantasyPros second projection's read on one player: the value
+// it re-solves to in dollars, its positional consensus rank, and how far the
+// most-accurate experts move him against that consensus.
+type FPRead struct {
+	Value      int
+	Rank       int
+	SharpDelta int
 }
 
 // BuildSignals joins every source onto the priced board.
@@ -183,6 +248,9 @@ func BuildSignals(in SignalInputs) []PlayerSignals {
 		if a, ok := sv[v.PlayerID]; ok {
 			p.AAV, p.ScarcityPct, p.VBD = a.aav, a.ps, a.vbd
 			p.ECR = SourceRow{ECRUp: a.ecrUp, ECRDown: a.ecrDown}.ECR()
+		}
+		if fp, ok := in.FantasyPros[v.PlayerID]; ok {
+			p.FPValue, p.ECRRank, p.SharpRankDelta = fp.Value, fp.Rank, fp.SharpDelta
 		}
 		if s, ok := in.Availability[v.PlayerID]; ok {
 			p.Availability = s
