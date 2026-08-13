@@ -628,3 +628,36 @@ func TestReloadAndSaveDoNotRace(t *testing.T) {
 		t.Errorf("the read was lost to concurrency: %+v %v", pl, ok)
 	}
 }
+
+// TestReloadRefreshesWhatTheStripSaysAboutLeans — a warning that survives
+// the edit that fixed it is worse than none: the strip becomes a list of
+// things that used to be true, and you stop reading it.
+func TestReloadRefreshesWhatTheStripSaysAboutLeans(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "mine.yaml")
+	// A read naming nobody the board has.
+	if err := os.WriteFile(path, []byte("up:\n  - Jahmyr Gibs\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	srv := leanServerAt(t, cfg)
+	srv.static.matcher = draft.NewPoolMatcher(poolNames(srv.static.projections), nil)
+	srv.static.refreshLeanWarnings()
+	if len(srv.static.leanWarnings) != 1 {
+		t.Fatalf("expected the bad read to be reported, got %v", srv.static.leanWarnings)
+	}
+
+	// Fix the spelling, the way you would after reading the warning.
+	if err := os.WriteFile(path, []byte("up:\n  - Jahmyr Gibbs\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := srv.reloadLeans(); err != nil {
+		t.Fatal(err)
+	}
+	if len(srv.static.leanWarnings) != 0 {
+		t.Errorf("the warning outlived the fix: %v", srv.static.leanWarnings)
+	}
+}

@@ -225,6 +225,7 @@ func (s *server) reloadLeans() error {
 	s.static.leans = leans.Match(s.static.matcher)
 	s.static.leanSets = setNames(sets)
 	s.static.minePath = writableSetPath(s.configDir, sets)
+	s.static.refreshLeanWarnings()
 	return s.rebuildLocked()
 }
 
