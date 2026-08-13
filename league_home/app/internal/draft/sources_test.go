@@ -247,3 +247,55 @@ func TestHitOrMissPool(t *testing.T) {
 		t.Errorf("Pool() = %d, want 2400", got)
 	}
 }
+
+// TestSuffixStrippingDoesNotEatASurname — the suffix is a word, not the
+// letters a name happens to end with. "Kyle Monangai II" normalizes to
+// kylemonangaiii, which matched the longest suffix checked and stripped to
+// "kylemonanga" — so he could not be resolved or leaned on by his full name.
+func TestSuffixStrippingDoesNotEatASurname(t *testing.T) {
+	idx := BuildPlayerIndex(map[string]PlayerInfo{
+		"1": {Name: "Kyle Monangai", Position: "RB", Team: "CHI"},
+		"2": {Name: "Rasheen Ali", Position: "RB", Team: "BAL"},
+		"3": {Name: "Mike Gesicki", Position: "TE", Team: "CIN"},
+	})
+	rows := []SourceRow{
+		{Player: "Kyle Monangai II", Position: "RB", Team: "CHI"},
+		{Player: "Rasheen Ali II", Position: "RB", Team: "BAL"},
+		{Player: "Mike Gesicki II", Position: "TE", Team: "CIN"},
+	}
+	if bad := idx.Resolve(rows); len(bad) != 0 {
+		t.Fatalf("expected all to resolve, got %+v", bad)
+	}
+	for i, want := range []string{"1", "2", "3"} {
+		if rows[i].PlayerID != want {
+			t.Errorf("%q resolved to %q, want %q", rows[i].Player, rows[i].PlayerID, want)
+		}
+	}
+}
+
+// TestSuffixStrippingLeavesLookalikeSurnamesAlone — a surname that merely
+// ends in a suffix's letters is not carrying a suffix. Stripping one would
+// invent a match, which is worse than missing one.
+func TestSuffixStrippingLeavesLookalikeSurnamesAlone(t *testing.T) {
+	for _, name := range []string{"Ricky Popov", "Auden Asiasi", "Kyle Monangai", "Rasheen Ali"} {
+		if got := stemName(name); got != normalizeName(name) {
+			t.Errorf("stemName(%q) = %q, want it untouched at %q", name, got, normalizeName(name))
+		}
+	}
+}
+
+// TestSuffixStrippingStillDropsRealSuffixes — the behaviour this exists for
+// has to survive the fix. Sources disagree about whether to print them.
+func TestSuffixStrippingStillDropsRealSuffixes(t *testing.T) {
+	for raw, want := range map[string]string{
+		"Kenneth Walker III":  "kennethwalker",
+		"Marvin Harrison Jr.": "marvinharrison",
+		"Michael Pittman Jr":  "michaelpittman",
+		"Odell Beckham Jr.":   "odellbeckham",
+		"Brian Robinson II":   "brianrobinson",
+	} {
+		if got := stemName(raw); got != want {
+			t.Errorf("stemName(%q) = %q, want %q", raw, got, want)
+		}
+	}
+}

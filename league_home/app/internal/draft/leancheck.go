@@ -59,7 +59,7 @@ func NewPoolMatcher(pool []string, aliases Aliases) *PoolMatcher {
 			continue
 		}
 		m.byName[key] = name
-		stem := stripSuffix(key)
+		stem := stemName(name)
 		if held, taken := m.byStem[stem]; taken && held != name {
 			// Two players with one stem. Neither is the answer, and a
 			// guess here would put a read on a player nobody named.
@@ -102,7 +102,7 @@ func (m *PoolMatcher) Canonical(name string) (string, bool) {
 	if got, ok := m.byName[key]; ok {
 		return got, true
 	}
-	if got, ok := m.byStem[stripSuffix(key)]; ok && got != "" {
+	if got, ok := m.byStem[stemName(name)]; ok && got != "" {
 		return got, true
 	}
 	for _, other := range m.synonym[key] {

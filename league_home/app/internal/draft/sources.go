@@ -313,13 +313,38 @@ func normalizeName(s string) string {
 // nameSuffixes are dropped when a direct match fails, since sources
 // disagree about whether to include them.
 //
-// Order matters: longest first, or "kennethwalkeriii" matches "ii" and
-// strips to "kennethwalkeri". A bare "v" is deliberately absent — real
+// A bare "v" is deliberately absent — real
 // surnames end in v (Popov, Asiasi) and stripping it would create false
 // matches, which are worse than the rare missed "V" suffix an alias can
 // cover instead.
 var nameSuffixes = []string{"iii", "iv", "ii", "jr", "sr"}
 
+// stemName normalizes a display name with a trailing generational suffix
+// dropped, treating it as a word rather than as trailing letters.
+//
+// The difference is not academic. Normalizing first glues the suffix to the
+// surname, so "Kyle Monangai II" becomes kylemonangaiii — which ends in
+// "iii" and stripped to "kylemonanga", a player who does not exist. Rasheen
+// Ali and Mike Gesicki have the same problem, and every one of them was
+// unresolvable by his own full name.
+//
+// Matching a whole token cannot make that mistake: "Monangai" is not a
+// suffix, and "II" is, whatever the surname before it happens to end with.
+func stemName(raw string) string {
+	fields := strings.Fields(raw)
+	if len(fields) > 1 {
+		last := strings.ToLower(strings.TrimSuffix(fields[len(fields)-1], "."))
+		for _, suffix := range nameSuffixes {
+			if last == suffix {
+				return normalizeName(strings.Join(fields[:len(fields)-1], " "))
+			}
+		}
+	}
+	return normalizeName(raw)
+}
+
+// stripSuffix is the string-ending form, kept for the one caller that has
+// only a normalized key and no name left to split. Prefer stemName.
 func stripSuffix(normalized string) string {
 	for _, suffix := range nameSuffixes {
 		if strings.HasSuffix(normalized, suffix) && len(normalized) > len(suffix)+3 {
@@ -421,7 +446,7 @@ func BuildPlayerIndexWithAliases(players map[string]PlayerInfo, aliases Aliases)
 		}
 		e := indexed{id: id, position: strings.ToUpper(p.Position), team: strings.ToUpper(p.Team)}
 		idx.byName[n] = append(idx.byName[n], e)
-		if s := stripSuffix(n); s != n {
+		if s := stemName(p.Name); s != n {
 			idx.byName[s] = append(idx.byName[s], e)
 		}
 	}
@@ -460,7 +485,7 @@ func (idx *PlayerIndex) Resolve(rows []SourceRow) []Unmatched {
 		}
 		cands := idx.byName[n]
 		if len(cands) == 0 {
-			cands = idx.byName[stripSuffix(n)]
+			cands = idx.byName[stemName(row.Player)]
 		}
 		switch len(cands) {
 		case 0:
