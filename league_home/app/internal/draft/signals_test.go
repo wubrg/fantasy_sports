@@ -101,16 +101,16 @@ func TestBuildSignalsJoinsFantasyPros(t *testing.T) {
 		Costs: map[string]int{"1": 58, "2": 68, "3": 2},
 		FantasyPros: map[string]FPRead{
 			// Sharps rank Bijan higher than consensus (positive) and Gibbs
-			// lower (negative) — the real 2026 flip.
-			"1": {Value: 64, Rank: 1, SharpDelta: 6},
-			"2": {Value: 61, Rank: 2, SharpDelta: -7},
+			// lower (negative), both past the flag threshold.
+			"1": {Value: 64, Rank: 1, SharpDelta: 16},
+			"2": {Value: 61, Rank: 2, SharpDelta: -18},
 		},
 	}
 	ps := BuildSignals(in)
 
 	bijan := find(t, ps, "Bijan Robinson")
-	if bijan.FPValue != 64 || bijan.ECRRank != 1 || bijan.SharpRankDelta != 6 {
-		t.Errorf("Bijan FP join = $%d rank %d delta %d, want 64/1/6",
+	if bijan.FPValue != 64 || bijan.ECRRank != 1 || bijan.SharpRankDelta != 16 {
+		t.Errorf("Bijan FP join = $%d rank %d delta %d, want 64/1/16",
 			bijan.FPValue, bijan.ECRRank, bijan.SharpRankDelta)
 	}
 	if bijan.Sharp() != SharpUp {
@@ -133,8 +133,8 @@ func TestSharpRespectsThreshold(t *testing.T) {
 		delta int
 		want  SharpState
 	}{
-		{6, SharpUp}, {5, SharpUp}, {4, SharpNone},
-		{0, SharpNone}, {-4, SharpNone}, {-5, SharpDown}, {-7, SharpDown},
+		{16, SharpUp}, {15, SharpUp}, {14, SharpNone},
+		{0, SharpNone}, {-14, SharpNone}, {-15, SharpDown}, {-16, SharpDown},
 	} {
 		if got := (PlayerSignals{SharpRankDelta: tc.delta}).Sharp(); got != tc.want {
 			t.Errorf("Sharp(delta=%d) = %v, want %v", tc.delta, got, tc.want)
