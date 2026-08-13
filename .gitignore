@@ -90,3 +90,13 @@ edge/model/data/raw/
 # edge/docs/frameworks/ is the tracked artifact. Keep the PDFs locally as the
 # originals; each transcript records its source share URL.
 /*.pdf
+
+# Agent tooling local state: Claude Code's worktrees/settings and the
+# Cowork-imported placeholder. Local to a checkout, not repo content.
+.claude/
+AGENTS.md
+
+# Go build temp files (canton/app) and FUSE sidecar files (canton/data) that
+# otherwise leave git status permanently noisy. See docs/backlog.md H5.
+*-go-tmp-umask
+.fuse_hidden*
