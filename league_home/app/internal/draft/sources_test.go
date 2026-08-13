@@ -299,3 +299,67 @@ func TestSuffixStrippingStillDropsRealSuffixes(t *testing.T) {
 		}
 	}
 }
+
+// TestSourceSchemaRejectsAMissingColumn — a renamed vendor column used to
+// read as a column of zeros, and a board built on zeros still renders. A
+// crash naming the column is the cheaper failure by a wide margin.
+func TestSourceSchemaRejectsAMissingColumn(t *testing.T) {
+	// Ciely's header with auction_value dropped.
+	in := "source,position,pos_rank,player,team,league_points\n" +
+		"ciely,WR,1,Ja'Marr Chase,CIN,300\n"
+	_, err := ParseSourceCSVAs(strings.NewReader(in), CielyColumns)
+	if err == nil {
+		t.Fatal("expected an error for the missing value column")
+	}
+	// It has to name the column, or you are left diffing headers by eye.
+	if !strings.Contains(err.Error(), "auction_value") {
+		t.Errorf("error should name the missing column: %v", err)
+	}
+	// And name what it did find, so a rename is obvious.
+	if !strings.Contains(err.Error(), "league_points") {
+		t.Errorf("error should show the header it read: %v", err)
+	}
+}
+
+// TestSourceSchemaAcceptsAnyKnownSpelling — the required check must not
+// reject a header pick() would happily have read, or it breaks setups that
+// work.
+func TestSourceSchemaAcceptsAnyKnownSpelling(t *testing.T) {
+	in := "player,pos,points,value\nJa'Marr Chase,WR,300,47\n"
+	rows, err := ParseSourceCSVAs(strings.NewReader(in), CielyColumns)
+	if err != nil {
+		t.Fatalf("alternate spellings must be accepted: %v", err)
+	}
+	if len(rows) != 1 || rows[0].AuctionValue != 47 || rows[0].Points != 300 {
+		t.Errorf("unexpected row: %+v", rows)
+	}
+}
+
+// TestSourceSchemaLeavesOptionalColumnsOptional — losing ps_pct or an ECR
+// flag costs a signal, not a number that silently reads as zero, so it must
+// not stop the file loading.
+func TestSourceSchemaLeavesOptionalColumnsOptional(t *testing.T) {
+	in := "source,baseline,position,player,team,aav,value\n" +
+		"subvertadown,beerplus,WR,Justin Jefferson,MIN,47,44\n"
+	rows, err := ParseSourceCSVAs(strings.NewReader(in), SubvertadownColumns)
+	if err != nil {
+		t.Fatalf("optional columns must stay optional: %v", err)
+	}
+	if len(rows) != 1 || rows[0].ScarcityPct != 0 || rows[0].ECRUp {
+		t.Errorf("unexpected row: %+v", rows)
+	}
+}
+
+// TestTheRealHeadersSatisfyTheirSchemas — the live extractors' output must
+// pass, or this check is a tripwire across the workflow rather than a guard.
+func TestTheRealHeadersSatisfyTheirSchemas(t *testing.T) {
+	ciely := "source,position,pos_rank,player,team,bye,ciely_points,league_points,points_delta," +
+		"auction_value,pass_yards,pass_td,interceptions,rush_yards,rush_td,targets,receptions,recv_yards,recv_td\n"
+	if _, err := ParseSourceCSVAs(strings.NewReader(ciely+"ciely,WR,1,X,CIN,6,1,2,3,44,0,0,0,0,0,0,0,0,0\n"), CielyColumns); err != nil {
+		t.Errorf("the live ciely header must pass: %v", err)
+	}
+	sv := "source,baseline,position,pos_rank,player,team,bye,aav,ps_pct,value,ecr_up,ecr_down\n"
+	if _, err := ParseSourceCSVAs(strings.NewReader(sv+"subvertadown,beerplus,WR,1,X,CIN,6,47,67,44,0,0\n"), SubvertadownColumns); err != nil {
+		t.Errorf("the live subvertadown header must pass: %v", err)
+	}
+}

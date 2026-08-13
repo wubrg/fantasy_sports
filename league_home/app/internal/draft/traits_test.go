@@ -77,7 +77,7 @@ func TestComponentsRebuildTheRealProjections(t *testing.T) {
 	if _, err := os.Stat(path); err != nil {
 		t.Skipf("no ciely projections at %s", path)
 	}
-	rows, err := LoadSourceCSV(path)
+	rows, err := LoadSourceCSV(path, SourceSchema{})
 	if err != nil {
 		t.Fatalf("loading %s: %v", path, err)
 	}

@@ -170,24 +170,99 @@ func (r SourceRow) ECR() ECRState {
 	return ECRConsensus
 }
 
-// LoadSourceCSV reads a normalized source CSV. Column order is read from
-// the header rather than assumed, because these files are produced by
-// several different extractors and hand-edited between drafts.
-func LoadSourceCSV(path string) ([]SourceRow, error) {
+// SourceSchema names the columns a source must carry.
+//
+// Per source rather than one shared list, because the two normalized files
+// hold different things: Ciely publishes a projection and a dollar value,
+// Subvertadown a baseline label and a market AAV. A list broad enough for
+// both would demand columns neither has.
+type SourceSchema struct {
+	// Name is the source, for the error message.
+	Name string
+	// Required is one entry per column that must exist, each listing the
+	// spellings that count. The spellings mirror what pick() accepts, so
+	// this check can never reject a header the parser would have read.
+	Required [][]string
+}
+
+// CielyColumns and SubvertadownColumns are what each extractor's output has
+// to carry for the board to mean anything.
+//
+// Only the columns whose absence would corrupt a number, not every column
+// the files happen to have. Losing ps_pct or an ECR flag costs a signal and
+// is survivable; losing the value column produces a board priced entirely
+// at zero that still renders and still looks like a board.
+var (
+	CielyColumns = SourceSchema{
+		Name: "ciely",
+		Required: [][]string{
+			{"player", "name", "player name"},
+			{"position", "pos"},
+			{"league_points", "points", "fps", "proj"},
+			{"auction_value", "auc$", "value", "auction"},
+		},
+	}
+	SubvertadownColumns = SourceSchema{
+		Name: "subvertadown",
+		Required: [][]string{
+			{"player", "name", "player name"},
+			{"position", "pos"},
+			{"baseline"},
+			{"aav"},
+			{"value", "auction_value"},
+		},
+	}
+)
+
+// check reports the first required column the header does not satisfy.
+func (s SourceSchema) check(header []string, cols map[string]int) error {
+	for _, accepted := range s.Required {
+		found := false
+		for _, name := range accepted {
+			if _, ok := cols[name]; ok {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("%s is missing a %s column (have %v)",
+				s.Name, strings.Join(accepted, "/"), header)
+		}
+	}
+	return nil
+}
+
+// LoadSourceCSV reads a normalized source CSV and checks it carries what the
+// schema requires. Column order is read from the header rather than assumed,
+// because these files are produced by several different extractors and
+// hand-edited between drafts.
+func LoadSourceCSV(path string, schema SourceSchema) ([]SourceRow, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("draft: opening source %s: %w", path, err)
 	}
 	defer f.Close()
-	rows, err := ParseSourceCSV(f)
+	rows, err := ParseSourceCSVAs(f, schema)
 	if err != nil {
 		return nil, fmt.Errorf("draft: %s: %w", path, err)
 	}
 	return rows, nil
 }
 
-// ParseSourceCSV reads normalized source rows from any CSV reader.
+// ParseSourceCSV reads rows with no schema check, for callers that only
+// want whatever the file happens to hold.
 func ParseSourceCSV(r io.Reader) ([]SourceRow, error) {
+	return ParseSourceCSVAs(r, SourceSchema{})
+}
+
+// ParseSourceCSVAs reads normalized source rows, rejecting a file that does
+// not carry the columns its schema requires.
+//
+// Loudly, because the alternative is what this replaced: every column but
+// the player name fell through to zero when it was missing, so a renamed
+// vendor column became a column of zeros. Nothing downstream can tell a
+// real zero from an absent one, and the board renders either way.
+func ParseSourceCSVAs(r io.Reader, schema SourceSchema) ([]SourceRow, error) {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.TrimLeadingSpace = true
@@ -219,6 +294,9 @@ func ParseSourceCSV(r io.Reader) ([]SourceRow, error) {
 		if _, ok := cols["name"]; !ok {
 			return nil, fmt.Errorf("no player/name column (have %v)", records[0])
 		}
+	}
+	if err := schema.check(records[0], cols); err != nil {
+		return nil, err
 	}
 
 	num := func(s string) float64 {

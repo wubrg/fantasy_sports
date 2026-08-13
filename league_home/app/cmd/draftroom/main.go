@@ -257,11 +257,11 @@ func sourceBoards(dataDir, cfg string, info map[string]draft.PlayerInfo, teams, 
 	if err != nil {
 		return nil, nil, err
 	}
-	ciely, err := draft.LoadSourceCSV(root.Normalized("ciely-2026.csv"))
+	ciely, err := draft.LoadSourceCSV(root.Normalized("ciely-2026.csv"), draft.CielyColumns)
 	if err != nil {
 		return nil, nil, err
 	}
-	sv, err := draft.LoadSourceCSV(root.Normalized("subvertadown-2026.csv"))
+	sv, err := draft.LoadSourceCSV(root.Normalized("subvertadown-2026.csv"), draft.SubvertadownColumns)
 	if err != nil {
 		return nil, nil, err
 	}
