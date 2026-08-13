@@ -1,6 +1,9 @@
 package draft
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // pool is the projection source's spelling of every player, which is what a
 // lean has to match — see Unmatched.
@@ -256,9 +259,9 @@ var sleeperish = map[string]PlayerInfo{
 // TestClosestPlayerCatchesATypo — the easy half: a name off by a character
 // or two is a spelling mistake and edit distance finds it.
 func TestClosestPlayerCatchesATypo(t *testing.T) {
-	id, p, ok := ClosestPlayer("Isaiah Lilely", "TE", "BAL", sleeperish)
-	if !ok || id != "2" || p.Name != "Isaiah Likely" {
-		t.Errorf("got %q %+v (ok=%v), want Isaiah Likely id=2", id, p, ok)
+	id, p, kind := ClosestPlayer("Isaiah Lilely", "TE", "BAL", sleeperish)
+	if kind != MatchSpelling || id != "2" || p.Name != "Isaiah Likely" {
+		t.Errorf("got %q %+v (kind=%v), want Isaiah Likely id=2 by spelling", id, p, kind)
 	}
 }
 
@@ -267,9 +270,9 @@ func TestClosestPlayerCatchesATypo(t *testing.T) {
 // same man; it is exactly what aliases.csv exists for. Surname plus the
 // position and team the source already stated identifies him.
 func TestClosestPlayerCatchesANickname(t *testing.T) {
-	id, p, ok := ClosestPlayer("Hollywood Brown", "WR", "PHI", sleeperish)
-	if !ok || id != "5848" || p.Name != "Marquise Brown" {
-		t.Errorf("got %q %+v (ok=%v), want Marquise Brown id=5848", id, p, ok)
+	id, p, kind := ClosestPlayer("Hollywood Brown", "WR", "PHI", sleeperish)
+	if kind != MatchSurname || id != "5848" || p.Name != "Marquise Brown" {
+		t.Errorf("got %q %+v (kind=%v), want Marquise Brown id=5848 by surname", id, p, kind)
 	}
 }
 
@@ -282,7 +285,7 @@ func TestClosestPlayerWillNotGuessBetweenTwo(t *testing.T) {
 		"1": {Name: "Some Brown", Position: "WR", Team: "PHI"},
 		"2": {Name: "Other Brown", Position: "WR", Team: "PHI"},
 	}
-	if id, _, ok := ClosestPlayer("Hollywood Brown", "WR", "PHI", two); ok {
+	if id, _, kind := ClosestPlayer("Hollywood Brown", "WR", "PHI", two); kind != MatchNone {
 		t.Errorf("guessed %q where the evidence does not decide", id)
 	}
 }
@@ -290,7 +293,7 @@ func TestClosestPlayerWillNotGuessBetweenTwo(t *testing.T) {
 // TestClosestPlayerNeedsTheSurnameToAgree — a different surname at the same
 // position and team is a different player, not a nickname.
 func TestClosestPlayerNeedsTheSurnameToAgree(t *testing.T) {
-	if id, _, ok := ClosestPlayer("Hollywood Jennings", "WR", "PHI", sleeperish); ok {
+	if id, _, kind := ClosestPlayer("Hollywood Jennings", "WR", "PHI", sleeperish); kind != MatchNone {
 		t.Errorf("matched %q on position and team alone", id)
 	}
 }
@@ -298,7 +301,97 @@ func TestClosestPlayerNeedsTheSurnameToAgree(t *testing.T) {
 // TestClosestPlayerHasNothingToSayAboutAnEmptyPool — no dictionary is not
 // the same claim as no such player.
 func TestClosestPlayerHasNothingToSayAboutAnEmptyPool(t *testing.T) {
-	if _, _, ok := ClosestPlayer("Anyone", "WR", "PHI", nil); ok {
+	if _, _, kind := ClosestPlayer("Anyone", "WR", "PHI", nil); kind != MatchNone {
 		t.Error("an empty dictionary should assert nothing")
+	}
+}
+
+// wideDict has the shapes the live Sleeper dictionary actually has: many
+// players sharing a surname across positions, and duplicate full names.
+var wideDict = map[string]PlayerInfo{
+	"qb1": {Name: "Caleb Williams", Position: "QB", Team: "CHI"},
+	"wr1": {Name: "Jalen Williams", Position: "WR", Team: "JAX"},
+	"wr2": {Name: "Mike Williams", Position: "WR", Team: "PIT"},
+	"g1":  {Name: "Jarvis Harrison", Position: "G", Team: "NYJ"},
+	"wr3": {Name: "Marvin Harrison", Position: "WR", Team: "ARI"},
+	"dl1": {Name: "Chris Smith", Position: "DL", Team: "DET"},
+	"db1": {Name: "Chris Smith", Position: "DB", Team: ""},
+	"de1": {Name: "Chris Smith", Position: "DE", Team: ""},
+	"rb1": {Name: "Kenneth Walker", Position: "RB", Team: "SEA"},
+	"wr4": {Name: "Kenneth Walker", Position: "WR", Team: ""},
+}
+
+// TestClosestPlayerWillNotCrossPositions — the caller states the position;
+// ignoring it offered a WR on DAL a defensive lineman on DET. A suggestion
+// is pasted into aliases.csv, where being wrong silently binds every read on
+// that player to somebody else.
+func TestClosestPlayerWillNotCrossPositions(t *testing.T) {
+	// Held out: this QB is not in the dictionary under this spelling.
+	for _, tc := range []struct{ name, pos, team string }{
+		{"Caleb Willians", "QB", "CHI"},
+		{"Marvin Harrisson", "WR", "ARI"},
+	} {
+		id, p, kind := ClosestPlayer(tc.name, tc.pos, tc.team, wideDict)
+		if kind != MatchNone && !strings.EqualFold(p.Position, tc.pos) {
+			t.Errorf("%s (%s) matched %s (%s) id=%s — wrong position",
+				tc.name, tc.pos, p.Name, p.Position, id)
+		}
+	}
+}
+
+// TestClosestPlayerIsDeterministic — three men named Chris Smith and a
+// randomized map made the same file suggest a different id per run. A
+// suggestion you cannot reproduce is one you cannot review.
+func TestClosestPlayerIsDeterministic(t *testing.T) {
+	first, _, _ := ClosestPlayer("Chris Smith", "DL", "DET", wideDict)
+	for i := 0; i < 200; i++ {
+		got, _, _ := ClosestPlayer("Chris Smith", "DL", "DET", wideDict)
+		if got != first {
+			t.Fatalf("run %d suggested %q where run 0 suggested %q", i, got, first)
+		}
+	}
+	// Same for a name with no position filter to lean on.
+	firstAny, _, _ := ClosestPlayer("Kenneth Walkr", "RB", "SEA", wideDict)
+	for i := 0; i < 200; i++ {
+		got, _, _ := ClosestPlayer("Kenneth Walkr", "RB", "SEA", wideDict)
+		if got != firstAny {
+			t.Fatalf("run %d suggested %q where run 0 suggested %q", i, got, firstAny)
+		}
+	}
+}
+
+// TestClosestPlayerPrefersTheStatedTeam — where the position leaves several,
+// the team the source gave decides rather than map order.
+func TestClosestPlayerPrefersTheStatedTeam(t *testing.T) {
+	id, p, kind := ClosestPlayer("Chris Smith", "DL", "DET", wideDict)
+	if kind == MatchNone || id != "dl1" || p.Team != "DET" {
+		t.Errorf("got %q %+v (kind=%v), want the DET one", id, p, kind)
+	}
+}
+
+// TestSpellingMatchWillNotSwapTwoRealPlayers — the shape that made one in
+// five held-out players draw a confidently wrong paste-ready fix. Two men
+// very often share a surname exactly and differ in the given name; one man
+// mistyped keeps his given name and loses a letter in the surname. Only the
+// second is a misspelling.
+func TestSpellingMatchWillNotSwapTwoRealPlayers(t *testing.T) {
+	dict := map[string]PlayerInfo{
+		"a": {Name: "Joe Williams", Position: "RB", Team: "TB"},
+		"b": {Name: "Kevin Coleman", Position: "WR", Team: "MIA"},
+		"c": {Name: "Isaiah Likely", Position: "TE", Team: "BAL"},
+	}
+	// Different players who merely share a surname must not be offered as
+	// spelling fixes.
+	for _, tc := range []struct{ name, pos, team string }{
+		{"Josh Williams", "RB", "TB"},
+		{"Keon Coleman", "WR", "BUF"},
+	} {
+		if id, p, kind := ClosestPlayer(tc.name, tc.pos, tc.team, dict); kind == MatchSpelling {
+			t.Errorf("%s offered as a misspelling of %s id=%s", tc.name, p.Name, id)
+		}
+	}
+	// The real typo still lands, because the given name is intact.
+	if _, p, kind := ClosestPlayer("Isaiah Lilely", "TE", "BAL", dict); kind != MatchSpelling || p.Name != "Isaiah Likely" {
+		t.Errorf("a genuine misspelling should still resolve: %+v %v", p, kind)
 	}
 }

@@ -109,13 +109,44 @@ func reportUnresolved(u draft.Unmatched, info map[string]draft.PlayerInfo, sourc
 	where := strings.TrimSpace(u.Row.Position + " " + u.Row.Team)
 	fmt.Printf("  %s  %s\n    %s\n", u.Row.Player, where, u.Reason)
 
-	id, p, ok := draft.ClosestPlayer(u.Row.Player, u.Row.Position, u.Row.Team, info)
-	if !ok {
-		// Naming a distant guess would be worse than naming none: pasting a
-		// wrong alias binds every read on that player to somebody else.
-		fmt.Printf("    no close match in Sleeper — check the spelling, or he may not be rostered\n\n")
+	// A defense is matched by team abbreviation, before aliases are ever
+	// consulted, so an alias for one is inert — you would paste the line,
+	// rerun, and see the identical suggestion forever. The fix is the
+	// abbreviation, so say that instead.
+	if isDefense(u.Row.Position) {
+		if id, p, kind := draft.ClosestPlayer(u.Row.Player, "DEF", "", info); kind != draft.MatchNone {
+			fmt.Printf("    Sleeper has %s as %s\n", p.Name, id)
+		}
+		fmt.Printf("    defenses match on team abbreviation, not by alias — correct the\n" +
+			"    team column in the extractor output\n\n")
 		return
 	}
-	fmt.Printf("    closest: %s (%s, %s) id=%s\n", p.Name, p.Position, p.Team, id)
-	fmt.Printf("    aliases.csv: %s,%s,%s name for %s\n\n", u.Row.Player, id, source, p.Name)
+
+	id, p, kind := draft.ClosestPlayer(u.Row.Player, u.Row.Position, u.Row.Team, info)
+	switch kind {
+	case draft.MatchSpelling:
+		// The names are a couple of edits apart at the same position, which
+		// is what a typo looks like. Safe to hand over ready to paste.
+		fmt.Printf("    looks like a misspelling of %s (%s, %s) id=%s\n", p.Name, p.Position, p.Team, id)
+		fmt.Printf("    aliases.csv: %s,%s,%s name for %s\n\n", u.Row.Player, id, source, p.Name)
+	case draft.MatchSurname:
+		// Only the surname, position and team agree. That is how a nickname
+		// is found and equally how two different men are confused — Brian
+		// and Bijan Robinson are both Atlanta running backs. Naming the
+		// candidate is useful; formatting it as a fix to paste unread is
+		// not, because a wrong alias binds every read on that player to
+		// somebody else and says nothing.
+		fmt.Printf("    same surname, position and team: %s (%s, %s) id=%s\n", p.Name, p.Position, p.Team, id)
+		fmt.Printf("    if that is the same player, add:  %s,%s,%s name for %s\n",
+			u.Row.Player, id, source, p.Name)
+		fmt.Printf("    if it is not, he is missing from Sleeper and there is nothing to alias\n\n")
+	default:
+		fmt.Printf("    no close match in Sleeper — check the spelling, or he may not be rostered\n\n")
+	}
+}
+
+// isDefense reports whether a row is a team defense, which sources label
+// either way.
+func isDefense(position string) bool {
+	return strings.EqualFold(position, "DST") || strings.EqualFold(position, "DEF")
 }

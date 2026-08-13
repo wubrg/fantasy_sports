@@ -363,3 +363,34 @@ func TestTheRealHeadersSatisfyTheirSchemas(t *testing.T) {
 		t.Errorf("the live subvertadown header must pass: %v", err)
 	}
 }
+
+// TestSchemaAcceptsEverySpellingPickDoes — the schema promises it can never
+// reject a header the parser would have read. Subvertadown's value column
+// required only two of the four spellings pick() takes.
+func TestSchemaAcceptsEverySpellingPickDoes(t *testing.T) {
+	for _, value := range []string{"value", "auction_value", "auc$", "auction"} {
+		in := "player,position,baseline,aav," + value + "\nX,WR,beerplus,47,44\n"
+		if _, err := ParseSourceCSVAs(strings.NewReader(in), SubvertadownColumns); err != nil {
+			t.Errorf("header with %q rejected: %v", value, err)
+		}
+	}
+}
+
+// TestAnEmptySourceFileIsAnError — a header-only or empty file is what a
+// broken extractor leaves behind, and it used to sail through as "0 rows".
+// A board with no prices renders exactly like a board.
+func TestAnEmptySourceFileIsAnError(t *testing.T) {
+	if _, err := ParseSourceCSVAs(strings.NewReader(""), CielyColumns); err == nil {
+		t.Error("an empty file should not pass a schema")
+	}
+	// Header only: the columns are checked, so a truncated file that also
+	// lost a column still fails on the column.
+	in := "source,position,player,team\n"
+	if _, err := ParseSourceCSVAs(strings.NewReader(in), CielyColumns); err == nil {
+		t.Error("a header-only file missing required columns should fail")
+	}
+	// And with no schema at all, anything still goes.
+	if _, err := ParseSourceCSV(strings.NewReader("")); err != nil {
+		t.Errorf("no schema means no opinion: %v", err)
+	}
+}

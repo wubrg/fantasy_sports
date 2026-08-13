@@ -209,7 +209,7 @@ var (
 			{"position", "pos"},
 			{"baseline"},
 			{"aav"},
-			{"value", "auction_value"},
+			{"value", "auction_value", "auc$", "auction"},
 		},
 	}
 )
@@ -271,7 +271,13 @@ func ParseSourceCSVAs(r io.Reader, schema SourceSchema) ([]SourceRow, error) {
 	if err != nil {
 		return nil, fmt.Errorf("reading csv: %w", err)
 	}
-	if len(records) < 2 {
+	if len(records) == 0 {
+		// No header at all. With a schema to satisfy there is nothing to
+		// check it against, and an empty file is exactly the shape a broken
+		// extractor leaves behind.
+		if len(schema.Required) > 0 {
+			return nil, fmt.Errorf("%s is empty", schema.Name)
+		}
 		return nil, nil
 	}
 

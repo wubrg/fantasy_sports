@@ -269,21 +269,74 @@ func editDistance(a, b string, cutoff int) int {
 // not is worse than none. A wrong alias binds every read on that player to
 // somebody else, silently, which is the failure this whole area exists to
 // stop.
-func ClosestPlayer(want, position, team string, players map[string]PlayerInfo) (id string, info PlayerInfo, ok bool) {
+// MatchKind says how a candidate was found, because the two ways carry very
+// different confidence and the caller has to say so.
+type MatchKind int
+
+const (
+	// MatchNone means nothing was near enough to name.
+	MatchNone MatchKind = iota
+	// MatchSpelling means the names are within a couple of edits — a typo,
+	// and almost certainly the same player.
+	MatchSpelling
+	// MatchSurname means only the surname, position and team agree. That is
+	// how a nickname is found ("Hollywood Brown" is "Marquise Brown"), and
+	// it is also how two different men are confused: Brian Robinson and
+	// Bijan Robinson are both running backs in Atlanta. It is a candidate
+	// for a person to judge, never a fix to apply unread.
+	MatchSurname
+)
+
+func ClosestPlayer(want, position, team string, players map[string]PlayerInfo) (id string, info PlayerInfo, kind MatchKind) {
 	key := normalizeName(want)
 	if key == "" || len(players) == 0 {
-		return "", PlayerInfo{}, false
+		return "", PlayerInfo{}, MatchNone
 	}
-	// nearest works on normalized name -> a label; carry the id as the
-	// label so the winner can be looked back up.
-	byName := make(map[string]string, len(players))
+
+	// Only players at the stated position are candidates. The source row
+	// says what he plays, and searching the whole dictionary without it
+	// offered a wide receiver a defensive lineman on the strength of a
+	// surname — a fifth of held-out players drew a confidently wrong
+	// suggestion that way. A quarterback is not a near miss for a guard
+	// however close the letters run.
+	type cand struct {
+		id   string
+		dist int
+		same bool // team agrees with the row
+	}
+	limit := len(key) / suggestionSlack
+	if limit < 2 {
+		limit = 2
+	}
+	var best []cand
 	for pid, p := range players {
-		if n := normalizeName(p.Name); n != "" {
-			byName[n] = pid
+		if position != "" && !strings.EqualFold(p.Position, position) {
+			continue
+		}
+		n := normalizeName(p.Name)
+		if n == "" {
+			continue
+		}
+		if d := editDistance(key, n, limit+1); d <= limit && looksLikeATypo(want, p.Name) {
+			best = append(best, cand{pid, d, team != "" && strings.EqualFold(p.Team, team)})
 		}
 	}
-	if pid := nearest(key, byName); pid != "" {
-		return pid, players[pid], true
+	if len(best) > 0 {
+		// Closest first, then the team the source stated, then the id — so
+		// the same file suggests the same player every run. Ranking by map
+		// order meant three men named Chris Smith produced a different id
+		// per invocation, and a suggestion you cannot reproduce is one you
+		// cannot review before pasting it.
+		sort.Slice(best, func(i, j int) bool {
+			if best[i].dist != best[j].dist {
+				return best[i].dist < best[j].dist
+			}
+			if best[i].same != best[j].same {
+				return best[i].same
+			}
+			return best[i].id < best[j].id
+		})
+		return best[0].id, players[best[0].id], MatchSpelling
 	}
 
 	// Edit distance cannot reach a nickname: "Hollywood Brown" is nowhere
@@ -296,9 +349,9 @@ func ClosestPlayer(want, position, team string, players map[string]PlayerInfo) (
 	// team at one position is rare, but naming either would be a guess, and
 	// a wrong alias binds every read on that player to somebody else.
 	if pid, found := onlyBySurname(want, position, team, players); found {
-		return pid, players[pid], true
+		return pid, players[pid], MatchSurname
 	}
-	return "", PlayerInfo{}, false
+	return "", PlayerInfo{}, MatchNone
 }
 
 // onlyBySurname finds the single player with this surname at this position
@@ -327,4 +380,37 @@ func onlyBySurname(want, position, team string, players map[string]PlayerInfo) (
 		hit = pid
 	}
 	return hit, hit != ""
+}
+
+// looksLikeATypo reports whether two names differ the way one name
+// mistyped differs, rather than the way two people differ.
+//
+// Whole-string distance cannot tell those apart. "Josh Williams" and "Joe
+// Williams" are two edits apart and two different running backs; "isaiah
+// lilely" and "Isaiah Likely" are two edits apart and one tight end. What
+// separates them is where the edits fall. Two men very often share a
+// surname exactly and differ in the first name; one man mistyped usually
+// keeps his first name and loses a letter somewhere in the surname.
+//
+// So the surname may drift and the given name may not, beyond a single
+// character. Applied to the paste-ready suggestion only, because that is
+// the one offered as a fix rather than as a candidate to judge.
+func looksLikeATypo(a, b string) bool {
+	firstA, lastA := splitName(a)
+	firstB, lastB := splitName(b)
+	if lastA == "" || lastB == "" {
+		// A single-token name has no parts to weigh; fall back to the
+		// whole-string judgement the caller already made.
+		return true
+	}
+	return editDistance(firstA, firstB, 2) <= 1
+}
+
+// splitName returns a name's normalized given name and surname.
+func splitName(raw string) (first, last string) {
+	fields := strings.Fields(raw)
+	if len(fields) < 2 {
+		return normalizeName(raw), ""
+	}
+	return normalizeName(fields[0]), normalizeName(fields[len(fields)-1])
 }
