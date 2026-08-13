@@ -233,8 +233,8 @@ func TestParseSourceCSVReadsSubvertadownColumns(t *testing.T) {
 // reads as no signal, and SharpDelta returns the larger-magnitude signed move.
 func TestParseSourceCSVReadsSharpDivergence(t *testing.T) {
 	in := "source,baseline,position,pos_rank,player,rank_vs_top10,rank_vs_top20\n" +
-		"fantasypros,consensus,RB,1,Bijan Robinson,-6,-4\n" +
-		"fantasypros,consensus,RB,2,Jahmyr Gibbs,7,3\n" +
+		"fantasypros,consensus,RB,1,Bijan Robinson,6,4\n" +
+		"fantasypros,consensus,RB,2,Jahmyr Gibbs,-7,-3\n" +
 		"fantasypros,consensus,WR,1,Ja'Marr Chase,,\n"
 	rows, err := ParseSourceCSV(strings.NewReader(in))
 	if err != nil {
@@ -243,11 +243,11 @@ func TestParseSourceCSVReadsSharpDivergence(t *testing.T) {
 	if len(rows) != 3 {
 		t.Fatalf("expected 3 rows, got %d", len(rows))
 	}
-	if rows[0].RankVsTop10 != -6 || rows[0].SharpDelta() != -6 {
-		t.Errorf("Bijan top10=%d delta=%d, want -6/-6", rows[0].RankVsTop10, rows[0].SharpDelta())
+	if rows[0].RankVsTop10 != 6 || rows[0].SharpDelta() != 6 {
+		t.Errorf("Bijan top10=%d delta=%d, want 6/6", rows[0].RankVsTop10, rows[0].SharpDelta())
 	}
-	if rows[1].SharpDelta() != 7 {
-		t.Errorf("Gibbs delta=%d, want 7", rows[1].SharpDelta())
+	if rows[1].SharpDelta() != -7 {
+		t.Errorf("Gibbs delta=%d, want -7", rows[1].SharpDelta())
 	}
 	if rows[2].RankVsTop10 != 0 || rows[2].SharpDelta() != 0 {
 		t.Errorf("Chase blank should read 0, got top10=%d delta=%d", rows[2].RankVsTop10, rows[2].SharpDelta())

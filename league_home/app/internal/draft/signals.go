@@ -64,9 +64,10 @@ type PlayerSignals struct {
 	// cover him.
 	ECRRank int
 	// SharpRankDelta is how far the most-accurate-expert subset moves him
-	// against the full consensus: negative means the sharps rank him better
-	// than the field. Zero is agreement or no coverage. Rank-based, so it is
-	// unaffected by the FantasyPros points recompute.
+	// against the full consensus: consensus rank minus the sharp rank, so a
+	// positive value means the sharps rank him higher (a better, lower rank
+	// number) than the field. Zero is agreement or no coverage. Rank-based, so
+	// it is unaffected by the FantasyPros points recompute.
 	//
 	// Distinct from ECR below, which is Subvertadown's industry-deviation
 	// flag. These two never share a code path.
@@ -145,13 +146,13 @@ const (
 )
 
 // Sharp reports whether the most-accurate-expert subset moved this player far
-// enough against consensus to flag, and in which direction. A negative
+// enough against consensus to flag, and in which direction. A positive
 // SharpRankDelta is a move to a better (lower) rank, so it reads as up.
 func (p PlayerSignals) Sharp() SharpState {
 	switch {
-	case p.SharpRankDelta <= -sharpRankThreshold:
-		return SharpUp
 	case p.SharpRankDelta >= sharpRankThreshold:
+		return SharpUp
+	case p.SharpRankDelta <= -sharpRankThreshold:
 		return SharpDown
 	}
 	return SharpNone

@@ -102,8 +102,8 @@ function flagHTML(p) {
   // field. Distinct from ecr± above, which is the wider industry. Threshold
   // mirrors sharpRankThreshold in signals.go.
   const sharp = p.SharpRankDelta || 0;
-  if (sharp <= -5) out.push(`<span class="flag sharp-up" title="the most-accurate experts rank him ${-sharp} spots higher than consensus">sharp+</span>`);
-  else if (sharp >= 5) out.push(`<span class="flag sharp-down" title="the most-accurate experts rank him ${sharp} spots lower than consensus">sharp-</span>`);
+  if (sharp >= 5) out.push(`<span class="flag sharp-up" title="the most-accurate experts rank him ${sharp} spots higher than consensus">sharp+</span>`);
+  else if (sharp <= -5) out.push(`<span class="flag sharp-down" title="the most-accurate experts rank him ${-sharp} spots lower than consensus">sharp-</span>`);
 
   if (p.Availability) {
     out.push(`<span class="flag hurt">${esc(p.Availability.toLowerCase())}</span>`);

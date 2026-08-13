@@ -114,14 +114,14 @@ func TestFlagsForSharpDivergence(t *testing.T) {
 		}
 		return false
 	}
-	if !has(PlayerSignals{SharpRankDelta: -6}, "sharp+") {
-		t.Errorf("sharps ranking him better should flag sharp+, got %v", flagsFor(PlayerSignals{SharpRankDelta: -6}))
+	if !has(PlayerSignals{SharpRankDelta: 6}, "sharp+") {
+		t.Errorf("sharps ranking him higher should flag sharp+, got %v", flagsFor(PlayerSignals{SharpRankDelta: 6}))
 	}
-	if !has(PlayerSignals{SharpRankDelta: 7}, "sharp-") {
-		t.Errorf("sharps ranking him worse should flag sharp-, got %v", flagsFor(PlayerSignals{SharpRankDelta: 7}))
+	if !has(PlayerSignals{SharpRankDelta: -7}, "sharp-") {
+		t.Errorf("sharps ranking him lower should flag sharp-, got %v", flagsFor(PlayerSignals{SharpRankDelta: -7}))
 	}
 	// A move under the threshold is noise and must stay off the board.
-	for _, f := range flagsFor(PlayerSignals{SharpRankDelta: -3}) {
+	for _, f := range flagsFor(PlayerSignals{SharpRankDelta: 3}) {
 		if strings.HasPrefix(f, "sharp") {
 			t.Errorf("a 3-rank move should not flag: %v", f)
 		}

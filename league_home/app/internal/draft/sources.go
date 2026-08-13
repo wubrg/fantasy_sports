@@ -92,8 +92,8 @@ type SourceRow struct {
 	ECRUp, ECRDown bool
 	// RankVsTop10 and RankVsTop20 are how far the most-accurate-expert
 	// subsets move a player against the full consensus: consensus rank minus
-	// the sharp rank, so a negative value means the sharps rank him better
-	// (a lower number) than the field does. Present only on FantasyPros
+	// the sharp rank, so a positive value means the sharps rank him higher
+	// (a better, lower number) than the field does. Present only on FantasyPros
 	// consensus rows, and only for players the subset also ranked; zero on
 	// every other source, which reads as "no sharp signal".
 	//
