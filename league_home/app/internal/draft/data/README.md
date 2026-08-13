@@ -32,7 +32,11 @@ What *is* tracked here:
 | `tools/` | the extractors — code, not data |
 | `aliases.csv` | our name-matching fixes, not vendor content |
 | `rulings.csv` | the league's own commissioner decisions |
+| `preferences.example.yaml` | template for the personal draft filters (below) |
 | `OPEN-QUESTIONS.md` | our notes |
+
+Your live `preferences.yaml` is gitignored — it is personal strategy, like the
+draftroom notes.
 
 Anyone cloning this re-runs the extractors against their own copies.
 
@@ -44,6 +48,7 @@ normalized/              generated CSVs in one schema
 tools/                   per-source extractors
 aliases.csv              source name -> Sleeper player_id
 rulings.csv              LM keeper rulings (season,player_id,price,keep_count,reason)
+preferences.yaml         personal one-per-offense / no-handcuff filters (gitignored; see .example)
 ```
 
 ## Sources

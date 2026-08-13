@@ -120,11 +120,14 @@ func TestWriteScarcityAndGaps(t *testing.T) {
 	var sb strings.Builder
 	if err := WriteScarcity(&sb, map[string]PositionScarcity{
 		"RB": {Position: "RB", Startable: 40, StartersLeft: 20, Cover: 2, TopScarcityPct: 85, Cliff: 22},
-	}); err != nil {
+	}, nil); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(sb.String(), "RB") || !strings.Contains(sb.String(), "22 pts") {
 		t.Errorf("scarcity table wrong:\n%s", sb.String())
+	}
+	if strings.Contains(sb.String(), "YOURS") {
+		t.Errorf("no effective scarcity given, so the YOURS column should be hidden:\n%s", sb.String())
 	}
 
 	sb.Reset()

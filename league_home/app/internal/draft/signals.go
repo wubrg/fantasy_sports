@@ -16,6 +16,15 @@ type PlayerSignals struct {
 	PlayerID string
 	Name     string
 	Position string
+	// Team is the player's NFL team abbreviation, from Sleeper's dictionary.
+	// Empty for a free agent. Used only by the personal preference filter —
+	// one-per-offense and no-handcuff both ask which offense a player is on.
+	Team string
+	// BlockedReason names why this player is off *your* board given who you
+	// already own and your declared preferences — empty when he is not, or
+	// when no preferences are set. Set after the board is built, in Build,
+	// because it depends on your roster rather than on the player alone.
+	BlockedReason string
 
 	// Value is what he is worth on median projections, re-solved against
 	// the live pool. Pay this and you should get this production.
@@ -107,6 +116,10 @@ type SignalInputs struct {
 	Subvertadown []SourceRow
 	// CielyPoints maps player ID to a projection in league scoring.
 	CielyPoints map[string]float64
+	// Teams maps player ID to an NFL team abbreviation, for the personal
+	// preference filter. A player absent here carries no team, which the
+	// filter treats as "no offense to be one-per".
+	Teams map[string]string
 	// Availability maps player ID to a Sleeper injury designation.
 	Availability map[string]string
 	// Leans are the personal reads.
@@ -163,6 +176,7 @@ func BuildSignals(in SignalInputs) []PlayerSignals {
 			Value:       v.Price,
 			Cost:        in.Costs[v.PlayerID],
 			MyMaxBid:    v.Price,
+			Team:        in.Teams[v.PlayerID],
 			VBD:         map[Baseline]float64{},
 			CielyPoints: in.CielyPoints[v.PlayerID],
 		}

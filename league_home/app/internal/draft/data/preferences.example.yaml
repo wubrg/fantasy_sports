@@ -1,0 +1,29 @@
+# Personal draft filters — copy to `preferences.yaml` in this directory to
+# turn on. An absent `preferences.yaml` leaves the feature off, and the board
+# is exactly the league's.
+#
+# These make positional scarcity *yours* rather than the room's: once you own a
+# piece of an offense, the rest of that offense comes off your board, and your
+# starter's handcuff never joins it. The board still shows those players — it
+# flags them `blocked:...` and adds a YOURS column to the scarcity table — so
+# this is a filter, not a solver.
+#
+# Every field is optional; the values shown here are the defaults that apply
+# when a key is omitted.
+
+# Block a second player from an NFL team you already own a piece of, unless the
+# pair is an allowed stack (below).
+one_per_offense: true
+
+# Block a second player at the same position on a team you already own — the
+# running back behind your running back. Same team + same position is the
+# proxy, since Sleeper carries no depth chart.
+no_handcuffs: true
+
+# Position pairs allowed to share one offense. Order does not matter. A pair
+# here overrides one_per_offense; it never overrides no_handcuffs, because a
+# same-position pair is a handcuff, not a stack. An explicit empty list
+# (`stacks: []`) allows no stacks at all.
+stacks:
+  - [QB, WR]
+  - [QB, TE]

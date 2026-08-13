@@ -36,8 +36,18 @@ type Snapshot struct {
 	// PriceLines say what a dollar figure buys at each position — see
 	// PositionPriceLine. A statement about price, never about a player.
 	PriceLines map[string]PositionPriceLine `json:"priceLines"`
-	// Scarcity is how thin each position has become.
+	// Scarcity is how thin each position has become, league-wide.
 	Scarcity map[string]PositionScarcity `json:"scarcity"`
+	// EffectiveScarcity is the same count taken over *your* board — the pool
+	// with the players your preferences block removed. Nil when no preferences
+	// are set or you own nothing yet, in which case it equals Scarcity and is
+	// not shown. See BlockedForMe and EffectiveScarcity.
+	EffectiveScarcity map[string]PositionScarcity `json:"effectiveScarcity,omitempty"`
+	// Blocked maps a player ID to why he is off your board — same offense as
+	// someone you own, or your own starter's handcuff. Empty when no
+	// preferences are set. The board annotates these rather than hiding them:
+	// a filter, not a solver.
+	Blocked map[string]string `json:"blocked,omitempty"`
 	// MustHaves totals what your declared must-haves commit you to.
 	MustHaves MustHaveCost `json:"mustHaves"`
 	// Pivot is the single highest-priority trigger, if any fired.

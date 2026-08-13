@@ -43,6 +43,14 @@ type staticData struct {
 	subvert     []draft.SourceRow
 
 	availability map[string]string
+	// team maps a player ID to his NFL team abbreviation, from the Sleeper
+	// dictionary. The personal preference filter is the only reader: it asks
+	// which offense a player is on.
+	team map[string]string
+	// prefs are the personal one-per-offense / no-handcuff filters that make
+	// scarcity your own rather than the league's. An absent file loads to the
+	// zero value, which filters nothing.
+	prefs draft.Preferences
 	// traits label what kind of player each man is; see ClassifyTraits.
 	traits map[string]draft.TraitSet
 	// priceHistory is what each rank tier has cost in past drafts, the
@@ -149,6 +157,10 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	if err != nil {
 		return nil, err
 	}
+	prefs, err := draft.LoadPreferences(filepath.Join(cfg, preferencesFile))
+	if err != nil {
+		return nil, err
+	}
 
 	idx := draft.BuildPlayerIndexWithAliases(info, aliases)
 	var warnings []string
@@ -165,6 +177,8 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 		leanSets:     setNames(sets),
 		minePath:     writableSetPath(cfg, sets),
 		availability: map[string]string{}, keeperOf: map[string]int{},
+		team:      map[string]string{},
+		prefs:     prefs,
 		projected: projected,
 	}
 	s.teams, s.budget = auctionShape(c, leagueID)
@@ -210,6 +224,9 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	for id, p := range info {
 		if p.Injury != "" {
 			s.availability[id] = p.Injury
+		}
+		if p.Team != "" {
+			s.team[id] = p.Team
 		}
 	}
 	for _, e := range projected {
@@ -330,7 +347,7 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans) (draft.Snap
 	leans := s.effectiveLeans(edits)
 	players := draft.BuildSignals(draft.SignalInputs{
 		Values: values, Costs: costs, Subvertadown: s.subvert,
-		CielyPoints: s.points, Availability: s.availability,
+		CielyPoints: s.points, Teams: s.team, Availability: s.availability,
 		Leans: leans, Traits: s.traits, RecommendedBid: recommended,
 	})
 	snap := draft.Assemble(s.season, state, me, players, leans, s.tempo(taken, costs), s.thresholds, append(append([]string(nil), s.warnings...), s.leanWarnings...))
@@ -344,7 +361,58 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans) (draft.Snap
 		}
 	}
 	snap.PriceLines = draft.PriceLines(players, sold, s.priceHistory)
+
+	// Effective scarcity: the board as *you* see it once your own preferences
+	// have spent the offenses you already have a piece of. Only when a filter
+	// is set and you own something for it to bite on.
+	if s.prefs.Active() {
+		owned := s.ownedRoster(taken)
+		if blocked := draft.BlockedForMe(owned, snap.Players, s.prefs); len(blocked) > 0 {
+			snap.Blocked = blocked
+			snap.EffectiveScarcity = draft.EffectiveScarcity(snap.Players, blocked, state, s.thresholds)
+			for i := range snap.Players {
+				if r, ok := blocked[snap.Players[i].PlayerID]; ok {
+					snap.Players[i].BlockedReason = r
+				}
+			}
+		}
+	}
 	return snap, nil
+}
+
+// ownedRoster is who you already have: your projected keepers plus anyone you
+// have bought live. The personal preference filter measures every other player
+// against this set. Minimal signals — position and team are all the filter
+// reads.
+func (s *staticData) ownedRoster(taken map[string]gone) []draft.PlayerSignals {
+	var out []draft.PlayerSignals
+	seen := map[string]bool{}
+	add := func(id, pos string) {
+		if id == "" || seen[id] {
+			return
+		}
+		seen[id] = true
+		out = append(out, draft.PlayerSignals{
+			PlayerID: id,
+			Name:     s.nameOf(id),
+			Position: pos,
+			Team:     s.team[id],
+		})
+	}
+
+	aav := map[string]float64{}
+	for _, m := range s.market {
+		aav[m.PlayerID] = m.AAV
+	}
+	for _, e := range projectedKeepers(s.projected, aav, s.ownerID) {
+		add(e.PlayerID, e.Position)
+	}
+	for id, g := range taken {
+		if g.mine {
+			add(id, s.positionOf(id))
+		}
+	}
+	return out
 }
 
 // tempo compares what the room actually paid against what the cost board
