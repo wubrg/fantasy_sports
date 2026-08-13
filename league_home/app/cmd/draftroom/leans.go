@@ -45,6 +45,24 @@ func loadLeanSets(cfg string, names []string) (draft.Leans, []draft.LeanSet, err
 	return draft.MergeLeans(set), []draft.LeanSet{set}, nil
 }
 
+// matchAndMerge resolves each set's spellings against the pool and then
+// merges them.
+//
+// In that order, and not the other way round. Matching collapses two
+// spellings of one player onto one key, so doing it after the merge would
+// leave the collision to be settled by whichever read a map happened to
+// yield first — losing the cap and note on the read that lost, and losing
+// the disagreement the merge had recorded. Matched first, precedence
+// decides it, which is what precedence is for.
+func matchAndMerge(sets []draft.LeanSet, m *draft.PoolMatcher) draft.Leans {
+	matched := make([]draft.LeanSet, len(sets))
+	for i, set := range sets {
+		set.Leans = set.Leans.Match(m)
+		matched[i] = set
+	}
+	return draft.MergeLeans(matched...)
+}
+
 // writableSetPath is the file a read set on the board belongs in: the one
 // the highest-precedence set was actually loaded from.
 //
@@ -275,6 +293,14 @@ func reportUnmatched(sets []draft.LeanSet, cfg, dataDir string) {
 	// board will happily apply. A missing alias file is not an error.
 	aliases, _ := draft.LoadAliases(filepath.Join(cfg, aliasesFile))
 	matcher := draft.NewPoolMatcher(pool, aliases)
+
+	// Said once, whether or not anything failed. This check reads the source
+	// file; the board additionally drops rows that never matched a Sleeper
+	// id, so a read can pass here and still reach nobody. Claiming a clean
+	// bill of health it cannot actually give is how a check earns distrust.
+	fmt.Printf("\nnames checked against %s (%d rows). The board drops rows with no Sleeper\n"+
+		"match, so its warnings are the last word on what a read reaches.\n",
+		projectionSource, len(pool))
 
 	for _, set := range sets {
 		bad := set.Leans.Unmatched(pool, matcher)

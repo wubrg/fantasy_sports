@@ -92,6 +92,15 @@ func (s *server) handleLean(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("no player named %q on the board", body.Player), http.StatusBadRequest)
 		return
 	}
+	// Store the read under the board's spelling, not the caller's. Validation
+	// resolves a name through the matcher, so a spelling it accepts must key
+	// the same way the board's own reads do — otherwise the request succeeds,
+	// the file gains the alternate spelling, and the read reaches nobody.
+	if s.static.matcher != nil {
+		if canonical, ok := s.static.matcher.Canonical(body.Player); ok {
+			body.Player = canonical
+		}
+	}
 
 	lean := draft.Lean(body.Lean)
 	switch lean {
@@ -213,7 +222,7 @@ func (s *server) reloadLeans() error {
 	names := append([]string(nil), s.static.leanSets...)
 	s.mu.Unlock()
 
-	leans, sets, err := loadLeanSets(s.configDir, names)
+	_, sets, err := loadLeanSets(s.configDir, names)
 	if err != nil {
 		return err
 	}
@@ -222,7 +231,7 @@ func (s *server) reloadLeans() error {
 	defer s.mu.Unlock()
 	// Matched to the pool the same way startup matched it, or a read
 	// spelled reasonably would survive a restart but not a reload.
-	s.static.leans = leans.Match(s.static.matcher)
+	s.static.leans = matchAndMerge(sets, s.static.matcher)
 	s.static.leanSets = setNames(sets)
 	s.static.minePath = writableSetPath(s.configDir, sets)
 	s.static.refreshLeanWarnings()

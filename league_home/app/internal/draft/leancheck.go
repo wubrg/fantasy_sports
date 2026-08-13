@@ -119,18 +119,36 @@ func (m *PoolMatcher) Canonical(name string) (string, bool) {
 // Match rewrites lean keys to the pool's spelling, so a read spelled a
 // reasonable way still reaches the board. Reads that resolve to nothing are
 // left exactly as they are, for the unmatched report to explain.
+//
+// Call this on each set *before* merging them, never on the merged result.
+// Matching collapses two spellings of one player onto one key, and only the
+// merge knows which set outranks which; run afterwards it would be picking
+// between them itself, with nothing to pick on.
+//
+// Within a single set a collision means the file names one player twice
+// under two spellings. The read that sorts first wins, so a given file
+// always produces the same board rather than a different one per restart.
 func (l Leans) Match(m *PoolMatcher) Leans {
 	if m == nil {
 		return l
 	}
+	keys := make([]string, 0, len(l))
+	for key := range l {
+		keys = append(keys, key)
+	}
+	// Go randomises map iteration, so an unsorted pass would resolve a
+	// collision differently between runs of the same file.
+	sort.Strings(keys)
+
 	out := make(Leans, len(l))
-	for key, pl := range l {
+	for _, key := range keys {
+		pl := l[key]
+		to := key
 		if canonical, ok := m.Canonical(pl.Player); ok {
-			key = normalizeName(canonical)
+			to = normalizeName(canonical)
 		}
-		// An earlier read wins a collision, matching merge precedence.
-		if _, taken := out[key]; !taken {
-			out[key] = pl
+		if _, taken := out[to]; !taken {
+			out[to] = pl
 		}
 	}
 	return out

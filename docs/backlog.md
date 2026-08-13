@@ -61,6 +61,13 @@ that looks applied but is not.
   about lean sets moves during a draft. Loop documented in `cmd/draftroom/README.md`
   ("Editing leans away from the machine").
 
+- **`D2c` — `stripSuffix` over-strips a surname ending in `i`.** **S.**
+  `internal/draft/sources.go:321-331` guards only on length, so `Kyle Monangai II` normalizes to
+  `kylemonangaiii`, matches the `iii` suffix, and strips to `kylemonanga` — a miss rather than a
+  wrong match, and consistent across the report and the board, but it means those players cannot
+  be leaned on by their full name. Same for `Rasheen Ali II`, `Mike Gesicki II`. Predates the
+  lean matcher and affects vendor row resolution equally.
+
 ### Tier 1 — trust the data before doing research on it
 
 - **`D4` — `draftroom sources -unmatched` diagnostic.** **M.** Source rows that fail to resolve

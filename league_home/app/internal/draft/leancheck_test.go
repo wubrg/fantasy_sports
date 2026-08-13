@@ -221,3 +221,25 @@ func TestMatchLeavesUnmatchedReadsAlone(t *testing.T) {
 		t.Errorf("the unmatched read moved or changed: %+v", matched)
 	}
 }
+
+// TestMatchIsDeterministic — matching collapses two spellings onto one key,
+// and Go randomises map iteration. Resolving that collision by iteration
+// order gave a different board on maybe one restart in ten, silently, with
+// the losing read's cap and note going with it.
+func TestMatchIsDeterministic(t *testing.T) {
+	pool := []string{"Kenneth Walker"}
+	build := func() Leans {
+		return Leans{
+			normalizeName("Kenneth Walker"):     {Player: "Kenneth Walker", Lean: LeanMust, Cap: 20, Note: "hard cap"},
+			normalizeName("Kenneth Walker III"): {Player: "Kenneth Walker III", Lean: LeanUp},
+		}
+	}
+	m := NewPoolMatcher(pool, nil)
+	first := build().Match(m)[normalizeName("Kenneth Walker")]
+	for i := 0; i < 300; i++ {
+		got := build().Match(m)[normalizeName("Kenneth Walker")]
+		if got.Lean != first.Lean || got.Cap != first.Cap || got.Note != first.Note {
+			t.Fatalf("run %d disagreed with the first: %+v vs %+v", i, got, first)
+		}
+	}
+}

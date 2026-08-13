@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -659,5 +661,68 @@ func TestReloadRefreshesWhatTheStripSaysAboutLeans(t *testing.T) {
 	}
 	if len(srv.static.leanWarnings) != 0 {
 		t.Errorf("the warning outlived the fix: %v", srv.static.leanWarnings)
+	}
+}
+
+// TestPrecedenceDecidesASpellingCollision — two sets spelling one player
+// differently used to collide after the merge, where nothing knew which set
+// outranked which. Your must-have losing to an analyst's up, on some starts
+// and not others, is the worst shape a bug can take here.
+func TestPrecedenceDecidesASpellingCollision(t *testing.T) {
+	mine := draft.LeanSet{Name: "mine", Leans: draft.Leans{
+		draft.NormalizeName("Jahmyr Gibbs"): {
+			Player: "Jahmyr Gibbs", Lean: draft.LeanMust, Cap: 20, Note: "hard cap", Source: "mine"},
+	}}
+	analyst := draft.LeanSet{Name: "menton", Leans: draft.Leans{
+		draft.NormalizeName("Jahmyr Gibbs Jr."): {
+			Player: "Jahmyr Gibbs Jr.", Lean: draft.LeanDND, Source: "menton"},
+	}}
+	m := draft.NewPoolMatcher([]string{"Jahmyr Gibbs"}, nil)
+
+	for i := 0; i < 200; i++ {
+		got := matchAndMerge([]draft.LeanSet{mine, analyst}, m)[draft.NormalizeName("Jahmyr Gibbs")]
+		if got.Lean != draft.LeanMust || got.Cap != 20 || got.Note != "hard cap" {
+			t.Fatalf("run %d: precedence lost — %+v", i, got)
+		}
+		// And the disagreement has to survive, or the board cannot mark it.
+		if !got.Contested() {
+			t.Fatalf("run %d: the analyst's opposing read vanished: %+v", i, got)
+		}
+	}
+}
+
+// TestLeanEndpointStoresTheBoardsSpelling — validation resolves a name
+// through the matcher, so the read must be keyed the same way. Otherwise the
+// request succeeds, the file gains the alternate spelling, and the read
+// reaches nobody.
+func TestLeanEndpointStoresTheBoardsSpelling(t *testing.T) {
+	cfg := t.TempDir()
+	dir := filepath.Join(cfg, "leans")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "mine.yaml"), []byte("up:\n  - Brock Bowers\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	srv := leanServerAt(t, cfg)
+	srv.static.matcher = draft.NewPoolMatcher(poolNames(srv.static.projections), nil)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/lean",
+		strings.NewReader(`{"player":"Jahmyr Gibbs Jr.","lean":"must"}`))
+	rec := httptest.NewRecorder()
+	srv.handleLean(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d: %s", rec.Code, rec.Body.String())
+	}
+
+	// Accepted, so it has to have landed on the player it resolved to.
+	found := false
+	for _, p := range srv.snapshot().Players {
+		if p.Name == "Jahmyr Gibbs" && p.Lean.Lean == draft.LeanMust {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("the endpoint returned 200 but the read reached no row on the board")
 	}
 }

@@ -186,7 +186,7 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	// so "Kenneth Walker III" — Sleeper's spelling and the natural one to
 	// type — had to be rewritten to reach the board at all.
 	s.matcher = draft.NewPoolMatcher(poolNames(s.projections), aliases)
-	s.leans = s.leans.Match(s.matcher)
+	s.leans = matchAndMerge(sets, s.matcher)
 	s.refreshLeanWarnings()
 
 	// Pinned now that the projection set is complete, and never
