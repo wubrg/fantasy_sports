@@ -94,16 +94,32 @@ that looks applied but is not.
 Realistically two or three of these land before the draft. `D6` and `D9` are the best value
 per day spent; `D11` is the one most likely to miss the date.
 
-- **`D6` — FantasyPros ECR ingest as the base ranking anchor.** Spike **S**, extractor **M**.
-  `OPEN-QUESTIONS.md:16-22` records four of five wanted experts as paywalled or JS-rendered,
-  but that survey predates a closer look at FantasyPros, which may expose per-expert rankings
-  for each. **Timebox a spike to confirm what is actually exportable for free before building
-  anything.** Do not scope the extractor against data nobody has confirmed exists.
+- **`D6` — FantasyPros ECR as the base ranking anchor.** **Spike done 2026-08-12; build blocked
+  on an export.** Findings, checked directly rather than assumed:
+  - Rankings pages are client-side rendered; a plain fetch returns the page shell. Confirms
+    `OPEN-QUESTIONS.md:22`.
+  - `?export=xls` without a session returns HTML, not data. There is no anonymous CSV.
+  - **Per-expert rankings are a paid feature** — the rankings nav reads "Pick Experts — Upgrade".
+    So Kluge, Menton, Zacharison and Barrett individually are not available free. Premium is
+    $6.99–$39.99/mo; MVP is $53.94 per six months.
+  - Consensus ECR export needs a **free** account, so it is a hand export like Ciely and
+    Subvertadown, which is what the ingest policy requires anyway.
 
-- **`D7` — Keeper price export with owner and team names.** **S.** So the league can be told
-  what their keepers cost. Most of this exists — `internal/draft/project.go` `WriteProjection`
-  and `WriteKeeperOptions` already render per-team keeper budgets. This is an output-format
-  ticket, not new logic.
+  **Blocked on**: one exported half-PPR consensus CSV in `raw/fantasypros/<date>/`. The extractor
+  cannot be written against a guessed header without risking rework. Nothing else blocks it.
+
+- **`D6b` — Per-expert rankings need a Premium subscription.** **Blocked on purchase.** The
+  multi-expert ambition in `draftroom_2026.md`, and `R2` (expert-accuracy backtesting) which
+  depends on it, both require paying FantasyPros. Recorded so the decision is yours to take
+  rather than something to rediscover.
+
+- **`D7` — Keeper price export for the league.** ✅ **Done 2026-08-12.** `draftroom keepers`
+  already rendered per-team keeper budgets, but it cannot be sent anywhere: it carries `COST`,
+  `VALUE`, `SAVES` and a `KEEP` recommendation, which is the model. `draftroom keepers -share`
+  prints only what the league is owed and cannot work out itself — each owner's eligible players
+  and what the rules charge, cheapest first — and suppresses the reconciliation and prior-season
+  budget sections too. ~6 kB, self-contained per team so it splits cleanly across chat messages.
+  `internal/draft/project.go` `WriteShareableKeepers`.
 
 - **`D8` — Effective positional scarcity, v1.** **M.** From the notes: taking Gibbs also removes
   Amon-Ra, LaPorta, and Jameson Williams from *your* board, given a no-handcuff and

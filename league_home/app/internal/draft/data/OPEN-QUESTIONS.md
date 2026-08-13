@@ -21,6 +21,15 @@ design takes paid content from your own copy only.
 | **Subvertadown** | Blocked. Tool is free but 100% client-side — no CSV export, no API, no data in the HTML | Run the tool with our settings and copy the table out |
 | **FantasyPros ECR** | Blocked. Half-PPR rankings are JS-rendered | Free account has a CSV export; grab it if you want a consensus anchor |
 
+**FantasyPros re-checked 2026-08-12.** The JS-rendering still holds, and
+`?export=xls` without a session returns the page shell rather than data. Two
+things are now settled that were not before: the consensus CSV export needs
+only a **free** account, and **per-expert rankings are a paid feature** — the
+rankings nav reads "Pick Experts — Upgrade". So Kluge, Menton, Zacharison and
+Barrett cannot be had individually without Premium ($6.99–$39.99/mo, MVP
+$53.94 per six months). The consensus anchor is free and hand-exported; the
+multi-expert ambition has a price on it. See `docs/backlog.md` `D6`/`D6b`.
+
 **Question:** which of these are worth buying/exporting, and which do we
 drop? My honest read: Ciely alone may be enough. He already matches our
 league's exact settings, and a second source mainly helps as a sanity
@@ -115,10 +124,16 @@ market-adjusted value, or both side by side? I'd default to both — the gap
 `aliases.csv` (Kenneth→Kenny Gainwell, Mitch/Mitchell Tinsley, the
 "Dermarcus"→Demarcus Robinson typo in his sheet).
 
-**Unresolved: "Hollywood Brown" (WR, PHI).** No Marquise Brown in Sleeper's
-dictionary under either name. His Ciely value is **$0.00**, so this changes
-nothing on the board — flagging only so it's a decision and not an
-oversight.
+**Unresolved: "Hollywood Brown" (WR, PHI).** ~~No Marquise Brown in Sleeper's
+dictionary under either name.~~
+
+**Corrected 2026-08-12:** he *is* in Sleeper — **Marquise Brown, id 5848, WR
+PHI**, matching the source row's position and team exactly. `draftroom
+sources -unmatched` finds him and prints the alias line. Adding
+`Hollywood Brown,5848,ciely name for Marquise Brown` (and the subvertadown
+equivalent) resolves the only unmatched row in either source. His Ciely
+value is still $0.00, so it changes nothing on the board — but the reason
+recorded here was wrong, not just stale.
 
 ---
 

@@ -206,3 +206,81 @@ func TestWriteKeeperOptionsShowsTheDecision(t *testing.T) {
 		t.Errorf("expected an explicit no-keeper line:\n%s", out)
 	}
 }
+
+// shareEntries is one league's worth of keeper candidates across two teams.
+func shareEntries() []Entry {
+	return []Entry{
+		{OwnerID: "a", Name: "Chris Olave", Position: "WR", LeaguePrice: 16},
+		{OwnerID: "a", Name: "Kenneth Walker", Position: "RB", LeaguePrice: 46},
+		{OwnerID: "a", Name: "Bench Guy", Position: "TE", LeaguePrice: 10,
+			Flags: []string{FlagDidNotPlay}},
+		{OwnerID: "b", Name: "George Pickens", Position: "WR", LeaguePrice: 19},
+	}
+}
+
+// TestShareableKeepersLeaksNoAnalysis is the whole reason this is a separate
+// renderer.
+//
+// The keeper report carries what a keeper would cost to win back, what he is
+// worth on median projections, and which one to keep. Sending that to the
+// league hands eleven opponents the model. What they need is the half that
+// is theirs anyway: their players and what the rules charge.
+func TestShareableKeepersLeaksNoAnalysis(t *testing.T) {
+	var b strings.Builder
+	names := Names{"a": "Aaron Jones Schadenfreude", "b": "Bishop Sycamore"}
+	if err := WriteShareableKeepers(&b, shareEntries(), names, "2026", 2, 200); err != nil {
+		t.Fatal(err)
+	}
+	got := b.String()
+	for _, leak := range []string{"COST", "VALUE", "SAVES", "KEEP ", "recommend"} {
+		if strings.Contains(got, leak) {
+			t.Errorf("shareable output contains %q, which is your analysis:\n%s", leak, got)
+		}
+	}
+}
+
+// TestShareableKeepersCoversEveryTeam — it is sent to the league, so an
+// owner missing from it is an owner who cannot check his own prices.
+func TestShareableKeepersCoversEveryTeam(t *testing.T) {
+	var b strings.Builder
+	names := Names{"a": "Aaron Jones Schadenfreude", "b": "Bishop Sycamore"}
+	if err := WriteShareableKeepers(&b, shareEntries(), names, "2026", 2, 200); err != nil {
+		t.Fatal(err)
+	}
+	got := b.String()
+	for _, want := range []string{
+		"Aaron Jones Schadenfreude", "Bishop Sycamore",
+		"Chris Olave", "Kenneth Walker", "George Pickens",
+		"$16", "$46", "$19", "2026",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q from:\n%s", want, got)
+		}
+	}
+	// An ineligible player must not appear with a price, which would be a
+	// price nobody can actually pay.
+	if strings.Contains(got, "Bench Guy") {
+		t.Errorf("an ineligible player was published:\n%s", got)
+	}
+}
+
+// TestShareableKeepersOrdersByPrice — an owner reads his own block looking
+// for the cheap ones, so cheapest first is the order that answers the
+// question being asked.
+func TestShareableKeepersOrdersByPrice(t *testing.T) {
+	var b strings.Builder
+	names := Names{"a": "Team A"}
+	entries := []Entry{
+		{OwnerID: "a", Name: "Dear", Position: "RB", LeaguePrice: 46},
+		{OwnerID: "a", Name: "Cheap", Position: "WR", LeaguePrice: 10},
+		{OwnerID: "a", Name: "Middle", Position: "TE", LeaguePrice: 20},
+	}
+	if err := WriteShareableKeepers(&b, entries, names, "2026", 2, 200); err != nil {
+		t.Fatal(err)
+	}
+	got := b.String()
+	if strings.Index(got, "Cheap") > strings.Index(got, "Middle") ||
+		strings.Index(got, "Middle") > strings.Index(got, "Dear") {
+		t.Errorf("expected cheapest first:\n%s", got)
+	}
+}
