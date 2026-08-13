@@ -199,6 +199,16 @@ tr.unaffordable td { opacity: 0.38; }
 .flag.dnd { background: #3b1414; color: var(--bad); }
 .flag.hurt { background: #3b1414; color: #fca5a5; }
 .flag.split { background: #2a2440; color: #c4b5fd; }
+.flag.blocked { background: #2a2333; color: #c4b5fd; }
+
+/* A blocked row is off *your* board — your one-per-offense / no-handcuff
+   preferences already spent that offense. Dimmed by colour rather than
+   hidden or opacity-faded, so its blocked flag stays legible and you can
+   still nominate him to make someone else pay. The left accent marks the
+   personal filter, the same purple as the "yours" scarcity count. */
+tr.blocked td { color: var(--dim); }
+tr.blocked td:first-child { border-left: 2px solid #7c6ba8; }
+.yours { color: #c4b5fd; }
 
 /* ---- sale buttons ---- */
 
