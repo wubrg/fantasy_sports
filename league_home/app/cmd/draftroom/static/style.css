@@ -373,6 +373,13 @@ tr.in-scratch { background: #16233a; }
 /* What kind of player he is. Quieter than the lean and injury flags — a
    trait is context you glance at, not a decision you act on. */
 .flag.trait { border-color: #3a4557; color: var(--dim); }
+
+/* Trait quick-ref: the pill exactly as a row shows it, with what it means
+   beside it. Meaning column reads as muted body text; the pill column stays
+   on one line and top-aligns so a two-line meaning does not drag it down. */
+.legend td { vertical-align: top; padding: 0.25rem 0; }
+.legend td:first-child { white-space: nowrap; padding-right: 0.6rem; }
+.legend td:last-child { color: var(--dim); font-size: 0.8rem; line-height: 1.35; }
 .mix { margin: 0.4rem 0 0.2rem; line-height: 1.9; }
 
 /* A control with nothing to do says so rather than swallowing the click. */
