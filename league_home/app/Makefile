@@ -104,6 +104,10 @@ refresh: ## Re-extract every source from the private data repo and rebuild gener
 	@python3 $(TOOLS)/extract_fantasypoints.py \
 		"$$(ls $(DATA)/raw/fantasypoints/*.html | tail -1)" \
 		$(DATA)/normalized/fantasypoints-big3-2026.csv
+	@echo "==> FantasyPros ECR"
+	@python3 $(TOOLS)/extract_fantasypros.py \
+		$$(ls -d $(DATA)/raw/fantasypros/*/ | tail -1) \
+		$(DATA)/normalized/fantasypros-2026.csv
 	@echo "==> generated lean sets"
 	@$(MAKE) --no-print-directory leans-generate
 
