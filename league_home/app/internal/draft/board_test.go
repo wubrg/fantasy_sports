@@ -105,6 +105,29 @@ func TestFlagsForOnlyShowsWhatMatters(t *testing.T) {
 	}
 }
 
+func TestFlagsForSharpDivergence(t *testing.T) {
+	has := func(p PlayerSignals, flag string) bool {
+		for _, f := range flagsFor(p) {
+			if f == flag {
+				return true
+			}
+		}
+		return false
+	}
+	if !has(PlayerSignals{SharpRankDelta: -6}, "sharp+") {
+		t.Errorf("sharps ranking him better should flag sharp+, got %v", flagsFor(PlayerSignals{SharpRankDelta: -6}))
+	}
+	if !has(PlayerSignals{SharpRankDelta: 7}, "sharp-") {
+		t.Errorf("sharps ranking him worse should flag sharp-, got %v", flagsFor(PlayerSignals{SharpRankDelta: 7}))
+	}
+	// A move under the threshold is noise and must stay off the board.
+	for _, f := range flagsFor(PlayerSignals{SharpRankDelta: -3}) {
+		if strings.HasPrefix(f, "sharp") {
+			t.Errorf("a 3-rank move should not flag: %v", f)
+		}
+	}
+}
+
 func TestWriteBoardLimit(t *testing.T) {
 	var sb strings.Builder
 	me := MyState{Budget: 120, OpenSlots: 8}

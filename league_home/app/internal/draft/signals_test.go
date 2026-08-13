@@ -1,9 +1,27 @@
 package draft
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 )
+
+// TestPlayerSignalsJSONKeys guards the contract with the web board: app.js
+// reads these fields by their Go name, since PlayerSignals carries no json
+// tags. Renaming a field without updating app.js would silently blank a
+// column, so pin the keys the page depends on here.
+func TestPlayerSignalsJSONKeys(t *testing.T) {
+	b, err := json.Marshal(PlayerSignals{FPValue: 64, ECRRank: 1, SharpRankDelta: -6})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{`"FPValue"`, `"ECRRank"`, `"SharpRankDelta"`} {
+		if !strings.Contains(string(b), key) {
+			t.Errorf("PlayerSignals JSON is missing %s that app.js reads: %s", key, b)
+		}
+	}
+}
 
 func svRow(id, name, pos, baseline string, value, aav, ps float64, up, down bool) SourceRow {
 	return SourceRow{
@@ -67,6 +85,58 @@ func TestBuildSignalsFoldsBaselinesIntoOneRow(t *testing.T) {
 	// AAV and PS% are per player, not per baseline.
 	if gibbs.AAV != 68 || gibbs.ScarcityPct != 93 {
 		t.Errorf("aav=%v ps=%v, want 68/93", gibbs.AAV, gibbs.ScarcityPct)
+	}
+}
+
+// TestBuildSignalsJoinsFantasyPros — the second projection's value, rank, and
+// sharp move ride onto each player, and a player FantasyPros is silent on
+// keeps the zero read rather than a fabricated one.
+func TestBuildSignalsJoinsFantasyPros(t *testing.T) {
+	in := SignalInputs{
+		Values: []PlayerValue{
+			{PlayerID: "1", Name: "Bijan Robinson", Position: "RB", Price: 60},
+			{PlayerID: "2", Name: "Jahmyr Gibbs", Position: "RB", Price: 66},
+			{PlayerID: "3", Name: "Nobody Known", Position: "WR", Price: 3},
+		},
+		Costs: map[string]int{"1": 58, "2": 68, "3": 2},
+		FantasyPros: map[string]FPRead{
+			"1": {Value: 64, Rank: 1, SharpDelta: -6},
+			"2": {Value: 61, Rank: 2, SharpDelta: 7},
+		},
+	}
+	ps := BuildSignals(in)
+
+	bijan := find(t, ps, "Bijan Robinson")
+	if bijan.FPValue != 64 || bijan.ECRRank != 1 || bijan.SharpRankDelta != -6 {
+		t.Errorf("Bijan FP join = $%d rank %d delta %d, want 64/1/-6",
+			bijan.FPValue, bijan.ECRRank, bijan.SharpRankDelta)
+	}
+	if bijan.Sharp() != SharpUp {
+		t.Errorf("Bijan Sharp() = %v, want SharpUp (sharps rank him better)", bijan.Sharp())
+	}
+	if gibbs := find(t, ps, "Jahmyr Gibbs"); gibbs.Sharp() != SharpDown {
+		t.Errorf("Gibbs Sharp() = %v, want SharpDown", gibbs.Sharp())
+	}
+	nobody := find(t, ps, "Nobody Known")
+	if nobody.FPValue != 0 || nobody.ECRRank != 0 || nobody.Sharp() != SharpNone {
+		t.Errorf("uncovered player should carry no FP read, got $%d rank %d %v",
+			nobody.FPValue, nobody.ECRRank, nobody.Sharp())
+	}
+}
+
+// TestSharpRespectsThreshold — a move smaller than the threshold is noise and
+// must not flag, in either direction.
+func TestSharpRespectsThreshold(t *testing.T) {
+	for _, tc := range []struct {
+		delta int
+		want  SharpState
+	}{
+		{-6, SharpUp}, {-5, SharpUp}, {-4, SharpNone},
+		{0, SharpNone}, {4, SharpNone}, {5, SharpDown}, {7, SharpDown},
+	} {
+		if got := (PlayerSignals{SharpRankDelta: tc.delta}).Sharp(); got != tc.want {
+			t.Errorf("Sharp(delta=%d) = %v, want %v", tc.delta, got, tc.want)
+		}
 	}
 }
 

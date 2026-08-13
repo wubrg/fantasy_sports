@@ -279,8 +279,14 @@ means three or four teams are going to start a quarterback nobody wanted.
 
 Flags: `MUST` `+` `-` `DND` (your leans) · `vs <set>` (another lean set
 reads him the opposite way) · `ecr+` `ecr-` `split` (industry deviation;
-`split` means contested in both directions) · `swing$N` (value moves $N
-across baselines — a fragile buy) · injury designation.
+`split` means contested in both directions) · `sharp+` `sharp-` (the
+most-accurate experts — FantasyPros' top-10/20 subset — rank him higher /
+lower than the full consensus) · `swing$N` (value moves $N across baselines —
+a fragile buy) · injury designation.
+
+`sharp±` and `ecr±` are different sources and never share a code path: `ecr±`
+is Subvertadown's industry-vs-market deviation, `sharp±` is FantasyPros'
+accurate-expert subset against its own consensus.
 
 **Baselines are a live strategy switch, not config.** VOLS values against
 the last starter and concentrates hardest on the top; BEER+ balances
@@ -825,9 +831,20 @@ where Sleeper says "Kenny Gainwell".
 
 ## What the numbers are and are not
 
-Three sources measure genuinely different things, and the board keeps them
+Four sources measure genuinely different things, and the board keeps them
 apart rather than blending them:
 
+- **FantasyPros ECR** is a second projection and an expert-consensus ranking.
+  Its `league_points` are recomputed under this league's scoring like Ciely's,
+  then re-solved into dollars as the **FP** column on the web board — a
+  like-for-like second opinion beside **Value**, so where the two projection
+  sources diverge is visible rather than blended away. The **ECR** column is
+  its positional consensus rank. Because its top-10/20 most-accurate-expert
+  subsets ship alongside consensus, a `sharp±` flag marks where the sharps and
+  the full field disagree. One caveat: FantasyPros projects no interceptions,
+  so QB picks are **estimated** from projected pass volume (recorded as
+  `est_interceptions`); QB FP dollars are therefore modelled on that estimate,
+  not published.
 - **Ciely** produces *median* projections, which explicitly removes the
   range of outcomes. His dollars are a linear map of those medians
   (r = 1.000), so they cannot see keeper inflation and they systematically

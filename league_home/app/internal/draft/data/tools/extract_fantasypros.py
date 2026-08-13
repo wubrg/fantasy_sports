@@ -30,14 +30,17 @@ quantities are written and the delta between them kept auditable:
 
   fantasypros_points  their published total
   league_points       recomputed from the stat components under our scoring
+  est_interceptions   interceptions estimated from projected pass volume
   points_delta        league_points - fantasypros_points
 
-CAVEAT, deliberate: the stats export carries no interception or fumble
-column, so league_points omits the league's negative-play penalty. The delta
-is therefore that penalty — small for skill players (0-2 pts) but large for
-passers (Allen +14, Lamar +11, Purdy +12), where league_points reads high.
-Ciely's INT-aware projection stays the QB source of record; FantasyPros'
-value for QBs is the ranking, not the recomputed total.
+INTERCEPTIONS: the stats export carries no interception column, and at -1 each
+they move a passer's season by ~11-14 points — enough to distort his value if
+dropped. They are estimated (see estimate_interceptions) from projected pass
+yards at a league yards-per-attempt and interception rate, recorded in
+est_interceptions so the assumption is auditable, and applied to league_points.
+This is a league-average estimate, not a player projection, since FantasyPros
+projected no interceptions; skill players are untouched (zero pass yards).
+Fumbles remain absent and unmodelled — they are small and roughly position-flat.
 
 Kickers are dropped: the league has no kicker slot, matching the QB/RB/WR/TE/
 DST coverage of the other extractors. Team defenses are kept — they resolve
@@ -54,9 +57,11 @@ import os
 import re
 import sys
 
-# Hit or Miss scoring, matching extract_ciely.py. Interceptions and fumbles
-# are absent from the export, so they cannot be applied here — see the module
-# docstring's caveat.
+# Hit or Miss scoring, matching extract_ciely.py. Fumbles are absent from the
+# export and cannot be applied. Interceptions are absent too, but at -1 each
+# they move a QB's season by ~11-14 points, enough to distort his value — so
+# they are estimated from projected pass volume rather than dropped. See
+# estimate_interceptions and the module docstring.
 SCORING = {
     "pass_yards": 0.04,
     "pass_td": 4.0,
@@ -66,6 +71,25 @@ SCORING = {
     "recv_yards": 0.1,
     "recv_td": 6.0,
 }
+
+# Interception estimate. The stats export gives passing yards and TDs but no
+# attempts or interceptions, so attempts are backed out of projected yards at
+# a league yards-per-attempt, then multiplied by a league interception rate.
+# A league-average estimate, not a player projection — appropriate because
+# FantasyPros projected no interceptions at all. INTERCEPTION_POINTS is the
+# league's -1 per pick (see draft.HitOrMiss).
+PASS_YARDS_PER_ATTEMPT = 7.0
+INTERCEPTION_RATE = 0.022
+INTERCEPTION_POINTS = -1.0
+
+
+def estimate_interceptions(pass_yards):
+    """Estimated interceptions for a passer's projected yardage. Zero for a
+    non-passer, so it never touches a skill player's total."""
+    if not pass_yards or pass_yards <= 0:
+        return 0.0
+    attempts = pass_yards / PASS_YARDS_PER_ATTEMPT
+    return attempts * INTERCEPTION_RATE
 
 # Variant label -> the filename prefix its four views share.
 VARIANTS = {
@@ -215,6 +239,10 @@ def parse_variant(raw_dir, prefix):
             comp["rush_td"] = as_float(cell(s, s_rush_td)) or 0.0
 
         league_points = sum(SCORING[k] * comp[k] for k in SCORING)
+        # Interceptions are not in the export; estimate them from pass volume
+        # so a QB's total is not ~11-14 points high. Only passers are touched.
+        est_int = estimate_interceptions(comp["pass_yards"])
+        league_points += INTERCEPTION_POINTS * est_int
         # DST rows carry no stat components to recompute from, so the
         # published number stands and the delta is zero — as in extract_ciely.
         if position == "DST" and fantasypros_points is not None:
@@ -242,6 +270,7 @@ def parse_variant(raw_dir, prefix):
             "sos": lead_int(cell(row, c_sos)),
             "fantasypros_points": round(fantasypros_points, 2) if fantasypros_points is not None else None,
             "league_points": round(league_points, 2),
+            "est_interceptions": round(est_int, 2),
             "points_delta": round(league_points - fantasypros_points, 2) if fantasypros_points is not None else None,
             "pass_yards": round(comp["pass_yards"], 1),
             "pass_td": round(comp["pass_td"], 2),
@@ -257,7 +286,8 @@ def parse_variant(raw_dir, prefix):
 FIELDS = [
     "source", "baseline", "position", "pos_rank", "player", "team", "bye",
     "overall_rank", "tier", "best", "worst", "avg_rank", "stddev", "ecr_vs_adp",
-    "upside", "bust", "sos", "fantasypros_points", "league_points", "points_delta",
+    "upside", "bust", "sos", "fantasypros_points", "league_points",
+    "est_interceptions", "points_delta",
     "pass_yards", "pass_td", "rush_yards", "rush_td", "receptions", "recv_yards",
     "recv_td", "rank_vs_top10", "rank_vs_top20", "notes",
 ]
@@ -320,7 +350,8 @@ def main():
         qb_gap = sum(p["points_delta"] for p in qbs) / len(qbs) if qbs else 0.0
         sk_gap = sum(p["points_delta"] for p in skill) / len(skill) if skill else 0.0
         print(f"  {label:9} {n:3} players  "
-              f"(recompute delta: QB {qb_gap:+.1f}, skill {sk_gap:+.1f} — the missing INT/fumble penalty)")
+              f"(recompute delta: QB {qb_gap:+.1f}, skill {sk_gap:+.1f} — "
+              f"INTs estimated, residual is fumbles + estimate error)")
 
     # Divergence summary from the consensus rows.
     moved = [(name, r["rank_vs_top10"]) for _, name, r in out_rows

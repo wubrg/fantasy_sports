@@ -41,8 +41,8 @@ if (!location.pathname.endsWith("/")) {
     <table id="board">
       <thead>
         <tr>
-          <th>Player</th><th>Pos</th>
-          <th class="num">Cost</th><th class="num">Value</th>
+          <th>Player</th><th>Pos</th><th class="num">ECR</th>
+          <th class="num">Cost</th><th class="num">Value</th><th class="num">FP</th>
           <th class="num">Edge</th><th class="num">vs Pos</th>
           <th class="num">My Max</th><th class="num">PS%</th>
           <th>Flags</th><th class="sold-col"></th><th class="try-col"></th>
@@ -72,6 +72,15 @@ if (!location.pathname.endsWith("/")) {
       <table class="mini" id="bias"></table>
       <p class="note">How much of every edge is about the position, not the
       player. Subtracted in the <strong>vs Pos</strong> column.</p>
+    </section>
+    <section>
+      <h2>Second projection</h2>
+      <p class="note"><strong>ECR</strong> is FantasyPros' expert-consensus
+      positional rank. <strong>FP</strong> is their projection re-solved into
+      dollars against the same pool as <strong>Value</strong>, so the two are a
+      like-for-like second opinion &mdash; where they diverge is what a single
+      number would hide. QB interceptions are estimated (FantasyPros omits
+      them), so QB FP is modelled, not published.</p>
     </section>
     <section>
       <h2>Price lines</h2>
@@ -116,6 +125,10 @@ if (!location.pathname.endsWith("/")) {
           below consensus.</td></tr>
         <tr><td><span class="flag">ecr+</span>&nbsp;<span class="flag">ecr-</span></td>
           <td>Industry consensus sits above / below the market price.</td></tr>
+        <tr><td><span class="flag sharp-up">sharp+</span>&nbsp;<span class="flag sharp-down">sharp-</span></td>
+          <td>The most-accurate experts (FantasyPros' top-10/20 subset) rank him
+          higher / lower than the full consensus &mdash; a read the sharps and
+          the field disagree on.</td></tr>
         <tr><td><span class="flag">swing&nbsp;$12</span></td>
           <td>His model value swings this much across the valuation curves; the
           bigger it is, the more his price depends on where replacement is

@@ -262,11 +262,19 @@ class ExtractFantasyProsTest(unittest.TestCase):
         self.assertAlmostEqual(p['league_points'], 330.4, places=1)
         self.assertAlmostEqual(p['points_delta'], 2.0, places=1)
 
-    def test_recompute_runs_high_for_qbs_missing_the_int_penalty(self):
+    def test_qb_interceptions_are_estimated(self):
         p = self.consensus()['Josh Allen']
-        # 3668*.04 + 25*4 + 579*.1 + 14*6 = 388.62, vs their INT-aware 374.6
-        self.assertAlmostEqual(p['league_points'], 388.62, places=2)
-        self.assertGreater(p['points_delta'], 10)
+        # Pre-INT: 3668*.04 + 25*4 + 579*.1 + 14*6 = 388.62. Estimated picks:
+        # (3668 / 7.0) * 0.022 = 11.53 at -1 each, so 388.62 - 11.53 = 377.09.
+        self.assertAlmostEqual(p['est_interceptions'], 11.53, places=2)
+        self.assertAlmostEqual(p['league_points'], 377.09, places=2)
+        # With the penalty applied the delta collapses to skill-player size,
+        # which is the whole point — the QB total is no longer inflated.
+        self.assertLess(abs(p['points_delta']), 5)
+
+    def test_skill_players_get_no_interception_penalty(self):
+        p = self.consensus()['Jahmyr Gibbs']
+        self.assertEqual(p['est_interceptions'], 0.0)
 
     def test_kicker_is_dropped(self):
         self.assertNotIn('Cameron Dicker', self.consensus())

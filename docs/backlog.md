@@ -103,8 +103,13 @@ per day spent; `D11` is the one most likely to miss the date.
   record). Validated by `draftroom sources`: **1531 of 1535 rows resolve**, the four misses being
   two genuinely-absent deep free agents (Tommy Myers, Sederrick Cunningham). Three nickname/suffix
   aliases added (`David Sills V`, `Bam Knight`, `Chip Trayanum`) and `JAC`→`JAX` fixed in the
-  extractor. **Deferred**: surfacing the ECR rank, divergence, and second projection on the board
-  (`static.go`/`board.go`) — the data is ingested and trusted first, per the Tier 1 discipline.
+  extractor. **Board surfacing done 2026-08-13** (the deferred half): the web board carries an
+  **ECR** positional-rank column, an **FP** second-projection dollar column (re-solved against
+  the same pool as `VALUE` via a second `Solve`), and a `sharp±` flag where the top-10/20 sharps
+  diverge from consensus; the narrow CLI table gains only the `sharp±` flag. The QB interception
+  caveat is retired — picks are now **estimated** from projected pass volume (`est_interceptions`),
+  so QB `FP` dollars are comparable rather than ~11–14 high. `signals.go`, `sources.go`,
+  `board.go`, `static.go`, `static/{index.html,app.js,style.css}`, `extract_fantasypros.py`.
 
 - **`D6b` — Per-expert rankings need a Premium subscription.** **Partly overtaken by `D6`.** True
   per-expert rankings (Kluge, Menton individually) still need Premium. But the `D6` export
@@ -121,11 +126,12 @@ per day spent; `D11` is the one most likely to miss the date.
   budget sections too. ~6 kB, self-contained per team so it splits cleanly across chat messages.
   `internal/draft/project.go` `WriteShareableKeepers`.
 
-- **`D8` — Effective positional scarcity, v1.** **M.** From the notes: taking Gibbs also removes
-  Amon-Ra, LaPorta, and Jameson Williams from *your* board, given a no-handcuff and
-  one-per-offense preference — so your effective scarcity differs from the league's. Scarcity
-  today is league-wide only (`internal/draft/pivots.go`, `tiers.go`). The narrow version is a
-  declared preference file plus a board annotation — a filter, not a solver.
+- **`D8` — Effective positional scarcity, v1.** ✅ **Done 2026-08-13.** From the notes: taking
+  Gibbs also removes Amon-Ra, LaPorta, and Jameson Williams from *your* board, given a
+  no-handcuff and one-per-offense preference — so your effective scarcity differs from the
+  league's. Shipped as a declared preference file plus a board annotation — a filter, not a
+  solver — on both the CLI and the web board (`internal/draft/effscarcity.go`, `preferences.go`,
+  `overrides.go`; PRs #24 and #25).
 
 - **`D9` — Decide what a lean means: "I like him" or "I like him at this price".** Decision
   **S**, implementation **M**. Raised in the user's own notes, and it changes the meaning of

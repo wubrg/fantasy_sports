@@ -90,6 +90,17 @@ type SourceRow struct {
 	// beat consensus and others think will miss it carries both, which
 	// marks him contested rather than cancelling out.
 	ECRUp, ECRDown bool
+	// RankVsTop10 and RankVsTop20 are how far the most-accurate-expert
+	// subsets move a player against the full consensus: consensus rank minus
+	// the sharp rank, so a negative value means the sharps rank him better
+	// (a lower number) than the field does. Present only on FantasyPros
+	// consensus rows, and only for players the subset also ranked; zero on
+	// every other source, which reads as "no sharp signal".
+	//
+	// Distinct from ECRUp/ECRDown on purpose: those are Subvertadown's
+	// industry-deviation flags, this is the FantasyPros sharp-expert
+	// divergence. Never conflate the two.
+	RankVsTop10, RankVsTop20 int
 	// PlayerID is the resolved Sleeper ID, empty until Resolve runs.
 	PlayerID string
 	// Components is the projection broken into the pieces it was built
@@ -156,6 +167,18 @@ const (
 	// different midpoint.
 	ECRContested ECRState = "contested"
 )
+
+// SharpDelta is the sharp-expert divergence to act on: the larger-magnitude
+// of the top-10 and top-20 moves, keeping its sign. Top-10 and top-20 usually
+// agree in direction, so the larger move is the stronger reading; when only
+// one subset ranked the player the other is zero and does not win. Negative
+// means the sharps rank him better than the full field.
+func (r SourceRow) SharpDelta() int {
+	if abs(r.RankVsTop10) >= abs(r.RankVsTop20) {
+		return r.RankVsTop10
+	}
+	return r.RankVsTop20
+}
 
 // ECR reports which of the four deviation states the row is in.
 func (r SourceRow) ECR() ECRState {
@@ -373,6 +396,8 @@ func ParseSourceCSVAs(r io.Reader, schema SourceSchema) ([]SourceRow, error) {
 			ScarcityPct:  num(pick(rec, "ps_pct", "ps")),
 			ECRUp:        truthy(pick(rec, "ecr_up")),
 			ECRDown:      truthy(pick(rec, "ecr_down")),
+			RankVsTop10:  signedInt(pick(rec, "rank_vs_top10")),
+			RankVsTop20:  signedInt(pick(rec, "rank_vs_top20")),
 		})
 	}
 	return out, nil
@@ -390,6 +415,17 @@ func Rescale(rows []SourceRow, from, to Basis) float64 {
 		rows[i].AuctionValue *= factor
 	}
 	return factor
+}
+
+// signedInt parses an optionally-signed integer, returning 0 for an empty or
+// unparseable field. Used for the sharp-divergence columns, which are blank
+// on rows the subset did not rank and can carry a negative move.
+func signedInt(s string) int {
+	n, err := strconv.Atoi(strings.TrimSpace(s))
+	if err != nil {
+		return 0
+	}
+	return n
 }
 
 // NormalizeName is the exported form of normalizeName, for callers that

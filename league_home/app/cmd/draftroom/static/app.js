@@ -98,6 +98,13 @@ function flagHTML(p) {
   else if (p.ECR === "upside") out.push(`<span class="flag">ecr+</span>`);
   else if (p.ECR === "downside") out.push(`<span class="flag">ecr-</span>`);
 
+  // Sharp-expert divergence: the most-accurate-expert subset against the full
+  // field. Distinct from ecr± above, which is the wider industry. Threshold
+  // mirrors sharpRankThreshold in signals.go.
+  const sharp = p.SharpRankDelta || 0;
+  if (sharp <= -5) out.push(`<span class="flag sharp-up" title="the most-accurate experts rank him ${-sharp} spots higher than consensus">sharp+</span>`);
+  else if (sharp >= 5) out.push(`<span class="flag sharp-down" title="the most-accurate experts rank him ${sharp} spots lower than consensus">sharp-</span>`);
+
   if (p.Availability) {
     out.push(`<span class="flag hurt">${esc(p.Availability.toLowerCase())}</span>`);
   }
@@ -236,8 +243,10 @@ function drawRows() {
     return `<tr class="${tooRich ? "unaffordable" : ""} ${trying ? "in-scratch" : ""} ${p.BlockedReason ? "blocked" : ""}">
       <td>${esc(p.Name)}</td>
       <td class="pos pos-${esc(p.Position)}">${esc(p.Position)}</td>
+      <td class="num ecr" title="FantasyPros expert-consensus positional rank">${p.ECRRank ? esc(p.Position) + p.ECRRank : "—"}</td>
       <td class="num">${p.Cost ? money(p.Cost) : "—"}</td>
       <td class="num">${money(p.Value)}</td>
+      <td class="num fp" title="FantasyPros second projection, re-solved into dollars against the same pool">${p.FPValue ? money(p.FPValue) : "—"}</td>
       <td class="num">${p.Cost ? signed(p.Value - p.Cost) : "—"}</td>
       <td class="num">${p.Cost ? signed(Math.round(adjustedEdge(p))) : "—"}</td>
       <td class="num">${myMax}</td>

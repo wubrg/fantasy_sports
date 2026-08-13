@@ -200,6 +200,14 @@ tr.unaffordable td { opacity: 0.38; }
 .flag.hurt { background: #3b1414; color: #fca5a5; }
 .flag.split { background: #2a2440; color: #c4b5fd; }
 .flag.blocked { background: #2a2333; color: #c4b5fd; }
+/* Sharp-expert divergence — the accurate subset likes (up) or fades (down)
+   him against consensus. Coloured because it is a stronger read than ecr±. */
+.flag.sharp-up { background: #0f2e1c; color: var(--good); }
+.flag.sharp-down { background: #33210a; color: var(--warn); }
+
+/* The FantasyPros columns are a second opinion, not the primary board, so
+   they sit a shade quieter than Cost/Value. */
+td.ecr, td.fp { color: var(--dim); }
 
 /* A blocked row is off *your* board — your one-per-offense / no-handcuff
    preferences already spent that offense. Dimmed by colour rather than
