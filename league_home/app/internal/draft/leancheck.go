@@ -1,6 +1,9 @@
 package draft
 
-import "sort"
+import (
+	"sort"
+	"strings"
+)
 
 // UnmatchedLean is a read naming a player the pool does not contain, which
 // means it can never reach the board.
@@ -254,4 +257,74 @@ func editDistance(a, b string, cutoff int) int {
 		prev, curr = curr, prev
 	}
 	return prev[len(br)]
+}
+
+// ClosestPlayer names the player nearest to a written name, when one is
+// near enough to be worth naming.
+//
+// Used to turn an unresolved source row into a fix you can paste rather
+// than a name you have to go and look up. The threshold is the same one
+// Unmatched suggests within, because a suggestion confident enough to print
+// beside a read is confident enough to print beside a row — and one that is
+// not is worse than none. A wrong alias binds every read on that player to
+// somebody else, silently, which is the failure this whole area exists to
+// stop.
+func ClosestPlayer(want, position, team string, players map[string]PlayerInfo) (id string, info PlayerInfo, ok bool) {
+	key := normalizeName(want)
+	if key == "" || len(players) == 0 {
+		return "", PlayerInfo{}, false
+	}
+	// nearest works on normalized name -> a label; carry the id as the
+	// label so the winner can be looked back up.
+	byName := make(map[string]string, len(players))
+	for pid, p := range players {
+		if n := normalizeName(p.Name); n != "" {
+			byName[n] = pid
+		}
+	}
+	if pid := nearest(key, byName); pid != "" {
+		return pid, players[pid], true
+	}
+
+	// Edit distance cannot reach a nickname: "Hollywood Brown" is nowhere
+	// near "Marquise Brown" as a string, and they are the same man. That is
+	// precisely the case aliases.csv exists for, so it deserves a second
+	// try on different evidence — the surname with the position and team the
+	// source already told us.
+	//
+	// Only when exactly one player fits. Two men sharing a surname on one
+	// team at one position is rare, but naming either would be a guess, and
+	// a wrong alias binds every read on that player to somebody else.
+	if pid, found := onlyBySurname(want, position, team, players); found {
+		return pid, players[pid], true
+	}
+	return "", PlayerInfo{}, false
+}
+
+// onlyBySurname finds the single player with this surname at this position
+// and team, if there is exactly one.
+func onlyBySurname(want, position, team string, players map[string]PlayerInfo) (string, bool) {
+	fields := strings.Fields(want)
+	if len(fields) < 2 || position == "" || team == "" {
+		return "", false
+	}
+	surname := normalizeName(fields[len(fields)-1])
+	if surname == "" {
+		return "", false
+	}
+	var hit string
+	for pid, p := range players {
+		pf := strings.Fields(p.Name)
+		if len(pf) < 2 || normalizeName(pf[len(pf)-1]) != surname {
+			continue
+		}
+		if !strings.EqualFold(p.Position, position) || !strings.EqualFold(p.Team, team) {
+			continue
+		}
+		if hit != "" {
+			return "", false
+		}
+		hit = pid
+	}
+	return hit, hit != ""
 }

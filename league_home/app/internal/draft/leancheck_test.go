@@ -243,3 +243,62 @@ func TestMatchIsDeterministic(t *testing.T) {
 		}
 	}
 }
+
+var sleeperish = map[string]PlayerInfo{
+	// Teams and ids as Sleeper actually has them, so the fixture cannot
+	// claim a match the live dictionary would refuse.
+	"5848": {Name: "Marquise Brown", Position: "WR", Team: "PHI"},
+	"5859": {Name: "A.J. Brown", Position: "WR", Team: "NE"},
+	"2":    {Name: "Isaiah Likely", Position: "TE", Team: "BAL"},
+	"3":    {Name: "Jahmyr Gibbs", Position: "RB", Team: "DET"},
+}
+
+// TestClosestPlayerCatchesATypo — the easy half: a name off by a character
+// or two is a spelling mistake and edit distance finds it.
+func TestClosestPlayerCatchesATypo(t *testing.T) {
+	id, p, ok := ClosestPlayer("Isaiah Lilely", "TE", "BAL", sleeperish)
+	if !ok || id != "2" || p.Name != "Isaiah Likely" {
+		t.Errorf("got %q %+v (ok=%v), want Isaiah Likely id=2", id, p, ok)
+	}
+}
+
+// TestClosestPlayerCatchesANickname — the half edit distance cannot do.
+// "Hollywood Brown" is nowhere near "Marquise Brown" as a string and is the
+// same man; it is exactly what aliases.csv exists for. Surname plus the
+// position and team the source already stated identifies him.
+func TestClosestPlayerCatchesANickname(t *testing.T) {
+	id, p, ok := ClosestPlayer("Hollywood Brown", "WR", "PHI", sleeperish)
+	if !ok || id != "5848" || p.Name != "Marquise Brown" {
+		t.Errorf("got %q %+v (ok=%v), want Marquise Brown id=5848", id, p, ok)
+	}
+}
+
+// TestClosestPlayerWillNotGuessBetweenTwo — two men sharing a surname at one
+// position on one team makes the surname evidence worthless. Naming either
+// would be a coin flip, and a wrong alias silently binds every read on that
+// player to somebody else.
+func TestClosestPlayerWillNotGuessBetweenTwo(t *testing.T) {
+	two := map[string]PlayerInfo{
+		"1": {Name: "Some Brown", Position: "WR", Team: "PHI"},
+		"2": {Name: "Other Brown", Position: "WR", Team: "PHI"},
+	}
+	if id, _, ok := ClosestPlayer("Hollywood Brown", "WR", "PHI", two); ok {
+		t.Errorf("guessed %q where the evidence does not decide", id)
+	}
+}
+
+// TestClosestPlayerNeedsTheSurnameToAgree — a different surname at the same
+// position and team is a different player, not a nickname.
+func TestClosestPlayerNeedsTheSurnameToAgree(t *testing.T) {
+	if id, _, ok := ClosestPlayer("Hollywood Jennings", "WR", "PHI", sleeperish); ok {
+		t.Errorf("matched %q on position and team alone", id)
+	}
+}
+
+// TestClosestPlayerHasNothingToSayAboutAnEmptyPool — no dictionary is not
+// the same claim as no such player.
+func TestClosestPlayerHasNothingToSayAboutAnEmptyPool(t *testing.T) {
+	if _, _, ok := ClosestPlayer("Anyone", "WR", "PHI", nil); ok {
+		t.Error("an empty dictionary should assert nothing")
+	}
+}
