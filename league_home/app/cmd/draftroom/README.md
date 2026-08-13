@@ -57,6 +57,30 @@ Use it to decide which two players to keep, and to see what every rival
 brings to the auction — Sleeper shows all twelve teams a flat $200, which
 is wrong and would corrupt any "who can outbid me" judgment.
 
+### `draftroom keepers -share`
+
+Keeper prices for the league, without your valuations.
+
+```sh
+draftroom keepers -share
+```
+
+`make keepers` cannot be sent anywhere. It carries what a keeper would cost
+to win back in the auction, what he is worth on median projections, which one
+to keep, and which past seasons the tool distrusts — the model, in other
+words. Handing that to eleven opponents gives away the reasoning the board
+exists to have.
+
+`-share` prints only the half they are owed and cannot work out themselves:
+each owner's eligible players and what the league's rules charge for each,
+cheapest first. Sleeper shows everyone a flat budget and does not apply the
+escalating ladder, so without this nobody knows what their own keepers cost
+until the auction.
+
+About 6 kB for a twelve-team league. Each team's block is self-contained, so
+it splits cleanly across chat messages if you are pasting it somewhere with a
+length limit.
+
 ### `make board`
 
 The draft board. Re-solves prices against the pool that actually remains.

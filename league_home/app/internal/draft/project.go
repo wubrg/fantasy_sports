@@ -263,3 +263,58 @@ func WriteKeeperOptions(w io.Writer, options []KeeperOption, names Names, season
 	}
 	return tw.Flush()
 }
+
+// WriteShareableKeepers renders keeper prices for the league to read.
+//
+// A separate renderer from WriteProjection and WriteKeeperOptions, and
+// deliberately poorer than either. Those carry what a keeper would cost to
+// win back in the auction, what he is worth on median projections, and
+// which one to keep — the model, in other words. Sending that to the league
+// would hand eleven opponents the reasoning you built the board to have.
+//
+// What is left is what they are owed and cannot work out themselves: their
+// own players, and what the league's rules charge for each. Sleeper shows
+// everyone a flat budget and does not apply the escalating ladder, so
+// without this nobody knows what their own keepers cost until the auction.
+//
+// Cheapest first within a team, because the question an owner opens this
+// with is which of his players is a bargain.
+func WriteShareableKeepers(w io.Writer, entries []Entry, names Names, season string, maxKeepers, fullBudget int) error {
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+
+	byOwner := map[string][]Entry{}
+	for _, e := range entries {
+		// A player who did not play cannot be kept, so a price for him
+		// would be a number nobody can act on.
+		if hasFlag(e, FlagDidNotPlay) {
+			continue
+		}
+		byOwner[e.OwnerID] = append(byOwner[e.OwnerID], e)
+	}
+	owners := make([]string, 0, len(byOwner))
+	for o := range byOwner {
+		owners = append(owners, o)
+		sort.Slice(byOwner[o], func(i, j int) bool {
+			if byOwner[o][i].LeaguePrice != byOwner[o][j].LeaguePrice {
+				return byOwner[o][i].LeaguePrice < byOwner[o][j].LeaguePrice
+			}
+			return byOwner[o][i].Name < byOwner[o][j].Name
+		})
+	}
+	sort.Slice(owners, func(i, j int) bool { return names.Of(owners[i]) < names.Of(owners[j]) })
+
+	fmt.Fprintf(tw, "%s KEEPER PRICES\n\n", season)
+	fmt.Fprintf(tw, "What each of your players costs to keep under the league rules in\n")
+	fmt.Fprintf(tw, "draft.md. Keep up to %d; your auction budget is $%d less whatever you\n", maxKeepers, fullBudget)
+	fmt.Fprintf(tw, "keep. Sleeper shows everyone a flat $%d and does not apply the\n", fullBudget)
+	fmt.Fprintf(tw, "escalating ladder, so these are the numbers that count.\n")
+	fmt.Fprintf(tw, "Players with no games last season are not eligible and are left out.\n")
+
+	for _, o := range owners {
+		fmt.Fprintf(tw, "\n%s\n", names.Of(o))
+		for _, e := range byOwner[o] {
+			fmt.Fprintf(tw, "  %s\t%s\t$%d\n", e.Name, e.Position, e.LeaguePrice)
+		}
+	}
+	return tw.Flush()
+}

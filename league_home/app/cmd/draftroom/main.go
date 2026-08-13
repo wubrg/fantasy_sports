@@ -90,6 +90,7 @@ func main() {
 	generate := fs.Bool("generate", false, "leans: rebuild the generated sets from source data")
 	convert := fs.Bool("convert", false, "leans: rewrite the named sets as YAML, leaving the originals in place")
 	unmatched := fs.Bool("unmatched", false, "sources: show only the rows that reach no Sleeper player")
+	share := fs.Bool("share", false, "keepers: print keeper prices for the league, without your valuations")
 	seasons := fs.String("seasons", "2023,2024,2025", "calibrate: seasons to measure, comma separated (empty for every usable one)")
 	includeAll := fs.Bool("all", false, "calibrate: measure every completed season, including ones whose prices are not comparable")
 	fs.Usage = func() {
@@ -115,7 +116,8 @@ func main() {
 
 	switch command {
 	case "keepers":
-		if err := runKeepers(*leagueID, orBuiltin(*configDir, builtinConfigDir), orBuiltin(*dataDir, builtinDataDir)); err != nil {
+		if err := runKeepers(*leagueID, orBuiltin(*configDir, builtinConfigDir),
+			orBuiltin(*dataDir, builtinDataDir), *share); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}
@@ -174,7 +176,7 @@ func envOr(key, fallback string) string {
 
 // runKeepers rebuilds the keeper ledger from every season Sleeper has and
 // prints the reconciliation plus the most recent season's budgets.
-func runKeepers(leagueID, configDir, dataDir string) error {
+func runKeepers(leagueID, configDir, dataDir string, share bool) error {
 	cfg, err := draft.ResolveConfigDir(configDir)
 	if err != nil {
 		return err
@@ -215,15 +217,21 @@ func runKeepers(leagueID, configDir, dataDir string) error {
 	}
 
 	rec := draft.Reconcile(seasons, ledger, teams, budget)
-	if err := rec.WriteText(os.Stdout, names, teams, budget); err != nil {
-		return err
-	}
-
 	last := ledger.Seasons[len(ledger.Seasons)-1]
-	fmt.Printf("\n\n%s BUDGETS UNDER LEAGUE RULES\n", last)
-	fmt.Println("(Sleeper shows every team a flat $" + fmt.Sprint(budget) + ", so these differ.)")
-	if err := draft.WriteBudgets(os.Stdout, ledger.EntriesForSeason(last), names, budget); err != nil {
-		return err
+
+	// Reconciliation and last season's budgets are useful to you and noise
+	// to the league — and they name the seasons whose keeper data the tool
+	// distrusts, which is not yours to publish. The shareable form prints
+	// one thing and nothing else, so it can be pasted whole.
+	if !share {
+		if err := rec.WriteText(os.Stdout, names, teams, budget); err != nil {
+			return err
+		}
+		fmt.Printf("\n\n%s BUDGETS UNDER LEAGUE RULES\n", last)
+		fmt.Println("(Sleeper shows every team a flat $" + fmt.Sprint(budget) + ", so these differ.)")
+		if err := draft.WriteBudgets(os.Stdout, ledger.EntriesForSeason(last), names, budget); err != nil {
+			return err
+		}
 	}
 
 	// Rosters carry forward between seasons, so before the draft they
@@ -244,6 +252,13 @@ func runKeepers(leagueID, configDir, dataDir string) error {
 	projected, err := draft.Project(ledger, upcoming, rosters, info)
 	if err != nil {
 		return err
+	}
+
+	// The shareable form stops here on purpose. Everything below prices
+	// keepers against the auction, and that is the part that must not be
+	// sent to the people you are bidding against.
+	if share {
+		return draft.WriteShareableKeepers(os.Stdout, projected, names, upcoming, maxKeepers, budget)
 	}
 
 	// A keeper is a purchase, so it needs the same cost and value boards
