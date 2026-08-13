@@ -69,6 +69,22 @@ Each chunk lands via `cantonctl add` (or a bulk JSON merge + `import`),
 followed by `cantonctl export-json` to refresh the tracked snapshot, same
 workflow as the live `app/` already uses for 1994–2025 maintenance.
 
+## HOF (Pro Football Hall of Fame)
+
+| Chunk | Scope | Status | Notes |
+|---|---|---|---|
+| 13 | HOF award type + inductee data, 1963–2026 | ✅ DONE | Taxonomy added 2026-07-02 (`a9a015d`); 281 inductee rows landed 2026-07-03 as part of `ec3def5` ("Add 1960-1993 historical awards data (chunks 7-12)" — that commit's message undersells it; it also added the full HOF dataset). Already fully committed, including the `canton_data.json` snapshot. |
+| 13a | Rebuild + validate HOF feature (this pass) | ✅ DONE | 2026-07-08, after the separate `main`-recovery/merge session (see `docs/maintenance/2026-07-08-main-recovery/`) landed this history on `main`. Re-ran `go build` (canton + cantonctl, both compiled clean) and `make check` (fmt-check, vet, test — clean; no `_test.go` files exist yet so `test` is a no-op) against the merged state. Ran `cantonctl export-json` as a re-export sanity check: byte-identical dataset (0 rows added/removed vs. the committed snapshot, just row-order churn from re-running the exporter), so the export was discarded rather than committed — no real change. Structural checks on `canton_data.json`: 0 duplicate rows, 0 invalid team/award/unit codes across all 9,458 rows; HOF slice is 281 rows, 1963–2026, 6 `[verify]`-flagged (multi-team or year-confirmation edge cases, e.g. George Blanda counted under LV vs. his TEN-era play). Net: HOF feature confirmed healthy, no code or data changes were needed. |
+
+**Open item:** `quicklook.html`'s embedded snapshot is stale (still the
+pre-1960-extension, pre-HOF v0.8 dataset — 4,498 rows, 1994–2025 — and its
+inline JS filter logic predates the AFL/HOF award codes added to
+`app/static/app.js`). Not regenerated in this pass since there's no
+committed generator script (it was hand-authored once); re-embedding needs
+both a data swap and a JS logic sync, not just recreating the "run a
+script" step from the header comment. Left as a follow-up decision for
+wubrg rather than done unprompted.
+
 ## Verify List
 
 Superseded by the `nt` field in `data/canton_data.json` (88 rows carry a
@@ -112,3 +128,4 @@ source-of-record policy for the new AFL-side awards.
 | 1.1 | 2026-06-20 | Marked chunks 3–6 done (shipped in v0.8); replaced hand-maintained verify list with a pointer to the data's `[verify]` notes |
 | 2.0 | 2026-06-28 | Extended scope to 1960–1993 per ADR-002: added chunks 7–12, the four new AFL-side award codes, franchise-lineage team-code notes, and an updated source strategy (Wikipedia/search instead of direct PFR fetches, which now 403 in this environment) |
 | 2.1 | 2026-07-03 | Completed chunks 7–11 and partial chunk 12 (AFL All-Star 1961–1966); HOF feature added; DB at 9,458 rows |
+| 2.2 | 2026-07-08 | Chunk 13a: re-verified the HOF feature after the separate `main`-recovery merge — `go build` + `make check` clean, structural checks on `canton_data.json` clean (0 dupes, 0 invalid codes, 281 HOF rows intact). No data or code changes; the 281 HOF rows were already committed 2026-07-03 (`ec3def5`), this pass only confirmed it. `quicklook.html` regeneration flagged as an open item. |
