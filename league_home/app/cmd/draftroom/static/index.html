@@ -95,8 +95,40 @@ if (!location.pathname.endsWith("/")) {
       dimmed in the table.</p>
     </section>
     <section>
-      <h2>Traits</h2>
+      <h2>Legend</h2>
       <table class="mini legend">
+        <tr class="grp"><td colspan="2">Your reads &mdash; click a pill on a row to change it</td></tr>
+        <tr><td><span class="flag must">MUST</span></td>
+          <td>Must-have: bid up to value + half his swing + $3, capped by roster
+          safety. A cap in your lean file overrides that.</td></tr>
+        <tr><td><span class="flag dnd">DND</span></td>
+          <td>Do-not-draft: never bid, whatever he is worth.</td></tr>
+        <tr><td><span class="flag">+</span>&nbsp;<span class="flag">-</span></td>
+          <td>Lean up / down: nudges his value by &plusmn;15%. A bare
+          <span class="flag">&middot;</span> means no read yet.</td></tr>
+
+        <tr class="grp"><td colspan="2">Signals</td></tr>
+        <tr><td><span class="flag vs">vs menton</span></td>
+          <td>A lean set you trust disagrees &mdash; go check that read before
+          bidding.</td></tr>
+        <tr><td><span class="flag split">split</span></td>
+          <td>The industry is contested on him &mdash; ranked both above and
+          below consensus.</td></tr>
+        <tr><td><span class="flag">ecr+</span>&nbsp;<span class="flag">ecr-</span></td>
+          <td>Industry consensus sits above / below the market price.</td></tr>
+        <tr><td><span class="flag">swing&nbsp;$12</span></td>
+          <td>His model value swings this much across the valuation curves; the
+          bigger it is, the more his price depends on where replacement is
+          drawn.</td></tr>
+        <tr><td><span class="flag hurt">questionable</span></td>
+          <td>Sleeper injury designation &mdash; meaningful once cutdowns and
+          practice reports land.</td></tr>
+        <tr><td><span class="flag blocked">blocked: LAR&middot;Nacua</span></td>
+          <td>Off your board: your one-per-offense / no-handcuff preferences
+          already spent that offense. <em>(handcuff)</em> marks a same-position
+          duplicate.</td></tr>
+
+        <tr class="grp"><td colspan="2">Traits &mdash; what kind of player he is</td></tr>
         <tr><td><span class="flag trait trait-floor">floor</span></td>
           <td>Points from repeatable usage &mdash; catches and yardage, not
           touchdowns. Rarely wins or loses you a week.</td></tr>
@@ -116,8 +148,9 @@ if (!location.pathname.endsWith("/")) {
           <td>Price suppressed by an injury tag. You buy the discount and the
           risk together.</td></tr>
       </table>
-      <p class="note">What kind of player a pill marks, position-relative.
-      Context to glance at, not a number to act on.</p>
+      <p class="note">Every pill a row can carry. Reads are yours to set;
+      the rest is context to glance at, not numbers to act on. Traits are
+      position-relative.</p>
     </section>
     <section>
       <h2>Recorded sales</h2>

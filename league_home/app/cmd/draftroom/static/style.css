@@ -380,6 +380,10 @@ tr.in-scratch { background: #16233a; }
 .legend td { vertical-align: top; padding: 0.25rem 0; }
 .legend td:first-child { white-space: nowrap; padding-right: 0.6rem; }
 .legend td:last-child { color: var(--dim); font-size: 0.8rem; line-height: 1.35; }
+/* Group headings split the legend into reads / signals / traits. */
+.legend .grp td { padding-top: 0.8rem; color: var(--text); font-weight: 600;
+  font-size: 0.78rem; white-space: normal; border-bottom: 1px solid var(--line); }
+.legend tr.grp:first-child td { padding-top: 0; }
 .mix { margin: 0.4rem 0 0.2rem; line-height: 1.9; }
 
 /* A control with nothing to do says so rather than swallowing the click. */
