@@ -16,6 +16,7 @@ var sourceFiles = []struct {
 }{
 	{"ciely-2026.csv", draft.CielyColumns},
 	{"subvertadown-2026.csv", draft.SubvertadownColumns},
+	{"fantasypros-2026.csv", draft.FantasyProsColumns},
 }
 
 // playerNames fetches Sleeper's dictionary for name resolution alone.

@@ -94,24 +94,24 @@ that looks applied but is not.
 Realistically two or three of these land before the draft. `D6` and `D9` are the best value
 per day spent; `D11` is the one most likely to miss the date.
 
-- **`D6` — FantasyPros ECR as the base ranking anchor.** **Spike done 2026-08-12; build blocked
-  on an export.** Findings, checked directly rather than assumed:
-  - Rankings pages are client-side rendered; a plain fetch returns the page shell. Confirms
-    `OPEN-QUESTIONS.md:22`.
-  - `?export=xls` without a session returns HTML, not data. There is no anonymous CSV.
-  - **Per-expert rankings are a paid feature** — the rankings nav reads "Pick Experts — Upgrade".
-    So Kluge, Menton, Zacharison and Barrett individually are not available free. Premium is
-    $6.99–$39.99/mo; MVP is $53.94 per six months.
-  - Consensus ECR export needs a **free** account, so it is a hand export like Ciely and
-    Subvertadown, which is what the ingest policy requires anyway.
+- **`D6` — FantasyPros ECR as the base ranking anchor.** ✅ **Ingested 2026-08-13.** The spike
+  (2026-08-12) was blocked only on an export; that landed and the extractor is built.
+  `tools/extract_fantasypros.py` merges the four hand-exported CSV views (overview, ranks,
+  stats, notes) into `normalized/fantasypros-2026.csv`, recomputing points under league scoring
+  like Ciely (second projection, delta kept auditable — with one caveat: the stats export omits
+  interceptions, so the recompute runs ~11–14 high for QBs, and Ciely stays the QB source of
+  record). Validated by `draftroom sources`: **1531 of 1535 rows resolve**, the four misses being
+  two genuinely-absent deep free agents (Tommy Myers, Sederrick Cunningham). Three nickname/suffix
+  aliases added (`David Sills V`, `Bam Knight`, `Chip Trayanum`) and `JAC`→`JAX` fixed in the
+  extractor. **Deferred**: surfacing the ECR rank, divergence, and second projection on the board
+  (`static.go`/`board.go`) — the data is ingested and trusted first, per the Tier 1 discipline.
 
-  **Blocked on**: one exported half-PPR consensus CSV in `raw/fantasypros/<date>/`. The extractor
-  cannot be written against a guessed header without risking rework. Nothing else blocks it.
-
-- **`D6b` — Per-expert rankings need a Premium subscription.** **Blocked on purchase.** The
-  multi-expert ambition in `draftroom_2026.md`, and `R2` (expert-accuracy backtesting) which
-  depends on it, both require paying FantasyPros. Recorded so the decision is yours to take
-  rather than something to rediscover.
+- **`D6b` — Per-expert rankings need a Premium subscription.** **Partly overtaken by `D6`.** True
+  per-expert rankings (Kluge, Menton individually) still need Premium. But the `D6` export
+  included FantasyPros' **top-10 and top-20 most-accurate-expert subsets**, now ingested as the
+  `top10`/`top20` baselines with a `rank_vs_top10`/`rank_vs_top20` divergence signal per player —
+  which delivers most of the multi-expert value `R2` wanted (weighting toward the sharps) without
+  the per-expert purchase. Individual-expert accuracy backtesting remains blocked on Premium.
 
 - **`D7` — Keeper price export for the league.** ✅ **Done 2026-08-12.** `draftroom keepers`
   already rendered per-team keeper budgets, but it cannot be sent anywhere: it carries `COST`,
@@ -161,6 +161,10 @@ per day spent; `D11` is the one most likely to miss the date.
   backtests *spending shape* against results via Spearman ρ, not expert projections — and found
   no signal (every metric ρ < 0.21). Per-expert accuracy needs historical expert projections
   that are not currently retained, so this is blocked on archiving each season's sources.
+  *Partly satisfied by `D6`:* FantasyPros' own top-10/top-20 most-accurate-expert subsets are now
+  ingested (`fantasypros-2026.csv` `baseline` = `top10`/`top20`) with a per-player divergence from
+  consensus — FantasyPros did the accuracy weighting, so this ticket narrows to *our own*
+  backtest of per-expert projections we retain.
 
 - **`R3` — Scenario traits.** Port the Edgectl idea: named per-player flags scored into a lean
   to find underpriced tails. Builds on the six traits already in `internal/draft/traits.go:11-41`

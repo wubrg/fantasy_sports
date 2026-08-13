@@ -13,7 +13,9 @@ import tempfile
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import csv  # noqa: E402
 import extract_fantasypoints as fp  # noqa: E402
+import extract_fantasypros as fpx  # noqa: E402
 import extract_subvertadown as sv  # noqa: E402
 
 
@@ -167,6 +169,144 @@ class ExtractFantasyPointsTest(unittest.TestCase):
         carrying ADP and metrics are real."""
         toc = '<ul><li><a href="#chase-brown-rb-cin">Chase Brown, RB, CIN</a></li></ul>' + ARTICLE
         self.assertEqual(len(self.parse(toc)), 2)
+
+
+# --- FantasyPros ------------------------------------------------------------
+#
+# The trap here is the opposite of Subvertadown's: nothing is hidden in one
+# cell, but one player is spread across four separate CSV views that must be
+# merged, and the stats view — the only one carrying the numbers — has no POS
+# column to merge on. On top of that the point total has to be recomputed
+# under league scoring from components that omit interceptions.
+
+# stats view: RK,TIERS,NAME,TEAM,FANTASYPTS, then pass(yds,td), rec(rec,yds,td),
+# rush(att,yds,td) — the three YDS/TDS pairs repeat by name.
+FPX_STATS_HEADER = ['RK', 'TIERS', 'PLAYER NAME', 'TEAM', 'FANTASYPTS',
+                    'YDS', 'TDS', 'REC', 'YDS', 'TDS', 'ATT', 'YDS', 'TDS']
+
+
+def fpx_write(path, header, rows):
+    with open(path, 'w', newline='', encoding='utf-8') as f:
+        w = csv.writer(f)
+        w.writerow(header)
+        w.writerows(rows)
+
+
+def fpx_variant(raw_dir, prefix, players):
+    """Write the four view files for one variant. Each player is a dict with
+    rank, tier, name, team, pos, bye, note, and a stats 9-tuple
+    (fpts, pyds, ptds, rec, ryds, rtds, att, ruyds, rutds)."""
+    ov = [[p['rank'], p['tier'], p['name'], p['team'], p['pos'], p['bye'],
+           '5 out of 5', '2 out of 5', '3 out of 5 stars', p.get('adp', '-')]
+          for p in players]
+    fpx_write(os.path.join(raw_dir, f'{prefix}-ecr-for-2026.csv'),
+              ['RK', 'TIERS', 'PLAYER NAME', 'TEAM', 'POS', 'BYE WEEK',
+               'UPSIDE ', 'BUST ', 'SOS SEASON', 'ECR VS. ADP'], ov)
+    rk = [[p['rank'], p['tier'], p['name'], p['team'], p['pos'],
+           p['rank'], p['rank'] + 4, float(p['rank']) + 0.5, 0.8, p.get('adp', '-')]
+          for p in players]
+    fpx_write(os.path.join(raw_dir, f'{prefix}-ecr-ranks-for-2026.csv'),
+              ['RK', 'TIERS', 'PLAYER NAME', 'TEAM', 'POS', 'BEST', 'WORST',
+               'AVG.', 'STD.DEV', 'ECR VS. ADP'], rk)
+    st = [[p['rank'], p['tier'], p['name'], p['team'], *p['stats']] for p in players]
+    fpx_write(os.path.join(raw_dir, f'{prefix}-ecr-stats-for-2026.csv'),
+              FPX_STATS_HEADER, st)
+    nt = [[p['rank'], p['tier'], p['name'], p['team'], p['pos'], p['bye'],
+           p.get('note', '')] for p in players]
+    fpx_write(os.path.join(raw_dir, f'{prefix}-ecr-notes-for-2026.csv'),
+              ['RK', 'TIERS', 'PLAYER NAME', 'TEAM', 'POS', 'BYE WEEK', 'NOTES'], nt)
+
+
+# Gibbs and Allen carry the two scoring cases; the consensus set also has a
+# kicker (dropped) and the Jaguars DST (team JAC -> JAX, its own number stands).
+GIBBS = {'rank': 1, 'tier': 1, 'name': 'Jahmyr Gibbs', 'team': 'DET', 'pos': 'RB1',
+         'bye': 6, 'note': 'Workhorse back.', 'stats': (328.4, 0, 0, 77, 616, 5, 243, 1223, 13)}
+ALLEN = {'rank': 26, 'tier': 3, 'name': 'Josh Allen', 'team': 'BUF', 'pos': 'QB1',
+         'bye': 7, 'stats': (374.6, 3668, 25, 0, 0, 0, 112, 579, 14)}
+BIJAN = {'rank': 2, 'tier': 1, 'name': 'Bijan Robinson', 'team': 'ATL', 'pos': 'RB2',
+         'bye': 5, 'stats': (331.3, 0, 0, 60, 500, 4, 260, 1350, 12)}
+KICKER = {'rank': 150, 'tier': 8, 'name': 'Cameron Dicker', 'team': 'LAC', 'pos': 'K1',
+          'bye': 12, 'stats': (150, 0, 0, 0, 0, 0, 0, 0, 0)}
+JAGS = {'rank': 170, 'tier': 8, 'name': 'Jacksonville Jaguars', 'team': 'JAC', 'pos': 'DST1',
+        'bye': 8, 'stats': (120, 0, 0, 0, 0, 0, 0, 0, 0)}
+
+
+class ExtractFantasyProsTest(unittest.TestCase):
+    def build(self):
+        """A raw dir with all three variants. Consensus ranks Gibbs over Bijan;
+        the sharp subsets flip it, which is the divergence signal."""
+        d = tempfile.mkdtemp()
+        fpx_variant(d, 'fantasypros', [GIBBS, BIJAN, ALLEN, KICKER, JAGS])
+        # top10/top20 rank Bijan #1, Gibbs #2 — the flip.
+        b1 = dict(BIJAN, rank=1)
+        g2 = dict(GIBBS, rank=2)
+        fpx_variant(d, 'fantasypros-2025-top10', [b1, g2, dict(ALLEN, rank=24)])
+        fpx_variant(d, 'fantasypros-2025-top20', [b1, g2, dict(ALLEN, rank=25)])
+        return d
+
+    def consensus(self):
+        return fpx.parse_variant(self.build(), 'fantasypros')
+
+    def test_views_merge_by_name(self):
+        p = self.consensus()['Jahmyr Gibbs']
+        self.assertEqual(p['position'], 'RB')
+        self.assertEqual(p['pos_rank'], 1)
+        self.assertEqual(p['overall_rank'], 1)
+        self.assertEqual(p['best'], 1)          # from the ranks view
+        self.assertAlmostEqual(p['avg_rank'], 1.5)  # from the ranks view
+        self.assertEqual(p['receptions'], 77.0)  # from the stats view
+
+    def test_league_recompute_matches_for_skill_players(self):
+        p = self.consensus()['Jahmyr Gibbs']
+        # 77*.5 + 616*.1 + 5*6 + 1223*.1 + 13*6 = 330.4
+        self.assertAlmostEqual(p['league_points'], 330.4, places=1)
+        self.assertAlmostEqual(p['points_delta'], 2.0, places=1)
+
+    def test_recompute_runs_high_for_qbs_missing_the_int_penalty(self):
+        p = self.consensus()['Josh Allen']
+        # 3668*.04 + 25*4 + 579*.1 + 14*6 = 388.62, vs their INT-aware 374.6
+        self.assertAlmostEqual(p['league_points'], 388.62, places=2)
+        self.assertGreater(p['points_delta'], 10)
+
+    def test_kicker_is_dropped(self):
+        self.assertNotIn('Cameron Dicker', self.consensus())
+
+    def test_defense_team_is_normalized_and_its_number_stands(self):
+        p = self.consensus()['Jacksonville Jaguars']
+        self.assertEqual(p['team'], 'JAX')                 # JAC -> JAX
+        self.assertEqual(p['league_points'], 120.0)        # published number stands
+        self.assertEqual(p['points_delta'], 0.0)
+
+    def out_rows(self):
+        d = self.build()
+        out = os.path.join(d, 'fantasypros-2026.csv')
+        old = sys.argv
+        sys.argv = ['extract_fantasypros.py', d, out]
+        try:
+            fpx.main()
+        finally:
+            sys.argv = old
+        with open(out, encoding='utf-8') as f:
+            return list(csv.DictReader(f))
+
+    def test_divergence_lives_on_the_consensus_spine(self):
+        rows = self.out_rows()
+        con = {r['player']: r for r in rows if r['baseline'] == 'consensus'}
+        # Sharps rank Bijan #1 over consensus #2: 2 - 1 = +1 (they rate him higher).
+        self.assertEqual(con['Bijan Robinson']['rank_vs_top10'], '1')
+        self.assertEqual(con['Bijan Robinson']['rank_vs_top20'], '1')
+        # Gibbs the reverse: consensus #1, sharps #2 -> 1 - 2 = -1.
+        self.assertEqual(con['Jahmyr Gibbs']['rank_vs_top10'], '-1')
+        # The subset rows themselves carry no divergence.
+        subs = [r for r in rows if r['baseline'] == 'top10']
+        self.assertTrue(all(r['rank_vs_top10'] == '' for r in subs))
+
+    def test_notes_ride_on_consensus_only(self):
+        rows = self.out_rows()
+        con = {r['player']: r for r in rows if r['baseline'] == 'consensus'}
+        self.assertEqual(con['Jahmyr Gibbs']['notes'], 'Workhorse back.')
+        top10 = [r for r in rows if r['baseline'] == 'top10']
+        self.assertTrue(all(r['notes'] == '' for r in top10))
 
 
 if __name__ == "__main__":
