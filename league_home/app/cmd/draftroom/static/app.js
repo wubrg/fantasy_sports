@@ -468,6 +468,21 @@ document.addEventListener("click", async ev => {
     await scratchAction("clear", "");
     return;
   }
+  if (ev.target.id === "reloadleans") {
+    const button = ev.target;
+    button.disabled = true;
+    try {
+      snap = await fetchJSON("api/leans/reload", { method: "POST", body: "{}" });
+      draw();
+    } catch (err) {
+      // The reads on the board are still the ones that loaded, so say what
+      // happened rather than leaving the click looking like it worked.
+      document.getElementById("status").textContent = String(err);
+    } finally {
+      button.disabled = false;
+    }
+    return;
+  }
   if (ev.target.id === "undoall") {
     snap = await fetchJSON("api/undo", { method: "POST", body: "{}" });
     snap.__sold = {};

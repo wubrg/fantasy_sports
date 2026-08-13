@@ -546,6 +546,38 @@ A merge you cannot inspect is a merge you cannot trust: precedence decides
 which of two contradictory reads reaches the board. See
 [Lean sets](#lean-sets) for what the sets are and how precedence works.
 
+It also reports two things a lean file cannot tell you by looking at it:
+players listed with no read yet, and reads naming a player the projection
+source does not have — with the nearest real player suggested. A lean is
+applied by name, so a name typed wrong is not an error, it is simply absent
+from the board.
+
+### Editing leans away from the machine
+
+A lean set is often a symlink into a notes vault, so it can be edited from a
+phone while doing research. The loop:
+
+1. **Edit** in the vault — add a name under `up:`, or leave one under
+   `undecided:` if you have not ruled on him.
+2. **Check** with `make leans LEANS=mine,wubrg-lean`. This is where a typo
+   surfaces; the board will not tell you, because a read it cannot match
+   simply is not there.
+3. **Reload** — press **reload leans** in the board's footer. It re-reads
+   the files and rebuilds, and it works from the phone you edited on, since
+   it is a button on the page rather than something run on the server.
+
+Reload is deliberately a button and not a timer. Lean sets are otherwise
+read once, at startup, and nothing else about them moves while a draft runs;
+polling the files would rebuild the board every couple of seconds to learn
+nothing. A file that does not parse leaves the reads you already had exactly
+where they were and reports the error — losing every conviction you hold to
+a half-typed file would be worse than the staleness it fixes.
+
+`make draftroom-restart` is only needed after building a new binary.
+
+Precedence is left to right, so `mine` outranks a set listed after it; see
+[Lean sets](#lean-sets).
+
 ### `make refresh`
 
 Re-runs every extractor against the newest snapshot in the private repo,

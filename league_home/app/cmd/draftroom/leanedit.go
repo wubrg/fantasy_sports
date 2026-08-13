@@ -134,7 +134,15 @@ func (s *server) saveLeans() error {
 	// directory. Two formats are readable and the reader has fallbacks the
 	// writer cannot see, so a guessed path can be a real file the board
 	// never consults: the click looks saved and the read is gone on restart.
+	//
+	// Taken under the lock and used after it. A reload replaces both of
+	// these while this runs, and reaching into s.static unlocked is a data
+	// race on a live map rather than merely a stale value.
+	s.mu.Lock()
 	path := s.static.minePath
+	inherited := s.static.leans
+	s.mu.Unlock()
+
 	if path == "" {
 		path = draft.LeanSetPath(s.configDir, "mine")
 	}
@@ -155,7 +163,7 @@ func (s *server) saveLeans() error {
 			// and the read comes straight back from whichever set owns it.
 			// A none row is how your own set says "I have no opinion on him",
 			// and it outranks the set that does.
-			if _, inherited := s.static.leans[k]; inherited {
+			if _, held := inherited[k]; held {
 				if _, ours := onDisk[k]; !ours {
 					merged[k] = draft.PlayerLean{Player: v.Player, Lean: draft.LeanNone}
 					continue
@@ -174,10 +182,64 @@ func (s *server) saveLeans() error {
 		// four clicks that end where they began.
 		if old, ok := merged[k]; ok {
 			v.Cap, v.Note = old.Cap, old.Note
-		} else if old, ok := s.static.leans[k]; ok {
+		} else if old, ok := inherited[k]; ok {
 			v.Cap, v.Note = old.Cap, old.Note
 		}
 		merged[k] = v
 	}
 	return draft.WriteLeans(path, merged, undecided)
+}
+
+// reloadLeans re-reads the lean sets from disk and rebuilds the board.
+//
+// Lean sets are otherwise read once, at startup, because nothing else about
+// them moves during a draft. But they are edited as research — often in a
+// notes vault, from a phone — and a read added there reached the board only
+// after a restart, with nothing on screen to say the file and the board had
+// diverged.
+//
+// On demand rather than on a timer, deliberately. There is no second writer
+// to race and no reason to rebuild the board every two seconds to discover
+// nothing changed.
+//
+// A file that does not parse leaves the loaded reads exactly as they were
+// and returns the error. Losing every conviction you hold because a file was
+// caught half-typed would be a worse failure than the one this fixes.
+func (s *server) reloadLeans() error {
+	// Which sets to read is itself shared state a previous reload may have
+	// replaced, so it comes from under the lock. The file reads happen
+	// outside it: they are the slow part, and nothing else writes them.
+	s.mu.Lock()
+	names := append([]string(nil), s.static.leanSets...)
+	s.mu.Unlock()
+
+	leans, sets, err := loadLeanSets(s.configDir, names)
+	if err != nil {
+		return err
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	// Matched to the pool the same way startup matched it, or a read
+	// spelled reasonably would survive a restart but not a reload.
+	s.static.leans = leans.Match(s.static.matcher)
+	s.static.leanSets = setNames(sets)
+	s.static.minePath = writableSetPath(s.configDir, sets)
+	return s.rebuildLocked()
+}
+
+// handleLeanReload re-reads the lean files and returns the rebuilt board.
+func (s *server) handleLeanReload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST required", http.StatusMethodNotAllowed)
+		return
+	}
+	if err := s.reloadLeans(); err != nil {
+		// The reads you had are still on the board; say what went wrong
+		// rather than pretending the reload happened.
+		http.Error(w, fmt.Sprintf("leans not reloaded, previous reads kept: %v", err),
+			http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, s.snapshot())
 }
