@@ -94,15 +94,32 @@ const (
 // Leans indexes personal reads by normalized player name.
 type Leans map[string]PlayerLean
 
+// mustHaveSwingShare is how much of a must-have's swing — the spread of his
+// value across the valuation curves — becomes overpay headroom. Half: the
+// swing is his plausible upside, and you meet it partway rather than paying
+// the optimistic curve in full.
+const mustHaveSwingShare = 0.5
+
+// mustHaveBidBuffer is the flat dollars added on top, so a walk-away actually
+// clears a competing bid rather than tying it.
+const mustHaveBidBuffer = 3
+
 // WalkAway returns the most you will bid for a player, and which rule set
 // it.
 //
 // value is the model's price for him. recommended is the most you can pay
-// before the rest of your roster is at risk — see MaxRecommendedBid. A
-// must-have uses that rather than the model, because wanting a specific
-// player is an acquisition decision rather than a valuation one; the risk
-// ceiling is what keeps it pragmatic without asking you to guess a number.
-func (l Leans) WalkAway(playerName string, value, recommended int) (int, PlayerLean, BidRule) {
+// before the rest of your roster is at risk — see MaxRecommendedBid. swing is
+// his BaselineSpread, the distance between the most and least generous
+// valuation curve.
+//
+// A must-have with no explicit cap does not default to the risk ceiling: that
+// priced every must-have at the same ~$49 whether he was a $45 stud or a $12
+// sleeper. Instead the default flexes with his swing — value plus half his
+// spread as overpay headroom, plus a buffer to win the bid — because wanting a
+// specific player is an acquisition decision, and how far above his median he
+// is worth chasing is exactly what the spread measures. The risk ceiling still
+// caps it, so the studs land there while the mid-tier drops to a sane number.
+func (l Leans) WalkAway(playerName string, value, recommended int, swing float64) (int, PlayerLean, BidRule) {
 	pl, ok := l[normalizeName(playerName)]
 	if !ok {
 		return value, PlayerLean{}, RuleValue
@@ -112,10 +129,14 @@ func (l Leans) WalkAway(playerName string, value, recommended int) (int, PlayerL
 	case LeanDND:
 		return 0, pl, RuleRefused
 	case LeanMust:
-		bid := recommended
-		if pl.Cap > 0 && pl.Cap < bid {
-			// An explicit cap only ever tightens the recommendation.
+		bid := value + int(swing*mustHaveSwingShare+0.5) + mustHaveBidBuffer
+		if pl.Cap > 0 {
+			// An explicit cap is your own number, replacing the swing default.
 			bid = pl.Cap
+		}
+		if bid > recommended {
+			// The risk ceiling is the hard upper bound either way.
+			bid = recommended
 		}
 		// The ceiling binds upward only; if the model already values him
 		// above it, there is no reason to bid less than he is worth.

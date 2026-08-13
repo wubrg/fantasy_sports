@@ -197,14 +197,16 @@ func TestMatchedLeanReachesTheBid(t *testing.T) {
 	leans := leansFrom(t, "player,lean\nKenneth Walker III,must\n")
 
 	// Before matching, the read cannot be found at all.
-	if bid, _, rule := leans.WalkAway("Kenneth Walker", 24, 49); rule != RuleValue || bid != 24 {
+	if bid, _, rule := leans.WalkAway("Kenneth Walker", 24, 49, 0); rule != RuleValue || bid != 24 {
 		t.Fatalf("precondition failed: unmatched read already applied (%d, %s)", bid, rule)
 	}
 
 	matched := leans.Match(NewPoolMatcher(matcherPool, nil))
-	bid, pl, rule := matched.WalkAway("Kenneth Walker", 24, 49)
-	if rule != RuleMustHave || bid != 49 {
-		t.Errorf("got $%d by %s, want $49 by must-have", bid, rule)
+	// The point here is that the matched read now fires as a must-have at all;
+	// the number is the swing-based default (value $24 + no swing + $3 buffer).
+	bid, pl, rule := matched.WalkAway("Kenneth Walker", 24, 49, 0)
+	if rule != RuleMustHave || bid != 27 {
+		t.Errorf("got $%d by %s, want $27 by must-have", bid, rule)
 	}
 	// The read keeps the spelling you wrote, so the board can show it back.
 	if pl.Player != "Kenneth Walker III" {

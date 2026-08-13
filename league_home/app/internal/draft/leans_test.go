@@ -125,7 +125,7 @@ func TestLoadLeansMissingFileIsNotAnError(t *testing.T) {
 // number outright.
 func TestMustHaveOverridesValueRatherThanScalingIt(t *testing.T) {
 	leans := leansFrom(t, "player,lean,cap\nAshton Jeanty,must,48\n")
-	bid, _, rule := leans.WalkAway("Ashton Jeanty", 24, 51)
+	bid, _, rule := leans.WalkAway("Ashton Jeanty", 24, 51, 0)
 	if bid != 48 {
 		t.Errorf("walk-away = %d, want the declared cap of 48 tightening the $51 recommendation", bid)
 	}
@@ -138,7 +138,7 @@ func TestMustHaveOverridesValueRatherThanScalingIt(t *testing.T) {
 // instruction to underbid a player the model already rates higher.
 func TestCapOnlyBindsUpward(t *testing.T) {
 	leans := leansFrom(t, "player,lean,cap\nJahmyr Gibbs,must,40\n")
-	bid, _, rule := leans.WalkAway("Jahmyr Gibbs", 63, 40)
+	bid, _, rule := leans.WalkAway("Jahmyr Gibbs", 63, 40, 0)
 	if bid != 63 {
 		t.Errorf("walk-away = %d, want the model's 63", bid)
 	}
@@ -147,12 +147,38 @@ func TestCapOnlyBindsUpward(t *testing.T) {
 	}
 }
 
+// TestMustHaveDefaultFlexesWithSwing — an uncapped must-have no longer defaults
+// to the flat risk ceiling. It is value plus half his swing plus a $3 buffer,
+// still bounded by the ceiling, so a mid-tier guy drops to a sane number while
+// a stud still lands at the ceiling.
+func TestMustHaveDefaultFlexesWithSwing(t *testing.T) {
+	leans := leansFrom(t, "player,lean\nA,must\n")
+	cases := []struct {
+		value, recommended int
+		swing              float64
+		wantBid            int
+		wantRule           BidRule
+	}{
+		{15, 49, 6, 21, RuleMustHave},  // 15 + 3 + 3
+		{20, 49, 0, 23, RuleMustHave},  // no swing: value + buffer only
+		{45, 49, 18, 49, RuleMustHave}, // 45 + 9 + 3 = 57, capped at 49
+		{60, 49, 4, 60, RuleValue},     // worth more than the ceiling → pay his value
+	}
+	for _, c := range cases {
+		bid, _, rule := leans.WalkAway("A", c.value, c.recommended, c.swing)
+		if bid != c.wantBid || rule != c.wantRule {
+			t.Errorf("value %d swing %.0f rec %d: got %d/%q, want %d/%q",
+				c.value, c.swing, c.recommended, bid, rule, c.wantBid, c.wantRule)
+		}
+	}
+}
+
 // TestDNDIsAbsolute — do-not-draft is a refusal, not a discount. Quoting a
 // number for a player you have sworn off is how you end up owning him.
 func TestDNDIsAbsolute(t *testing.T) {
 	leans := leansFrom(t, "player,lean\nKyle Pitts,dnd\n")
 	for _, value := range []int{1, 25, 200} {
-		bid, pl, rule := leans.WalkAway("Kyle Pitts", value, 50)
+		bid, pl, rule := leans.WalkAway("Kyle Pitts", value, 50, 0)
 		if bid != 0 || rule != RuleRefused {
 			t.Errorf("value %d: got bid %d rule %q, want 0/do-not-draft", value, bid, rule)
 		}
@@ -164,21 +190,21 @@ func TestDNDIsAbsolute(t *testing.T) {
 
 func TestConvictionScalesValue(t *testing.T) {
 	leans := leansFrom(t, "player,lean\nChase Brown,up\nSaquon Barkley,down\n")
-	if bid, _, rule := leans.WalkAway("Chase Brown", 40, 60); bid != 46 || rule != RuleConviction {
+	if bid, _, rule := leans.WalkAway("Chase Brown", 40, 60, 0); bid != 46 || rule != RuleConviction {
 		t.Errorf("up: got %d/%q, want 46/conviction", bid, rule)
 	}
-	if bid, _, _ := leans.WalkAway("Saquon Barkley", 40, 60); bid != 34 {
+	if bid, _, _ := leans.WalkAway("Saquon Barkley", 40, 60, 0); bid != 34 {
 		t.Errorf("down: got %d, want 34", bid)
 	}
 	// Conviction must never price below the auction floor; dnd is the way
 	// to say no.
-	if bid, _, _ := leans.WalkAway("Saquon Barkley", 1, 60); bid != 1 {
+	if bid, _, _ := leans.WalkAway("Saquon Barkley", 1, 60, 0); bid != 1 {
 		t.Errorf("floor: got %d, want 1", bid)
 	}
 }
 
 func TestUnlistedPlayersAreUntouched(t *testing.T) {
-	bid, _, rule := Leans{}.WalkAway("Nobody", 37, 50)
+	bid, _, rule := Leans{}.WalkAway("Nobody", 37, 50, 0)
 	if bid != 37 || rule != RuleValue {
 		t.Errorf("got %d/%q, want 37/value", bid, rule)
 	}

@@ -127,8 +127,8 @@ type SignalInputs struct {
 	// Traits label what kind of player each man is, keyed by player ID.
 	Traits map[string]TraitSet
 	// RecommendedBid is the most you can pay for any one player before the
-	// rest of your roster is at risk. Must-haves are priced at this rather
-	// than at a number picked by hand.
+	// rest of your roster is at risk. It is the hard ceiling on a must-have's
+	// swing-based default cap — see WalkAway — not the must-have price itself.
 	RecommendedBid int
 }
 
@@ -188,7 +188,7 @@ func BuildSignals(in SignalInputs) []PlayerSignals {
 			p.Availability = s
 		}
 		p.Traits = in.Traits[v.PlayerID]
-		bid, lean, rule := in.Leans.WalkAway(v.Name, v.Price, in.RecommendedBid)
+		bid, lean, rule := in.Leans.WalkAway(v.Name, v.Price, in.RecommendedBid, p.BaselineSpread())
 		p.MyMaxBid, p.Lean, p.BidRule = bid, lean, rule
 		out = append(out, p)
 	}
