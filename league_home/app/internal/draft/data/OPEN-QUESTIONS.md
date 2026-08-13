@@ -19,7 +19,7 @@ design takes paid content from your own copy only.
 | **JJ Zachariason** | Blocked. Late-Round Draft Guide is **$29.99**; no free rankings anywhere. FantasyPros' "JJ Zachariason vs Consensus" page renders in JS and returned "No rankings found" | Buy it and export/copy the rankings, or say skip him |
 | **Peaked in High Skool** | Blocked. Cheat sheets moved to **Patreon** ($10/mo tier). Their latest published sheet is **2025 V2.01**, not 2026 | Your Patreon copy of the 12-team half-PPR PDF, or skip |
 | **Subvertadown** | Blocked. Tool is free but 100% client-side — no CSV export, no API, no data in the HTML | Run the tool with our settings and copy the table out |
-| **FantasyPros ECR** | Blocked. Half-PPR rankings are JS-rendered | Free account has a CSV export; grab it if you want a consensus anchor |
+| **FantasyPros ECR** | **Ingested 2026-08-13.** 787 consensus players + top10/top20 sharp subsets | nothing — see `docs/backlog.md` `D6` |
 
 **FantasyPros re-checked 2026-08-12.** The JS-rendering still holds, and
 `?export=xls` without a session returns the page shell rather than data. Two

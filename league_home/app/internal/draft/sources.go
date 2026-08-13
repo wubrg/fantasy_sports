@@ -212,6 +212,21 @@ var (
 			{"value", "auction_value", "auc$", "auction"},
 		},
 	}
+	// FantasyProsColumns is what the FantasyPros ECR extract must carry.
+	//
+	// It ships no auction value — it is a ranking source recomputed into a
+	// projection — so the column that would corrupt a number if missing is
+	// league_points, not a dollar value. The rank, tier, and expert-spread
+	// columns ride along for the board but their absence only costs a signal,
+	// so they are not required here (see the note on CielyColumns).
+	FantasyProsColumns = SourceSchema{
+		Name: "fantasypros",
+		Required: [][]string{
+			{"player", "name", "player name"},
+			{"position", "pos"},
+			{"league_points", "points", "fps", "proj"},
+		},
+	}
 )
 
 // check reports the first required column the header does not satisfy.
