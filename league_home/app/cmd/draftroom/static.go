@@ -61,6 +61,10 @@ type staticData struct {
 	// can say whose reads it is applying rather than leaving you to
 	// remember which flags you asked for.
 	leanSets []string
+	// matcher resolves a written player name to the pool's own spelling, so
+	// a read spelled reasonably still lands. Kept so the lean-edit endpoint
+	// resolves names the same way the board did.
+	matcher *draft.PoolMatcher
 	// minePath is the file the first set was actually read from, and it is
 	// where a read set on the board is written back.
 	//
@@ -177,6 +181,13 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 			PlayerID: r.PlayerID, Name: r.Player, Position: r.Position, Points: r.Points,
 		})
 	}
+	// Now that the pool exists, reads can be matched to it. A lean is
+	// applied by name, and the pool is spelled the projection source's way,
+	// so "Kenneth Walker III" — Sleeper's spelling and the natural one to
+	// type — had to be rewritten to reach the board at all.
+	s.matcher = draft.NewPoolMatcher(poolNames(s.projections), aliases)
+	s.leans = s.leans.Match(s.matcher)
+
 	// Pinned now that the projection set is complete, and never
 	// recomputed: replacement level measured against the pool that remains
 	// falls as the pool empties, so a count above it could never drop.
@@ -455,6 +466,13 @@ func (s *staticData) nameOf(playerID string) string {
 // playerIDByName resolves a board name to a Sleeper ID, normalizing so
 // punctuation in what the page rendered cannot defeat the match.
 func (s *staticData) playerIDByName(name string) string {
+	// Through the same matcher the board's reads went through, or the
+	// lean-edit endpoint would reject a name the board itself resolves.
+	if s.matcher != nil {
+		if canonical, ok := s.matcher.Canonical(name); ok {
+			name = canonical
+		}
+	}
 	want := draft.NormalizeName(name)
 	for _, p := range s.projections {
 		if draft.NormalizeName(p.Name) == want {
@@ -467,4 +485,14 @@ func (s *staticData) playerIDByName(name string) string {
 		}
 	}
 	return ""
+}
+
+// poolNames lists the projection source's spelling of every player, which
+// is what a lean has to match.
+func poolNames(projections []draft.Projection) []string {
+	out := make([]string, 0, len(projections))
+	for _, p := range projections {
+		out = append(out, p.Name)
+	}
+	return out
 }

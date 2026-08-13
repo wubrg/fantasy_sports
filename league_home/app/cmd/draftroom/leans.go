@@ -103,7 +103,7 @@ func runLeans(configDir, dataDir string, names []string, generate, convert bool)
 		fmt.Printf("\n%s: %d listed with no lean yet — %s\n",
 			set.Name, len(set.Undecided), strings.Join(set.Undecided, ", "))
 	}
-	reportUnmatched(sets, dataDir)
+	reportUnmatched(sets, cfg, dataDir)
 
 	rows := make([]draft.PlayerLean, 0, len(merged))
 	for _, pl := range merged {
@@ -256,7 +256,7 @@ const projectionSource = "ciely-2026.csv"
 // The check is deliberately best-effort. Anyone without the private data
 // repo still has a working `draftroom leans`, and a missing optional check
 // must never become a failed command.
-func reportUnmatched(sets []draft.LeanSet, dataDir string) {
+func reportUnmatched(sets []draft.LeanSet, cfg, dataDir string) {
 	root, err := draft.ResolveDataRoot(dataDir)
 	if err != nil {
 		fmt.Printf("\nskipped the name check: %v\n", err)
@@ -271,9 +271,13 @@ func reportUnmatched(sets []draft.LeanSet, dataDir string) {
 	for _, r := range rows {
 		pool = append(pool, r.Player)
 	}
+	// Same matcher the board uses, so the report never flags a read the
+	// board will happily apply. A missing alias file is not an error.
+	aliases, _ := draft.LoadAliases(filepath.Join(cfg, aliasesFile))
+	matcher := draft.NewPoolMatcher(pool, aliases)
 
 	for _, set := range sets {
-		bad := set.Leans.Unmatched(pool)
+		bad := set.Leans.Unmatched(pool, matcher)
 		if len(bad) == 0 {
 			continue
 		}
