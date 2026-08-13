@@ -127,11 +127,14 @@ func (p PlayerSignals) BaselineSpread() float64 {
 // directions, which calls for a hard ceiling rather than a different price.
 func (p PlayerSignals) Contested() bool { return p.ECR == ECRContested }
 
-// sharpRankThreshold is how many positions the sharp subset must move a
-// player before it is worth a flag. Below it the move is noise — two expert
-// panels ordering the middle of a tier slightly differently — rather than a
-// disagreement about the player.
-const sharpRankThreshold = 5
+// sharpRankThreshold is how far the sharp subset must move a player, in
+// FantasyPros overall rank, before it is worth a flag. It is deliberately
+// large: the move is an overall-rank delta, which inflates with depth (a
+// five-spot disagreement means little at rank 300), and a flag on half the
+// contended board reads as none while bidding. At 15 it fires on ~10% of the
+// contended pool — the genuine sharp-versus-field splits, not tier-ordering
+// noise.
+const sharpRankThreshold = 15
 
 // SharpState is which way the most-accurate experts lean against consensus.
 type SharpState int
