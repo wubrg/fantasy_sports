@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -318,17 +319,71 @@ type gone struct {
 // Passed in rather than stored, because staticData is shared and immutable
 // by contract — see the type comment. Threading them through the one seam
 // that consumes them keeps that true and keeps the dependency visible.
-func (s *staticData) Build(taken map[string]gone, edits draft.Leans) (draft.Snapshot, error) {
-	// Start from the projected keeper set, then remove anyone already off
-	// the board for real.
+// keeperScenarioSet resolves a research keeper scenario to the league keeper
+// set it takes off the board. "" (draft night) and "none" (the research
+// baseline) keep nobody through this path; "locks" keeps only the near-certain
+// keepers, "expected" the standard surplus projection.
+func (s *staticData) keeperScenarioSet(scenario string, aav map[string]float64) []draft.Entry {
+	switch scenario {
+	case "locks":
+		return leagueKeepers(s.projected, aav, lockThreshold)
+	case "expected":
+		return leagueKeepers(s.projected, aav, 0)
+	}
+	return nil
+}
+
+func (s *staticData) Build(taken map[string]gone, edits draft.Leans, keeperScenario string) (draft.Snapshot, error) {
 	aav := map[string]float64{}
 	for _, m := range s.market {
 		aav[m.PlayerID] = m.AAV
 	}
-	dollars, slots, filled := poolAfterKeepers(s.projected, aav, s.teams, s.budget)
-	me := myState(s.projected, aav, s.ownerID, s.budget)
+
+	// Resolve the keeper scenario. "" is draft night: the standard projection
+	// deducts keeper money but leaves the kept players on the board, exactly as
+	// before. A named scenario is research mode — the same set is deducted AND
+	// its players leave the pool, so the money and the board agree about who is
+	// kept. Keepers never arrive through the live feed, so this is the only
+	// place they come off; pushing them through taken would double-count.
+	keeperSet := s.keeperScenarioSet(keeperScenario, aav)
+	scenarioActive := keeperScenario != ""
+
+	var dollars, slots int
+	var filled map[string]int
+	var me draft.MyState
+	if scenarioActive {
+		dollars, slots, filled = poolFromKeepers(keeperSet, s.teams, s.budget)
+		var mine []draft.Entry
+		for _, e := range keeperSet {
+			if e.OwnerID == s.ownerID {
+				mine = append(mine, e)
+			}
+		}
+		me = myStateFrom(mine, s.budget)
+	} else {
+		dollars, slots, filled = poolAfterKeepers(s.projected, aav, s.teams, s.budget)
+		me = myState(s.projected, aav, s.ownerID, s.budget)
+	}
+
+	keeperIDs := make(map[string]bool, len(keeperSet))
+	for _, e := range keeperSet {
+		keeperIDs[e.PlayerID] = true
+	}
+	// A player off the board for either reason. Keepers are money-accounted in
+	// the pool setup above, so the taken loop skips them to avoid deducting
+	// twice; both still leave the value and cost pools below.
+	offBoard := func(id string) bool {
+		if keeperIDs[id] {
+			return true
+		}
+		_, t := taken[id]
+		return t
+	}
 
 	for id, g := range taken {
+		if keeperIDs[id] {
+			continue
+		}
 		dollars -= g.price
 		slots--
 		if g.mine {
@@ -350,7 +405,7 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans) (draft.Snap
 
 	available := make([]draft.Projection, 0, len(s.projections))
 	for _, p := range s.projections {
-		if _, off := taken[p.PlayerID]; !off {
+		if !offBoard(p.PlayerID) {
 			available = append(available, p)
 		}
 	}
@@ -366,7 +421,7 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans) (draft.Snap
 	if len(s.fpProjections) > 0 {
 		fpAvailable := make([]draft.Projection, 0, len(s.fpProjections))
 		for _, p := range s.fpProjections {
-			if _, off := taken[p.PlayerID]; !off {
+			if !offBoard(p.PlayerID) {
 				fpAvailable = append(fpAvailable, p)
 			}
 		}
@@ -383,7 +438,7 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans) (draft.Snap
 
 	openMarket := make([]draft.MarketPrice, 0, len(s.market))
 	for _, m := range s.market {
-		if _, off := taken[m.PlayerID]; !off {
+		if !offBoard(m.PlayerID) {
 			openMarket = append(openMarket, m)
 		}
 	}
@@ -435,6 +490,21 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans) (draft.Snap
 			}
 		}
 	}
+
+	// Tell the page which scenario it is showing and who left the pool because
+	// of it, marquee keepers first, so it can name the hypothetical and list
+	// the players gone.
+	snap.KeeperScenario = keeperScenario
+	for _, e := range keeperSet {
+		tier := "likely"
+		if aav[e.PlayerID]-float64(e.LeaguePrice) >= lockThreshold {
+			tier = "lock"
+		}
+		snap.Kept = append(snap.Kept, draft.KeptPlayer{
+			Name: e.Name, Position: e.Position, Price: e.LeaguePrice, Tier: tier,
+		})
+	}
+	sort.Slice(snap.Kept, func(i, j int) bool { return snap.Kept[i].Price > snap.Kept[j].Price })
 	return snap, nil
 }
 

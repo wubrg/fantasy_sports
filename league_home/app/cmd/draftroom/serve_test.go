@@ -39,11 +39,11 @@ func testStatic() *staticData {
 // and takes his money and slot out of the pool.
 func TestBuildRemovesDraftedPlayers(t *testing.T) {
 	s := testStatic()
-	base, err := s.Build(nil, nil)
+	base, err := s.Build(nil, nil, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	after, err := s.Build(map[string]gone{"1": {price: 45, mine: false}}, nil)
+	after, err := s.Build(map[string]gone{"1": {price: 45, mine: false}}, nil, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,11 +64,11 @@ func TestBuildRemovesDraftedPlayers(t *testing.T) {
 // pool but must not touch my budget or my lineup needs.
 func TestBuildDebitsOnlyMyOwnPurchases(t *testing.T) {
 	s := testStatic()
-	theirs, err := s.Build(map[string]gone{"1": {price: 45, mine: false}}, nil)
+	theirs, err := s.Build(map[string]gone{"1": {price: 45, mine: false}}, nil, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	mine, err := s.Build(map[string]gone{"1": {price: 45, mine: true}}, nil)
+	mine, err := s.Build(map[string]gone{"1": {price: 45, mine: true}}, nil, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,8 +86,8 @@ func TestBuildDebitsOnlyMyOwnPurchases(t *testing.T) {
 // TestBuildLowersTheCeilingAfterSpending
 func TestBuildLowersTheCeilingAfterSpending(t *testing.T) {
 	s := testStatic()
-	base, _ := s.Build(nil, nil)
-	after, _ := s.Build(map[string]gone{"1": {price: 100, mine: true}}, nil)
+	base, _ := s.Build(nil, nil, "")
+	after, _ := s.Build(map[string]gone{"1": {price: 100, mine: true}}, nil, "")
 	if after.Recommended >= base.Recommended {
 		t.Errorf("spending $100 should lower the safe ceiling: %d -> %d",
 			base.Recommended, after.Recommended)

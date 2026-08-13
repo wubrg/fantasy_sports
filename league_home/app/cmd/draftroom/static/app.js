@@ -144,6 +144,7 @@ function draw() {
   document.getElementById("pool").textContent =
     `$${snap.dollars} over ${snap.slots} slots · ${snap.baseline}`;
 
+  drawResearch();
   drawPivot();
   drawMustHaves();
   drawRows();
@@ -169,6 +170,7 @@ function draw() {
   drawPriceLines();
   drawSold();
   drawScratch();
+  drawKept();
 
   document.getElementById("status").textContent =
     `${snap.players.length} available · updated ${new Date().toLocaleTimeString()}` +
@@ -180,6 +182,54 @@ function drawPivot() {
   if (!snap.hasPivot) { el.classList.add("hidden"); return; }
   el.classList.remove("hidden");
   el.innerHTML = `<span class="name">${esc(snap.pivot.Name)}</span>${esc(snap.pivot.Reason)}`;
+}
+
+// Research mode is whatever keeper scenario the server is holding: empty means
+// the live draft-night board, anything else is a hypothetical pool. The page
+// derives its whole mode from that one field, so a reload lands you back where
+// the server is rather than in a mode the page invented.
+function drawResearch() {
+  const scenario = snap.keeperScenario || "";
+  const research = scenario !== "";
+  document.body.classList.toggle("research", research);
+  document.getElementById("research-badge").classList.toggle("hidden", !research);
+  document.getElementById("scenario-wrap").classList.toggle("hidden", !research);
+  for (const b of document.querySelectorAll(".mode-btn")) {
+    b.classList.toggle("on", (b.dataset.mode === "research") === research);
+  }
+  if (research) document.getElementById("keeper-scenario").value = scenario;
+}
+
+function drawKept() {
+  const panel = document.getElementById("kept-panel");
+  if ((snap.keeperScenario || "") === "") { panel.classList.add("hidden"); return; }
+  panel.classList.remove("hidden");
+  const kept = snap.kept || [];
+  document.getElementById("kept-count").textContent =
+    kept.length ? `${kept.length} off the pool` : "full pool";
+  document.getElementById("kept").innerHTML = kept.length
+    ? kept.map(k =>
+        `<tr class="kept-${esc(k.tier)}"><td>${esc(k.name)}</td>` +
+        `<td class="pos pos-${esc(k.position)}">${esc(k.position)}</td>` +
+        `<td class="num">$${k.price}</td>` +
+        `<td>${k.tier === "lock" ? '<span class="kept-lock">lock</span>' : ""}</td></tr>`
+      ).join("")
+    : `<tr><td colspan="4" class="empty">nobody assumed kept — the full pool</td></tr>`;
+}
+
+// setScenario switches the board between the live view ("") and a research
+// keeper scenario. The response is the rebuilt board, same path as a sale, so
+// values and scarcity move in one paint. The 2s poll then keeps it, since the
+// scenario lives on the server.
+async function setScenario(scenario) {
+  const sold = snap && snap.__sold;
+  snap = await fetchJSON("api/keepers", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scenario }),
+  });
+  snap.__sold = sold || {};
+  draw();
 }
 
 function drawMustHaves() {
@@ -516,6 +566,24 @@ document.addEventListener("click", async ev => {
     snap.__sold = {};
     draw();
   }
+});
+
+// ---- research mode ---------------------------------------------------
+
+for (const b of document.querySelectorAll(".mode-btn")) {
+  b.addEventListener("click", () => {
+    // Draft night is the live board (no scenario); Research enters with
+    // whatever the dropdown last showed, defaulting to the expected keepers.
+    if (b.dataset.mode === "research") {
+      setScenario(document.getElementById("keeper-scenario").value || "expected");
+    } else {
+      setScenario("");
+    }
+  });
+}
+
+document.getElementById("keeper-scenario").addEventListener("change", ev => {
+  setScenario(ev.target.value);
 });
 
 // ---- input -----------------------------------------------------------

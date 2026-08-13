@@ -26,6 +26,21 @@ if (!location.pathname.endsWith("/")) {
   <div class="stat wide right"><span class="label">pool</span><span class="value" id="pool">—</span></div>
 </header>
 
+<div id="modebar">
+  <div class="modes">
+    <button class="mode-btn" data-mode="draft">Draft night</button>
+    <button class="mode-btn" data-mode="research">Research</button>
+  </div>
+  <label class="scenario hidden" id="scenario-wrap">keepers assumed
+    <select id="keeper-scenario">
+      <option value="none">none &mdash; full pool</option>
+      <option value="locks">locks only</option>
+      <option value="expected" selected>expected</option>
+    </select>
+  </label>
+  <span class="research-badge hidden" id="research-badge">RESEARCH &mdash; hypothetical pool, keepers removed</span>
+</div>
+
 <div id="pivot" class="pivot hidden"></div>
 <div id="musthaves" class="musthaves hidden"></div>
 
@@ -53,6 +68,14 @@ if (!location.pathname.endsWith("/")) {
   </section>
 
   <aside>
+    <section id="kept-panel" class="kept hidden">
+      <h2>Kept <span class="count" id="kept-count"></span></h2>
+      <table class="mini kept-list" id="kept"></table>
+      <p class="note">Players the assumed keepers take off the auction, so the
+      board below is the pool you would actually bid into.
+      <span class="kept-lock">lock</span> is near-certain; the rest are marginal
+      and might slip back to the pool.</p>
+    </section>
     <section id="scratch-panel" class="scratch">
       <h2>Scratch roster <span class="mode">hypothetical</span></h2>
       <div class="scratch-stats">

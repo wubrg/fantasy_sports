@@ -59,9 +59,31 @@ type Snapshot struct {
 	// LeanSets names the opinion sets applied, in precedence order.
 	LeanSets []string `json:"leanSets"`
 
+	// KeeperScenario is the research keeper scenario the board is showing —
+	// "" on the live draft-night board, or "none"/"locks"/"expected" when you
+	// are exploring the pool the league's keepers would leave. It tells the
+	// page it is looking at a hypothetical, not the live draft.
+	KeeperScenario string `json:"keeperScenario,omitempty"`
+	// Kept is who the active scenario takes off the board, so the page can
+	// show which players left the pool. Empty on the live board.
+	Kept []KeptPlayer `json:"kept,omitempty"`
+
 	// Warnings are non-fatal problems worth showing rather than hiding —
 	// unmatched source rows, stale snapshots.
 	Warnings []string `json:"warnings"`
+}
+
+// KeptPlayer is one player a research keeper scenario removes from the pool.
+type KeptPlayer struct {
+	Name     string `json:"name"`
+	Position string `json:"position"`
+	// Price is his projected keeper cost, the money that leaves the pool with
+	// him.
+	Price int `json:"price"`
+	// Tier is "lock" for a near-certain keeper (large surplus) or "likely" for
+	// a marginal one, so the page can separate the sure things from the
+	// coin-flips.
+	Tier string `json:"tier"`
 }
 
 // AdjustedEdges returns the board ranked by edge with the positional
