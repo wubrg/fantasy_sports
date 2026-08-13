@@ -77,6 +77,13 @@ function flagHTML(p) {
   out.push(`<span class="${cls} lean-set" data-lean="${esc(p.Name)}"` +
     ` data-next="${nextLean(lean)}" title="click: ${nextLean(lean) || "no read"}">${label}</span>`);
 
+  // Blocked leads the info flags: he is off your board because your own
+  // roster already spent that offense, which changes the decision more than
+  // anything else here.
+  if (p.BlockedReason) {
+    out.push(`<span class="flag blocked" title="off your board — ${esc(p.BlockedReason)}">blocked: ${esc(p.BlockedReason)}</span>`);
+  }
+
   // Naming the dissenting set, not just flagging dissent: you want to know
   // which read to go and check before the bidding starts.
   for (const by of (p.Lean && p.Lean.contestedBy) || []) {
@@ -143,7 +150,14 @@ function draw() {
       // start replacement level at the position.
       const cover = s.Cover ? s.Cover.toFixed(2) + "x" : "—";
       const thin = s.Cover > 0 && s.Cover < 1 ? " bad" : "";
-      return [pos, `<span class="${thin.trim()}">${s.Startable} startable · ${cover}</span>`];
+      // Your effective count: the same tally over your board, once the
+      // offenses you already own a piece of are off it. Shown only where it
+      // differs from the room's, so the column stays quiet until it bites.
+      const eff = (snap.effectiveScarcity || {})[pos];
+      const yours = eff && eff.Startable !== s.Startable
+        ? ` · <span class="yours" title="startable on your board, after your one-per-offense / no-handcuff preferences">${eff.Startable} yours</span>`
+        : "";
+      return [pos, `<span class="${thin.trim()}">${s.Startable} startable · ${cover}</span>${yours}`];
     }));
   drawPriceLines();
   drawSold();
@@ -219,7 +233,7 @@ function drawRows() {
     else myMax = `<span class="mymax${p.BidRule === "must-have" ? " must" : ""}">$${p.MyMaxBid}</span>`;
 
     const trying = inScratch.has(p.PlayerID);
-    return `<tr class="${tooRich ? "unaffordable" : ""} ${trying ? "in-scratch" : ""}">
+    return `<tr class="${tooRich ? "unaffordable" : ""} ${trying ? "in-scratch" : ""} ${p.BlockedReason ? "blocked" : ""}">
       <td>${esc(p.Name)}</td>
       <td class="pos pos-${esc(p.Position)}">${esc(p.Position)}</td>
       <td class="num">${p.Cost ? money(p.Cost) : "—"}</td>
