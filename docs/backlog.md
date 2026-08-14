@@ -140,8 +140,13 @@ per day spent; `D11` is the one most likely to miss the date.
   cost. The cheapest expression is an optional price bound — "up under $30" — and `cap` already
   does half of this for must-haves.
 
-- **`D10` — Keeper simulation into leftover-pool assessment.** **M.** Pseudo-randomly guess the
-  league's keepers, then assess what is left and what team shapes it implies. Greenfield.
+- **`D10` — Keeper simulation into leftover-pool assessment.** ✅ **Done 2026-08-13** (PR #33).
+  Shipped as a **research mode** on the web board rather than a random guess: a Draft night /
+  Research toggle whose keeper-scenario selector (none / locks / expected) takes the projected
+  keepers off the pool and re-solves values and scarcity against what remains, so you see the
+  auction you would actually face. The projection is the existing surplus-based top-2-per-team
+  set (`leagueKeepers`), tiered by surplus; keeper money is deducted once, not twice.
+  `cmd/draftroom/{static,serve,main}.go`, `internal/draft/snapshot.go`, `static/*`.
 
 - **`D11` — Team-composition search, v1.** **L.** From the notes: rather than maximizing value,
   enumerate rosters that fill every starting slot plus 0–3 bench under budget while clearing a
