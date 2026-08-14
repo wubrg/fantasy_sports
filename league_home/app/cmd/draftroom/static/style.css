@@ -159,6 +159,9 @@ th {
   position: sticky;
   top: 3.9rem;
   background: var(--bg);
+  /* Above the scrolling rows so the header is not painted under them as
+     they slide up, but below the #strip (z-index 5) it tucks beneath. */
+  z-index: 4;
 }
 
 td {

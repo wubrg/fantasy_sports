@@ -51,7 +51,7 @@ const (
 
 // defaultLeanSets is what -leans holds when you say nothing: your own reads
 // alone. An analyst set only applies when you ask for it by name.
-const defaultLeanSets = "mine"
+const defaultLeanSets = "wubrg-lean"
 
 const ()
 
