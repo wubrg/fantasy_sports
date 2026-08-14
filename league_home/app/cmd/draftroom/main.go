@@ -38,6 +38,9 @@ const (
 const (
 	rulingsFile = "rulings.csv"
 	aliasesFile = "aliases.csv"
+	// ownersFile maps Sleeper handles to manager names so reports label a
+	// team by owner and handle rather than by a volatile Sleeper team name.
+	ownersFile = "owners.csv"
 	// preferencesFile holds the personal one-per-offense / no-handcuff filters
 	// that make positional scarcity your own. Absent means the feature is off.
 	preferencesFile = "preferences.yaml"
@@ -220,7 +223,13 @@ func runKeepers(leagueID, configDir, dataDir string, share bool) error {
 	}
 
 	teams, budget := auctionShape(c, leagueID)
-	names, err := ownerNames(c, seasons)
+	// Owners are optional; without the file a team falls back to its bare
+	// Sleeper handle, which still identifies who it is.
+	owners, err := draft.LoadOwners(filepath.Join(cfg, ownersFile))
+	if err != nil {
+		return err
+	}
+	names, err := ownerNames(c, seasons, owners)
 	if err != nil {
 		return err
 	}
@@ -419,7 +428,7 @@ func auctionShape(c *sleeper.Client, leagueID string) (teams, budget int) {
 
 // ownerNames maps owner IDs to team names across every season, so managers
 // who have since left the league still render readably.
-func ownerNames(c *sleeper.Client, seasons []draft.SeasonData) (draft.Names, error) {
+func ownerNames(c *sleeper.Client, seasons []draft.SeasonData, owners draft.Owners) (draft.Names, error) {
 	names := draft.Names{}
 	seen := map[string]bool{}
 	for _, s := range seasons {
@@ -434,9 +443,11 @@ func ownerNames(c *sleeper.Client, seasons []draft.SeasonData) (draft.Names, err
 		}
 		for _, u := range users {
 			// Later seasons are processed first, so only fill gaps to
-			// keep the most recent team name for each manager.
+			// keep the most recent handle for each manager. Label by
+			// owner and handle, not the Sleeper team name, which the
+			// league changes too often to identify anyone by.
 			if _, ok := names[u.UserID]; !ok {
-				names[u.UserID] = u.TeamName()
+				names[u.UserID] = owners.Label(u.DisplayName)
 			}
 		}
 	}
