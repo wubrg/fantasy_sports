@@ -165,6 +165,33 @@ func TestLeansMaxLandsAtLeastAsManyGuys(t *testing.T) {
 	}
 }
 
+func TestSampleCapsQBandTE(t *testing.T) {
+	// A pool deep in cheap quarterbacks and tight ends: an uncapped bench would
+	// happily pile on a third of each. No sampled team may carry more than two.
+	pool := append(samplePool(),
+		PlayerSignals{PlayerID: "qb3", Name: "QB Three", Position: "QB", Team: "QQ", Cost: 2, MyMaxBid: 2, CielyPoints: 270},
+		PlayerSignals{PlayerID: "qb4", Name: "QB Four", Position: "QB", Team: "RR", Cost: 1, MyMaxBid: 1, CielyPoints: 260},
+		PlayerSignals{PlayerID: "te4", Name: "TE Four", Position: "TE", Team: "SS", Cost: 1, MyMaxBid: 1, CielyPoints: 120},
+	)
+	for _, o := range []Objective{ObjectiveStrategy, ObjectiveLeansMax} {
+		teams := SampleTeams(pool, nil, 200, 14, sampleShape(), map[string]float64{}, Preferences{}, o, 80, 9)
+		for _, tm := range teams {
+			var qb, te int
+			for _, s := range append(append([]RosterSpot{}, tm.Starters...), tm.Bench...) {
+				switch s.Player.Position {
+				case "QB":
+					qb++
+				case "TE":
+					te++
+				}
+			}
+			if qb > 2 || te > 2 {
+				t.Errorf("%s team carries %d QB / %d TE, cap is 2", o, qb, te)
+			}
+		}
+	}
+}
+
 func TestSampleIsReproducible(t *testing.T) {
 	pool := samplePool()
 	a := SampleTeams(pool, nil, 200, 14, sampleShape(), map[string]float64{}, Preferences{}, ObjectiveStrategy, 30, 42)
