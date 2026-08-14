@@ -31,6 +31,24 @@ type Preferences struct {
 	// independent. A pair here overrides OnePerOffense; it never overrides
 	// NoHandcuffs, because a same-position pair is a handcuff, not a stack.
 	Stacks []Stack
+	// Offenses are NFL teams (as abbreviations) you have named as targets:
+	// deep, points-rich offenses whose players carry the "rich offense"
+	// trait on the board. This is a display signal, not a filter -- it
+	// changes nothing about blocking, scarcity, or bids.
+	Offenses []string
+}
+
+// OffenseSet is the target offenses as a lookup keyed by abbreviation, for
+// tagging players by team. Empty when none are named.
+func (p Preferences) OffenseSet() map[string]bool {
+	if len(p.Offenses) == 0 {
+		return nil
+	}
+	out := make(map[string]bool, len(p.Offenses))
+	for _, t := range p.Offenses {
+		out[t] = true
+	}
+	return out
 }
 
 // Stack is one allowed same-offense position pair, such as QB with WR.
@@ -74,6 +92,7 @@ type prefsDoc struct {
 	OnePerOffense *bool       `yaml:"one_per_offense,omitempty"`
 	NoHandcuffs   *bool       `yaml:"no_handcuffs,omitempty"`
 	Stacks        *[][]string `yaml:"stacks,omitempty"`
+	Offenses      *[]string   `yaml:"offenses,omitempty"`
 }
 
 // ParsePreferences reads the personal draft filters from YAML. An unknown key
@@ -90,7 +109,7 @@ func ParsePreferences(r io.Reader) (Preferences, error) {
 			return DefaultPreferences(), nil
 		}
 		return Preferences{}, fmt.Errorf("reading preferences: %w "+
-			"(keys are one_per_offense, no_handcuffs, stacks)", err)
+			"(keys are one_per_offense, no_handcuffs, stacks, offenses)", err)
 	}
 
 	p := DefaultPreferences()
@@ -108,6 +127,29 @@ func ParsePreferences(r io.Reader) (Preferences, error) {
 					"stack %v needs exactly two positions", pair)
 			}
 			p.Stacks = append(p.Stacks, Stack{A: normPos(pair[0]), B: normPos(pair[1])})
+		}
+	}
+	if doc.Offenses != nil {
+		p.Offenses = nil
+		var bad []string
+		for _, name := range *doc.Offenses {
+			if strings.TrimSpace(name) == "" {
+				continue
+			}
+			abbr, ok := ResolveTeam(name)
+			if !ok {
+				bad = append(bad, name)
+				continue
+			}
+			p.Offenses = append(p.Offenses, abbr)
+		}
+		// A team named but not recognised is a target you think is on and is
+		// not — the same silent failure the strict parser exists to prevent —
+		// so all unresolved names are reported at once rather than dropped.
+		if len(bad) > 0 {
+			return Preferences{}, fmt.Errorf(
+				"offenses: unrecognised team(s): %s (use a city, nickname, full name, or abbreviation)",
+				strings.Join(bad, ", "))
 		}
 	}
 	return p, nil

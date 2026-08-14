@@ -22,6 +22,11 @@ none:
 undecided:
   - Colston Loveland
 
+# your guys — will stretch a bid toward a must-have's price for them
+favorites:
+  - Chase Brown
+  - Nick Singleton
+
 # both optional, and rare
 caps:
   Ashton Jeanty: 48
@@ -52,6 +57,12 @@ which is how the board clears a lean it inherited from an analyst.
 `undecided` records a name without a read. It is a real state — you wrote
 him down before ruling on him — and `draftroom leans` prints those names so
 one you have not decided cannot pass for one you have.
+
+`favorites` is not a read at all — it is a tag that layers on top of one. A
+name here may also sit under `up` or `must`, and often does. On the board a
+favorite lifts your walk-away toward a must-have's headroom (about half as
+far) without committing budget to him, so it is a willingness to pay up, not
+a plan to. It shows as a `fav` flag beside whatever read the player carries.
 
 ### Things that are errors, on purpose
 

@@ -27,3 +27,13 @@ no_handcuffs: true
 stacks:
   - [QB, WR]
   - [QB, TE]
+
+# NFL offenses you are targeting: deep, points-rich teams whose pieces are
+# steadier bets even through week-to-week noise. Every player on one gets a
+# "rich offense" trait on the board. This is a display signal only — it does
+# NOT block, change scarcity, or move a bid. Name a team by city, nickname,
+# full name, or abbreviation; an unrecognised team is an error, not a shrug.
+# offenses:
+#   - Chicago Bears
+#   - Chargers
+#   - DET
