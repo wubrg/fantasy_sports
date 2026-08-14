@@ -31,6 +31,12 @@ const priceSwing = 0.30
 // one.
 const defReserve = 1
 
+// positionCap limits how many of a position a sampled roster will carry. Three
+// quarterbacks or three tight ends is a wasted draft: you start one, maybe
+// bench one for a bye, and a third never plays. Backs and receivers fill the
+// flex and the bench, so they are left uncapped.
+var positionCap = map[string]int{"QB": 2, "TE": 2}
+
 // TeamSample is one sampled roster and how it reads, scored the same way the
 // live board and the scratch panel score a lineup.
 type TeamSample struct {
@@ -145,6 +151,10 @@ func fillOne(pool []PlayerSignals, keepers []RosterSpot, budget, slots int,
 	// blocked by your own preferences given who you already hold.
 	eligible := func(p PlayerSignals) bool {
 		if owned[p.PlayerID] || p.Lean.Lean == LeanDND {
+			return false
+		}
+		// No stacking a third of a one-slot position — a wasted roster spot.
+		if lim := positionCap[p.Position]; lim > 0 && have(r, p.Position) >= lim {
 			return false
 		}
 		// Your ceiling gates your must-haves: if this draw sends one past your
