@@ -22,7 +22,7 @@ func TestLegacyMyGuysIsStillRead(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	leans, sets, err := loadLeanSets(cfg, nil)
+	leans, sets, err := loadLeanSets(cfg, []string{"mine"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +73,8 @@ func TestMissingLeansIsNotAnError(t *testing.T) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "mine.csv"), []byte("player,lean,cap,note\n"), 0o644); err != nil {
+	// The default set, whatever it is named, seeded empty — no reads recorded.
+	if err := os.WriteFile(filepath.Join(dir, defaultLeanSets+".csv"), []byte("player,lean,cap,note\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	leans, _, err := loadLeanSets(cfg, nil)

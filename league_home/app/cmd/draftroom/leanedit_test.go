@@ -364,12 +364,13 @@ func TestSavingReachesTheSetTheBoardActuallyReads(t *testing.T) {
 // actually resolved, rather than from a filename the test picked.
 func leanServerAt(t *testing.T, cfg string) *server {
 	t.Helper()
-	merged, sets, err := loadLeanSets(cfg, nil)
+	merged, sets, err := loadLeanSets(cfg, []string{"mine"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	static := testStatic()
 	static.leans = merged
+	static.leanSets = setNames(sets)
 	static.minePath = writableSetPath(cfg, sets)
 	srv, err := newServer(static, cfg)
 	if err != nil {
@@ -401,7 +402,7 @@ func TestSavingAnUnmigratedConfigWritesTheFileItRead(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(cfg, "leans", "mine.yaml")); err == nil {
 		t.Error("the save invented leans/mine.yaml, which startup would then prefer")
 	}
-	back, _, err := loadLeanSets(cfg, nil)
+	back, _, err := loadLeanSets(cfg, []string{"mine"})
 	if err != nil {
 		t.Fatal(err)
 	}
