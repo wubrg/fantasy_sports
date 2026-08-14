@@ -194,6 +194,7 @@ function drawResearch() {
   document.body.classList.toggle("research", research);
   document.getElementById("research-badge").classList.toggle("hidden", !research);
   document.getElementById("scenario-wrap").classList.toggle("hidden", !research);
+  document.getElementById("teams-panel").classList.toggle("hidden", !research);
   for (const b of document.querySelectorAll(".mode-btn")) {
     b.classList.toggle("on", (b.dataset.mode === "research") === research);
   }
@@ -230,6 +231,94 @@ async function setScenario(scenario) {
   });
   snap.__sold = sold || {};
   draw();
+}
+
+// ---- team sampling (research mode) -----------------------------------
+
+let savedTeams = [];
+const JSON_POST = { "Content-Type": "application/json" };
+
+function surname(name) {
+  const parts = String(name).trim().split(/\s+/);
+  return parts.length > 1 ? parts.slice(1).join(" ") : name;
+}
+
+// teamPicks flattens a sampled team's starters and bench into the pick list the
+// shortlist and the scratch loader both speak. Keepers (Held) are dropped: they
+// are always yours, so the scratch loader re-adds them itself — including them
+// here would double them on the roster.
+function teamPicks(team) {
+  return [...(team.starters || []), ...(team.bench || [])]
+    .filter(s => !s.Held)
+    .map(s => ({
+      playerId: s.Player.PlayerID, name: s.Player.Name,
+      position: s.Player.Position, price: s.Price,
+    }));
+}
+
+function teamCardHTML(picks, meta, kind) {
+  const line = picks.map(p =>
+    `<span class="tp pos-${esc(p.position)}">${esc(surname(p.name))} <em>$${p.price}</em></span>`
+  ).join("");
+  const guys = meta.myGuys ? `${meta.myGuys} of your guys` : "";
+  const actions = kind === "saved"
+    ? `<button data-scratch-saved="${esc(meta.id)}">→ scratch</button>` +
+      `<button class="del" data-del="${esc(meta.id)}">remove</button>`
+    : `<button data-save>save</button><button data-scratch-sample>→ scratch</button>`;
+  return `<div class="team-card">
+    <div class="team-head"><span class="team-spend">$${meta.spend}</span>` +
+    `<span class="team-popr" title="starting points above replacement">POPR ${Math.round(meta.popr)}</span>` +
+    (guys ? `<span class="team-guys">${guys}</span>` : "") +
+    (meta.created ? `<span class="team-when">${esc(meta.created)}</span>` : "") +
+    `</div><div class="team-line">${line}</div>` +
+    `<div class="team-actions">${actions}</div></div>`;
+}
+
+async function sampleTeams(objective, button) {
+  const results = document.getElementById("teams-results");
+  results.innerHTML = `<p class="note">sampling…</p>`;
+  try {
+    const teams = await fetchJSON("api/teams", {
+      method: "POST", headers: JSON_POST, body: JSON.stringify({ objective }),
+    });
+    if (!teams.length) { results.innerHTML = `<p class="note">no legal teams from this pool.</p>`; return; }
+    results.innerHTML = teams.map(t => {
+      const picks = teamPicks(t);
+      const card = teamCardHTML(picks, { spend: t.spend, popr: t.popr, myGuys: t.myGuys }, "sample");
+      // Stash the picks + meta on the node so save/scratch need no re-sample.
+      return card;
+    }).join("");
+    // Bind the sampled picks to each card in order.
+    [...results.querySelectorAll(".team-card")].forEach((el, i) => {
+      el.__team = { objective, picks: teamPicks(teams[i]), spend: teams[i].spend, popr: teams[i].popr, myGuys: teams[i].myGuys };
+    });
+  } catch (err) {
+    results.innerHTML = `<p class="note">${esc(String(err))}</p>`;
+  }
+}
+
+async function refreshSaved() {
+  savedTeams = await fetchJSON("api/teams/saved");
+  drawSavedTeams();
+}
+
+function drawSavedTeams() {
+  const wrap = document.getElementById("saved-teams");
+  document.getElementById("saved-head").classList.toggle("hidden", savedTeams.length === 0);
+  wrap.innerHTML = savedTeams.map(t =>
+    teamCardHTML(t.picks || [], t, "saved")).join("");
+}
+
+async function loadPicksIntoScratch(picks) {
+  await fetchJSON("api/scratch", { method: "POST", headers: JSON_POST, body: JSON.stringify({ action: "clear" }) });
+  let res;
+  for (const p of picks) {
+    res = await fetchJSON("api/scratch", {
+      method: "POST", headers: JSON_POST,
+      body: JSON.stringify({ action: "add", player: p.name, price: p.price }),
+    });
+  }
+  if (res) { snap = res.board; scratch = res.scratch; draw(); }
 }
 
 function drawMustHaves() {
@@ -512,6 +601,45 @@ document.addEventListener("click", async ev => {
     await recordSale(btn.dataset.player, btn.dataset.mine === "1");
     return;
   }
+
+  const sampleBtn = ev.target.closest(".sample-btn");
+  if (sampleBtn) {
+    await sampleTeams(sampleBtn.dataset.objective, sampleBtn);
+    return;
+  }
+  const saveBtn = ev.target.closest("button[data-save]");
+  if (saveBtn) {
+    const t = saveBtn.closest(".team-card").__team;
+    savedTeams = await fetchJSON("api/teams/save", {
+      method: "POST", headers: JSON_POST,
+      body: JSON.stringify({ objective: t.objective, spend: t.spend, popr: t.popr, myGuys: t.myGuys, picks: t.picks }),
+    });
+    drawSavedTeams();
+    saveBtn.textContent = "saved ✓";
+    saveBtn.disabled = true;
+    return;
+  }
+  const scratchSample = ev.target.closest("button[data-scratch-sample]");
+  if (scratchSample) {
+    await loadPicksIntoScratch(scratchSample.closest(".team-card").__team.picks);
+    return;
+  }
+  const scratchSaved = ev.target.closest("button[data-scratch-saved]");
+  if (scratchSaved) {
+    const res = await fetchJSON("api/teams/scratch", {
+      method: "POST", headers: JSON_POST, body: JSON.stringify({ id: scratchSaved.dataset.scratchSaved }),
+    });
+    snap = res.board; scratch = res.scratch; draw();
+    return;
+  }
+  const delBtn = ev.target.closest("button[data-del]");
+  if (delBtn) {
+    savedTeams = await fetchJSON("api/teams/delete", {
+      method: "POST", headers: JSON_POST, body: JSON.stringify({ id: delBtn.dataset.del }),
+    });
+    drawSavedTeams();
+    return;
+  }
   const tryBtn = ev.target.closest("button[data-try]");
   if (tryBtn) {
     const name = tryBtn.dataset.try;
@@ -655,3 +783,4 @@ async function refresh() {
 
 refresh();
 setInterval(refresh, POLL_MS);
+refreshSaved().catch(() => {});

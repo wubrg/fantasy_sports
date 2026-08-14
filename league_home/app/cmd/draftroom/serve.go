@@ -66,13 +66,25 @@ type server struct {
 	// exploring the pool the league's keepers would leave. Guarded by mu with
 	// the rest of the live state, since changing it rebuilds the board.
 	keeperScenario string
+
+	// saved is the durable shortlist of sampled teams, persisted to savedPath.
+	// Its own lock: it does not touch the board and changes on its own rhythm.
+	savedMu   sync.Mutex
+	saved     []SavedTeam
+	savedPath string
 }
 
 func newServer(s *staticData, configDir string) (*server, error) {
 	srv := &server{
 		static: s, taken: map[string]gone{}, manual: map[string]gone{},
 		scratch: newScratchpad(), leans: newLeanEdits(), configDir: configDir,
+		savedPath: savedTeamsPath(configDir),
 	}
+	saved, err := loadSavedTeams(srv.savedPath)
+	if err != nil {
+		return nil, err
+	}
+	srv.saved = saved
 	return srv, srv.rebuild()
 }
 
@@ -307,6 +319,11 @@ func runServe(addr, leagueID, configDir, dataDir, ownerID string, baseline draft
 	mux.HandleFunc("/api/scratch", srv.handleScratch)
 	mux.HandleFunc("/api/scratch/view", srv.handleScratchView)
 	mux.HandleFunc("/api/keepers", srv.handleKeepers)
+	mux.HandleFunc("/api/teams", srv.handleTeams)
+	mux.HandleFunc("/api/teams/saved", srv.handleTeamsSaved)
+	mux.HandleFunc("/api/teams/save", srv.handleTeamSave)
+	mux.HandleFunc("/api/teams/delete", srv.handleTeamDelete)
+	mux.HandleFunc("/api/teams/scratch", srv.handleTeamScratch)
 
 	snap := srv.snapshot()
 	cadence := idleInterval

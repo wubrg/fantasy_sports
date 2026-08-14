@@ -6,3 +6,8 @@ draftroom_2026.md
 # Your live one-per-offense / no-handcuff filters — personal strategy, kept
 # out of the public repo. `preferences.example.yaml` is the tracked template.
 preferences.yaml
+
+# The durable shortlist of sampled target rosters — your strategy, and written
+# by the board at runtime.
+saved-teams.json
+saved-teams.json.tmp

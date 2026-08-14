@@ -619,6 +619,7 @@ func (s *staticData) heldRoster(ownerID string) []draft.RosterSpot {
 				PlayerID:    e.PlayerID,
 				Name:        e.Name,
 				Position:    e.Position,
+				Team:        s.team[e.PlayerID],
 				CielyPoints: s.points[e.PlayerID],
 				Cost:        int(aav[e.PlayerID] + 0.5),
 				// Traits matter as much as the price. Without them a
