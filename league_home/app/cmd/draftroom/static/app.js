@@ -205,6 +205,9 @@ function drawKept() {
   const panel = document.getElementById("kept-panel");
   if ((snap.keeperScenario || "") === "") { panel.classList.add("hidden"); return; }
   panel.classList.remove("hidden");
+  // Restore the collapsed state chosen earlier, so a redraw does not reopen
+  // a box the user closed.
+  panel.classList.toggle("collapsed", localStorage.getItem("keptCollapsed") === "1");
   const kept = snap.kept || [];
   document.getElementById("kept-count").textContent =
     kept.length ? `${kept.length} off the pool` : "full pool";
@@ -712,6 +715,13 @@ for (const b of document.querySelectorAll(".mode-btn")) {
 
 document.getElementById("keeper-scenario").addEventListener("change", ev => {
   setScenario(ev.target.value);
+});
+
+// The Kept box can be collapsed to a header, so it does not push the rest of
+// the panel down when you have finished reading it. The choice sticks.
+document.getElementById("kept-head").addEventListener("click", () => {
+  const collapsed = document.getElementById("kept-panel").classList.toggle("collapsed");
+  localStorage.setItem("keptCollapsed", collapsed ? "1" : "");
 });
 
 // ---- input -----------------------------------------------------------

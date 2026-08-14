@@ -38,6 +38,10 @@ type staticData struct {
 	// Priced keeper projections and the resulting per-owner budgets.
 	projected []draft.Entry
 	keeperOf  map[string]int
+	// forcedKeepers are players declared kept by hand (keeper-locks.csv),
+	// keyed by player ID. The research keeper scenarios treat them as locks
+	// regardless of surplus, for keepers the value math would not guess.
+	forcedKeepers map[string]bool
 
 	projections []draft.Projection
 	market      []draft.MarketPrice
@@ -239,6 +243,24 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	s.leans = matchAndMerge(sets, s.matcher)
 	s.refreshLeanWarnings()
 
+	// Resolve hand-declared keeper locks against the pool now the matcher
+	// exists. A name that reaches no rostered player is surfaced rather than
+	// dropped — a keeper you think is locked and is not would quietly leave
+	// him in the auction pool.
+	locks, err := loadKeeperLocks(cfg)
+	if err != nil {
+		return nil, err
+	}
+	s.forcedKeepers = map[string]bool{}
+	for _, lk := range locks {
+		id := s.playerIDByName(lk.Player)
+		if id == "" {
+			s.warnings = append(s.warnings, fmt.Sprintf("keeper lock %q reaches no rostered player", lk.Player))
+			continue
+		}
+		s.forcedKeepers[id] = true
+	}
+
 	// Pinned now that the projection set is complete, and never
 	// recomputed: replacement level measured against the pool that remains
 	// falls as the pool empties, so a count above it could never drop.
@@ -326,9 +348,9 @@ type gone struct {
 func (s *staticData) keeperScenarioSet(scenario string, aav map[string]float64) []draft.Entry {
 	switch scenario {
 	case "locks":
-		return leagueKeepers(s.projected, aav, lockThreshold)
+		return leagueKeepers(s.projected, aav, lockThreshold, s.forcedKeepers)
 	case "expected":
-		return leagueKeepers(s.projected, aav, 0)
+		return leagueKeepers(s.projected, aav, 0, s.forcedKeepers)
 	}
 	return nil
 }
@@ -361,8 +383,8 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans, keeperScena
 		}
 		me = myStateFrom(mine, s.budget)
 	} else {
-		dollars, slots, filled = poolAfterKeepers(s.projected, aav, s.teams, s.budget)
-		me = myState(s.projected, aav, s.ownerID, s.budget)
+		dollars, slots, filled = poolAfterKeepers(s.projected, aav, s.teams, s.budget, s.forcedKeepers)
+		me = myState(s.projected, aav, s.ownerID, s.budget, s.forcedKeepers)
 	}
 
 	keeperIDs := make(map[string]bool, len(keeperSet))
@@ -497,7 +519,7 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans, keeperScena
 	snap.KeeperScenario = keeperScenario
 	for _, e := range keeperSet {
 		tier := "likely"
-		if aav[e.PlayerID]-float64(e.LeaguePrice) >= lockThreshold {
+		if s.forcedKeepers[e.PlayerID] || aav[e.PlayerID]-float64(e.LeaguePrice) >= lockThreshold {
 			tier = "lock"
 		}
 		snap.Kept = append(snap.Kept, draft.KeptPlayer{
@@ -532,7 +554,7 @@ func (s *staticData) ownedRoster(taken map[string]gone) []draft.PlayerSignals {
 	for _, m := range s.market {
 		aav[m.PlayerID] = m.AAV
 	}
-	for _, e := range projectedKeepers(s.projected, aav, s.ownerID) {
+	for _, e := range projectedKeepers(s.projected, aav, s.ownerID, s.forcedKeepers) {
 		add(e.PlayerID, e.Position)
 	}
 	for id, g := range taken {
@@ -613,7 +635,7 @@ func (s *staticData) heldRoster(ownerID string) []draft.RosterSpot {
 		aav[m.PlayerID] = m.AAV
 	}
 	var out []draft.RosterSpot
-	for _, e := range projectedKeepers(s.projected, aav, ownerID) {
+	for _, e := range projectedKeepers(s.projected, aav, ownerID, s.forcedKeepers) {
 		out = append(out, draft.RosterSpot{
 			Player: draft.PlayerSignals{
 				PlayerID:    e.PlayerID,
