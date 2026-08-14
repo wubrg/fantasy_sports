@@ -76,6 +76,18 @@ if (!location.pathname.endsWith("/")) {
       <span class="kept-lock">lock</span> is near-certain; the rest are marginal
       and might slip back to the pool.</p>
     </section>
+    <section id="teams-panel" class="teams hidden">
+      <h2>Team sampling</h2>
+      <p class="note">Draw auction teams you could end up with from this pool at
+      market prices, on your budget and keepers.</p>
+      <div class="teams-buttons">
+        <button class="sample-btn" data-objective="strategy">Following my strategy</button>
+        <button class="sample-btn" data-objective="leans-max">Maximizing my leans</button>
+      </div>
+      <div id="teams-results" class="teams-results"></div>
+      <h3 class="saved-head hidden" id="saved-head">Saved teams</h3>
+      <div id="saved-teams" class="saved-teams"></div>
+    </section>
     <section id="scratch-panel" class="scratch">
       <h2>Scratch roster <span class="mode">hypothetical</span></h2>
       <div class="scratch-stats">
