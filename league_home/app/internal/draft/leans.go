@@ -65,6 +65,13 @@ type PlayerLean struct {
 	// draft; a number you pick yourself cannot.
 	Cap  int
 	Note string
+	// Favorite marks a player you will stretch toward a must-have price for
+	// without committing budget to him. It is a tag layered on top of the
+	// read above, not a read itself: a player can be up and a favorite at
+	// once, and a favorite need carry no up/down/must read at all. See
+	// WalkAway for what the tag does to a bid, and note MustHaves ignores it
+	// on purpose — favorites are a willingness, not a plan.
+	Favorite bool
 	// Source names the lean set this read came from, so the board can say
 	// whose opinion it is showing.
 	Source string
@@ -87,6 +94,9 @@ const (
 	// RuleMustHave means the cap set it — you are paying above your own
 	// value estimate on purpose.
 	RuleMustHave BidRule = "must-have"
+	// RuleFavorite means a favorite tag stretched the bid above its base —
+	// a soft lean toward a must-have's headroom, without the commitment.
+	RuleFavorite BidRule = "favorite"
 	// RuleRefused means do-not-draft.
 	RuleRefused BidRule = "do-not-draft"
 )
@@ -103,6 +113,15 @@ const mustHaveSwingShare = 0.5
 // mustHaveBidBuffer is the flat dollars added on top, so a walk-away actually
 // clears a competing bid rather than tying it.
 const mustHaveBidBuffer = 3
+
+// favoriteSwingShare is how much of a favorite's swing becomes stretch
+// headroom — half of what a must-have gets. A favorite is a willingness to
+// pay up, not a commitment to, so the lean is real but gentler.
+const favoriteSwingShare = 0.25
+
+// favoriteBidBuffer is the flat dollars a favorite adds on top of the swing
+// stretch, smaller than a must-have's for the same reason.
+const favoriteBidBuffer = 2
 
 // WalkAway returns the most you will bid for a player, and which rule set
 // it.
@@ -127,6 +146,7 @@ func (l Leans) WalkAway(playerName string, value, recommended int, swing float64
 
 	switch pl.Lean {
 	case LeanDND:
+		// A refusal is a refusal; a favorite tag does not resurrect it.
 		return 0, pl, RuleRefused
 	case LeanMust:
 		bid := value + int(swing*mustHaveSwingShare+0.5) + mustHaveBidBuffer
@@ -143,18 +163,35 @@ func (l Leans) WalkAway(playerName string, value, recommended int, swing float64
 		if value > bid {
 			return value, pl, RuleValue
 		}
+		// A must-have already stretches past a favorite would, so the tag
+		// adds nothing here.
 		return bid, pl, RuleMustHave
 	}
 
-	factor, known := convictionFactor[pl.Lean]
-	if !known {
-		return value, pl, RuleValue
+	// Base: the model's price, or a conviction-adjusted one.
+	base, rule := value, RuleValue
+	if factor, known := convictionFactor[pl.Lean]; known {
+		base = int(float64(value)*factor + 0.5)
+		if base < 1 {
+			base = 1
+		}
+		rule = RuleConviction
 	}
-	adjusted := int(float64(value)*factor + 0.5)
-	if adjusted < 1 {
-		adjusted = 1
+
+	// A favorite stretches the walk-away toward a must-have's headroom —
+	// gentler, and without the budget commitment MustHaves tracks. Applied
+	// on top of the base, capped at the risk ceiling, and only when it
+	// actually raises the number.
+	if pl.Favorite {
+		fav := base + int(swing*favoriteSwingShare+0.5) + favoriteBidBuffer
+		if fav > recommended {
+			fav = recommended
+		}
+		if fav > base {
+			return fav, pl, RuleFavorite
+		}
 	}
-	return adjusted, pl, RuleConviction
+	return base, pl, rule
 }
 
 // MustHaveCost reports what the declared must-haves commit you to and what

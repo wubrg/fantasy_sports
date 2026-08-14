@@ -32,12 +32,18 @@ const (
 	// TraitDiscounted is a player whose price is suppressed by an injury
 	// designation. You are buying the discount and the risk together.
 	TraitDiscounted Trait = "discounted"
+	// TraitOffense is a player on an offense you have named a target: one
+	// you expect to command a large share of the fantasy-points pie, so its
+	// pieces are deeper and steadier bets even through week-to-week noise.
+	// Declared by hand in preferences, not measured — it labels the team,
+	// not the player's own production.
+	TraitOffense Trait = "offense"
 )
 
 // TraitNames is every trait in report order.
 var TraitNames = []Trait{
 	TraitFloor, TraitRedZone, TraitUpside,
-	TraitTargetHog, TraitBellCow, TraitDiscounted,
+	TraitTargetHog, TraitBellCow, TraitDiscounted, TraitOffense,
 }
 
 // Label is the trait in words, for a report.
@@ -55,6 +61,8 @@ func (t Trait) Label() string {
 		return "bell cow"
 	case TraitDiscounted:
 		return "injury discount"
+	case TraitOffense:
+		return "rich offense"
 	}
 	return string(t)
 }

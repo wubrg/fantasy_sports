@@ -461,7 +461,7 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans, keeperScena
 		Values: values, Costs: costs, Subvertadown: s.subvert,
 		CielyPoints: s.points, Teams: s.team, Availability: s.availability,
 		Leans: leans, Traits: s.traits, RecommendedBid: recommended,
-		FantasyPros: fantasyPros,
+		FantasyPros: fantasyPros, Offenses: s.prefs.OffenseSet(),
 	})
 	snap := draft.Assemble(s.season, state, me, players, leans, s.tempo(taken, costs), s.thresholds, append(append([]string(nil), s.warnings...), s.leanWarnings...))
 	snap.LeanSets = s.leanSets

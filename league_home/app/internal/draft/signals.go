@@ -186,6 +186,10 @@ type SignalInputs struct {
 	Leans Leans
 	// Traits label what kind of player each man is, keyed by player ID.
 	Traits map[string]TraitSet
+	// Offenses are the NFL team abbreviations named as targets in
+	// preferences. A player on one gets the "rich offense" trait. Empty when
+	// none are named, which adds no traits.
+	Offenses map[string]bool
 	// RecommendedBid is the most you can pay for any one player before the
 	// rest of your roster is at risk. It is the hard ceiling on a must-have's
 	// swing-based default cap — see WalkAway — not the must-have price itself.
@@ -260,6 +264,12 @@ func BuildSignals(in SignalInputs) []PlayerSignals {
 			p.Availability = s
 		}
 		p.Traits = in.Traits[v.PlayerID]
+		// A named target offense adds a declared trait on top of the measured
+		// ones. Copied rather than appended in place, since the measured set
+		// is shared out of the Traits map.
+		if len(in.Offenses) > 0 && p.Team != "" && in.Offenses[normTeam(p.Team)] {
+			p.Traits = append(append(TraitSet{}, p.Traits...), TraitOffense)
+		}
 		bid, lean, rule := in.Leans.WalkAway(v.Name, v.Price, in.RecommendedBid, p.BaselineSpread())
 		p.MyMaxBid, p.Lean, p.BidRule = bid, lean, rule
 		out = append(out, p)

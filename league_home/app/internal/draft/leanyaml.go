@@ -29,8 +29,13 @@ type leanDoc struct {
 	// lower-precedence set that does hold one. It is not the same as
 	// Undecided: none says "I looked and I have no opinion" and silences
 	// the analyst behind it, undecided says nothing at all.
-	None      []string          `yaml:"none,omitempty"`
-	Undecided []string          `yaml:"undecided,omitempty"`
+	None      []string `yaml:"none,omitempty"`
+	Undecided []string `yaml:"undecided,omitempty"`
+	// Favorites are the players you will stretch a bid toward a must-have
+	// price for. Orthogonal to the read groups above — a name here may also
+	// appear under up or must, and often does — so it is not folded into the
+	// one-read-per-player check.
+	Favorites []string          `yaml:"favorites,omitempty"`
 	Caps      map[string]int    `yaml:"caps,omitempty"`
 	Notes     map[string]string `yaml:"notes,omitempty"`
 }
@@ -106,6 +111,29 @@ func ParseLeansYAML(r io.Reader) (Leans, []string, error) {
 		undecided = append(undecided, name)
 	}
 
+	// Favorites are a tag, not a read, so they layer onto whatever a player
+	// already has rather than conflicting with it. A favorite with no read
+	// of his own gets a bare entry, so the flag applies and the name is
+	// still checked against the pool.
+	for _, name := range doc.Favorites {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			continue
+		}
+		key := normalizeName(name)
+		pl, ok := out[key]
+		if !ok {
+			pl = PlayerLean{Player: name}
+		}
+		pl.Favorite = true
+		out[key] = pl
+		if _, taken := listed[key]; !taken {
+			// So a note or cap on a favorite-only player attaches instead of
+			// erroring as "not listed under any heading".
+			listed[key] = "favorite"
+		}
+	}
+
 	if err := attach(doc, out, listed); err != nil {
 		return nil, nil, err
 	}
@@ -162,6 +190,9 @@ func sortedKeys[V any](m map[string]V) []string {
 func FormatLeansYAML(leans []PlayerLean, undecided []string) ([]byte, error) {
 	doc := leanDoc{Undecided: undecided}
 	for _, pl := range leans {
+		if pl.Favorite {
+			doc.Favorites = append(doc.Favorites, pl.Player)
+		}
 		switch pl.Lean {
 		case LeanMust:
 			doc.Must = append(doc.Must, pl.Player)
@@ -174,8 +205,11 @@ func FormatLeansYAML(leans []PlayerLean, undecided []string) ([]byte, error) {
 		case LeanNone:
 			doc.None = append(doc.None, pl.Player)
 		default:
-			// No read is the undecided group, however it was expressed.
-			doc.Undecided = append(doc.Undecided, pl.Player)
+			// No read of his own. A favorite is represented by the favorites
+			// list; anyone else with no read is undecided.
+			if !pl.Favorite {
+				doc.Undecided = append(doc.Undecided, pl.Player)
+			}
 			continue
 		}
 		if pl.Cap > 0 {

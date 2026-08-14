@@ -98,6 +98,11 @@ func flagsFor(p PlayerSignals) []string {
 	if m := p.Lean.Marker(); m != "" {
 		out = append(out, m)
 	}
+	// A favorite is orthogonal to the read above — a player can be up and a
+	// favorite at once — so it gets its own flag rather than replacing one.
+	if p.Lean.Favorite {
+		out = append(out, "fav")
+	}
 	// Naming who disagrees rather than just that someone does: "vs menton"
 	// tells you which read to go and check, which a bare mark does not.
 	for _, o := range p.Lean.Disagreement() {
