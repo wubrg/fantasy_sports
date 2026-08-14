@@ -486,6 +486,17 @@ body.research #strip { border-bottom-color: var(--warn); }
 body.research main { box-shadow: inset 0 0 0 2px var(--warn); }
 
 .kept { border-color: var(--warn); }
+/* The Kept header is a disclosure control: click to collapse the box to just
+   this line. The caret shows which way it will go. */
+.kept h2.collapsible { cursor: pointer; user-select: none; }
+.kept h2.collapsible::before {
+  content: "\25be "; /* ▾ */
+  color: var(--dim);
+  font-size: 0.8em;
+}
+.kept.collapsed h2.collapsible::before { content: "\25b8 "; } /* ▸ */
+.kept.collapsed .kept-list,
+.kept.collapsed .note { display: none; }
 .kept h2 .count {
   float: right;
   font-size: 0.7rem;

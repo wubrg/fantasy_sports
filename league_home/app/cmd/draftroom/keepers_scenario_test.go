@@ -52,7 +52,7 @@ func TestLeagueKeepersTiersAndCap(t *testing.T) {
 	s := keeperStatic()
 	aav := aavOf(s)
 
-	expected := ids(leagueKeepers(s.projected, aav, 0))
+	expected := ids(leagueKeepers(s.projected, aav, 0, nil))
 	if !expected["1"] || !expected["2"] {
 		t.Errorf("expected should keep Gibbs and Chase, got %v", expected)
 	}
@@ -60,7 +60,7 @@ func TestLeagueKeepersTiersAndCap(t *testing.T) {
 		t.Error("Bowers is a third keeper past the 2-cap and must not be kept")
 	}
 
-	locks := ids(leagueKeepers(s.projected, aav, lockThreshold))
+	locks := ids(leagueKeepers(s.projected, aav, lockThreshold, nil))
 	if !locks["1"] || len(locks) != 1 {
 		t.Errorf("locks should be Gibbs alone, got %v", locks)
 	}
@@ -161,5 +161,28 @@ func TestResearchNoneIsTheFullPool(t *testing.T) {
 	}
 	if len(snap.Kept) != 0 {
 		t.Errorf("none keeps nobody, got %d kept", len(snap.Kept))
+	}
+}
+
+// TestForcedKeeperLockedRegardlessOfSurplus — a hand-declared keeper lock is
+// kept even below the surplus a lock would normally need, and still counts
+// against the two-per-team cap.
+func TestForcedKeeperLockedRegardlessOfSurplus(t *testing.T) {
+	s := keeperStatic()
+	aav := aavOf(s)
+	forced := map[string]bool{"3": true} // Bowers, surplus 4, well under lockThreshold
+
+	locks := ids(leagueKeepers(s.projected, aav, lockThreshold, forced))
+	if !locks["3"] {
+		t.Error("a forced keeper must be kept even below the lock threshold")
+	}
+	if !locks["1"] {
+		t.Error("the remaining slot should still go to the highest surplus (Gibbs)")
+	}
+	if locks["2"] {
+		t.Error("only two keepers per team; Chase is past the cap once Bowers is forced")
+	}
+	if len(locks) != 2 {
+		t.Errorf("want two keepers, got %v", locks)
 	}
 }

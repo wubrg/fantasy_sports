@@ -547,7 +547,7 @@ func tail(edges []draft.PlayerSignals, n int) []draft.PlayerSignals {
 // and your budget never disagree about the keeper set. minSurplus of 0 is the
 // standard projection ("expected"); a higher floor keeps only the near-certain
 // ones ("locks only").
-func leagueKeepers(projected []draft.Entry, aav map[string]float64, minSurplus float64) []draft.Entry {
+func leagueKeepers(projected []draft.Entry, aav map[string]float64, minSurplus float64, forced map[string]bool) []draft.Entry {
 	byOwner := map[string][]draft.Entry{}
 	for _, e := range projected {
 		byOwner[e.OwnerID] = append(byOwner[e.OwnerID], e)
@@ -565,12 +565,31 @@ func leagueKeepers(projected []draft.Entry, aav map[string]float64, minSurplus f
 	for _, o := range owners {
 		list := byOwner[o]
 		sort.SliceStable(list, func(i, j int) bool { return surplus(list[i]) > surplus(list[j]) })
-		for i := 0; i < maxKeepers && i < len(list); i++ {
+
+		kept := 0
+		taken := map[string]bool{}
+		// A hand-declared lock is kept regardless of surplus, ahead of the
+		// value-based picks but still under the same per-team limit.
+		for _, e := range list {
+			if kept >= maxKeepers {
+				break
+			}
+			if forced[e.PlayerID] {
+				out = append(out, e)
+				taken[e.PlayerID] = true
+				kept++
+			}
+		}
+		for i := 0; i < len(list) && kept < maxKeepers; i++ {
+			if taken[list[i].PlayerID] {
+				continue
+			}
 			// A keeper whose surplus does not clear the floor is not kept.
 			if surplus(list[i]) <= minSurplus {
 				break
 			}
 			out = append(out, list[i])
+			kept++
 		}
 	}
 	return out
@@ -590,8 +609,8 @@ func poolFromKeepers(keepers []draft.Entry, teams, budget int) (dollars, slots i
 	return dollars, slots, filled
 }
 
-func poolAfterKeepers(projected []draft.Entry, aav map[string]float64, teams, budget int) (dollars, slots int, filled map[string]int) {
-	return poolFromKeepers(leagueKeepers(projected, aav, 0), teams, budget)
+func poolAfterKeepers(projected []draft.Entry, aav map[string]float64, teams, budget int, forced map[string]bool) (dollars, slots int, filled map[string]int) {
+	return poolFromKeepers(leagueKeepers(projected, aav, 0, forced), teams, budget)
 }
 
 // myStateFrom is what you bring to the auction once a given set of your own
@@ -614,8 +633,8 @@ func myStateFrom(myKeepers []draft.Entry, budget int) draft.MyState {
 
 // myState figures out what you personally bring to the auction, given the
 // keepers projected for your team.
-func myState(projected []draft.Entry, aav map[string]float64, ownerID string, budget int) draft.MyState {
-	return myStateFrom(projectedKeepers(projected, aav, ownerID), budget)
+func myState(projected []draft.Entry, aav map[string]float64, ownerID string, budget int, forced map[string]bool) draft.MyState {
+	return myStateFrom(projectedKeepers(projected, aav, ownerID, forced), budget)
 }
 
 // projectedKeepers is who an owner is expected to keep: the players whose
@@ -624,12 +643,12 @@ func myState(projected []draft.Entry, aav map[string]float64, ownerID string, bu
 // Split out from myState because the roster shapes need to know *who* is
 // kept, not just what it costs. A keeper is part of the finished roster and
 // the shape constraints have to see him.
-func projectedKeepers(projected []draft.Entry, aav map[string]float64, ownerID string) []draft.Entry {
+func projectedKeepers(projected []draft.Entry, aav map[string]float64, ownerID string, forced map[string]bool) []draft.Entry {
 	if ownerID == "" {
 		return nil
 	}
 	var out []draft.Entry
-	for _, e := range leagueKeepers(projected, aav, 0) {
+	for _, e := range leagueKeepers(projected, aav, 0, forced) {
 		if e.OwnerID == ownerID {
 			out = append(out, e)
 		}
