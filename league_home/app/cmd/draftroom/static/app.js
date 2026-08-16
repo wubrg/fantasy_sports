@@ -194,7 +194,10 @@ function drawResearch() {
   document.body.classList.toggle("research", research);
   document.getElementById("research-badge").classList.toggle("hidden", !research);
   document.getElementById("scenario-wrap").classList.toggle("hidden", !research);
-  document.getElementById("teams-panel").classList.toggle("hidden", !research);
+  const teams = document.getElementById("teams-panel");
+  teams.classList.toggle("hidden", !research);
+  // Restore the collapsed choice whenever the panel reappears.
+  teams.classList.toggle("collapsed", localStorage.getItem("teamsCollapsed") === "1");
   for (const b of document.querySelectorAll(".mode-btn")) {
     b.classList.toggle("on", (b.dataset.mode === "research") === research);
   }
@@ -722,6 +725,11 @@ document.getElementById("keeper-scenario").addEventListener("change", ev => {
 document.getElementById("kept-head").addEventListener("click", () => {
   const collapsed = document.getElementById("kept-panel").classList.toggle("collapsed");
   localStorage.setItem("keptCollapsed", collapsed ? "1" : "");
+});
+
+document.getElementById("teams-head").addEventListener("click", () => {
+  const collapsed = document.getElementById("teams-panel").classList.toggle("collapsed");
+  localStorage.setItem("teamsCollapsed", collapsed ? "1" : "");
 });
 
 // ---- input -----------------------------------------------------------
