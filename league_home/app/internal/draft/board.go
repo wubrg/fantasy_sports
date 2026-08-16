@@ -125,6 +125,14 @@ func flagsFor(p PlayerSignals) []string {
 	case SharpDown:
 		out = append(out, "sharp-")
 	}
+	// Chris Dell's own read, one trusted expert kept apart from the sharp
+	// subset above so you can see when he specifically leans.
+	switch p.DellSharp() {
+	case SharpUp:
+		out = append(out, "dell+")
+	case SharpDown:
+		out = append(out, "dell-")
+	}
 	// Traits deliberately absent here. This board is the narrow one — six
 	// flags on a row is the same as none while bidding, and "targets" sits
 	// on nearly every player at the top of it, so it separates nothing

@@ -105,6 +105,12 @@ function flagHTML(p) {
   if (sharp >= 15) out.push(`<span class="flag sharp-up" title="the most-accurate experts rank him ${sharp} spots higher than consensus">sharp+</span>`);
   else if (sharp <= -15) out.push(`<span class="flag sharp-down" title="the most-accurate experts rank him ${-sharp} spots lower than consensus">sharp-</span>`);
 
+  // Chris Dell's own read, one trusted expert kept apart from the sharp
+  // subset above. Threshold mirrors dellSharpThreshold in leangen.go.
+  const dell = p.DellDelta || 0;
+  if (dell >= 12) out.push(`<span class="flag sharp-up" title="Chris Dell ranks him ${dell} spots higher than consensus">dell+</span>`);
+  else if (dell <= -12) out.push(`<span class="flag sharp-down" title="Chris Dell ranks him ${-dell} spots lower than consensus">dell-</span>`);
+
   if (p.Availability) {
     out.push(`<span class="flag hurt">${esc(p.Availability.toLowerCase())}</span>`);
   }

@@ -56,6 +56,9 @@ type staticData struct {
 	fpProjections []draft.Projection
 	fpRank        map[string]int
 	fpSharp       map[string]int
+	// dellSharp is Chris Dell's rank-vs-consensus gap per player ID, for the
+	// dell+/dell- flag. Empty when his source is absent.
+	dellSharp map[string]int
 
 	availability map[string]string
 	// team maps a player ID to his NFL team abbreviation, from the Sleeper
@@ -259,6 +262,14 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 			continue
 		}
 		s.forcedKeepers[id] = true
+	}
+
+	// Chris Dell's rankings drive the dell+/dell- flag, resolved through the
+	// same matcher so a name lands where his lean set does. Absent is fine.
+	dellSharp, dellWarn := loadChrisDellSharp(root.Normalized("chrisdell-2026.csv"), s.playerIDByName)
+	s.dellSharp = dellSharp
+	if dellWarn != "" {
+		s.warnings = append(s.warnings, dellWarn)
 	}
 
 	// Pinned now that the projection set is complete, and never
@@ -484,6 +495,7 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans, keeperScena
 		CielyPoints: s.points, Teams: s.team, Availability: s.availability,
 		Leans: leans, Traits: s.traits, RecommendedBid: recommended,
 		FantasyPros: fantasyPros, Offenses: s.prefs.OffenseSet(),
+		DellSharp: s.dellSharp,
 	})
 	snap := draft.Assemble(s.season, state, me, players, leans, s.tempo(taken, costs), s.thresholds, append(append([]string(nil), s.warnings...), s.leanWarnings...))
 	snap.LeanSets = s.leanSets

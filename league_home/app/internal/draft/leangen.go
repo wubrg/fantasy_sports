@@ -55,7 +55,71 @@ var Generators = []LeanGenerator{{
 		"and goal-line work. Backs who hit two of the three lean up; backs " +
 		"who hit none lean down.",
 	Build: mentonLeans,
+}, {
+	Name:   "chrisdell",
+	Source: "chrisdell-2026.csv",
+	What: "Chris Dell's expert board against FantasyPros consensus. A player " +
+		"he ranks well above consensus at his position leans up; well below, " +
+		"down. A trusted sharp's disagreements, as reads to weigh against yours.",
+	Build: chrisdellLeans,
 }}
+
+// dellSharpThreshold is how many positional-rank spots Chris Dell must sit
+// from consensus before it counts as a read — enough to be a stance rather
+// than a rounding difference. Adjustable in the same spirit as the menton
+// thresholds; at 12 it selects his ~three dozen strongest disagreements.
+const dellSharpThreshold = 12
+
+// chrisdellLeans turns Chris Dell's rank-vs-consensus into reads. vs_ecr is
+// consensus positional rank minus his own, so a positive gap is a player he
+// rates above the field.
+func chrisdellLeans(rows []map[string]string) ([]PlayerLean, error) {
+	var out []PlayerLean
+	for _, row := range rows {
+		name := strings.TrimSpace(row["player"])
+		if name == "" {
+			continue
+		}
+		raw := strings.TrimSpace(row["vs_ecr"])
+		if raw == "" {
+			continue
+		}
+		gap, err := strconv.Atoi(raw)
+		if err != nil {
+			return nil, fmt.Errorf("%s: bad vs_ecr %q: %w", name, raw, err)
+		}
+
+		var lean Lean
+		switch {
+		case gap >= dellSharpThreshold:
+			lean = LeanUp
+		case gap <= -dellSharpThreshold:
+			lean = LeanDown
+		default:
+			continue
+		}
+		out = append(out, PlayerLean{
+			Player: name,
+			Lean:   lean,
+			Note:   chrisdellNote(gap, row),
+			Source: "chrisdell",
+		})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Player < out[j].Player })
+	return out, nil
+}
+
+// chrisdellNote says by how much, and against what, so the board shows his
+// reasoning rather than a bare verdict.
+func chrisdellNote(gap int, row map[string]string) string {
+	pos := strings.TrimSpace(row["position"])
+	sign := "+"
+	if gap < 0 {
+		sign = ""
+	}
+	return fmt.Sprintf("Dell %s%d vs consensus — his %s%s, consensus %s%s",
+		sign, gap, pos, strings.TrimSpace(row["pos_rank"]), pos, strings.TrimSpace(row["ecr"]))
+}
 
 // GeneratorNamed finds a generator by set name.
 func GeneratorNamed(name string) (LeanGenerator, bool) {
