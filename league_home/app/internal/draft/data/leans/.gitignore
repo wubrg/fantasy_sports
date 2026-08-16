@@ -4,3 +4,6 @@
 *.yaml
 *.yml
 !mine.yaml
+# blank.yaml is a generic empty set (no reads), not derived from private
+# source data, so it is tracked — the research boards point `-leans` at it.
+!blank.yaml

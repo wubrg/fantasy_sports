@@ -5,7 +5,9 @@ BINS := leaguectl leaguebot leagueweb draftroom
 	leagueweb-install leagueweb-load leagueweb-unload leagueweb-restart leagueweb-status \
 	leagueweb-serve-mount leagueweb-serve-unmount leagueweb-serve-status \
 	draftroom-install draftroom-load draftroom-unload draftroom-restart draftroom-status \
-	draftroom-serve-mount draftroom-serve-unmount draftroom-serve-status
+	draftroom-serve-mount draftroom-serve-unmount draftroom-serve-status \
+	draftroom-sam-install draftroom-sam-load draftroom-sam-unload draftroom-sam-restart draftroom-sam-status \
+	draftroom-sam-serve-mount draftroom-sam-serve-unmount
 
 build: ## Build leaguectl, leaguebot, leagueweb, and draftroom binaries
 	go build -o leaguectl ./cmd/leaguectl
@@ -161,6 +163,35 @@ draftroom-serve-unmount: ## (macOS) Remove the /draftroom tailscale serve mount
 
 draftroom-serve-status: ## (macOS) Show current tailscale serve mappings
 	tailscale serve status
+
+## --- macOS-only: Sam's read-only research board (/draftroom/sam, :8084) ---
+## Same shape as the draftroom targets above, bound to Sam's owner id with a
+## blank lean set. A second board for researching his team; not a live-draft
+## board of your own.
+
+SAM_PLIST := com.draftroom-sam.serve.plist
+SAM_PLIST_DEST := $(HOME)/Library/LaunchAgents/$(SAM_PLIST)
+
+draftroom-sam-install: ## (macOS) Copy Sam's board plist into ~/Library/LaunchAgents
+	cp com.draftroom-sam.serve.plist.template $(SAM_PLIST_DEST)
+	@echo "$(SAM_PLIST_DEST) copied. Paths and Sam's owner ID are pre-filled for this checkout; edit if either differs, then: make draftroom-sam-load"
+
+draftroom-sam-load: ## (macOS) launchctl load Sam's board launch agent
+	launchctl load $(SAM_PLIST_DEST)
+
+draftroom-sam-unload: ## (macOS) launchctl unload Sam's board launch agent
+	launchctl unload $(SAM_PLIST_DEST)
+
+draftroom-sam-restart: draftroom-sam-unload draftroom-sam-load ## (macOS) unload then load Sam's board launch agent
+
+draftroom-sam-status: ## (macOS) Show whether Sam's board launch agent is loaded
+	launchctl list | grep com.draftroom-sam.serve || echo "not loaded"
+
+draftroom-sam-serve-mount: ## (macOS) Mount Sam's board at /draftroom/sam via tailscale serve
+	tailscale serve --bg --set-path=/draftroom/sam localhost:8084
+
+draftroom-sam-serve-unmount: ## (macOS) Remove the /draftroom/sam tailscale serve mount
+	tailscale serve --set-path=/draftroom/sam off
 
 ## --- macOS-only: leagueweb persistence via launchd + tailscale serve ---
 ## Not exercised by `check`. See ../../league_home/README.md ("Running it
