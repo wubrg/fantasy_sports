@@ -72,6 +72,12 @@ type PlayerSignals struct {
 	// Distinct from ECR below, which is Subvertadown's industry-deviation
 	// flag. These two never share a code path.
 	SharpRankDelta int
+	// DellDelta is Chris Dell's positional-rank gap from consensus: positive
+	// where this one trusted expert rates the player above the field. Same
+	// sign and shape as SharpRankDelta, but one named sharp rather than the
+	// most-accurate subset, so it earns its own flag. Zero is agreement or no
+	// coverage.
+	DellDelta int
 	// ScarcityPct is the fraction of positive value left at the position
 	// after this player goes. Lower means the position is drying up.
 	ScarcityPct float64
@@ -161,6 +167,18 @@ func (p PlayerSignals) Sharp() SharpState {
 	return SharpNone
 }
 
+// DellSharp reports Chris Dell's read, using the same threshold his generated
+// lean set does so the flag and the set agree about who counts.
+func (p PlayerSignals) DellSharp() SharpState {
+	switch {
+	case p.DellDelta >= dellSharpThreshold:
+		return SharpUp
+	case p.DellDelta <= -dellSharpThreshold:
+		return SharpDown
+	}
+	return SharpNone
+}
+
 // SignalInputs are the assembled sources a board is built from.
 type SignalInputs struct {
 	// Values come from Solve against the live pool.
@@ -190,6 +208,9 @@ type SignalInputs struct {
 	// preferences. A player on one gets the "rich offense" trait. Empty when
 	// none are named, which adds no traits.
 	Offenses map[string]bool
+	// DellSharp is Chris Dell's rank-vs-consensus gap per player ID. Empty
+	// when his source is absent, which shows no dell flags.
+	DellSharp map[string]int
 	// RecommendedBid is the most you can pay for any one player before the
 	// rest of your roster is at risk. It is the hard ceiling on a must-have's
 	// swing-based default cap — see WalkAway — not the must-have price itself.
@@ -260,6 +281,7 @@ func BuildSignals(in SignalInputs) []PlayerSignals {
 		if fp, ok := in.FantasyPros[v.PlayerID]; ok {
 			p.FPValue, p.ECRRank, p.SharpRankDelta = fp.Value, fp.Rank, fp.SharpDelta
 		}
+		p.DellDelta = in.DellSharp[v.PlayerID]
 		if s, ok := in.Availability[v.PlayerID]; ok {
 			p.Availability = s
 		}
