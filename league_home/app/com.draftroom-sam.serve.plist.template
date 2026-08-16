@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.draftroom-sam.serve</string>
+
+    <!-- A read-only research board for Sam's team, on its own port and served
+         at /draftroom/sam. `-leans blank` shows the pure model valuation of
+         his roster with none of your reads overlaid. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/adamwieberg/adori/fantasy_sports/league_home/app/draftroom</string>
+        <string>serve</string>
+        <string>-addr</string>
+        <string>:8084</string>
+        <string>-leans</string>
+        <string>blank</string>
+    </array>
+
+    <!-- DRAFTROOM_OWNER_ID is Sam's Sleeper owner ID, which makes this board
+         his: his budget, his keepers (Odunze/Flowers), his roster. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>DRAFTROOM_OWNER_ID</key>
+        <string>467790106363686912</string>
+        <key>DRAFTROOM_CONFIG_DIR</key>
+        <string>/Users/adamwieberg/adori/fantasy_sports/league_home/app/internal/draft/data</string>
+        <key>DRAFTROOM_DATA_DIR</key>
+        <string>/Users/adamwieberg/adori/fantasy_sports_data</string>
+    </dict>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/adamwieberg/adori/fantasy_sports/league_home/app</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/draftroom-sam.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/draftroom-sam.error.log</string>
+</dict>
+</plist>

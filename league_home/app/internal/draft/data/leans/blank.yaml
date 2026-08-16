@@ -1,0 +1,6 @@
+# Intentionally empty — a lean set with no reads.
+#
+# Point a board at it with `-leans blank` to show the pure model valuation,
+# with none of your own up/down/must/favorites overlaid. Used for the
+# read-only research boards of other managers' teams (e.g. /draftroom/sam),
+# where your convictions are not the point.
