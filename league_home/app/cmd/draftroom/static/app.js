@@ -395,6 +395,7 @@ function drawRows() {
       <td>${esc(p.Name)}</td>
       <td class="pos pos-${esc(p.Position)}">${esc(p.Position)}</td>
       <td class="num ecr" title="FantasyPros expert-consensus positional rank">${p.ECRRank ? esc(p.Position) + p.ECRRank : "—"}</td>
+      <td class="num bc" title="Boris Chen half-PPR tier (within position; 1 is best)">${p.BorisTier ? "T" + p.BorisTier : "—"}</td>
       <td class="num">${p.Cost ? money(p.Cost) : "—"}</td>
       <td class="num">${money(p.Value)}</td>
       <td class="num fp" title="FantasyPros second projection, re-solved into dollars against the same pool">${p.FPValue ? money(p.FPValue) : "—"}</td>

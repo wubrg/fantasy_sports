@@ -56,7 +56,7 @@ if (!location.pathname.endsWith("/")) {
     <table id="board">
       <thead>
         <tr>
-          <th>Player</th><th>Pos</th><th class="num">ECR</th>
+          <th>Player</th><th>Pos</th><th class="num">ECR</th><th class="num">BC</th>
           <th class="num">Cost</th><th class="num">Value</th><th class="num">FP</th>
           <th class="num">Edge</th><th class="num">vs Pos</th>
           <th class="num">My Max</th><th class="num">PS%</th>
@@ -115,7 +115,10 @@ if (!location.pathname.endsWith("/")) {
       dollars against the same pool as <strong>Value</strong>, so the two are a
       like-for-like second opinion &mdash; where they diverge is what a single
       number would hide. QB interceptions are estimated (FantasyPros omits
-      them), so QB FP is modelled, not published.</p>
+      them), so QB FP is modelled, not published.
+      <strong>BC</strong> is Boris Chen's half-PPR tier (within position, 1 is
+      best) &mdash; a second opinion on tiering from a mixture model over expert
+      consensus, beside our own gap-based tiers.</p>
     </section>
     <section>
       <h2>Price lines</h2>
