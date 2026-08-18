@@ -30,6 +30,12 @@ let affordableOnly = false;
 let positions = new Set();
 let aboveReplacementOnly = false;
 
+// Sort state, kept here for the same reason as the filters above: the poll
+// rebuilds the table every two seconds and would otherwise drop what you
+// clicked. null sortKey means the server's own order — most expensive first.
+let sortKey = null;
+let sortDir = null;
+
 // Player IDs currently on the scratch roster, so board rows can show it.
 function scratchIDs() {
   if (!scratch) return new Set();
@@ -128,6 +134,68 @@ function baselineSpread(p) {
 function adjustedEdge(p) {
   const bias = (snap.bias || {})[p.Position] || 0;
   return (p.Value - p.Cost) - bias;
+}
+
+// Click-to-sort. Each column reads one value off a player, says whether it is
+// a number or a name, and carries the direction its first click should take —
+// best-first for ranks and tiers, biggest-first for dollars and points. value
+// returns null for a cell the board draws as "—"; those always sort last, so a
+// player Boris never tiered does not masquerade as tier zero at the top.
+const SORT_COLS = {
+  name:  { value: p => p.Name, type: "str", dir: "asc" },
+  pos:   { value: p => p.Position, type: "str", dir: "asc" },
+  ecr:   { value: p => p.ECRRank || null, type: "num", dir: "asc" },
+  bc:    { value: p => p.BorisTier || null, type: "num", dir: "asc" },
+  cost:  { value: p => p.Cost || null, type: "num", dir: "desc" },
+  value: { value: p => p.Value, type: "num", dir: "desc" },
+  fp:    { value: p => p.FPValue || null, type: "num", dir: "desc" },
+  edge:  { value: p => (p.Cost ? p.Value - p.Cost : null), type: "num", dir: "desc" },
+  vspos: { value: p => (p.Cost ? adjustedEdge(p) : null), type: "num", dir: "desc" },
+  mymax: { value: p => (p.MyMaxBid > 0 ? p.MyMaxBid : null), type: "num", dir: "desc" },
+  ps:    { value: p => p.ScarcityPct || null, type: "num", dir: "desc" },
+};
+
+// compareBy sorts by one column. Missing cells sink to the bottom whichever way
+// the column points; a real tie keeps the server's order, since Array.sort is
+// stable and the list arrives most-expensive-first.
+function compareBy(col, dir) {
+  return (a, b) => {
+    const av = col.value(a), bv = col.value(b);
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    const c = col.type === "str"
+      ? String(av).localeCompare(String(bv))
+      : av - bv;
+    return dir === "desc" ? -c : c;
+  };
+}
+
+// cycleSort steps one header through default direction, its opposite, then off
+// (back to the server's order). Clicking a different header starts it fresh at
+// that column's own default direction.
+function cycleSort(key) {
+  const col = SORT_COLS[key];
+  if (!col) return;
+  if (sortKey !== key) {
+    sortKey = key;
+    sortDir = col.dir;
+  } else if (sortDir === col.dir) {
+    sortDir = col.dir === "asc" ? "desc" : "asc";
+  } else {
+    sortKey = null;
+    sortDir = null;
+  }
+  drawSortIndicators();
+  drawRows();
+}
+
+// drawSortIndicators marks the active header so the caret matches the order.
+function drawSortIndicators() {
+  for (const th of document.querySelectorAll("#board thead th[data-sort]")) {
+    th.classList.toggle("sorted-asc", th.dataset.sort === sortKey && sortDir === "asc");
+    th.classList.toggle("sorted-desc", th.dataset.sort === sortKey && sortDir === "desc");
+  }
 }
 
 function draw() {
@@ -378,6 +446,9 @@ function drawRows() {
     if (aboveReplacementOnly && !aboveReplacement(p)) return false;
     return true;
   });
+  // Sort before the cap, so the 120 that survive it are the top of the order
+  // you asked for rather than the top of the server's.
+  if (sortKey) matched.sort(compareBy(SORT_COLS[sortKey], sortDir));
   const rows = matched.slice(0, ROW_CAP);
   drawCounts(matched, rows.length);
 
@@ -767,6 +838,12 @@ document.getElementById("posfilter").addEventListener("click", ev => {
   drawRows();
 });
 
+// Click a column header to sort by it; cycleSort handles the direction cycle.
+document.querySelector("#board thead").addEventListener("click", ev => {
+  const th = ev.target.closest("th[data-sort]");
+  if (th) cycleSort(th.dataset.sort);
+});
+
 document.addEventListener("keydown", ev => {
   const search = document.getElementById("search");
   if (ev.key === "/" && document.activeElement !== search) {
@@ -781,10 +858,13 @@ document.addEventListener("keydown", ev => {
     positions.clear();
     affordableOnly = false;
     aboveReplacementOnly = false;
+    sortKey = null;
+    sortDir = null;
     document.getElementById("affordable").checked = false;
     document.getElementById("above").checked = false;
     search.blur();
     drawPosFilter();
+    drawSortIndicators();
     drawRows();
   }
 });
