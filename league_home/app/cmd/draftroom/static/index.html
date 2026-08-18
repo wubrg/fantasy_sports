@@ -53,6 +53,15 @@ if (!location.pathname.endsWith("/")) {
       <label class="toggle"><input type="checkbox" id="above"> only above replacement</label>
       <span class="hint" id="hint"></span>
     </div>
+    <div class="criteria hidden" id="criteria">
+      <span class="crit-note">only show players matching</span>
+      <span class="crit-group">AAV $<input type="number" min="0" id="crit-aav-min" placeholder="min"><span class="dash">&ndash;</span><input type="number" min="0" id="crit-aav-max" placeholder="max"></span>
+      <span class="crit-group">Tier<input type="number" min="1" id="crit-tier-min" placeholder="min"><span class="dash">&ndash;</span><input type="number" min="1" id="crit-tier-max" placeholder="max"></span>
+      <span class="crit-group">Cost $<input type="number" min="0" id="crit-cost-min" placeholder="min"><span class="dash">&ndash;</span><input type="number" min="0" id="crit-cost-max" placeholder="max"></span>
+      <span class="crit-traits" id="crit-traits"></span>
+      <button class="crit-mode" id="crit-trait-mode" data-mode="any" title="match ANY selected trait — click to require ALL">any</button>
+      <button class="crit-clear" id="crit-clear">clear</button>
+    </div>
     <table id="board">
       <thead>
         <tr>

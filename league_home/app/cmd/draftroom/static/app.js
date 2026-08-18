@@ -36,6 +36,17 @@ let aboveReplacementOnly = false;
 let sortKey = null;
 let sortDir = null;
 
+// Research-mode criteria filters. They narrow the board to players who fall
+// inside a range or carry a trait, and apply only while a keeper scenario is
+// active — a research-only gate so the draft-night board is never quietly
+// filtered by a range you set and forgot.
+const TRAITS = ["floor", "redzone", "upside", "targets", "bellcow", "discounted", "offense"];
+let critAAV = { min: null, max: null };
+let critTier = { min: null, max: null };
+let critCost = { min: null, max: null };
+let critTraits = new Set();
+let critTraitMode = "any"; // "any" | "all"
+
 // Player IDs currently on the scratch roster, so board rows can show it.
 function scratchIDs() {
   if (!scratch) return new Set();
@@ -268,6 +279,7 @@ function drawResearch() {
   document.body.classList.toggle("research", research);
   document.getElementById("research-badge").classList.toggle("hidden", !research);
   document.getElementById("scenario-wrap").classList.toggle("hidden", !research);
+  document.getElementById("criteria").classList.toggle("hidden", !research);
   const teams = document.getElementById("teams-panel");
   teams.classList.toggle("hidden", !research);
   // Restore the collapsed choice whenever the panel reappears.
@@ -427,8 +439,48 @@ function aboveReplacement(p) {
   return p.CielyPoints >= s.Threshold;
 }
 
+// Research mode is any active keeper scenario — the same field drawResearch
+// derives the whole mode from. The criteria filters only bite here.
+function researchActive() {
+  return (snap && (snap.keeperScenario || "")) !== "";
+}
+
+// inRange keeps a player whose value sits within a set window. A player with no
+// value in the field (0/"—") falls outside any window you set on purpose: "no
+// AAV" is not "inside an AAV range", so a range excludes him rather than
+// letting a zero pass as the low end.
+function inRange(v, r) {
+  if (r.min == null && r.max == null) return true;
+  if (!v) return false;
+  if (r.min != null && v < r.min) return false;
+  if (r.max != null && v > r.max) return false;
+  return true;
+}
+
+function traitMatch(p) {
+  if (!critTraits.size) return true;
+  const has = new Set(p.Traits || []);
+  const sel = [...critTraits];
+  return critTraitMode === "all" ? sel.every(t => has.has(t)) : sel.some(t => has.has(t));
+}
+
+function critActive() {
+  return critAAV.min != null || critAAV.max != null ||
+    critTier.min != null || critTier.max != null ||
+    critCost.min != null || critCost.max != null ||
+    critTraits.size > 0;
+}
+
+function meetsCriteria(p) {
+  return inRange(p.AAV, critAAV) &&
+    inRange(p.BorisTier, critTier) &&
+    inRange(p.Cost, critCost) &&
+    traitMatch(p);
+}
+
 function anyFilter() {
-  return positions.size > 0 || filter !== "" || affordableOnly || aboveReplacementOnly;
+  return positions.size > 0 || filter !== "" || affordableOnly || aboveReplacementOnly ||
+    (researchActive() && critActive());
 }
 
 function drawRows() {
@@ -444,6 +496,9 @@ function drawRows() {
     if (needle && !p.Name.toLowerCase().includes(needle)) return false;
     if (affordableOnly && p.MyMaxBid > snap.maxBid) return false;
     if (aboveReplacementOnly && !aboveReplacement(p)) return false;
+    // Research-only criteria, gated so the draft-night board is never filtered
+    // by a range left over from a research session.
+    if (researchActive() && !meetsCriteria(p)) return false;
     return true;
   });
   // Sort before the cap, so the 120 that survive it are the top of the order
@@ -517,6 +572,29 @@ function drawPosFilter() {
   document.getElementById("posfilter").innerHTML = POSITIONS.map(pos =>
     `<button class="pospill pos-${pos}${positions.has(pos) ? " on" : ""}"` +
     ` data-pos="${pos}">${pos}</button>`).join("");
+}
+
+// The research-mode trait chips, mirroring the position pills: outline off,
+// filled on.
+function drawCritTraits() {
+  document.getElementById("crit-traits").innerHTML = TRAITS.map(t =>
+    `<button class="critpill trait-${t}${critTraits.has(t) ? " on" : ""}"` +
+    ` data-trait="${t}">${t}</button>`).join("");
+}
+
+// clearCriteria resets every range and trait, and the inputs that hold them, so
+// one gesture (the clear button or Escape) empties the whole panel. The any/all
+// mode is a preference, not a filter value, so it is left alone.
+function clearCriteria() {
+  critAAV = { min: null, max: null };
+  critTier = { min: null, max: null };
+  critCost = { min: null, max: null };
+  critTraits.clear();
+  for (const id of ["crit-aav-min", "crit-aav-max", "crit-tier-min",
+    "crit-tier-max", "crit-cost-min", "crit-cost-max"]) {
+    document.getElementById(id).value = "";
+  }
+  drawCritTraits();
 }
 
 function drawMini(id, pairs) {
@@ -844,6 +922,50 @@ document.querySelector("#board thead").addEventListener("click", ev => {
   if (th) cycleSort(th.dataset.sort);
 });
 
+// ---- research criteria filters ---------------------------------------
+
+function numOrNull(el) {
+  const v = el.value.trim();
+  if (v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+// bindRange keeps a {min,max} object in step with its two inputs.
+function bindRange(minId, maxId, obj) {
+  const update = () => {
+    obj.min = numOrNull(document.getElementById(minId));
+    obj.max = numOrNull(document.getElementById(maxId));
+    drawRows();
+  };
+  document.getElementById(minId).addEventListener("input", update);
+  document.getElementById(maxId).addEventListener("input", update);
+}
+bindRange("crit-aav-min", "crit-aav-max", critAAV);
+bindRange("crit-tier-min", "crit-tier-max", critTier);
+bindRange("crit-cost-min", "crit-cost-max", critCost);
+
+document.getElementById("crit-traits").addEventListener("click", ev => {
+  const pill = ev.target.closest("button[data-trait]");
+  if (!pill) return;
+  const t = pill.dataset.trait;
+  if (critTraits.has(t)) critTraits.delete(t); else critTraits.add(t);
+  drawCritTraits();
+  drawRows();
+});
+
+document.getElementById("crit-trait-mode").addEventListener("click", ev => {
+  critTraitMode = critTraitMode === "any" ? "all" : "any";
+  ev.currentTarget.dataset.mode = critTraitMode;
+  ev.currentTarget.textContent = critTraitMode;
+  drawRows();
+});
+
+document.getElementById("crit-clear").addEventListener("click", () => {
+  clearCriteria();
+  drawRows();
+});
+
 document.addEventListener("keydown", ev => {
   const search = document.getElementById("search");
   if (ev.key === "/" && document.activeElement !== search) {
@@ -860,6 +982,7 @@ document.addEventListener("keydown", ev => {
     aboveReplacementOnly = false;
     sortKey = null;
     sortDir = null;
+    clearCriteria();
     document.getElementById("affordable").checked = false;
     document.getElementById("above").checked = false;
     search.blur();
@@ -870,6 +993,7 @@ document.addEventListener("keydown", ev => {
 });
 
 drawPosFilter();
+drawCritTraits();
 
 // ---- polling ---------------------------------------------------------
 

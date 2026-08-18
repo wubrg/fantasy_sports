@@ -146,6 +146,57 @@ main {
   color: var(--bg);
 }
 
+/* Research-mode criteria row: range inputs + trait chips that narrow the board
+   to players worth sampling. Scoped to :not(.hidden) so the global .hidden rule
+   still wins outside research (see drawResearch). */
+.criteria:not(.hidden) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+  margin: -0.2rem 0 0.7rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.85rem;
+  color: var(--dim);
+}
+.crit-note { font-style: italic; }
+.crit-group { display: inline-flex; align-items: center; gap: 0.3rem; }
+.criteria input[type="number"] {
+  width: 3.4rem;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.85rem;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.criteria input[type="number"]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.criteria .dash { color: var(--dim); }
+.crit-traits { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; }
+.critpill {
+  padding: 0.2rem 0.5rem;
+  font: 600 0.8rem/1 inherit;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.critpill:hover { border-color: var(--accent); }
+.critpill.on { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.crit-mode, .crit-clear {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.8rem;
+  background: var(--panel);
+  color: var(--dim);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.crit-mode { text-transform: uppercase; letter-spacing: 0.04em; min-width: 2.6rem; }
+.crit-clear:hover, .crit-mode:hover { border-color: var(--accent); color: var(--text); }
+
 table { width: 100%; border-collapse: collapse; }
 
 th {
