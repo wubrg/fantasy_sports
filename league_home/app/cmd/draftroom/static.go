@@ -58,6 +58,10 @@ type staticData struct {
 	// dellSharp is Chris Dell's rank-vs-consensus gap per player ID, for the
 	// dell+/dell- flag. Empty when his source is absent.
 	dellSharp map[string]int
+	// borisTier is Boris Chen's within-position half-PPR tier per player ID,
+	// shown on the web board beside our own gap-based tiering. Empty when his
+	// source is absent.
+	borisTier map[string]int
 
 	availability map[string]string
 	// team maps a player ID to his NFL team abbreviation, from the Sleeper
@@ -248,6 +252,14 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	s.dellSharp = dellSharp
 	if dellWarn != "" {
 		s.warnings = append(s.warnings, dellWarn)
+	}
+
+	// Boris Chen's half-PPR tiers, resolved through the same matcher. Absent
+	// is fine — the board simply shows no Boris tier.
+	borisTier, borisWarn := loadBorisChenTiers(root.Normalized("borischen-2026.csv"), s.playerIDByName)
+	s.borisTier = borisTier
+	if borisWarn != "" {
+		s.warnings = append(s.warnings, borisWarn)
 	}
 
 	// Pinned now that the projection set is complete, and never
@@ -473,7 +485,7 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans, keeperScena
 		CielyPoints: s.points, Teams: s.team, Availability: s.availability,
 		Leans: leans, Traits: s.traits, RecommendedBid: recommended,
 		FantasyPros: fantasyPros, Offenses: s.prefs.OffenseSet(),
-		DellSharp: s.dellSharp,
+		DellSharp: s.dellSharp, BorisTier: s.borisTier,
 	})
 	snap := draft.Assemble(s.season, state, me, players, leans, s.tempo(taken, costs), s.thresholds, append(append([]string(nil), s.warnings...), s.leanWarnings...))
 	snap.LeanSets = s.leanSets

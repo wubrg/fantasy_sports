@@ -78,6 +78,12 @@ type PlayerSignals struct {
 	// most-accurate subset, so it earns its own flag. Zero is agreement or no
 	// coverage.
 	DellDelta int
+	// BorisTier is Boris Chen's within-position half-PPR tier (1 is best).
+	// A second opinion on tiering, kept beside our own gap-based tiers rather
+	// than blended: his tiers come from a mixture model over expert consensus,
+	// ours from dollar-value gaps, and where the two disagree is worth a look.
+	// Zero means his list did not cover the player. Shown on the web board only.
+	BorisTier int
 	// ScarcityPct is the fraction of positive value left at the position
 	// after this player goes. Lower means the position is drying up.
 	ScarcityPct float64
@@ -211,6 +217,9 @@ type SignalInputs struct {
 	// DellSharp is Chris Dell's rank-vs-consensus gap per player ID. Empty
 	// when his source is absent, which shows no dell flags.
 	DellSharp map[string]int
+	// BorisTier is Boris Chen's within-position half-PPR tier per player ID.
+	// Empty when his source is absent, which shows no Boris tier.
+	BorisTier map[string]int
 	// RecommendedBid is the most you can pay for any one player before the
 	// rest of your roster is at risk. It is the hard ceiling on a must-have's
 	// swing-based default cap — see WalkAway — not the must-have price itself.
@@ -282,6 +291,7 @@ func BuildSignals(in SignalInputs) []PlayerSignals {
 			p.FPValue, p.ECRRank, p.SharpRankDelta = fp.Value, fp.Rank, fp.SharpDelta
 		}
 		p.DellDelta = in.DellSharp[v.PlayerID]
+		p.BorisTier = in.BorisTier[v.PlayerID]
 		if s, ok := in.Availability[v.PlayerID]; ok {
 			p.Availability = s
 		}

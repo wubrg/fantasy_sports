@@ -110,6 +110,15 @@ refresh: ## Re-extract every source from the private data repo and rebuild gener
 	@python3 $(TOOLS)/extract_fantasypros.py \
 		$$(ls -d $(DATA)/raw/fantasypros/*/ | tail -1) \
 		$(DATA)/normalized/fantasypros-2026.csv
+	@echo "==> Boris Chen (half-PPR tiers)"
+	@mkdir -p $(DATA)/raw/borischen/$$(date +%F)
+	@for f in text_QB.txt text_RB-HALF.txt text_WR-HALF.txt text_TE-HALF.txt; do \
+		curl -fsS "https://s3-us-west-1.amazonaws.com/fftiers/out/$$f" \
+			-o $(DATA)/raw/borischen/$$(date +%F)/$$f || echo "  WARN: $$f fetch failed"; \
+	done
+	@python3 $(TOOLS)/extract_borischen.py \
+		$$(ls -d $(DATA)/raw/borischen/*/ | tail -1) \
+		$(DATA)/normalized/borischen-2026.csv
 	@echo "==> generated lean sets"
 	@$(MAKE) --no-print-directory leans-generate
 

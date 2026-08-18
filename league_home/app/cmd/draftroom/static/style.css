@@ -210,7 +210,7 @@ tr.unaffordable td { opacity: 0.38; }
 
 /* The FantasyPros columns are a second opinion, not the primary board, so
    they sit a shade quieter than Cost/Value. */
-td.ecr, td.fp { color: var(--dim); }
+td.ecr, td.fp, td.bc { color: var(--dim); }
 
 /* A blocked row is off *your* board — your one-per-offense / no-handcuff
    preferences already spent that offense. Dimmed by colour rather than
