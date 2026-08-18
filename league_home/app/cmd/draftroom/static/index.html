@@ -39,6 +39,7 @@ if (!location.pathname.endsWith("/")) {
     </select>
   </label>
   <span class="research-badge hidden" id="research-badge">RESEARCH &mdash; hypothetical pool, keepers removed</span>
+  <button id="guidebtn" class="guide-btn" title="what every number on this screen means &mdash; press ?">?</button>
 </div>
 
 <div id="pivot" class="pivot hidden"></div>
@@ -69,7 +70,7 @@ if (!location.pathname.endsWith("/")) {
           <th class="num" data-sort="cost">Cost</th><th class="num" data-sort="value">Value</th><th class="num" data-sort="fp">FP</th>
           <th class="num" data-sort="edge">Edge</th><th class="num" data-sort="vspos">vs Pos</th>
           <th class="num" data-sort="mymax">My Max</th><th class="num" data-sort="ps">PS%</th>
-          <th>Flags</th><th class="sold-col"></th><th class="try-col"></th>
+          <th data-help="flags">Flags</th><th class="sold-col"></th><th class="try-col"></th>
         </tr>
       </thead>
       <tbody id="rows"></tbody>
@@ -80,15 +81,9 @@ if (!location.pathname.endsWith("/")) {
     <section id="kept-panel" class="kept hidden">
       <h2 id="kept-head" class="collapsible">Kept <span class="count" id="kept-count"></span></h2>
       <table class="mini kept-list" id="kept"></table>
-      <p class="note">Players the assumed keepers take off the auction, so the
-      board below is the pool you would actually bid into.
-      <span class="kept-lock">lock</span> is near-certain; the rest are marginal
-      and might slip back to the pool.</p>
     </section>
     <section id="teams-panel" class="teams hidden">
       <h2 id="teams-head" class="collapsible">Team sampling</h2>
-      <p class="note">Draw auction teams you could end up with from this pool at
-      market prices, on your budget and keepers.</p>
       <div class="teams-buttons">
         <button class="sample-btn" data-objective="strategy">Following my strategy</button>
         <button class="sample-btn" data-objective="leans-max">Maximizing my leans</button>
@@ -114,11 +109,60 @@ if (!location.pathname.endsWith("/")) {
     <section>
       <h2>Positional bias</h2>
       <table class="mini" id="bias"></table>
-      <p class="note">How much of every edge is about the position, not the
-      player. Subtracted in the <strong>vs Pos</strong> column.</p>
     </section>
     <section>
-      <h2>Second projection</h2>
+      <h2>Price lines</h2>
+      <table class="mini lines" id="pricelines"></table>
+    </section>
+    <section>
+      <h2>Scarcity</h2>
+      <table class="mini" id="scarcity"></table>
+    </section>
+    <section>
+      <h2>Recorded sales</h2>
+      <ul class="sold" id="soldlist"><li class="empty">none yet</li></ul>
+      <button id="undoall" class="undo">clear all</button>
+    </section>
+  </aside>
+</main>
+
+<footer>
+  <span id="status">loading&hellip;</span>
+  <button id="reloadleans" class="undo" title="Re-read the lean files from disk. Lean sets are loaded once at startup, so an edit made elsewhere — a notes vault, an editor — arrives when you ask for it.">reload leans</button>
+  <span class="keys"><kbd>?</kbd> field guide &middot; <kbd>/</kbd> search by name &middot;
+  <kbd>Esc</kbd> clear every filter &middot;
+  click <kbd>me</kbd> or <kbd>them</kbd> to record a sale</span>
+</footer>
+
+<div id="guide" class="guide hidden" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+  <div class="guide-backdrop" data-guide-close></div>
+  <div class="guide-panel">
+    <div class="guide-head">
+      <h2 id="guide-title">Field guide</h2>
+      <button class="guide-close" data-guide-close title="close &mdash; Esc">&times;</button>
+    </div>
+    <div class="guide-body">
+
+      <section>
+        <h3>The strip</h3>
+        <p class="note">The numbers along the top &mdash; the ones you glance at
+        mid-bid without leaning in.</p>
+        <table class="mini legend" id="guide-strip"></table>
+      </section>
+
+      <section>
+        <h3>Board columns</h3>
+        <p class="note">Three quantities, deliberately not blended: what it takes
+        to win him, what he is worth, and the gap between them. Cost and Value
+        answer different questions and diverge exactly where it matters &mdash;
+        collapsing them into one &ldquo;price&rdquo; would hide the only decision
+        worth making. Click any header to sort; click again to reverse, a third
+        time to drop back to the server&rsquo;s order.</p>
+        <table class="mini legend" id="guide-cols"></table>
+      </section>
+
+      <section>
+        <h3>Second projection</h3>
       <p class="note"><strong>ECR</strong> is FantasyPros' expert-consensus
       positional rank. <strong>FP</strong> is their projection re-solved into
       dollars against the same pool as <strong>Value</strong>, so the two are a
@@ -128,31 +172,11 @@ if (!location.pathname.endsWith("/")) {
       <strong>BC</strong> is Boris Chen's half-PPR tier (within position, 1 is
       best) &mdash; a second opinion on tiering from a mixture model over expert
       consensus, beside our own gap-based tiers.</p>
-    </section>
-    <section>
-      <h2>Price lines</h2>
-      <table class="mini lines" id="pricelines"></table>
-      <p class="note">What a bid buys at each position. The muted figure is
-      what this league has paid for that finish in past drafts. It says what
-      the money buys, not how a player will do &mdash; price rank and finish
-      rank correlate about +0.46 here, and top-five money landed a top-five
-      finish 28 times in 60.</p>
-    </section>
-    <section>
-      <h2>Scarcity</h2>
-      <table class="mini" id="scarcity"></table>
-      <p class="note">PS% is the share of value left at a position after its
-      best remaining player goes. <em>Startable</em> counts the players above
-      the position's replacement bar &mdash; the same players
-      <em>only above replacement</em> leaves on the board.
-      <em class="yours">N&nbsp;yours</em> is that count over your own board,
-      once your one-per-offense / no-handcuff preferences take the offenses
-      you already own a piece of off it; blocked players are flagged and
-      dimmed in the table.</p>
-    </section>
-    <section>
-      <h2>Legend</h2>
-      <table class="mini legend">
+      </section>
+
+      <section>
+        <h3>Flags and traits</h3>
+        <table class="mini legend">
         <tr class="grp"><td colspan="2">Your reads &mdash; click a pill on a row to change it</td></tr>
         <tr><td><span class="flag must">MUST</span></td>
           <td>Must-have: bid up to value + half his swing + $3, capped by roster
@@ -207,25 +231,171 @@ if (!location.pathname.endsWith("/")) {
         <tr><td><span class="flag trait trait-discounted">discounted</span></td>
           <td>Price suppressed by an injury tag. You buy the discount and the
           risk together.</td></tr>
-      </table>
-      <p class="note">Every pill a row can carry. Reads are yours to set;
-      the rest is context to glance at, not numbers to act on. Traits are
-      position-relative.</p>
-    </section>
-    <section>
-      <h2>Recorded sales</h2>
-      <ul class="sold" id="soldlist"><li class="empty">none yet</li></ul>
-      <button id="undoall" class="undo">clear all</button>
-    </section>
-  </aside>
-</main>
+              </table>
+        <p class="note">Every pill a row can carry. Reads are yours to set;
+        the rest is context to glance at, not numbers to act on. Traits are
+        position-relative &mdash; the bar is the median projection of the tier
+        the last starting slot falls in, not the projection of the player
+        sitting in that slot.</p>
+      </section>
 
-<footer>
-  <span id="status">loading&hellip;</span>
-  <button id="reloadleans" class="undo" title="Re-read the lean files from disk. Lean sets are loaded once at startup, so an edit made elsewhere — a notes vault, an editor — arrives when you ask for it.">reload leans</button>
-  <span class="keys"><kbd>/</kbd> search by name &middot; <kbd>Esc</kbd> clear every filter &middot;
-  click <kbd>me</kbd> or <kbd>them</kbd> to record a sale</span>
-</footer>
+      <section>
+        <h3>Modes</h3>
+        <table class="mini legend">
+          <tr><td><span class="guide-key">Draft night</span></td>
+            <td>The live pool as it stands. Sales you record come off the board
+            and every remaining price is re-solved against what is left. The
+            research criteria are hidden here on purpose, so the draft-night
+            board is never quietly filtered by a range you set and forgot.</td></tr>
+          <tr><td><span class="guide-key">Research</span></td>
+            <td>A hypothetical pool for working before draft night: keepers are
+            removed by assumption and the criteria row appears. The
+            <span class="research-badge">RESEARCH</span> badge is up whenever
+            what you are looking at is not the live board.</td></tr>
+          <tr class="grp"><td colspan="2">keepers assumed</td></tr>
+          <tr><td><span class="guide-key">none</span></td>
+            <td>Full pool &mdash; nobody kept. The widest board, and the one
+            furthest from what draft night will look like.</td></tr>
+          <tr><td><span class="guide-key">locks only</span></td>
+            <td>Only the near-certain keepers come out.</td></tr>
+          <tr><td><span class="guide-key">expected</span></td>
+            <td>Locks plus the marginal ones. The default, and the closest guess
+            at the pool you will actually bid into. Keepers remove demand and
+            supply at the same time, so this moves replacement level, not just
+            the player list.</td></tr>
+        </table>
+      </section>
+
+      <section>
+        <h3>Filters</h3>
+        <table class="mini legend">
+          <tr><td><span class="guide-key">search</span></td>
+            <td>By name. <kbd>/</kbd> puts the cursor in it from anywhere.</td></tr>
+          <tr><td><span class="guide-key">position pills</span></td>
+            <td>Click QB / RB / WR / TE to narrow to those positions; click again
+            to release. More than one can be on at once.</td></tr>
+          <tr><td><span class="guide-key">only what I can afford</span></td>
+            <td>Hides anyone whose <strong>My Max</strong> sits above your max
+            bid &mdash; what is still genuinely biddable, not merely cheap.</td></tr>
+          <tr><td><span class="guide-key">only above replacement</span></td>
+            <td>Hides players projecting below their position&rsquo;s replacement
+            bar. The same players the Scarcity panel counts as
+            <em>startable</em>.</td></tr>
+          <tr class="grp"><td colspan="2">Research criteria &mdash; research mode only</td></tr>
+          <tr><td><span class="guide-key">AAV $</span></td>
+            <td>The raw national average auction value. Not the same number as
+            <strong>Cost</strong>, which is that figure restated against this
+            room&rsquo;s money and slots.</td></tr>
+          <tr><td><span class="guide-key">Tier</span></td>
+            <td>Boris Chen&rsquo;s tier &mdash; the <strong>BC</strong> column.
+            1 is best, so a 1&ndash;3 range is the top of a position.</td></tr>
+          <tr><td><span class="guide-key">Cost $</span></td>
+            <td>The <strong>Cost</strong> column: what he goes for in this
+            room.</td></tr>
+          <tr><td><span class="guide-key">trait pills</span></td>
+            <td>Narrow to players carrying a trait. <em>offense</em> is
+            research-only and is not a measured trait like the rest.</td></tr>
+          <tr><td><span class="guide-key">any / all</span></td>
+            <td>Whether a player needs one of the selected traits or every one of
+            them. Click to switch.</td></tr>
+        </table>
+      </section>
+
+      <section>
+        <h3>The side panels</h3>
+        <table class="mini legend">
+          <tr><td><span class="guide-key">Kept</span></td>
+            <td>Players the assumed keepers take off the auction, so the board is
+            the pool you would actually bid into.
+            <span class="kept-lock">lock</span> is near-certain; the rest are
+            marginal and might slip back to the pool.</td></tr>
+          <tr><td><span class="guide-key">Team sampling</span></td>
+            <td>Draws auction teams you could end up with from this pool at market
+            prices, on your budget and keepers. Either following your strategy, or
+            maximising your leans.</td></tr>
+          <tr><td><span class="guide-key">Scratch roster</span></td>
+            <td>Hypothetical only &mdash; nothing on it touches the live board.
+            Click <kbd>+</kbd> on a row to try a player here. <strong>POPR</strong>
+            is the starting points above replacement the shape adds up to.</td></tr>
+          <tr><td><span class="guide-key">Positional bias</span></td>
+            <td>How much of every edge is about the position, not the player.
+            Ciely prices 29 tight ends above the floor against 13 in the market
+            and 12 starting spots, which lifts every TE and makes the whole
+            position look cheap. This median is subtracted in the
+            <strong>vs Pos</strong> column. Taken over contested players only
+            &mdash; the hundreds sitting at the $1 floor on both boards would
+            drag every position to nothing.</td></tr>
+          <tr><td><span class="guide-key">Price lines</span></td>
+            <td>What a bid buys at each position. The muted figure is what this
+            league has paid for that finish in past drafts. It says what the money
+            buys, not how a player will do &mdash; price rank and finish rank
+            correlate about +0.46 here, and top-five money landed a top-five
+            finish 28 times in 60.</td></tr>
+          <tr><td><span class="guide-key">Scarcity</span></td>
+            <td><em>Startable</em> counts the players above the position&rsquo;s
+            replacement bar &mdash; bodies are not the measure. 182 receivers left
+            in a room needing 43 more starters reads as the deepest position on
+            the board; only 40 projecting above replacement is the opposite
+            reading. The multiplier is that count against the starting spots still
+            to fill: under 1.00x the room is about to start replacement level
+            there. <em class="yours">N&nbsp;yours</em> is the same tally over your
+            own board, once your one-per-offense / no-handcuff preferences take
+            the offenses you already own a piece of off it.</td></tr>
+          <tr><td><span class="guide-key">Recorded sales</span></td>
+            <td>What has gone, and for how much. Every sale re-solves the board
+            against the money and players left.</td></tr>
+        </table>
+      </section>
+
+      <section>
+        <h3>What the numbers are and are not</h3>
+        <p class="note">Four sources measure genuinely different things, and the
+        board keeps them apart rather than blending them.</p>
+        <table class="mini legend">
+          <tr><td><span class="guide-key">Ciely</span></td>
+            <td>Produces <em>median</em> projections, which explicitly removes the
+            range of outcomes. His dollars are a linear map of those medians, so
+            they cannot see keeper inflation and they systematically underprice
+            upside. Use his ordering; do not read his dollars as prices. Values
+            under about $15 carry no information &mdash; his board floors there
+            while a real market has a long $1&ndash;3 tail.</td></tr>
+          <tr><td><span class="guide-key">Subvertadown</span></td>
+            <td>AAV is what humans actually pay, so it prices the range. Measured
+            against Ciely, the market pays about $5 more for players carrying an
+            industry upside flag and $9 less for contested ones.</td></tr>
+          <tr><td><span class="guide-key">FantasyPros</span></td>
+            <td>A second projection and an expert-consensus ranking, recomputed
+            under this league&rsquo;s scoring and re-solved into dollars as
+            <strong>FP</strong>. Its top-10/20 most-accurate-expert subsets ship
+            alongside consensus, which is what the <em>sharp&plusmn;</em> flags
+            read.</td></tr>
+          <tr><td><span class="guide-key">Big 3</span></td>
+            <td>Ranks upside <em>at cost</em>, not absolute quality. Players
+            already priced for their upside are absent from that list because
+            they are priced for it, not because they failed to qualify.</td></tr>
+        </table>
+        <p class="note">There is <strong>no inflation multiplier</strong> anywhere
+        in this tool. Prices are re-solved from the money and players actually
+        left in the room, and keeper inflation falls out of that automatically.
+        A scalar gets two things wrong that this does not: a $1 player cannot
+        absorb inflation, so surplus has to concentrate at the top of the board;
+        and removing players moves replacement level, which shifts value
+        additively within a position rather than scaling it.</p>
+      </section>
+
+      <section>
+        <h3>Keys</h3>
+        <table class="mini legend">
+          <tr><td><span class="guide-key"><kbd>?</kbd></span></td><td>This guide. <kbd>Esc</kbd> closes it and leaves your filters alone.</td></tr>
+          <tr><td><span class="guide-key"><kbd>/</kbd></span></td><td>Jump to the search box.</td></tr>
+          <tr><td><span class="guide-key"><kbd>Esc</kbd></span></td><td>Clear every filter at once &mdash; the key you hit when a name is called and the board is showing the wrong slice of players.</td></tr>
+          <tr><td><span class="guide-key">click</span></td><td><kbd>me</kbd> or <kbd>them</kbd> records a sale; <kbd>+</kbd> tries a player on the scratch roster; a read pill cycles your lean.</td></tr>
+        </table>
+      </section>
+
+    </div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>
