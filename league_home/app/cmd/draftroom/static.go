@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -159,10 +158,6 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 		return nil, err
 	}
 
-	ciely, err := draft.LoadSourceCSV(root.Normalized("ciely-2026.csv"), draft.CielyColumns)
-	if err != nil {
-		return nil, err
-	}
 	sv, err := draft.LoadSourceCSV(root.Normalized("subvertadown-2026.csv"), draft.SubvertadownColumns)
 	if err != nil {
 		return nil, err
@@ -182,23 +177,24 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 
 	idx := draft.BuildPlayerIndexWithAliases(info, aliases)
 	var warnings []string
-	if bad := idx.Resolve(ciely); len(bad) > 0 {
-		warnings = append(warnings, fmt.Sprintf("%d Ciely rows unmatched", len(bad)))
+	// Projection sources — the sheets solved into comparable dollar values —
+	// load from the registry rather than by name here; adding one is an entry
+	// in draft.ProjectionSources, and which sheet is the backbone is its Role.
+	// Subvertadown stays separate: it is VBD baselines plus a market AAV, a
+	// different shape the registry deliberately does not carry.
+	proj, err := draft.LoadProjections(root.Normalized, idx)
+	if err != nil {
+		return nil, err
 	}
+	warnings = append(warnings, proj.PrimaryWarnings...)
 	if bad := idx.Resolve(sv); len(bad) > 0 {
 		warnings = append(warnings, fmt.Sprintf("%d Subvertadown rows unmatched", len(bad)))
 	}
-	fp, fpWarn := loadFantasyPros(root.Normalized("fantasypros-2026.csv"))
-	if fpWarn != "" {
-		warnings = append(warnings, fpWarn)
-	}
-	if bad := idx.Resolve(fp); len(bad) > 0 {
-		warnings = append(warnings, fmt.Sprintf("%d FantasyPros rows unmatched", len(bad)))
-	}
+	warnings = append(warnings, proj.SecondWarnings...)
 
 	s := &staticData{
 		client: c, ownerID: ownerID, season: season, warnings: warnings,
-		leans: leans, subvert: sv, points: map[string]float64{},
+		leans: leans, subvert: sv, points: proj.Points,
 		leanSets:     setNames(sets),
 		minePath:     writableSetPath(cfg, sets),
 		availability: map[string]string{}, keeperOf: map[string]int{},
@@ -212,31 +208,13 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	s.shape.Teams, s.shape.Baseline = s.teams, baseline
 	s.fullDollars, s.fullSlots = s.teams*s.budget, s.teams*14
 
-	for _, r := range ciely {
-		if r.PlayerID == "" || r.Position == "DST" {
-			continue
-		}
-		s.points[r.PlayerID] = r.Points
-		s.projections = append(s.projections, draft.Projection{
-			PlayerID: r.PlayerID, Name: r.Player, Position: r.Position, Points: r.Points,
-		})
-	}
-	// The FantasyPros consensus rows are the second projection. Only the
-	// consensus baseline carries the sharp-expert move against the top-10/20
-	// subsets; the subset rows themselves are that comparison's other half and
-	// are not put on the board. DST is excluded to match the Ciely set, so
-	// both projections apportion the same membership when re-solved.
-	for _, r := range fp {
-		if r.PlayerID == "" || r.Position == "DST" || strings.ToLower(r.Baseline) != "consensus" {
-			continue
-		}
-		s.fpProjections = append(s.fpProjections, draft.Projection{
-			PlayerID: r.PlayerID, Name: r.Player, Position: r.Position, Points: r.Points,
-		})
-		s.fpRank[r.PlayerID] = r.PosRank
-		if d := r.SharpDelta(); d != 0 {
-			s.fpSharp[r.PlayerID] = d
-		}
+	// The primary source is the board's projection backbone; each second
+	// opinion is re-solved against the same pool in Build for a comparable
+	// value. FPValue carries a single second opinion today, so the last one
+	// registered wins — see the scope note on ProjectionData.
+	s.projections = proj.Projections
+	for _, so := range proj.SecondOpinions {
+		s.fpProjections, s.fpRank, s.fpSharp = so.Projections, so.Rank, so.Sharp
 	}
 	// Now that the pool exists, reads can be matched to it. A lean is
 	// applied by name, and the pool is spelled the projection source's way,
@@ -276,7 +254,7 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 	// recomputed: replacement level measured against the pool that remains
 	// falls as the pool empties, so a count above it could never drop.
 	s.baselines = draft.ScoringBaselines(s.projections, s.shape)
-	s.traits = classifyTraits(ciely, sv, info, s.shape)
+	s.traits = classifyTraits(proj.PrimaryRows, sv, info, s.shape)
 	s.priceHistory = draft.HistoricalPriceLines(seasons, func(id string) string {
 		return info[id].Position
 	}, minSpendForUsableSeason)
@@ -727,25 +705,6 @@ func poolNames(projections []draft.Projection) []string {
 		out = append(out, p.Name)
 	}
 	return out
-}
-
-// loadFantasyPros reads the FantasyPros second-projection source if present.
-//
-// Optional on purpose: unlike Ciely and Subvertadown the board renders without
-// it, losing only the FP column and the sharp-expert flags. A data snapshot
-// taken before this source was added must degrade to a warning rather than
-// fail the whole board on the one night it matters. It returns the warning to
-// surface rather than logging, so it rides the same strip as every other
-// load-time problem.
-func loadFantasyPros(path string) ([]draft.SourceRow, string) {
-	if _, err := os.Stat(path); err != nil {
-		return nil, "FantasyPros source absent — FP column and sharp flags off"
-	}
-	rows, err := draft.LoadSourceCSV(path, draft.FantasyProsColumns)
-	if err != nil {
-		return nil, fmt.Sprintf("FantasyPros source unreadable: %v", err)
-	}
-	return rows, ""
 }
 
 // refreshLeanWarnings recomputes everything the strip says about the reads.
