@@ -166,6 +166,80 @@ const SORT_COLS = {
   ps:    { value: p => p.ScarcityPct || null, type: "num", dir: "desc" },
 };
 
+// ---- field guide ------------------------------------------------------
+//
+// One blurb per number on the screen, written once and used twice: as the
+// hover tooltip on the header, and as a row in the guide overlay. Keeping
+// them in one place is the point — a tooltip that has drifted away from the
+// help screen is worse than no tooltip, because you believe it.
+//
+// Each entry is [key, label, text]. For the board, key matches the header's
+// data-sort (or data-help, for the columns that do not sort). For the strip,
+// key is the id of the .value span the number is drawn into.
+
+const COLUMN_HELP = [
+  ["name", "Player", "His name. Sorts A\u2013Z."],
+  ["pos", "Pos", "His position."],
+  ["ecr", "ECR", "FantasyPros' expert-consensus positional rank; 1 is best. A second opinion on ordering, not on price."],
+  ["bc", "BC", "Boris Chen's half-PPR tier within the position; 1 is best. His tiers come from a mixture model over expert consensus, ours from dollar-value gaps \u2014 kept beside each other rather than blended."],
+  ["cost", "Cost", "What it will take to win him. The national average auction value, restated against this room's money and slots."],
+  ["value", "Value", "What he is worth. Median projections re-solved against the same pool. Pay this and you should get this production."],
+  ["fp", "FP", "FantasyPros' projection re-solved into dollars against the same pool as Value \u2014 a like-for-like second opinion, so where the two sources diverge is visible rather than blended away. QB interceptions are estimated (FantasyPros omits them), so QB FP is modelled, not published."],
+  ["edge", "Edge", "Value \u2212 Cost. Positive is a bargain; negative means you are paying for a range of outcomes a median projection cannot see."],
+  ["vspos", "vs Pos", "Edge with the position's median edge subtracted \u2014 how much better he looks than the rest of his own position. This is the number to act on: a raw +$15 on a tight end when every tight end reads +$8 is a baseline artifact."],
+  ["mymax", "My Max", "The most you will bid, once your reads are applied. A must-have is a deliberate overpay; a value clipped to what you can actually afford is marked; do-not-draft shows as \u2014."],
+  ["ps", "PS%", "The share of positive value left at his position after he goes. High means the position holds up without him; low means he is most of what is left."],
+  ["flags", "Flags", "Your reads, the industry's signals, and what kind of player he is. Click a read pill on a row to change it."],
+];
+
+const STRIP_HELP = [
+  ["budget", "budget", "The money you have left."],
+  ["slots", "slots", "Roster spots you still have to fill. Every one of them needs at least a dollar, which is what caps your max bid."],
+  ["maxbid", "max bid", "The most you can bid on one player and still fill the roster \u2014 your budget less $1 for every other open slot. A physical limit, not advice."],
+  ["ceiling", "safe ceiling", "The most you can pay for one player before the rest of your roster suffers. Scored as your dollars per remaining starting spot against the league's, held at the stretched band. You do not pick it and it moves with the draft: when the room overspends early, the yardstick drops and this rises on its own. It is per-player, so it does not stop you committing to several \u2014 the must-have line does that job. Hover the number itself for the live band."],
+  ["needs", "still starting", "The starting spots still empty on your roster. \u201clineup full\u201d means every starter is filled and the rest is bench."],
+  ["pool", "pool", "What is left in the room: total dollars over total open slots, and the replacement curve prices are solved against. There is no inflation multiplier \u2014 prices are re-solved from the money and players actually remaining, so keeper inflation falls out of that by itself."],
+];
+
+// guideRows renders one help table. Same shape as the legend, so the moved
+// legend markup and these generated rows sit together without restyling.
+function guideRows(entries) {
+  return entries.map(([, label, text]) =>
+    `<tr><td><span class="guide-key">${esc(label)}</span></td><td>${esc(text)}</td></tr>`).join("");
+}
+
+function drawGuide() {
+  document.getElementById("guide-strip").innerHTML = guideRows(STRIP_HELP);
+  document.getElementById("guide-cols").innerHTML = guideRows(COLUMN_HELP);
+
+  // The same text as a hover tooltip. Board headers key off data-sort, except
+  // the ones that do not sort and carry data-help instead.
+  const cols = new Map(COLUMN_HELP.map(([k, , text]) => [k, text]));
+  for (const th of document.querySelectorAll("#board thead th")) {
+    const text = cols.get(th.dataset.sort || th.dataset.help);
+    if (text) th.title = text;
+  }
+
+  // On the strip the title goes on the label, not the value: draw() rewrites
+  // #ceiling's own title every poll with the live risk band, and that more
+  // specific reading should keep winning when you hover the number.
+  const strip = new Map(STRIP_HELP.map(([k, , text]) => [k, text]));
+  for (const stat of document.querySelectorAll("#strip .stat")) {
+    const value = stat.querySelector(".value");
+    const label = stat.querySelector(".label");
+    const text = value && strip.get(value.id);
+    if (text && label) label.title = text;
+  }
+}
+
+function guideOpen() {
+  return !document.getElementById("guide").classList.contains("hidden");
+}
+
+function toggleGuide(show) {
+  document.getElementById("guide").classList.toggle("hidden", !show);
+}
+
 // compareBy sorts by one column. Missing cells sink to the bottom whichever way
 // the column points; a real tie keeps the server's order, since Array.sort is
 // stable and the list arrives most-expensive-first.
@@ -972,7 +1046,16 @@ document.addEventListener("keydown", ev => {
     ev.preventDefault();
     search.focus();
     search.select();
+  } else if (ev.key === "?" && !typing(document.activeElement)) {
+    ev.preventDefault();
+    toggleGuide(!guideOpen());
   } else if (ev.key === "Escape") {
+    // The guide first. Escape also wipes every filter, and closing a help
+    // screen is not a reason to throw away the slice of the board you set up.
+    if (guideOpen()) {
+      toggleGuide(false);
+      return;
+    }
     // Everything, not just the text. Escape is the one key you hit when a
     // name is called and the board is showing the wrong slice of players.
     search.value = "";
@@ -992,6 +1075,19 @@ document.addEventListener("keydown", ev => {
   }
 });
 
+// typing reports whether keystrokes belong to a field rather than the board,
+// so "/" and "?" stay usable as shortcuts without eating a search term or a
+// digit typed into one of the criteria boxes.
+function typing(el) {
+  return !!el && (el.tagName === "INPUT" || el.tagName === "SELECT" || el.tagName === "TEXTAREA");
+}
+
+document.getElementById("guidebtn").addEventListener("click", () => toggleGuide(true));
+for (const el of document.querySelectorAll("[data-guide-close]")) {
+  el.addEventListener("click", () => toggleGuide(false));
+}
+
+drawGuide();
 drawPosFilter();
 drawCritTraits();
 
