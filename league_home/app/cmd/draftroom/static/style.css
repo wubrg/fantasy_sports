@@ -164,6 +164,20 @@ th {
   z-index: 4;
 }
 
+/* Sortable headers: clickable, with a caret on the active column. The caret is
+   reserved space so a header does not shift left/right as the sort moves. */
+#board thead th[data-sort] {
+  cursor: pointer;
+  user-select: none;
+}
+#board thead th[data-sort]:hover { color: var(--text); }
+#board thead th[data-sort]::after {
+  content: " \2195"; /* up-down arrow, dimmed, until this column is the active sort */
+  opacity: 0.25;
+}
+#board thead th.sorted-asc::after { content: " \25B2"; opacity: 1; color: var(--accent); }
+#board thead th.sorted-desc::after { content: " \25BC"; opacity: 1; color: var(--accent); }
+
 td {
   padding: 0.32rem 0.6rem;
   border-bottom: 1px solid #21252c;
