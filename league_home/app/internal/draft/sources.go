@@ -80,6 +80,19 @@ type SourceRow struct {
 	// single number, which is every source but FantasyPros.
 	PointsLow  float64
 	PointsHigh float64
+	// ECRvsADP is how far expert consensus rank sits from where the market
+	// actually drafts him, positive where the experts rate him above his draft
+	// slot. Zero also means "not published".
+	//
+	// Parsed and deliberately unused. It looks like a discount signal that owes
+	// nothing to injury, and it is not one here: measured against adjusted edge
+	// across the 2026 pre-draft board it came out at r = +0.01, with the
+	// experts-above-market bucket sitting a dollar on the wrong side. ADP is a
+	// snake-draft measure and this league is an auction, so how late a player
+	// goes says little about what he costs — AAV is the market price, and the
+	// board already reads it. Kept so the column round-trips and so the next
+	// person to notice it can read this instead of measuring it again.
+	ECRvsADP int
 	// AuctionValue is the source's dollar value, rescaled to the league's
 	// pool.
 	AuctionValue float64
@@ -397,6 +410,7 @@ func ParseSourceCSVAs(r io.Reader, schema SourceSchema) ([]SourceRow, error) {
 			Baseline:     strings.ToLower(pick(rec, "baseline")),
 			Points:       num(pick(rec, "league_points", "points", "fps", "proj")),
 			PointsLow:    num(pick(rec, "points_low")),
+			ECRvsADP:     signedInt(pick(rec, "ecr_vs_adp")),
 			PointsHigh:   num(pick(rec, "points_high")),
 			AuctionValue: num(pick(rec, "auction_value", "auc$", "value", "auction")),
 			AAV:          num(pick(rec, "aav")),

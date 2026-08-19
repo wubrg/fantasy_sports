@@ -320,7 +320,82 @@ func BuildSignals(in SignalInputs) []PlayerSignals {
 		out = append(out, p)
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Cost > out[j].Cost })
+	// Last, because it is the one trait that needs every other player priced
+	// before it can be decided.
+	markDiscounted(out)
 	return out
+}
+
+// discountBar is the floor under the discount threshold, in dollars of
+// adjusted edge.
+//
+// A percentile alone would flag somebody no matter how flat the board is: nine
+// in ten is a rank, and a rank always has a top. This says that however cheap
+// the room looks, a discount worth a pill is still worth this much.
+const discountBar = 5
+
+// discountSample is the fewest healthy contested players a percentile may be
+// taken from. Late in a draft the survivors are too few and too odd to rank,
+// and the bar above is the better answer than a percentile of eleven players.
+const discountSample = 25
+
+// markDiscounted tags the players the market has actually marked down.
+//
+// The test is adjusted edge, not price against value. Everything looks cheap
+// against Ciely — healthy players sit around three quarters of his number — so
+// "below value" is the baseline rather than a discount, and an absolute
+// threshold would flag most of the board. Positional bias is what removes that
+// common component, which is why this runs on the same footing as vs Pos.
+//
+// The bar is the 90th percentile of healthy contested players: cheaper than
+// nine in ten men nobody is worried about. On the pre-draft board that lands at
+// +$8 and selects eight players, against the fifty-three the old any-designation
+// rule carried. Taken fresh on every rebuild, so it still means something once
+// the room has spent its money and the whole board has moved.
+//
+// A designation is required and is deliberately not enough on its own. Sleeper
+// gives a bare string with no practice report behind it, and in August a PUP
+// tag is a roster mechanism rather than a prognosis; the market marking the
+// price down is the corroboration that makes it a discount rather than a rumour.
+func markDiscounted(players []PlayerSignals) {
+	bias := PositionalBias(players)
+
+	healthy := make([]float64, 0, len(players))
+	for _, p := range players {
+		if p.Availability != "" || p.uncontested() {
+			continue
+		}
+		healthy = append(healthy, AdjustedEdge(p, bias))
+	}
+
+	bar := float64(discountBar)
+	if len(healthy) >= discountSample {
+		sort.Float64s(healthy)
+		if p90 := healthy[(len(healthy)*9)/10]; p90 > bar {
+			bar = p90
+		}
+	}
+
+	for i := range players {
+		p := players[i]
+		if p.Availability == "" || p.uncontested() {
+			continue
+		}
+		if AdjustedEdge(p, bias) < bar {
+			continue
+		}
+		// Copied rather than appended in place: the measured set is shared out
+		// of the traits map, and appending would write this trait onto every
+		// player who happens to share that set.
+		players[i].Traits = append(append(TraitSet{}, p.Traits...), TraitDiscounted)
+	}
+}
+
+// uncontested reports a player nobody is actually bidding on, sitting at the
+// floor on both boards. Same exclusion PositionalBias makes, for the same
+// reason: at a dollar against a dollar every ratio is noise.
+func (p PlayerSignals) uncontested() bool {
+	return p.Cost <= contestedFloor && p.Value <= contestedFloor
 }
 
 // Gap is one player where this room's price and an outside reference

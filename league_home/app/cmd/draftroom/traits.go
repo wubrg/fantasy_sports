@@ -45,7 +45,6 @@ func classifyTraits(ciely, sv []draft.SourceRow, info map[string]draft.PlayerInf
 			t.ECRUpside = o.up
 		}
 		if pi, ok := info[r.PlayerID]; ok {
-			t.Injury = pi.Injury
 			t.PriorPoints = pi.PriorPoints
 			t.PriorGames = pi.GamesPlayed
 		}
