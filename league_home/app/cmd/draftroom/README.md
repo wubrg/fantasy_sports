@@ -841,10 +841,19 @@ apart rather than blending them:
   sources diverge is visible rather than blended away. The **ECR** column is
   its positional consensus rank. Because its top-10/20 most-accurate-expert
   subsets ship alongside consensus, a `sharp±` flag marks where the sharps and
-  the full field disagree. One caveat: FantasyPros projects no interceptions,
-  so QB picks are **estimated** from projected pass volume (recorded as
-  `est_interceptions`); QB FP dollars are therefore modelled on that estimate,
-  not published.
+  the full field disagree. Alone among the four it publishes a **high and a low**
+  as well as a middle, recomputed under league scoring the same way, which is the
+  only place on the board a projection says how much it does not know. Where that
+  range comes out wider than the FP value it brackets, the row carries a `range`
+  pill.
+
+  The projections come from FantasyPros' own projection exports, not from the
+  `…-ecr-stats-…` view that sits beside its rankings: that view is **last
+  season's actuals**, and scoring it floored every 2026 rookie at nothing while
+  reading as a second projection. Interceptions and fumbles are both published
+  in the projection exports; interceptions are scored at the league's -1, and
+  fumbles are deliberately **not** scored, because `SCORING` has to stay
+  key-for-key with Ciely's or FP stops being comparable to **Value** at all.
 - **Ciely** produces *median* projections, which explicitly removes the
   range of outcomes. His dollars are a linear map of those medians
   (r = 1.000), so they cannot see keeper inflation and they systematically

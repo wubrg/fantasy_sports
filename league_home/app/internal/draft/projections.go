@@ -51,6 +51,11 @@ type ProjectionSource struct {
 	// the other half of its divergence signal, and only consensus belongs on
 	// the board. Nil keeps every resolved, non-DST row.
 	Include func(SourceRow) bool
+	// RequirePoints drops rows carrying no projection at all. FantasyPros
+	// ranks several hundred more players than it projects; a zero would enter
+	// the solve as a player who scores nothing and come out at the dollar
+	// floor, which reads as a real opinion. Dropped, he reads as "—".
+	RequirePoints bool
 }
 
 // ProjectionSources is the set of projection sheets the board loads.
@@ -68,7 +73,8 @@ var ProjectionSources = []ProjectionSource{
 		Name: "fantasypros", Label: "FantasyPros", File: "fantasypros-2026.csv",
 		Schema: FantasyProsColumns, Required: false,
 		AbsentNote: "FP column and sharp flags off", Role: RoleSecondOpinion,
-		Include: func(r SourceRow) bool { return strings.EqualFold(r.Baseline, "consensus") },
+		Include:       func(r SourceRow) bool { return strings.EqualFold(r.Baseline, "consensus") },
+		RequirePoints: true,
 	},
 }
 
@@ -157,13 +163,20 @@ func loadProjections(sources []ProjectionSource, normalized func(string) string,
 				if src.Include != nil && !src.Include(r) {
 					continue
 				}
-				so.Projections = append(so.Projections, Projection{
-					PlayerID: r.PlayerID, Name: r.Player, Position: r.Position, Points: r.Points,
-				})
+				// The rank survives even where the projection does not: a
+				// player FantasyPros ranks but does not project still has an
+				// ECR, and that is a real read worth keeping.
 				so.Rank[r.PlayerID] = r.PosRank
 				if d := r.SharpDelta(); d != 0 {
 					so.Sharp[r.PlayerID] = d
 				}
+				if src.RequirePoints && r.Points <= 0 {
+					continue
+				}
+				so.Projections = append(so.Projections, Projection{
+					PlayerID: r.PlayerID, Name: r.Player, Position: r.Position,
+					Points: r.Points, PointsLow: r.PointsLow, PointsHigh: r.PointsHigh,
+				})
 			}
 			pd.SecondOpinions = append(pd.SecondOpinions, so)
 		}

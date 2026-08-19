@@ -167,11 +167,62 @@ if (!location.pathname.endsWith("/")) {
       positional rank. <strong>FP</strong> is their projection re-solved into
       dollars against the same pool as <strong>Value</strong>, so the two are a
       like-for-like second opinion &mdash; where they diverge is what a single
-      number would hide. QB interceptions are estimated (FantasyPros omits
-      them), so QB FP is modelled, not published.
+      number would hide. Alone among the sources they publish a high and a low
+      as well as a middle, so the FP cell can show what the projection does not
+      know; hover it for the range.
       <strong>BC</strong> is Boris Chen's half-PPR tier (within position, 1 is
       best) &mdash; a second opinion on tiering from a mixture model over expert
       consensus, beside our own gap-based tiers.</p>
+      </section>
+
+      <section>
+        <h3>Reasoning about FP</h3>
+        <p class="note">FP and <strong>Value</strong> are two projections solved
+        against the same pool in the same way, so a gap between them is a
+        disagreement about the player rather than an artefact of method. Four
+        moves make one readable. The figures below are from the full $2,018 pool
+        &mdash; yours move as the room spends.</p>
+        <table class="mini legend">
+          <tr class="grp"><td colspan="2">1 &mdash; read the gap against the position, not on its own</td></tr>
+          <tr><td><span class="guide-key">Tucker Kraft</span></td>
+            <td>TE, Value $18, FP $12 &mdash; FantasyPros reads him $6 lower.
+            But the median contested tight end reads about $5 lower on FP, so
+            nearly all of that $6 is the position rather than the player. Net
+            disagreement: about a dollar. Exactly the lesson
+            <strong>vs Pos</strong> teaches for <strong>Edge</strong>.</td></tr>
+          <tr><td><span class="guide-key">Derrick Henry</span></td>
+            <td>RB, Value $27, FP $40 &mdash; read $13 higher, where the median
+            contested back is only about $4 higher. Some $9 of it survives the
+            positional adjustment, so this one is a real disagreement about
+            Henry, and worth going to look at.</td></tr>
+
+          <tr class="grp"><td colspan="2">2 &mdash; check FP against ECR, the other half of the same source</td></tr>
+          <tr><td><span class="guide-key">Lamar Jackson</span></td>
+            <td>QB, <strong>ECR</strong> 2 &mdash; but FP $18 against a Value of
+            $21. The same source ranks him second at his position and prices him
+            unremarkably. That disagreement is <em>inside</em> FantasyPros, so
+            neither half of it is evidence about him; go to another source rather
+            than picking the half you like.</td></tr>
+
+          <tr class="grp"><td colspan="2">3 &mdash; ask whether the projection is committing</td></tr>
+          <tr><td><span class="guide-key">the range</span></td>
+            <td>Lamar's own low and high come out $5&ndash;$35. A range wider
+            than the number it brackets is a projection saying it does not know,
+            and it carries a <span class="flag range">range</span> pill.
+            Contrast Gibbs: the widest band on the board in dollars and one of
+            the narrowest against his own value, which is a confident projection
+            &mdash; dollar width alone mostly finds expensive players, not
+            uncertain ones.</td></tr>
+
+          <tr class="grp"><td colspan="2">4 &mdash; near the floor neither number is saying anything</td></tr>
+          <tr><td><span class="guide-key">$1, and &mdash;</span></td>
+            <td>Only about a hundred players sit above replacement, so most of
+            the board floors at $1 on both sources: a $1-against-$1 agreement is
+            two sources both declining to comment. A <strong>&mdash;</strong> in
+            the FP column is a different thing again &mdash; FantasyPros ranks
+            several hundred more players than it projects, and a dash means no
+            projection, not a projection of nothing.</td></tr>
+        </table>
       </section>
 
       <section>
@@ -204,6 +255,12 @@ if (!location.pathname.endsWith("/")) {
           <td>His model value swings this much across the valuation curves; the
           bigger it is, the more his price depends on where replacement is
           drawn.</td></tr>
+        <tr><td><span class="flag range">range&nbsp;$5&ndash;$35</span></td>
+          <td>FantasyPros' own low and high for him, in dollars. Shown only when
+          that range comes out wider than his FP value itself &mdash; the
+          projection is declining to commit. Different from <em>swing</em>:
+          swing is how much his price moves with where replacement is drawn,
+          this is how little the projection knows.</td></tr>
         <tr><td><span class="flag hurt">questionable</span></td>
           <td>Sleeper injury designation &mdash; meaningful once cutdowns and
           practice reports land.</td></tr>
@@ -368,7 +425,8 @@ if (!location.pathname.endsWith("/")) {
             under this league&rsquo;s scoring and re-solved into dollars as
             <strong>FP</strong>. Its top-10/20 most-accurate-expert subsets ship
             alongside consensus, which is what the <em>sharp&plusmn;</em> flags
-            read.</td></tr>
+            read. The one source of the four that publishes a range rather than
+            a single number.</td></tr>
           <tr><td><span class="guide-key">Big 3</span></td>
             <td>Ranks upside <em>at cost</em>, not absolute quality. Players
             already priced for their upside are absent from that list because

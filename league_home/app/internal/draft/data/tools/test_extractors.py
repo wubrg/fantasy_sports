@@ -217,18 +217,69 @@ def fpx_variant(raw_dir, prefix, players):
               ['RK', 'TIERS', 'PLAYER NAME', 'TEAM', 'POS', 'BYE WEEK', 'NOTES'], nt)
 
 
+FPX_QB_PROJ_HEADER = ['Player', 'Team', 'ATT', 'CMP', 'YDS', 'TDS', 'INTS',
+                      'ATT', 'YDS', 'TDS', 'FL', 'FPTS']
+FPX_FLX_PROJ_HEADER = ['Player', 'Team', 'POS', 'ATT', 'YDS', 'TDS',
+                       'REC', 'YDS', 'TDS', 'FL', 'FPTS']
+
+
+def fpx_projections(raw_dir, players):
+    """Write the two Hi/Low projection exports.
+
+    A player with a 'proj' key contributes three consecutive rows: the named
+    average, then an unnamed 'high', then an unnamed 'low'. FantasyPros also
+    writes a blank sub-header beneath the real header, reproduced here because
+    the parser has to survive it.
+    """
+    qb, flx = [], []
+    for p in players:
+        if 'proj' not in p:
+            continue
+        if p['pos'].startswith('QB'):
+            qb.append([p['name'], p['team'], *p['proj']])
+            qb.append(['', 'high', *p['proj_high']])
+            qb.append(['', 'low', *p['proj_low']])
+        else:
+            flx.append([p['name'], p['team'], p['pos'], *p['proj']])
+            flx.append(['', 'high', '', *p['proj_high']])
+            flx.append(['', 'low', '', *p['proj_low']])
+    fpx_write(os.path.join(raw_dir, 'fantasypros-projections-qb-hilo-for-2026.csv'),
+              FPX_QB_PROJ_HEADER, [[' ', '', '', '']] + qb)
+    fpx_write(os.path.join(raw_dir, 'fantasypros-projections-flx-hilo-for-2026.csv'),
+              FPX_FLX_PROJ_HEADER, [[' ', '', ' ', '', '']] + flx)
+
+
 # Gibbs and Allen carry the two scoring cases; the consensus set also has a
-# kicker (dropped) and the Jaguars DST (team JAC -> JAX, its own number stands).
+# kicker (dropped), the Jaguars DST (team JAC -> JAX, its own number stands),
+# and a deep player FantasyPros ranks but does not project.
+#
+# `stats` is the ECR stats view — last season's actuals, kept only because a
+# DST has nothing else. `proj` is the projection export, which is what scoring
+# now reads: flex is (rush att, yds, td, rec, yds, td, FL, FPTS) and QB is
+# (att, cmp, yds, td, INT, rush att, yds, td, FL, FPTS).
 GIBBS = {'rank': 1, 'tier': 1, 'name': 'Jahmyr Gibbs', 'team': 'DET', 'pos': 'RB1',
-         'bye': 6, 'note': 'Workhorse back.', 'stats': (328.4, 0, 0, 77, 616, 5, 243, 1223, 13)}
+         'bye': 6, 'note': 'Workhorse back.', 'stats': (328.4, 0, 0, 77, 616, 5, 243, 1223, 13),
+         'proj': (243, 1223, 13, 77, 616, 5, 1.0, 328.4),
+         'proj_high': (250, 1300, 15, 80, 650, 6, 1.0, 360),
+         'proj_low': (235, 1150, 11, 72, 580, 4, 1.0, 300)}
 ALLEN = {'rank': 26, 'tier': 3, 'name': 'Josh Allen', 'team': 'BUF', 'pos': 'QB1',
-         'bye': 7, 'stats': (374.6, 3668, 25, 0, 0, 0, 112, 579, 14)}
+         'bye': 7, 'stats': (374.6, 3668, 25, 0, 0, 0, 112, 579, 14),
+         'proj': (550, 380, 3668, 25, 12, 112, 579, 14, 3.0, 374.6),
+         'proj_high': (560, 390, 3900, 28, 10, 118, 620, 15, 3.0, 400),
+         'proj_low': (540, 370, 3400, 22, 15, 105, 540, 12, 3.0, 350)}
 BIJAN = {'rank': 2, 'tier': 1, 'name': 'Bijan Robinson', 'team': 'ATL', 'pos': 'RB2',
-         'bye': 5, 'stats': (331.3, 0, 0, 60, 500, 4, 260, 1350, 12)}
+         'bye': 5, 'stats': (331.3, 0, 0, 60, 500, 4, 260, 1350, 12),
+         'proj': (260, 1350, 12, 60, 500, 4, 1.5, 331.3),
+         'proj_high': (270, 1420, 14, 64, 540, 5, 1.5, 360),
+         'proj_low': (250, 1280, 10, 56, 470, 3, 1.5, 305)}
 KICKER = {'rank': 150, 'tier': 8, 'name': 'Cameron Dicker', 'team': 'LAC', 'pos': 'K1',
           'bye': 12, 'stats': (150, 0, 0, 0, 0, 0, 0, 0, 0)}
 JAGS = {'rank': 170, 'tier': 8, 'name': 'Jacksonville Jaguars', 'team': 'JAC', 'pos': 'DST1',
         'bye': 8, 'stats': (120, 0, 0, 0, 0, 0, 0, 0, 0)}
+# Ranked, never projected — the case that used to floor at zero and read as a
+# player who scores nothing.
+DEEP = {'rank': 400, 'tier': 14, 'name': 'Deep Reserve', 'team': 'NYJ', 'pos': 'RB80',
+        'bye': 9, 'stats': (0, 0, 0, 0, 0, 0, 0, 0, 0)}
 
 
 class ExtractFantasyProsTest(unittest.TestCase):
@@ -236,16 +287,21 @@ class ExtractFantasyProsTest(unittest.TestCase):
         """A raw dir with all three variants. Consensus ranks Gibbs over Bijan;
         the sharp subsets flip it, which is the divergence signal."""
         d = tempfile.mkdtemp()
-        fpx_variant(d, 'fantasypros', [GIBBS, BIJAN, ALLEN, KICKER, JAGS])
+        everyone = [GIBBS, BIJAN, ALLEN, KICKER, JAGS, DEEP]
+        fpx_variant(d, 'fantasypros', everyone)
         # top10/top20 rank Bijan #1, Gibbs #2 — the flip.
         b1 = dict(BIJAN, rank=1)
         g2 = dict(GIBBS, rank=2)
         fpx_variant(d, 'fantasypros-2025-top10', [b1, g2, dict(ALLEN, rank=24)])
         fpx_variant(d, 'fantasypros-2025-top20', [b1, g2, dict(ALLEN, rank=25)])
+        # Projections are one set for every variant: how well a player is
+        # expected to do does not depend on which experts ranked him.
+        fpx_projections(d, everyone)
         return d
 
-    def consensus(self):
-        return fpx.parse_variant(self.build(), 'fantasypros')
+    def consensus(self, raw_dir=None):
+        d = raw_dir or self.build()
+        return fpx.parse_variant(d, 'fantasypros', fpx.parse_projections(d))
 
     def test_views_merge_by_name(self):
         p = self.consensus()['Jahmyr Gibbs']
@@ -254,7 +310,7 @@ class ExtractFantasyProsTest(unittest.TestCase):
         self.assertEqual(p['overall_rank'], 1)
         self.assertEqual(p['best'], 1)          # from the ranks view
         self.assertAlmostEqual(p['avg_rank'], 1.5)  # from the ranks view
-        self.assertEqual(p['receptions'], 77.0)  # from the stats view
+        self.assertEqual(p['receptions'], 77.0)  # from the projections export
 
     def test_league_recompute_matches_for_skill_players(self):
         p = self.consensus()['Jahmyr Gibbs']
@@ -262,19 +318,60 @@ class ExtractFantasyProsTest(unittest.TestCase):
         self.assertAlmostEqual(p['league_points'], 330.4, places=1)
         self.assertAlmostEqual(p['points_delta'], 2.0, places=1)
 
-    def test_qb_interceptions_are_estimated(self):
+    def test_qb_interceptions_are_published_not_modelled(self):
         p = self.consensus()['Josh Allen']
-        # Pre-INT: 3668*.04 + 25*4 + 579*.1 + 14*6 = 388.62. Estimated picks:
-        # (3668 / 7.0) * 0.022 = 11.53 at -1 each, so 388.62 - 11.53 = 377.09.
-        self.assertAlmostEqual(p['est_interceptions'], 11.53, places=2)
-        self.assertAlmostEqual(p['league_points'], 377.09, places=2)
-        # With the penalty applied the delta collapses to skill-player size,
-        # which is the whole point — the QB total is no longer inflated.
+        # 3668*.04 + 25*4 + 579*.1 + 14*6 = 388.62, less the 12 picks the
+        # projection actually publishes at -1 each = 376.62. Nothing estimated.
+        self.assertEqual(p['interceptions'], 12.0)
+        self.assertAlmostEqual(p['league_points'], 376.62, places=2)
         self.assertLess(abs(p['points_delta']), 5)
 
-    def test_skill_players_get_no_interception_penalty(self):
+    def test_skill_players_carry_no_interceptions(self):
         p = self.consensus()['Jahmyr Gibbs']
-        self.assertEqual(p['est_interceptions'], 0.0)
+        self.assertEqual(p['interceptions'], 0.0)
+
+    def test_band_is_recomputed_under_league_scoring(self):
+        p = self.consensus()['Jahmyr Gibbs']
+        # high: 1300*.1 + 15*6 + 80*.5 + 650*.1 + 6*6 = 361.0
+        # low:  1150*.1 + 11*6 + 72*.5 + 580*.1 + 4*6 = 299.0
+        self.assertAlmostEqual(p['points_high'], 361.0, places=1)
+        self.assertAlmostEqual(p['points_low'], 299.0, places=1)
+        self.assertLess(p['points_low'], p['league_points'])
+        self.assertGreater(p['points_high'], p['league_points'])
+
+    def test_a_passers_low_carries_more_interceptions_not_fewer(self):
+        """The reason the band is recomputed rather than scaled from their
+        published total: the pessimistic case throws more picks, and only
+        recomputation under our scoring sees that."""
+        p = self.consensus()['Josh Allen']
+        # high: 3900*.04 + 28*4 + 620*.1 + 15*6 - 10 = 410.0
+        # low:  3400*.04 + 22*4 + 540*.1 + 12*6 - 15 = 335.0
+        self.assertAlmostEqual(p['points_high'], 410.0, places=1)
+        self.assertAlmostEqual(p['points_low'], 335.0, places=1)
+
+    def test_fumbles_are_recorded_but_never_scored(self):
+        """SCORING has to stay key-for-key with Ciely, who has no fumble term,
+        or FP stops being comparable to Value."""
+        self.assertNotIn('fumbles_lost', fpx.SCORING)
+        p = self.consensus()['Josh Allen']
+        self.assertEqual(p['fumbles_lost'], 3.0)
+        # 3 fumbles at any weight would have moved this; it did not.
+        self.assertAlmostEqual(p['league_points'], 376.62, places=2)
+
+    def test_scoring_keys_match_ciely(self):
+        import extract_ciely as cix
+        self.assertEqual(len(fpx.SCORING), len(cix.SCORING))
+        self.assertIn('interceptions', fpx.SCORING)
+        self.assertEqual(fpx.SCORING['interceptions'], cix.SCORING['INT'])
+
+    def test_ranked_but_unprojected_player_has_no_points(self):
+        """Empty, not zero. Zero reads as a player who scores nothing and
+        floors him at a dollar on the board; empty reads as no FP opinion."""
+        p = self.consensus()['Deep Reserve']
+        self.assertIsNone(p['league_points'])
+        self.assertIsNone(p['fantasypros_points'])
+        self.assertIsNone(p['points_delta'])
+        self.assertIsNone(p['points_high'])
 
     def test_kicker_is_dropped(self):
         self.assertNotIn('Cameron Dicker', self.consensus())

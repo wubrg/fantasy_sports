@@ -441,6 +441,15 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans, keeperScena
 	// same pool and state so its value is directly comparable to Value above.
 	// Empty when the source was absent at load, which reads as no FP column.
 	fantasyPros := map[string]draft.FPRead{}
+	// The rank and the sharp move stand on their own, ahead of any solve:
+	// FantasyPros ranks several hundred players it does not project, and an
+	// ECR is a real read even with no dollar figure beside it.
+	for id, rank := range s.fpRank {
+		if offBoard(id) {
+			continue
+		}
+		fantasyPros[id] = draft.FPRead{Rank: rank, SharpDelta: s.fpSharp[id]}
+	}
 	if len(s.fpProjections) > 0 {
 		fpAvailable := make([]draft.Projection, 0, len(s.fpProjections))
 		for _, p := range s.fpProjections {
@@ -453,9 +462,10 @@ func (s *staticData) Build(taken map[string]gone, edits draft.Leans, keeperScena
 			return draft.Snapshot{}, err
 		}
 		for _, v := range fpValues {
-			fantasyPros[v.PlayerID] = draft.FPRead{
-				Value: v.Price, Rank: s.fpRank[v.PlayerID], SharpDelta: s.fpSharp[v.PlayerID],
-			}
+			fp := fantasyPros[v.PlayerID]
+			fp.Value = v.Price
+			fp.Low, fp.High = v.PriceBand()
+			fantasyPros[v.PlayerID] = fp
 		}
 	}
 

@@ -105,9 +105,10 @@ his number and ours, keeping the difference auditable.
 
 ### FantasyPros specifics
 
-The rankings render client-side, so the four views — overview, ranks, stats,
-notes — are hand-exported as CSVs from a logged-in session into
-`raw/fantasypros/<date>/`. Three **variants** are ingested and packed into one
+The rankings render client-side, so the views — overview, ranks, stats, notes —
+are hand-exported as CSVs from a logged-in session into
+`raw/fantasypros/<date>/`, alongside a separate set of **projection** exports
+(see below). Three **variants** are ingested and packed into one
 file under a `baseline` column, mirroring Subvertadown's three baselines:
 `consensus` (every ranker, free), and `top10` / `top20` (the consensus of last
 year's ten / twenty most accurate experts). The subsets diverge from
@@ -116,15 +117,31 @@ where the full field does the reverse — so each consensus row also carries
 `rank_vs_top10` / `rank_vs_top20` (consensus rank minus the subset rank;
 positive = the sharps rate him higher).
 
+**Projections come from the projection exports, not the `stats` view.** That
+view is the "last season" reference column FantasyPros shows beside its
+rankings — 2025 **actuals**. Scoring it produced an FP column that floored every
+2026 rookie at nothing (Jeremiyah Love, ranked RB16, carried zeroes) and
+underpriced everyone who missed time, all while reading as a second projection.
+The `…-projections-qb-hilo-…` and `…-projections-flx-hilo-…` exports are primary
+— between them they cover every position and carry every stat component — with
+the flat per-position exports read only to fill a player the banded pair missed.
+In the banded files each player is three consecutive rows: named average, then
+an unnamed `high`, then an unnamed `low`. The `stats` view is now read for one
+thing only, a DST's published total, since the projections carry no defenses.
+
 Like Ciely, the point total is recomputed under league scoring so FantasyPros
 is a second projection, with the published total and the delta kept auditable.
-**Interceptions:** the stats export ships no interception column, and at −1
-each they move a passer's season ~11–14 points — enough to distort his value —
-so they are **estimated** from projected pass volume (attempts backed out of
-pass yards at a league yards-per-attempt, times a league interception rate) and
-recorded in `est_interceptions`. A league-average estimate, not a player
-projection, since FantasyPros projected none; skill players are untouched.
-Fumbles remain unmodelled (small and roughly position-flat). Kickers are
+The high and low are recomputed the same way rather than scaled from the
+published total — a passer's low carries *more* interceptions, not fewer, and
+only recomputation sees that. **Interceptions** are published in these exports
+and scored at the league's −1; nothing is estimated. **Fumbles** are published
+too, recorded as `fumbles_lost`, and deliberately **not** scored: `SCORING` has
+to stay key-for-key with `extract_ciely.py`, whose workbook has no fumble term,
+or FP stops being comparable to Value in a way nothing on the board would
+reveal. A player FantasyPros ranks but does not project gets an **empty**
+`league_points` rather than a zero — zero reads as a player who scores nothing
+and floors him at a dollar; empty reads as no FP opinion, and the board draws
+it as `—`. Kickers are
 dropped (no kicker slot); `JAC` is rewritten to Sleeper's `JAX` so the Jaguars
 DST resolves, while Washington stays `WAS` (Sleeper keys that defense under
 `WAS`, not the `WSH` it uses for skill players).

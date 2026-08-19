@@ -75,6 +75,11 @@ type SourceRow struct {
 	// Points is the projection restated in league scoring where the source
 	// published enough components to do so, otherwise as published.
 	Points float64
+	// PointsLow and PointsHigh are the low and high of the source's own
+	// projection, restated the same way. Zero where the source publishes a
+	// single number, which is every source but FantasyPros.
+	PointsLow  float64
+	PointsHigh float64
 	// AuctionValue is the source's dollar value, rescaled to the league's
 	// pool.
 	AuctionValue float64
@@ -391,6 +396,8 @@ func ParseSourceCSVAs(r io.Reader, schema SourceSchema) ([]SourceRow, error) {
 			PosRank:      rank,
 			Baseline:     strings.ToLower(pick(rec, "baseline")),
 			Points:       num(pick(rec, "league_points", "points", "fps", "proj")),
+			PointsLow:    num(pick(rec, "points_low")),
+			PointsHigh:   num(pick(rec, "points_high")),
 			AuctionValue: num(pick(rec, "auction_value", "auc$", "value", "auction")),
 			AAV:          num(pick(rec, "aav")),
 			ScarcityPct:  num(pick(rec, "ps_pct", "ps")),
