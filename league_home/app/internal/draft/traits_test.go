@@ -208,9 +208,15 @@ func TestUnprovenIsMeasuredPerGame(t *testing.T) {
 	}
 }
 
-// TestBellCowNeedsBothJobs — a back with carries alone is a committee
-// grinder and one with targets alone is a passing-down specialist.
-func TestBellCowNeedsBothJobs(t *testing.T) {
+// TestThreeDownNeedsRealVolumeOnBothSides — a back with carries alone is a
+// committee grinder and one with targets alone is a passing-down specialist.
+//
+// The specialist case is the one that changed. The rule used to ask only that
+// a back rush for something at all, so a receiving back cleared it on a token
+// carry and read as an every-down back; the test recorded that as a t.Log
+// rather than a failure. Naming the trait "3-down" made the gap between the
+// name and the rule impossible to keep.
+func TestThreeDownNeedsRealVolumeOnBothSides(t *testing.T) {
 	in := []TraitInput{
 		back("every-down", 1100, 9, 55, 420, 70),
 		back("grinder", 900, 8, 8, 60, 12),
@@ -222,15 +228,14 @@ func TestBellCowNeedsBothJobs(t *testing.T) {
 	}
 	got := ClassifyTraits(in, traitShapePool())
 
-	if !got["every-down"].Has(TraitBellCow) {
-		t.Error("a back with both jobs is a bell cow")
+	if !got["every-down"].Has(TraitThreeDown) {
+		t.Error("a back with real volume in both jobs is a three-down back")
 	}
-	if got["grinder"].Has(TraitBellCow) {
-		t.Error("carries without receiving work is not a bell cow")
+	if got["grinder"].Has(TraitThreeDown) {
+		t.Error("carries without receiving work is not a three-down back")
 	}
-	if !got["third-down"].Has(TraitBellCow) {
-		// Receiving volume plus any rushing counts; documented behaviour.
-		t.Log("note: a receiving back with some rushing reads as a bell cow")
+	if got["third-down"].Has(TraitThreeDown) {
+		t.Error("a receiving back with 120 rushing yards is a passing-down specialist, not a three-down back")
 	}
 }
 

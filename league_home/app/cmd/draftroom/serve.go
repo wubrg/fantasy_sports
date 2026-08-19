@@ -285,9 +285,9 @@ func writeJSON(w http.ResponseWriter, v interface{}) {
 }
 
 // runServe serves the draft board over HTTP.
-func runServe(addr, leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) error {
+func runServe(addr, leagueID, draftID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) error {
 	log.Printf("loading draft history and sources...")
-	static, err := loadStatic(leagueID, configDir, dataDir, ownerID, baseline, leanSets)
+	static, err := loadStatic(leagueID, draftID, configDir, dataDir, ownerID, baseline, leanSets)
 	if err != nil {
 		return err
 	}
@@ -310,12 +310,23 @@ func runServe(addr, leagueID, configDir, dataDir, ownerID string, baseline draft
 		return err
 	}
 	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.FS(content)))
+	files := http.FileServer(http.FS(content))
+	mux.Handle("/", files)
+	// The leans page under its own name rather than leans.html, so the address
+	// is one you would type. Deliberately no trailing slash: at /leans a
+	// relative "style.css" resolves to /style.css, and behind a tailscale
+	// serve --set-path mount /draftroom/leans resolves to /draftroom/style.css,
+	// which is the file. A slash would send both looking one level too deep.
+	mux.HandleFunc("/leans", func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = "/leans.html"
+		files.ServeHTTP(w, r)
+	})
 	mux.HandleFunc("/api/board", srv.handleBoard)
 	mux.HandleFunc("/api/sold", srv.handleSold)
 	mux.HandleFunc("/api/undo", srv.handleUndo)
 	mux.HandleFunc("/api/lean", srv.handleLean)
 	mux.HandleFunc("/api/leans/reload", srv.handleLeanReload)
+	mux.HandleFunc("/api/leans", srv.handleLeansPage)
 	mux.HandleFunc("/api/scratch", srv.handleScratch)
 	mux.HandleFunc("/api/scratch/view", srv.handleScratchView)
 	mux.HandleFunc("/api/keepers", srv.handleKeepers)

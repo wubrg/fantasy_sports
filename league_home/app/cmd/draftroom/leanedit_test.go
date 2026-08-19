@@ -16,23 +16,40 @@ import (
 // mine.csv, so saves have a real file to read back and modify.
 func leanServer(t *testing.T, mine string) (*server, string) {
 	t.Helper()
+	return leanServerFile(t, "mine.csv", mine)
+}
+
+// leanServerFile is leanServer over a named file, so a test that needs the
+// grouped YAML form — the only one with favorites — can have it.
+func leanServerFile(t *testing.T, name, mine string) (*server, string) {
+	t.Helper()
 	cfg := t.TempDir()
 	dir := filepath.Join(cfg, "leans")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(dir, "mine.csv")
+	path := filepath.Join(dir, name)
 	if err := os.WriteFile(path, []byte(mine), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	static := testStatic()
 	// Production loads staticData.leans from this same file at startup, so a
-	// fixture that leaves it empty tests a state the server cannot be in.
+	// fixture that leaves it empty tests a state the server cannot be in. The
+	// set metadata beside it is loaded the same way and for the same reason:
+	// the leans page reports which file an edit lands in, and a fixture with
+	// no path would test a server that cannot say.
+	sets := []draft.LeanSet{}
 	loaded, err := draft.LoadLeans(path)
 	if err != nil {
 		t.Fatal(err)
 	}
+	if _, s, err := loadLeanSets(cfg, []string{strings.TrimSuffix(name, filepath.Ext(name))}); err == nil {
+		sets = s
+	}
 	static.leans = loaded
+	static.leanSetInfo = sets
+	static.leanSets = setNames(sets)
+	static.minePath = writableSetPath(cfg, sets)
 
 	srv, err := newServer(static, cfg)
 	if err != nil {
@@ -42,14 +59,23 @@ func leanServer(t *testing.T, mine string) (*server, string) {
 }
 
 // TestEditsOverrideTheLoadedSets — the point of the overlay.
+// leanEdit builds one board edit the way leanEdits.set would, so a test can
+// say "he was set to must" without assembling pointers inline.
+func leanEdit(player string, lean draft.Lean) boardEdits {
+	return boardEdits{draft.NormalizeName(player): {player: player, lean: &lean}}
+}
+
+// favEdit builds one favorite tag with no read attached.
+func favEdit(player string, fav bool) boardEdits {
+	return boardEdits{draft.NormalizeName(player): {player: player, favorite: &fav}}
+}
+
 func TestEditsOverrideTheLoadedSets(t *testing.T) {
 	s := testStatic()
 	s.leans = draft.Leans{
 		draft.NormalizeName("Jahmyr Gibbs"): {Player: "Jahmyr Gibbs", Lean: draft.LeanDown},
 	}
-	edits := draft.Leans{
-		draft.NormalizeName("Jahmyr Gibbs"): {Player: "Jahmyr Gibbs", Lean: draft.LeanMust},
-	}
+	edits := leanEdit("Jahmyr Gibbs", draft.LeanMust)
 
 	got := s.effectiveLeans(edits)[draft.NormalizeName("Jahmyr Gibbs")]
 	if got.Lean != draft.LeanMust {
@@ -71,7 +97,7 @@ func TestClearingARemovesTheReadEntirely(t *testing.T) {
 	key := draft.NormalizeName("Jahmyr Gibbs")
 	s.leans = draft.Leans{key: {Player: "Jahmyr Gibbs", Lean: draft.LeanMust}}
 
-	got := s.effectiveLeans(draft.Leans{key: {Player: "Jahmyr Gibbs", Lean: ""}})
+	got := s.effectiveLeans(leanEdit("Jahmyr Gibbs", ""))
 	if _, still := got[key]; still {
 		t.Error("a cleared read is still on the board")
 	}
@@ -274,9 +300,7 @@ func TestAnEditKeepsTheOtherSetsOpinions(t *testing.T) {
 		Others: []draft.PlayerLean{{Lean: draft.LeanDown, Source: "menton"}},
 	}}
 
-	got := s.effectiveLeans(draft.Leans{key: {
-		Player: "Jahmyr Gibbs", Lean: draft.LeanMust, Source: "board",
-	}})[key]
+	got := s.effectiveLeans(leanEdit("Jahmyr Gibbs", draft.LeanMust))[key]
 
 	if !got.Contested() {
 		t.Error("the split flag went missing when the read was set from the board")
@@ -597,7 +621,7 @@ func TestReloadKeepsReadsSetOnTheBoard(t *testing.T) {
 	if err := srv.reloadLeans(); err != nil {
 		t.Fatal(err)
 	}
-	if pl, ok := srv.leans.snapshot()[draft.NormalizeName("Ja'Marr Chase")]; !ok || pl.Lean != draft.LeanMust {
+	if pl, ok := srv.leans.snapshot()[draft.NormalizeName("Ja'Marr Chase")]; !ok || pl.lean == nil || *pl.lean != draft.LeanMust {
 		t.Errorf("a read set on the board did not survive the reload: %+v %v", pl, ok)
 	}
 }
@@ -627,7 +651,7 @@ func TestReloadAndSaveDoNotRace(t *testing.T) {
 	wg.Wait()
 
 	// Whatever the interleaving, the read must still be on the board.
-	if pl, ok := srv.leans.snapshot()[draft.NormalizeName("Jahmyr Gibbs")]; !ok || pl.Lean != draft.LeanMust {
+	if pl, ok := srv.leans.snapshot()[draft.NormalizeName("Jahmyr Gibbs")]; !ok || pl.lean == nil || *pl.lean != draft.LeanMust {
 		t.Errorf("the read was lost to concurrency: %+v %v", pl, ok)
 	}
 }
@@ -725,5 +749,189 @@ func TestLeanEndpointStoresTheBoardsSpelling(t *testing.T) {
 	}
 	if !found {
 		t.Error("the endpoint returned 200 but the read reached no row on the board")
+	}
+}
+
+// TestCyclingALeanKeepsTheFavoriteTag is the same defect as the cap, one field
+// over and found later: the overlay carried no Favorite and the save restored
+// only Cap and Note, so every route around the read cycle dropped the star.
+//
+// It mattered quietly. A favorite lifts the walk-away toward a must-have's
+// headroom, so losing the tag lowered what you would pay for a name you had
+// deliberately marked as one you want, with nothing on screen to say so.
+func TestCyclingALeanKeepsTheFavoriteTag(t *testing.T) {
+	srv, path := leanServerFile(t, "mine.yaml",
+		"up:\n  - Jahmyr Gibbs\nfavorites:\n  - Jahmyr Gibbs\n")
+	key := draft.NormalizeName("Jahmyr Gibbs")
+
+	for _, lean := range []draft.Lean{draft.LeanMust, draft.LeanDown, draft.LeanDND, "", draft.LeanUp} {
+		srv.leans.set("Jahmyr Gibbs", lean)
+		if err := srv.saveLeans(); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if live := srv.static.effectiveLeans(srv.leans.snapshot())[key]; !live.Favorite {
+		t.Error("the favorite tag went missing from the board after a full cycle")
+	}
+
+	back, err := draft.LoadLeans(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := back[key]; !got.Favorite || got.Lean != draft.LeanUp {
+		t.Errorf("saved as lean %q favorite %v, want up and still favorited", got.Lean, got.Favorite)
+	}
+}
+
+// TestAFavoriteOutlivesItsRead — the tag is not a read. Clearing the read on a
+// player you have marked as one of yours should leave him under favorites
+// rather than deleting him from the file, which is a state the format has a
+// place for and WalkAway prices correctly.
+func TestAFavoriteOutlivesItsRead(t *testing.T) {
+	srv, path := leanServerFile(t, "mine.yaml",
+		"up:\n  - Jahmyr Gibbs\nfavorites:\n  - Jahmyr Gibbs\n")
+	key := draft.NormalizeName("Jahmyr Gibbs")
+
+	srv.leans.set("Jahmyr Gibbs", "")
+	if err := srv.saveLeans(); err != nil {
+		t.Fatal(err)
+	}
+
+	live := srv.static.effectiveLeans(srv.leans.snapshot())[key]
+	if !live.Favorite || live.Lean != "" {
+		t.Errorf("on the board: lean %q favorite %v, want no read but still favorited", live.Lean, live.Favorite)
+	}
+
+	back, err := draft.LoadLeans(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := back[key]; !got.Favorite || got.Lean != "" {
+		t.Errorf("saved as lean %q favorite %v, want him kept under favorites alone", got.Lean, got.Favorite)
+	}
+}
+
+// TestUntaggingAFavoriteBeatsTheFile — the mirror of the preservation above.
+// "Untouched" falls back to the file, but "cleared" has to overwrite it, or
+// the leans page could never remove a star.
+func TestUntaggingAFavoriteBeatsTheFile(t *testing.T) {
+	srv, path := leanServerFile(t, "mine.yaml",
+		"up:\n  - Jahmyr Gibbs\nfavorites:\n  - Jahmyr Gibbs\n")
+	key := draft.NormalizeName("Jahmyr Gibbs")
+
+	srv.leans.setFavorite("Jahmyr Gibbs", false)
+	if err := srv.saveLeans(); err != nil {
+		t.Fatal(err)
+	}
+
+	if live := srv.static.effectiveLeans(srv.leans.snapshot())[key]; live.Favorite {
+		t.Error("the board still shows a favorite that was untagged")
+	}
+	back, err := draft.LoadLeans(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := back[key]; got.Favorite {
+		t.Error("the file still lists a favorite that was untagged")
+	} else if got.Lean != draft.LeanUp {
+		t.Errorf("lean = %q, want the read left alone by a favorite-only edit", got.Lean)
+	}
+}
+
+// TestTaggingAFavoriteLeavesTheRead — a favorite-only edit must not be read as
+// "set his lean to nothing", which is what a single non-pointer field would
+// have made it.
+func TestTaggingAFavoriteLeavesTheRead(t *testing.T) {
+	srv, path := leanServerFile(t, "mine.yaml", "must:\n  - Jahmyr Gibbs\n")
+	key := draft.NormalizeName("Jahmyr Gibbs")
+
+	srv.leans.setFavorite("Jahmyr Gibbs", true)
+	if err := srv.saveLeans(); err != nil {
+		t.Fatal(err)
+	}
+
+	back, err := draft.LoadLeans(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := back[key]; got.Lean != draft.LeanMust || !got.Favorite {
+		t.Errorf("saved as lean %q favorite %v, want must and favorited", got.Lean, got.Favorite)
+	}
+}
+
+// TestAFavoriteTagAloneDoesNotClearTheRead is the same guarantee one level
+// down, on the overlay rather than the file: a favorite-only edit carries no
+// lean, and a non-pointer field would have made that mean "set it to nothing".
+func TestAFavoriteTagAloneDoesNotClearTheRead(t *testing.T) {
+	s := testStatic()
+	key := draft.NormalizeName("Jahmyr Gibbs")
+	s.leans = draft.Leans{key: {Player: "Jahmyr Gibbs", Lean: draft.LeanMust, Cap: 40}}
+
+	got := s.effectiveLeans(favEdit("Jahmyr Gibbs", true))[key]
+	if got.Lean != draft.LeanMust {
+		t.Errorf("lean = %q, want the read left alone", got.Lean)
+	}
+	if !got.Favorite {
+		t.Error("the tag was not applied")
+	}
+	if got.Cap != 40 {
+		t.Errorf("cap = %d, want the loaded set's own value kept", got.Cap)
+	}
+}
+
+// TestFavoriteOnlyEditLeavesTheRead — the leans page sends setLean:false when
+// it is only tagging a star. Without that flag the empty Lean in the body
+// would read as "clear his read", so a click on the star would silently throw
+// away the conviction beside it.
+func TestFavoriteOnlyEditLeavesTheRead(t *testing.T) {
+	srv, path := leanServerFile(t, "mine.yaml", "must:\n  - Jahmyr Gibbs\n")
+	key := draft.NormalizeName("Jahmyr Gibbs")
+
+	body := `{"player":"Jahmyr Gibbs","favorite":true,"setLean":false}`
+	rec := httptest.NewRecorder()
+	srv.handleLean(rec, httptest.NewRequest(http.MethodPost, "/api/lean", strings.NewReader(body)))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d: %s", rec.Code, rec.Body)
+	}
+
+	back, err := draft.LoadLeans(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := back[key]; got.Lean != draft.LeanMust || !got.Favorite {
+		t.Errorf("saved lean %q favorite %v, want must and favorited", got.Lean, got.Favorite)
+	}
+}
+
+// TestAnEmptyEditIsRejected — a body that changes nothing is a bug in the
+// caller, and answering 200 to it would hide that.
+func TestAnEmptyEditIsRejected(t *testing.T) {
+	srv, _ := leanServerFile(t, "mine.yaml", "must:\n  - Jahmyr Gibbs\n")
+	body := `{"player":"Jahmyr Gibbs","setLean":false}`
+	rec := httptest.NewRecorder()
+	srv.handleLean(rec, httptest.NewRequest(http.MethodPost, "/api/lean", strings.NewReader(body)))
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status %d, want 400 for an edit that changes nothing", rec.Code)
+	}
+}
+
+// TestTheBoardsOwnBodyStillWorks — the board sends {player, lean} and knows
+// nothing about favorites or setLean. Extending the endpoint must not have
+// changed what it means.
+func TestTheBoardsOwnBodyStillWorks(t *testing.T) {
+	srv, path := leanServerFile(t, "mine.yaml", "up:\n  - Jahmyr Gibbs\n")
+	body := `{"player":"Jahmyr Gibbs","lean":"dnd"}`
+	rec := httptest.NewRecorder()
+	srv.handleLean(rec, httptest.NewRequest(http.MethodPost, "/api/lean", strings.NewReader(body)))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d: %s", rec.Code, rec.Body)
+	}
+	back, err := draft.LoadLeans(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := back[draft.NormalizeName("Jahmyr Gibbs")]; got.Lean != draft.LeanDND {
+		t.Errorf("lean = %q, want dnd", got.Lean)
 	}
 }

@@ -742,3 +742,17 @@ h2.collapsible::before {
 /* The projection's own range. Outlined rather than filled: it qualifies the FP
    number beside it rather than making a claim of its own. */
 .flag.range { border-color: #4a5568; color: var(--dim); font-variant-numeric: tabular-nums; }
+
+/* The leans page, linked rather than folded into the board: it is a
+   research-time screen and the board has one job on draft night. Relative
+   href for the same reason every asset here is — the tailscale mount prefix. */
+.leans-link {
+  margin-left: auto;
+  width: auto;
+  padding: 0 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.leans-link + #guidebtn { margin-left: 0.5rem; }
