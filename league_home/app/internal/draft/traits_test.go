@@ -1,6 +1,7 @@
 package draft
 
 import (
+	"fmt"
 	"math"
 	"os"
 	"testing"
@@ -284,5 +285,122 @@ func TestTraitCountsReadTheLineupOnly(t *testing.T) {
 	}
 	if _, ok := TraitCounts(r)[TraitFloor]; ok {
 		t.Error("a trait nobody carries should be absent, not zero")
+	}
+}
+
+// discountBoard is a board with n healthy players at a known adjusted edge, so
+// a percentile taken over them is predictable.
+func discountBoard(healthy int, extra ...PlayerSignals) []PlayerSignals {
+	out := make([]PlayerSignals, 0, healthy+len(extra))
+	for i := 0; i < healthy; i++ {
+		// Edge zero: cost equals value, so the positional bias is zero too and
+		// the percentile over them is zero.
+		out = append(out, PlayerSignals{
+			PlayerID: fmt.Sprint("h", i), Name: fmt.Sprint("Healthy ", i),
+			Position: "WR", Cost: 20, Value: 20,
+		})
+	}
+	return append(out, extra...)
+}
+
+// TestDiscountNeedsTheMarketToAgree is the whole point of the change.
+//
+// The trait used to fire on any injury designation, which made a claim about a
+// price without looking at one. A Questionable tag the market has not moved on
+// is not a discount, and 47 of the 53 players carrying the old trait were
+// exactly that.
+func TestDiscountNeedsTheMarketToAgree(t *testing.T) {
+	cheap := PlayerSignals{PlayerID: "cheap", Name: "Marked Down", Position: "WR",
+		Cost: 6, Value: 20, Availability: "Questionable"}
+	priced := PlayerSignals{PlayerID: "priced", Name: "Still Priced", Position: "WR",
+		Cost: 20, Value: 20, Availability: "Questionable"}
+	board := discountBoard(30, cheap, priced)
+
+	markDiscounted(board)
+
+	if !board[30].Traits.Has(TraitDiscounted) {
+		t.Error("a designated player the market marked down is not flagged")
+	}
+	if board[31].Traits.Has(TraitDiscounted) {
+		t.Error("a designated player at full price is flagged as discounted")
+	}
+}
+
+// TestDiscountNeedsADesignation — cheap alone is a bargain, which the Edge
+// column already says. The trait is for a bargain with a reason attached.
+func TestDiscountNeedsADesignation(t *testing.T) {
+	bargain := PlayerSignals{PlayerID: "b", Name: "Just Cheap", Position: "WR",
+		Cost: 2, Value: 30}
+	board := discountBoard(30, bargain)
+	markDiscounted(board)
+	if board[30].Traits.Has(TraitDiscounted) {
+		t.Error("a healthy bargain is flagged as an injury discount")
+	}
+}
+
+// TestDiscountIgnoresTheDollarFloor — hundreds of players sit at a dollar on
+// both boards. Their ratios are noise and they must not be flagged, nor drag
+// the percentile.
+func TestDiscountIgnoresTheDollarFloor(t *testing.T) {
+	floor := PlayerSignals{PlayerID: "f", Name: "Waiver Fodder", Position: "WR",
+		Cost: 1, Value: 1, Availability: "IR"}
+	board := discountBoard(30, floor)
+	markDiscounted(board)
+	if board[30].Traits.Has(TraitDiscounted) {
+		t.Error("a dollar against a dollar was read as a discount")
+	}
+}
+
+// TestDiscountHoldsTheBarOnAFlatBoard — a percentile always has a top, so
+// without a floor the trait would flag somebody however little the market had
+// actually moved.
+func TestDiscountHoldsTheBarOnAFlatBoard(t *testing.T) {
+	// Barely cheaper than everyone else, and well under discountBar.
+	nearly := PlayerSignals{PlayerID: "n", Name: "Barely Cheaper", Position: "WR",
+		Cost: 18, Value: 20, Availability: "Questionable"}
+	board := discountBoard(30, nearly)
+	markDiscounted(board)
+	if board[30].Traits.Has(TraitDiscounted) {
+		t.Errorf("flagged a $%d edge on a flat board; the bar is $%d",
+			nearly.Value-nearly.Cost, discountBar)
+	}
+}
+
+// TestDiscountFallsBackLateInADraft — once the room has bought almost
+// everyone there are too few healthy players left to rank, and a percentile of
+// a handful is not a threshold. The bar carries it instead.
+func TestDiscountFallsBackLateInADraft(t *testing.T) {
+	cheap := PlayerSignals{PlayerID: "c", Name: "Late Bargain", Position: "WR",
+		Cost: 4, Value: 20, Availability: "PUP"}
+	board := discountBoard(3, cheap) // far below discountSample
+	markDiscounted(board)
+	if !board[3].Traits.Has(TraitDiscounted) {
+		t.Error("a clear discount was missed because the healthy sample was small")
+	}
+}
+
+// TestDiscountDoesNotLeakThroughTheSharedTraitSet is the trap.
+//
+// BuildSignals hands every player the same slice out of the traits map, so
+// appending in place writes the trait onto everyone who shares that set. The
+// offense trait already copies for this reason.
+func TestDiscountDoesNotLeakThroughTheSharedTraitSet(t *testing.T) {
+	shared := TraitSet{TraitFloor}
+	cheap := PlayerSignals{PlayerID: "c", Name: "Marked Down", Position: "WR",
+		Cost: 5, Value: 25, Availability: "Questionable", Traits: shared}
+	other := PlayerSignals{PlayerID: "o", Name: "Someone Else", Position: "WR",
+		Cost: 20, Value: 20, Traits: shared}
+	board := discountBoard(30, cheap, other)
+
+	markDiscounted(board)
+
+	if !board[30].Traits.Has(TraitDiscounted) {
+		t.Fatal("the discounted player was not flagged")
+	}
+	if board[31].Traits.Has(TraitDiscounted) {
+		t.Error("the trait leaked onto another player through the shared set")
+	}
+	if shared.Has(TraitDiscounted) {
+		t.Error("the trait was written into the shared set itself")
 	}
 }

@@ -476,7 +476,7 @@ roster is a label with nothing behind it.
 | **upside** | the industry flags him above consensus, **or** he is projected past his own record |
 | **targets** | projected targets in the top quartile — the stickiest thing a pass catcher has |
 | **3-down** | a back with both the ground work and the passing downs, not a committee share. Both sides need real volume: a passing-down back with a token carry is not one |
-| **discounted** | price suppressed by an injury designation; you buy the discount and the risk together |
+| **discounted** | the market has marked him down *and* he carries an injury designation to explain it. Measured as adjusted edge against the 90th percentile of healthy players, so a designation nobody has repriced does not qualify — most do not |
 
 Floor and red-zone are opposite ends of one axis, and nobody on this board is
 both — 0 of 446. That is a property of the data rather than something the

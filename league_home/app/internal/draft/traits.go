@@ -34,8 +34,16 @@ const (
 	// nothing here measures share. Three-down usage is what it actually
 	// selects, so that is what it is now called.
 	TraitThreeDown Trait = "3-down"
-	// TraitDiscounted is a player whose price is suppressed by an injury
-	// designation. You are buying the discount and the risk together.
+	// TraitDiscounted is a player the market has actually marked down, with
+	// an injury designation to explain why. You are buying the discount and
+	// the risk together.
+	//
+	// Not decided here: this classifier runs before the pool is priced, so
+	// there is no price in scope to be suppressed. It used to fire on any
+	// designation at all, which made it a claim about a price that never
+	// looked at one — and since a Questionable tag was 47 of the 53 players
+	// carrying it, the trait mostly meant "Sleeper says something", which the
+	// hurt flag already says on every row. See markDiscounted in signals.go.
 	TraitDiscounted Trait = "discounted"
 	// TraitOffense is a player on an offense you have named a target: one
 	// you expect to command a large share of the fantasy-points pie, so its
@@ -65,7 +73,7 @@ func (t Trait) Label() string {
 	case TraitThreeDown:
 		return "3-down back"
 	case TraitDiscounted:
-		return "injury discount"
+		return "marked down"
 	case TraitOffense:
 		return "rich offense"
 	}
@@ -94,8 +102,6 @@ type TraitInput struct {
 	Parts    Components
 	// ECRUpside is true when the industry flags him as beating consensus.
 	ECRUpside bool
-	// Injury is a Sleeper designation, empty when healthy.
-	Injury string
 	// PriorPoints and PriorGames are last season's half-PPR production.
 	// PriorGames of zero means no sample, which is a rookie or a player
 	// who missed the year — either way, nothing to check the projection
@@ -205,9 +211,6 @@ func ClassifyTraits(in []TraitInput, shape PoolState) map[string]TraitSet {
 			// swing$N, where it means what it says.
 			if p.ECRUpside || p.unproven() {
 				set = append(set, TraitUpside)
-			}
-			if p.Injury != "" {
-				set = append(set, TraitDiscounted)
 			}
 			out[p.PlayerID] = set
 		}
