@@ -24,7 +24,7 @@ func TestHeldRosterCarriesTraits(t *testing.T) {
 		Position: "RB", LeaguePrice: 35,
 	}}
 	s.traits = map[string]draft.TraitSet{
-		"1": {draft.TraitFloor, draft.TraitBellCow},
+		"1": {draft.TraitFloor, draft.TraitThreeDown},
 	}
 
 	held := s.heldRoster("me")
@@ -35,7 +35,7 @@ func TestHeldRosterCarriesTraits(t *testing.T) {
 	if got.Price != 35 {
 		t.Errorf("price = $%d, want the league charge of $35", got.Price)
 	}
-	if !got.Player.Traits.Has(draft.TraitFloor) || !got.Player.Traits.Has(draft.TraitBellCow) {
+	if !got.Player.Traits.Has(draft.TraitFloor) || !got.Player.Traits.Has(draft.TraitThreeDown) {
 		t.Errorf("keeper reached the shapes carrying %v, want both of his traits",
 			got.Player.Traits)
 	}

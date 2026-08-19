@@ -1,0 +1,192 @@
+/* The reads themselves, away from the board. Nothing here is live: this is
+   the page you work on in the week before the draft, so it is a long list you
+   scroll and edit rather than a screen you glance at mid-bid. Everything
+   borrows the board's palette and pills — a MUST has to look the same in both
+   places or you end up learning two vocabularies for one read. */
+
+/* The writable path is the whole point of the header: this file is often a
+   symlink into a notes vault, and an edit landing in the wrong copy is
+   invisible until draft night. Small, monospaced, and never truncated. */
+#writable {
+  font-size: 0.8rem;
+  font-weight: 400;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--accent);
+  word-break: break-all;
+  text-align: right;
+  max-width: 42rem;
+}
+#strip .stat.right { flex: 0 1 auto; }
+
+#modebar .mode-btn { text-decoration: none; }
+#modebar .mode-btn:hover { color: var(--accent); }
+#modebar .undo { margin: 0 0 0 0.8rem; }
+
+/* An error has to survive a scroll: it sits under the mode bar and stays
+   until the next action succeeds. */
+.errbar {
+  padding: 0.6rem 1.4rem;
+  background: #3b1414;
+  border-bottom: 1px solid var(--bad);
+  color: var(--bad);
+  font-size: 0.92rem;
+}
+.errbar.hidden { display: none; }
+
+/* ---- what to act on -------------------------------------------------- */
+
+.attention {
+  border: 1px solid var(--warn);
+  border-radius: 6px;
+  padding: 0.7rem 0.9rem 0.8rem;
+  margin-bottom: 1.2rem;
+  background: #221a0a;
+}
+.attention.hidden { display: none; }
+.attention h2 {
+  margin: 0 0 0.15rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--warn);
+}
+.attention h3 {
+  margin: 0.8rem 0 0.2rem;
+  font-size: 0.78rem;
+  color: var(--text);
+  font-weight: 600;
+}
+.attention h3:first-of-type { margin-top: 0.6rem; }
+.attention .note { margin: 0 0 0.3rem; }
+.attention table { margin-bottom: 0.1rem; }
+
+/* ---- add a player ---------------------------------------------------- */
+
+.addbar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 0.6rem; }
+#add {
+  flex: 1;
+  max-width: 26rem;
+  padding: 0.5rem 0.7rem;
+  font-size: 1rem;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+#add:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+/* Matches sit in a panel rather than a dropdown: you give a name a read from
+   here, so it has to stay put while you aim at a pill. */
+.addresults {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  padding: 0.3rem 0.6rem;
+  margin-bottom: 1.1rem;
+}
+.addresults.hidden { display: none; }
+.addresults td { border-bottom: 1px solid #21252c; }
+.addresults tr:last-child td { border-bottom: 0; }
+.addresults .have { color: var(--dim); font-size: 0.78rem; }
+
+/* ---- the groups ------------------------------------------------------ */
+
+.group { margin-bottom: 1.6rem; }
+.group h2 {
+  margin: 0 0 0.3rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--dim);
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.3rem;
+}
+.group h2 .count { color: var(--dim); font-weight: 400; letter-spacing: 0; text-transform: none; }
+.group h2 .what { color: var(--text); }
+.group.g-must h2 .what { color: var(--warn); }
+.group.g-dnd h2 .what { color: var(--bad); }
+.group .note { margin: 0 0 0.4rem; }
+
+/* Rows are static — no sticky header per group, which would stack four of
+   them down the screen as you scroll a 131-row file. */
+.reads th { position: static; }
+.reads td { vertical-align: top; }
+
+td.name { white-space: nowrap; }
+td.read { width: 12.5rem; white-space: nowrap; }
+td.fav { width: 1.6rem; text-align: center; }
+td.src { color: var(--dim); font-size: 0.78rem; white-space: nowrap; }
+td.sig { white-space: nowrap; }
+td.note { color: var(--dim); font-size: 0.82rem; line-height: 1.35; }
+
+/* ---- controls -------------------------------------------------------- */
+
+/* The read control is the board's own pill made pressable, so a MUST here
+   and a MUST on the board are visibly the same object. Off reads as an
+   outline, the set one is filled — the same grammar as the position filters. */
+button.flag {
+  font-family: inherit;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  padding: 0.1rem 0.4rem;
+  background: transparent;
+  color: var(--dim);
+  min-width: 2rem;
+}
+button.flag:hover { border-color: var(--accent); color: var(--accent); }
+button.flag.on { border-color: transparent; }
+button.flag.on.must { background: #3b2f0b; color: var(--warn); }
+button.flag.on.dnd { background: #3b1414; color: var(--bad); }
+button.flag.on.up { background: #0f2e1c; color: var(--good); }
+button.flag.on.down { background: #33210a; color: var(--warn); }
+button.flag.on.none { background: #262b33; color: var(--text); }
+button.flag[disabled] { opacity: 0.5; cursor: default; }
+
+/* A favorite is a star because it is not a read — it is a name you want to
+   keep looking at, and it must not read as a fifth lean. */
+.star {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--line);
+  cursor: pointer;
+}
+.star:hover { color: var(--warn); }
+.star.on { color: var(--warn); }
+
+/* A read that reaches nobody. Loud, because it costs you a player without
+   ever showing up on the board. */
+.flag.offboard { background: #3b1414; color: var(--bad); }
+.flag.sugg { border: 1px solid var(--line); }
+
+/* ---- sets panel ------------------------------------------------------ */
+
+.sets td { vertical-align: top; padding: 0.28rem 0; }
+.sets .ord { color: var(--dim); width: 1.2rem; }
+.sets .who { font-weight: 600; }
+.sets .path {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.68rem;
+  color: var(--dim);
+  word-break: break-all;
+  font-weight: 400;
+}
+.sets .num { color: var(--dim); font-size: 0.8rem; white-space: nowrap; }
+.sets .tag {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--dim);
+  margin-left: 0.3rem;
+}
+.sets .tag.writes { border-color: var(--accent); color: var(--accent); }
+
+aside h2 .count { float: right; font-weight: 400; text-transform: none; letter-spacing: 0; }

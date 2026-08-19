@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script>
+// The inverse of index.html's normalizer, for the same tailscale
+// serve --set-path reason. The board is served at a directory ("/") so it
+// needs the trailing slash for relative assets to resolve; this page is a
+// leaf served at "/leans", so a trailing slash would push "leans.css" and
+// "leans.js" down into a directory that does not exist. Strip it and let
+// the leaf resolve them as siblings. replace() so it costs no history entry.
+if (location.pathname.length > 1 && location.pathname.endsWith("/")) {
+  location.replace(location.pathname.slice(0, -1) + location.search + location.hash);
+}
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leans</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="leans.css">
+</head>
+<body class="leans">
+
+<header id="strip">
+  <div class="stat"><span class="label">reads</span><span class="value" id="n-reads">—</span></div>
+  <div class="stat"><span class="label">favorites</span><span class="value" id="n-favs">—</span></div>
+  <div class="stat"><span class="label">contested</span><span class="value" id="n-contested">—</span></div>
+  <div class="stat"><span class="label">unreachable</span><span class="value" id="n-offboard">—</span></div>
+  <div class="stat wide right"><span class="label">edits are written to</span><span class="value" id="writable">—</span></div>
+</header>
+
+<div id="modebar">
+  <a class="mode-btn" href=".">&larr; Board</a>
+  <span class="research-badge">RESEARCH &mdash; your reads, not the live board</span>
+  <button id="reloadleans" class="undo" title="Re-read the lean files from disk. Lean sets are loaded once at startup, so an edit made elsewhere — a notes vault, an editor — arrives when you ask for it.">reload from disk</button>
+</div>
+
+<!-- Errors from the server land here rather than in the console: a rejected
+     read looks exactly like a successful one if nothing says otherwise. -->
+<div id="err" class="errbar hidden"></div>
+
+<main>
+  <section class="reads">
+    <!-- The two things worth fixing before draft night lead the page: a read
+         that another set argues with, and a read that reaches nobody. -->
+    <section id="attention" class="attention hidden"></section>
+
+    <div class="addbar">
+      <input id="add" type="search" placeholder="add a player &mdash; search the board by name" autocomplete="off">
+      <span class="hint" id="addhint"></span>
+    </div>
+    <div id="addresults" class="addresults hidden"></div>
+
+    <div id="groups"></div>
+  </section>
+
+  <aside>
+    <section>
+      <h2>Lean sets <span class="count" id="sets-count"></span></h2>
+      <table class="mini sets" id="sets"></table>
+      <p class="note">Precedence runs down the list &mdash; the first set naming
+      a player owns his read. Only the writable set takes edits; a read you
+      change on a generated set is copied into yours, it does not edit theirs.</p>
+    </section>
+    <section>
+      <h2>Reading a row</h2>
+      <table class="mini legend">
+        <tr><td><span class="flag must">MUST</span></td>
+          <td>Must-have &mdash; bid up to value plus half his swing.</td></tr>
+        <tr><td><span class="flag">+</span>&nbsp;<span class="flag">-</span></td>
+          <td>Lean up / down: &plusmn;15% on his value.</td></tr>
+        <tr><td><span class="flag dnd">DND</span></td>
+          <td>Never bid, whatever he is worth.</td></tr>
+        <tr><td><span class="flag">&middot;</span></td>
+          <td>No read. Clearing the last read on a player who is not a
+          favorite drops him from the file entirely.</td></tr>
+        <tr><td><span class="star on">&#9733;</span></td>
+          <td>Favorite &mdash; a name you want kept in front of you whether or
+          not you have ruled on him.</td></tr>
+        <tr class="grp"><td colspan="2">Worth acting on</td></tr>
+        <tr><td><span class="flag vs">vs menton</span></td>
+          <td>Another set you trust reads him the other way.</td></tr>
+        <tr><td><span class="flag offboard">no player</span></td>
+          <td>The name matches nobody on the board &mdash; a misspelling, and
+          the read silently never fires. These are the expensive ones.</td></tr>
+        <tr><td><span class="flag range">cap&nbsp;$30</span></td>
+          <td>A hard ceiling from the file. Read-only here &mdash; edit the
+          YAML, where the reasoning sits beside it.</td></tr>
+      </table>
+    </section>
+  </aside>
+</main>
+
+<footer>
+  <span id="status">loading&hellip;</span>
+  <span class="keys">click a pill to set a read &middot; click <kbd>&#9733;</kbd> to favorite &middot;
+  <kbd>/</kbd> search to add a player</span>
+</footer>
+
+<script src="leans.js"></script>
+</body>
+</html>

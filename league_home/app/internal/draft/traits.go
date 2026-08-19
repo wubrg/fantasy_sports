@@ -26,9 +26,14 @@ const (
 	// TraitTargetHog is raw projected target volume. The stickiest thing a
 	// pass catcher has — targets survive bad games, touchdowns do not.
 	TraitTargetHog Trait = "targets"
-	// TraitBellCow is a back carrying both the ground work and the passing
+	// TraitThreeDown is a back carrying both the ground work and the passing
 	// down work, rather than a share of a committee.
-	TraitBellCow Trait = "bellcow"
+	//
+	// Called "bellcow" until it was noticed the name claimed something the
+	// rule never tested: a bell cow is a back taking most of a backfield, and
+	// nothing here measures share. Three-down usage is what it actually
+	// selects, so that is what it is now called.
+	TraitThreeDown Trait = "3-down"
 	// TraitDiscounted is a player whose price is suppressed by an injury
 	// designation. You are buying the discount and the risk together.
 	TraitDiscounted Trait = "discounted"
@@ -43,7 +48,7 @@ const (
 // TraitNames is every trait in report order.
 var TraitNames = []Trait{
 	TraitFloor, TraitRedZone, TraitUpside,
-	TraitTargetHog, TraitBellCow, TraitDiscounted, TraitOffense,
+	TraitTargetHog, TraitThreeDown, TraitDiscounted, TraitOffense,
 }
 
 // Label is the trait in words, for a report.
@@ -57,8 +62,8 @@ func (t Trait) Label() string {
 		return "upside"
 	case TraitTargetHog:
 		return "target hog"
-	case TraitBellCow:
-		return "bell cow"
+	case TraitThreeDown:
+		return "3-down back"
 	case TraitDiscounted:
 		return "injury discount"
 	case TraitOffense:
@@ -114,9 +119,17 @@ const (
 	unprovenLeap = 1.4
 	// provenGames is the sample below which last season says nothing.
 	provenGames = 6
-	// bellCowTargets is the per-season target count that separates an
+	// threeDownTargets is the per-season target count that separates an
 	// every-down back from a committee member on passing downs.
-	bellCowTargets = 45
+	threeDownTargets = 45
+	// threeDownRushYards is the other half of the same test, and was missing:
+	// the rule asked only that a back rush for something at all, so a
+	// passing-down specialist cleared it on a token carry. Justice Hill
+	// projects 190 rushing yards on 48 targets and read as an every-down
+	// back; the next-lowest back over the target line rushes for 463, so
+	// anything from roughly 200 to 460 selects the same players. This sits in
+	// the middle of that gap rather than on either edge of it.
+	threeDownRushYards = 400
 )
 
 // ClassifyTraits labels every player, position by position.
@@ -178,8 +191,8 @@ func ClassifyTraits(in []TraitInput, shape PoolState) map[string]TraitSet {
 				if tgtHi > 0 && p.Parts.Targets >= tgtHi {
 					set = append(set, TraitTargetHog)
 				}
-				if pos == "RB" && p.Parts.RushYards > 0 && p.Parts.Targets >= bellCowTargets {
-					set = append(set, TraitBellCow)
+				if pos == "RB" && p.Parts.RushYards >= threeDownRushYards && p.Parts.Targets >= threeDownTargets {
+					set = append(set, TraitThreeDown)
 				}
 			}
 			// Industry disagreement or a projection past his own record.

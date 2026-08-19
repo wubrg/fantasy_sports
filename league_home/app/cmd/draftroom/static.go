@@ -90,6 +90,11 @@ type staticData struct {
 	// can say whose reads it is applying rather than leaving you to
 	// remember which flags you asked for.
 	leanSets []string
+	// leanSetInfo is those same sets whole — path, undecided names, and
+	// whether a generator owns the file. The board needs only the names; the
+	// leans page needs to say where a read lives and whether it is safe to
+	// edit there.
+	leanSetInfo []draft.LeanSet
 	// matcher resolves a written player name to the pool's own spelling, so
 	// a read spelled reasonably still lands. Kept so the lean-edit endpoint
 	// resolves names the same way the board did.
@@ -117,7 +122,7 @@ type staticData struct {
 }
 
 // loadStatic fetches everything that will not change during the draft.
-func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) (*staticData, error) {
+func loadStatic(leagueID, draftID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) (*staticData, error) {
 	c := sleeper.New()
 	c.HTTPClient = &http.Client{Timeout: 180 * time.Second}
 
@@ -200,6 +205,7 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 		client: c, ownerID: ownerID, season: season, warnings: warnings,
 		leans: leans, subvert: sv, points: proj.Points,
 		leanSets:     setNames(sets),
+		leanSetInfo:  sets,
 		minePath:     writableSetPath(cfg, sets),
 		availability: map[string]string{}, keeperOf: map[string]int{},
 		team:      map[string]string{},
@@ -292,10 +298,13 @@ func loadStatic(leagueID, configDir, dataDir, ownerID string, baseline draft.Bas
 		s.keeperOf[e.PlayerID] = e.LeaguePrice
 	}
 
-	// The draft to watch, if one exists yet.
-	if drafts, err := c.Drafts(leagueID); err == nil && len(drafts) > 0 {
-		s.draftID = drafts[0].DraftID
+	// The draft to watch, if one exists yet. A failed lookup is not fatal:
+	// there may simply be no draft, which is most of the year.
+	drafts, err := c.Drafts(leagueID)
+	if err != nil {
+		drafts = nil
 	}
+	s.draftID = watchedDraft(draftID, drafts)
 	return s, nil
 }
 
@@ -356,7 +365,7 @@ func (s *staticData) keeperScenarioSet(scenario string, aav map[string]float64) 
 	return nil
 }
 
-func (s *staticData) Build(taken map[string]gone, edits draft.Leans, keeperScenario string) (draft.Snapshot, error) {
+func (s *staticData) Build(taken map[string]gone, edits boardEdits, keeperScenario string) (draft.Snapshot, error) {
 	aav := map[string]float64{}
 	for _, m := range s.market {
 		aav[m.PlayerID] = m.AAV
@@ -602,7 +611,7 @@ func (s *staticData) tempo(taken map[string]gone, costs map[string]int) draft.Dr
 // Copies rather than mutating: s.leans is shared with every other reader of
 // this staticData, and a board rebuild must not be able to change what the
 // next one starts from.
-func (s *staticData) effectiveLeans(edits draft.Leans) draft.Leans {
+func (s *staticData) effectiveLeans(edits boardEdits) draft.Leans {
 	if len(edits) == 0 {
 		return s.leans
 	}
@@ -610,11 +619,24 @@ func (s *staticData) effectiveLeans(edits draft.Leans) draft.Leans {
 	for k, v := range s.leans {
 		out[k] = v
 	}
-	for k, v := range edits {
-		if v.Lean == "" {
+	for k, e := range edits {
+		if e.lean != nil && *e.lean == "" {
 			// An edit back to nothing removes the read rather than leaving
 			// a blank one, which WalkAway would treat as an unknown lean.
-			delete(out, k)
+			//
+			// Unless he is tagged a favorite, which is not a read and outlives
+			// one: WalkAway reads a blank lean as no conviction and still
+			// applies the favorite stretch, which is exactly right for a name
+			// you want without an opinion on his range. The tag is resolved
+			// the same way the save path resolves it — this edit if it spoke
+			// to it, otherwise whatever the loaded set already says.
+			prior := out[k]
+			if !favorite(e, prior) {
+				delete(out, k)
+				continue
+			}
+			prior.Player, prior.Lean, prior.Source, prior.Favorite = e.player, "", boardSource, true
+			out[k] = prior
 			continue
 		}
 		// Only the read changes. Replacing the whole record erased two
@@ -628,9 +650,14 @@ func (s *staticData) effectiveLeans(edits draft.Leans) draft.Leans {
 		// hard cap into no cap at all.
 		merged, known := out[k]
 		if !known {
-			merged.Player = v.Player
+			merged.Player = e.player
 		}
-		merged.Lean, merged.Source = v.Lean, v.Source
+		if e.lean != nil {
+			merged.Lean, merged.Source = *e.lean, boardSource
+		}
+		if e.favorite != nil {
+			merged.Favorite = *e.favorite
+		}
 		out[k] = merged
 	}
 	return out
@@ -760,4 +787,21 @@ func (s *staticData) refreshLeanWarnings() {
 		out = append(out, line)
 	}
 	s.leanWarnings = out
+}
+
+// watchedDraft picks the draft to follow.
+//
+// An explicit id wins, and exists for a mock: Sleeper's standalone mock drafts
+// belong to no league, so /league/<id>/drafts never returns one and the only
+// way to follow it is to be told. Discovery stays the default because a real
+// league has exactly one draft that matters, and Sleeper returns them newest
+// first, so the current season's is the one in front.
+func watchedDraft(explicit string, drafts []sleeper.Draft) string {
+	if explicit != "" {
+		return explicit
+	}
+	if len(drafts) > 0 {
+		return drafts[0].DraftID
+	}
+	return ""
 }

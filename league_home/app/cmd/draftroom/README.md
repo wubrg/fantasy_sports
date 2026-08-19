@@ -403,13 +403,54 @@ because the binary in the checkout is built by `make draftroom`, which does
 not bake paths the way `make install` does. Without the owner ID the board
 reads every team as a flat $200 with no keepers deducted.
 
+### Rehearsing against a mock draft
+
+The board is a draft-night tool that gets used once a year, which is a bad
+time to discover a wiring fault. `-draft` points it at any Sleeper draft by id:
+
+```sh
+draftroom serve -addr :8085 -draft <mock-draft-id> -me <your-sleeper-id> -leans rehearsal
+```
+
+Discovery normally finds the draft through the league, and Sleeper's standalone
+mock drafts belong to no league — so without the flag there is nothing to find,
+and the board would sit watching the real league instead.
+
+**Check the mock is an auction first.** Sleeper's mocks default to snake, and
+`Metadata.Amount` is empty for anything that is not an auction, so `Dollars()`
+returns 0 and every pick sells for nothing. The board will look like it is
+working. A rehearsal that never exercised the money is worse than none, because
+you will trust it.
+
+Two things to set up so the rehearsal cannot cost you anything:
+
+- **Point `-leans` at a copy.** The default set is often a symlink into a notes
+  vault, and reads set on the board are written straight through to it. Copy it
+  to `leans/rehearsal.yaml` first; that still exercises the whole lean path on
+  your real reads without editing the ones you will draft from.
+- **Use a spare port.** `:8083` is the live board and `:8084` is the second one.
+
+What to actually watch, since a mock is only useful if you know what would
+count as a failure:
+
+| | What should happen |
+|---|---|
+| Picks arrive | A pick made in Sleeper leaves the board within about two seconds. Pool dollars and slots drop, and the remaining prices move. You should never need to record a sale by hand. |
+| Money tracks | The winning bid appears as the sale price. When the pick is yours, budget, slots, max bid and safe ceiling all move together, and the risk band changes as you spend. |
+| Reads survive | Leans set before the draft still show at the end; one set mid-draft is in `rehearsal.yaml` on disk; `reload leans` does not drop board edits; the scratch roster and recorded sales survive the whole thing. |
+
+Expect the **Kept panel and the keeper scenarios to be empty or meaningless**.
+`owners.csv`, `keeper-locks.csv` and `rulings.csv` are keyed to the real
+league, and a mock shares none of it. That is correct rather than broken, and
+it gives you a clean full pool to rehearse against.
+
 ### Player types on the board and the roster
 
 Every contended player is labelled with what kind of player he is, and the
 scratch roster adds them up as you build it:
 
 ```
-composition: 2 floor · 2 redzone · 4 targets · 2 bellcow · 1 upside · 1 discounted
+composition: 2 floor · 2 redzone · 4 targets · 2 3-down · 1 upside · 1 discounted
 ```
 
 That count is over **starters**, not the whole roster: a bench stacked with
@@ -434,7 +475,7 @@ roster is a label with nothing behind it.
 | **redzone** | touchdown share in the top quartile. The least predictable points in football, bought on purpose |
 | **upside** | the industry flags him above consensus, **or** he is projected past his own record |
 | **targets** | projected targets in the top quartile — the stickiest thing a pass catcher has |
-| **bellcow** | a back with both the ground work and the passing downs, not a committee share |
+| **3-down** | a back with both the ground work and the passing downs, not a committee share. Both sides need real volume: a passing-down back with a token carry is not one |
 | **discounted** | price suppressed by an injury designation; you buy the discount and the risk together |
 
 Floor and red-zone are opposite ends of one axis, and nobody on this board is

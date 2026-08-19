@@ -40,7 +40,7 @@ let sortDir = null;
 // inside a range or carry a trait, and apply only while a keeper scenario is
 // active — a research-only gate so the draft-night board is never quietly
 // filtered by a range you set and forgot.
-const TRAITS = ["floor", "redzone", "upside", "targets", "bellcow", "discounted", "offense"];
+const TRAITS = ["floor", "redzone", "upside", "targets", "3-down", "discounted", "offense"];
 let critAAV = { min: null, max: null };
 let critTier = { min: null, max: null };
 let critCost = { min: null, max: null };

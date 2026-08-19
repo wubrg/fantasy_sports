@@ -9,43 +9,75 @@ import (
 	"leaguehome/internal/draft"
 )
 
-// leanEdits are personal reads made from the board while it is running.
+// boardSource names the edits this file makes, so a read set on screen is
+// distinguishable from one that came out of a file.
+const boardSource = "board"
+
+// boardEdit is one change made from the board or the leans page.
+//
+// Both fields are pointers because "untouched" and "cleared" are different
+// answers and the save path has to tell them apart: an untouched field falls
+// back to whatever the file already says, a cleared one overwrites it. The
+// board only ever sets a read; the leans page can set either.
+type boardEdit struct {
+	player   string
+	lean     *draft.Lean
+	favorite *bool
+}
+
+// boardEdits are personal reads made while the server is running, keyed the
+// way ParseLeans keys its map — by normalized player name — so an edit and a
+// row in the file for the same player collide as they should.
+type boardEdits map[string]boardEdit
+
+// leanEdits holds those edits behind a lock.
 //
 // A separate map with its own lock, mirroring scratchpad, and for the same
 // reason: staticData is shared and immutable by contract, so the thing that
 // changes lives beside it rather than inside it. The board reads the two
-// together at rebuild time and never writes back.
-//
-// Keyed the way ParseLeans keys its map — by normalized player name — so an
-// edit and a row in the file for the same player collide as they should.
+// together at rebuild time; saveLeans is what puts them on disk.
 type leanEdits struct {
 	mu    sync.Mutex
-	edits draft.Leans
+	edits boardEdits
 }
 
-func newLeanEdits() *leanEdits { return &leanEdits{edits: draft.Leans{}} }
+func newLeanEdits() *leanEdits { return &leanEdits{edits: boardEdits{}} }
 
 // set records a read, or clears one when lean is empty.
 //
 // A cleared read is kept in the map as a blank rather than deleted, because
 // it has to out-rank the row in the file it is overriding. effectiveLeans turns it
 // into a deletion when the two are merged.
+//
+// The favorite tag is left alone: it is not a read, and cycling through the
+// reads on the board must not drop one.
 func (l *leanEdits) set(name string, lean draft.Lean) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.edits[draft.NormalizeName(name)] = draft.PlayerLean{
-		Player: name, Lean: lean, Source: "board",
-	}
+	key := draft.NormalizeName(name)
+	e := l.edits[key]
+	e.player, e.lean = name, &lean
+	l.edits[key] = e
+}
+
+// setFavorite tags or untags a player, leaving whatever read he carries.
+func (l *leanEdits) setFavorite(name string, favorite bool) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	key := draft.NormalizeName(name)
+	e := l.edits[key]
+	e.player, e.favorite = name, &favorite
+	l.edits[key] = e
 }
 
 // snapshot copies the edits for a rebuild to read without holding the lock.
-func (l *leanEdits) snapshot() draft.Leans {
+func (l *leanEdits) snapshot() boardEdits {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	if len(l.edits) == 0 {
 		return nil
 	}
-	out := make(draft.Leans, len(l.edits))
+	out := make(boardEdits, len(l.edits))
 	for k, v := range l.edits {
 		out[k] = v
 	}
@@ -83,6 +115,14 @@ func (s *server) handleLean(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Player string `json:"player"`
 		Lean   string `json:"lean"`
+		// Favorite is a pointer so the board, which knows nothing about the
+		// tag, can leave it alone by omitting it — while the leans page can
+		// send false and mean it. Absent and false are different requests.
+		Favorite *bool `json:"favorite"`
+		// SetLean distinguishes "no read given" from "clear his read", since
+		// the empty string is a legitimate value for Lean. The board always
+		// sends a read; the leans page sends only what it changed.
+		SetLean *bool `json:"setLean"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -102,16 +142,28 @@ func (s *server) handleLean(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	lean := draft.Lean(body.Lean)
-	switch lean {
-	case draft.LeanMust, draft.LeanUp, draft.LeanDown, draft.LeanDND, "":
-	default:
-		http.Error(w, fmt.Sprintf("unknown lean %q (use must, up, down, dnd, or empty)", body.Lean),
-			http.StatusBadRequest)
+	// A request that changes the read by default, so the board's existing
+	// {player, lean} body keeps working untouched.
+	setLean := body.SetLean == nil || *body.SetLean
+	if !setLean && body.Favorite == nil {
+		http.Error(w, "nothing to change: send a lean, a favorite, or both", http.StatusBadRequest)
 		return
 	}
 
-	s.leans.set(body.Player, lean)
+	if setLean {
+		lean := draft.Lean(body.Lean)
+		switch lean {
+		case draft.LeanMust, draft.LeanUp, draft.LeanDown, draft.LeanDND, "":
+		default:
+			http.Error(w, fmt.Sprintf("unknown lean %q (use must, up, down, dnd, or empty)", body.Lean),
+				http.StatusBadRequest)
+			return
+		}
+		s.leans.set(body.Player, lean)
+	}
+	if body.Favorite != nil {
+		s.leans.setFavorite(body.Player, *body.Favorite)
+	}
 
 	s.mu.Lock()
 	err := s.rebuildLocked()
@@ -166,37 +218,67 @@ func (s *server) saveLeans() error {
 	for k, v := range onDisk {
 		merged[k] = v
 	}
-	for k, v := range s.leans.snapshot() {
-		if v.Lean == "" {
-			// Deleting a row that was never in this file changes nothing,
-			// and the read comes straight back from whichever set owns it.
-			// A none row is how your own set says "I have no opinion on him",
-			// and it outranks the set that does.
-			if _, held := inherited[k]; held {
-				if _, ours := onDisk[k]; !ours {
-					merged[k] = draft.PlayerLean{Player: v.Player, Lean: draft.LeanNone}
-					continue
-				}
-			}
-			delete(merged, k)
-			continue
-		}
-		// Keep whatever cap and note he came with: the board cannot set
-		// them, so it must not erase them either.
+	for k, e := range s.leans.snapshot() {
+		// What he already carries, from the file if it names him and from the
+		// startup state if it does not.
 		//
 		// Falling back to the startup state matters as much as reading the
 		// file. Cycling past "none" deletes the row, so by the time the
 		// cycle comes back around to a read there is nothing on disk left
 		// to preserve — and a $20 hard cap would be quietly dropped by
 		// four clicks that end where they began.
-		if old, ok := merged[k]; ok {
-			v.Cap, v.Note = old.Cap, old.Note
-		} else if old, ok := inherited[k]; ok {
-			v.Cap, v.Note = old.Cap, old.Note
+		prior, held := merged[k]
+		if !held {
+			prior, held = inherited[k]
 		}
-		merged[k] = v
+
+		if e.lean != nil && *e.lean == "" {
+			// A tagged favorite survives losing his read: the tag is not a
+			// read, and the file has a place for a name under favorites with
+			// no heading of its own.
+			if favorite(e, prior) {
+				merged[k] = draft.PlayerLean{Player: e.player, Favorite: true, Cap: prior.Cap, Note: prior.Note}
+				continue
+			}
+			// Deleting a row that was never in this file changes nothing,
+			// and the read comes straight back from whichever set owns it.
+			// A none row is how your own set says "I have no opinion on him",
+			// and it outranks the set that does.
+			if _, inherited := inherited[k]; inherited {
+				if _, ours := onDisk[k]; !ours {
+					merged[k] = draft.PlayerLean{Player: e.player, Lean: draft.LeanNone}
+					continue
+				}
+			}
+			delete(merged, k)
+			continue
+		}
+
+		// Keep whatever cap and note he came with: neither the board nor the
+		// leans page can set them, so neither must erase them either. The
+		// favorite tag is kept the same way unless this edit spoke to it.
+		next := prior
+		next.Player = e.player
+		if e.lean != nil {
+			next.Lean, next.Source = *e.lean, boardSource
+		} else if !held {
+			// Tagged a favorite with no read anywhere. Legal, and WalkAway
+			// reads it as no conviction plus the favorite stretch.
+			next.Lean = ""
+		}
+		next.Favorite = favorite(e, prior)
+		merged[k] = next
 	}
 	return draft.WriteLeans(path, merged, undecided)
+}
+
+// favorite resolves the tag: what this edit says if it said anything, and
+// otherwise what he already carried.
+func favorite(e boardEdit, prior draft.PlayerLean) bool {
+	if e.favorite != nil {
+		return *e.favorite
+	}
+	return prior.Favorite
 }
 
 // reloadLeans re-reads the lean sets from disk and rebuilds the board.
@@ -233,6 +315,7 @@ func (s *server) reloadLeans() error {
 	// spelled reasonably would survive a restart but not a reload.
 	s.static.leans = matchAndMerge(sets, s.static.matcher)
 	s.static.leanSets = setNames(sets)
+	s.static.leanSetInfo = sets
 	s.static.minePath = writableSetPath(s.configDir, sets)
 	s.static.refreshLeanWarnings()
 	return s.rebuildLocked()

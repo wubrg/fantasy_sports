@@ -92,6 +92,7 @@ func main() {
 
 	fs := flag.NewFlagSet("draftroom", flag.ExitOnError)
 	leagueID := fs.String("league", envOr("LEAGUE_ID", defaultLeagueID), "Sleeper league ID")
+	draftID := fs.String("draft", envOr("DRAFTROOM_DRAFT_ID", ""), "Sleeper draft ID to follow, for a mock draft that belongs to no league (default: the league's own draft)")
 	configDir := fs.String("config", "", "directory holding rulings.csv, aliases.csv and leans/ (default: the repo's copy)")
 	dataDir := fs.String("data", "", "private data directory (default: $DRAFTROOM_DATA_DIR or ../fantasy_sports_data)")
 	baseline := fs.String("baseline", string(draft.BaselineBEERPlus), "valuation curve: beer, beerplus, or vols")
@@ -134,7 +135,7 @@ func main() {
 			os.Exit(1)
 		}
 	case "board":
-		if err := runBoard(*leagueID, orBuiltin(*configDir, builtinConfigDir), orBuiltin(*dataDir, builtinDataDir),
+		if err := runBoard(*leagueID, *draftID, orBuiltin(*configDir, builtinConfigDir), orBuiltin(*dataDir, builtinDataDir),
 			*me, draft.Baseline(*baseline), *limit, draft.SetNames(*leans)); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
@@ -167,7 +168,7 @@ func main() {
 			os.Exit(1)
 		}
 	case "serve":
-		if err := runServe(*addr, *leagueID, orBuiltin(*configDir, builtinConfigDir),
+		if err := runServe(*addr, *leagueID, *draftID, orBuiltin(*configDir, builtinConfigDir),
 			orBuiltin(*dataDir, builtinDataDir), *me, draft.Baseline(*baseline), draft.SetNames(*leans)); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
@@ -458,8 +459,8 @@ func ownerNames(c *sleeper.Client, seasons []draft.SeasonData, owners draft.Owne
 //
 // Delegates to the same loader and builder the server uses, so the printed
 // board and the web board cannot disagree about anything.
-func buildSnapshot(leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) (draft.Snapshot, error) {
-	static, err := loadStatic(leagueID, configDir, dataDir, ownerID, baseline, leanSets)
+func buildSnapshot(leagueID, draftID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) (draft.Snapshot, error) {
+	static, err := loadStatic(leagueID, draftID, configDir, dataDir, ownerID, baseline, leanSets)
 	if err != nil {
 		return draft.Snapshot{}, err
 	}
@@ -482,8 +483,8 @@ func buildSnapshot(leagueID, configDir, dataDir, ownerID string, baseline draft.
 }
 
 // runBoard prints the draft board.
-func runBoard(leagueID, configDir, dataDir, ownerID string, baseline draft.Baseline, limit int, leanSets []string) error {
-	snap, err := buildSnapshot(leagueID, configDir, dataDir, ownerID, baseline, leanSets)
+func runBoard(leagueID, draftID, configDir, dataDir, ownerID string, baseline draft.Baseline, limit int, leanSets []string) error {
+	snap, err := buildSnapshot(leagueID, draftID, configDir, dataDir, ownerID, baseline, leanSets)
 	if err != nil {
 		return err
 	}
