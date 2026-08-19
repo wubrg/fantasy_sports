@@ -738,3 +738,7 @@ h2.collapsible::before {
 .guide-key { color: var(--text); font-weight: 600; white-space: nowrap; }
 .guide-body .legend td:first-child { padding-right: 1rem; }
 .guide-body .research-badge { margin-left: 0; }
+
+/* The projection's own range. Outlined rather than filled: it qualifies the FP
+   number beside it rather than making a claim of its own. */
+.flag.range { border-color: #4a5568; color: var(--dim); font-variant-numeric: tabular-nums; }

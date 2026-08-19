@@ -59,6 +59,13 @@ type PlayerSignals struct {
 	// it: where the two projection sources disagree is exactly what a single
 	// number would hide.
 	FPValue int
+	// FPLow and FPHigh are FPValue at the low and high of FantasyPros' own
+	// projection — the one source here that publishes a range rather than a
+	// single number, so the only place the board can show what a projection
+	// does not know. Zero where absent; see PlayerValue.PriceBand for how the
+	// points range becomes a dollar range.
+	FPLow  int
+	FPHigh int
 	// ECRRank is the player's FantasyPros positional rank (his consensus
 	// expert-ranking within his position). Zero means FantasyPros did not
 	// cover him.
@@ -233,6 +240,11 @@ type FPRead struct {
 	Value      int
 	Rank       int
 	SharpDelta int
+	// Low and High are his value at the low and high of FantasyPros' own
+	// projection, read against the median-priced pool. Zero where the source
+	// published no range or he sits at replacement level.
+	Low  int
+	High int
 }
 
 // BuildSignals joins every source onto the priced board.
@@ -289,6 +301,7 @@ func BuildSignals(in SignalInputs) []PlayerSignals {
 		}
 		if fp, ok := in.FantasyPros[v.PlayerID]; ok {
 			p.FPValue, p.ECRRank, p.SharpRankDelta = fp.Value, fp.Rank, fp.SharpDelta
+			p.FPLow, p.FPHigh = fp.Low, fp.High
 		}
 		p.DellDelta = in.DellSharp[v.PlayerID]
 		p.BorisTier = in.BorisTier[v.PlayerID]

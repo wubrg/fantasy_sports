@@ -2,6 +2,7 @@ package draft
 
 import (
 	"fmt"
+	"math"
 	"sort"
 )
 
@@ -70,6 +71,41 @@ type PlayerValue struct {
 	VOB float64
 	// Price is his share of the money actually left in the room.
 	Price int
+	// PointsLow and PointsHigh carry the source's own projection range
+	// through the solve unpriced, for callers that want to read the range
+	// against the price. Zero where the source published a single number.
+	PointsLow  float64
+	PointsHigh float64
+}
+
+// PriceBand converts a projection's own point range into a dollar range at
+// this player's marginal rate — the dollars per point above replacement that
+// his solved price implies.
+//
+// Deliberately not a second and third call to Solve at the low and the high.
+// Solve shares out a fixed pot, so moving every player to his high at once
+// inflates the whole pool and the prices barely move: that answers "what if
+// everyone overperformed", which is not the question. The question is what
+// this player's range is worth against a pool priced at its median, and that
+// is what the marginal rate gives. It is an approximation, and a linear one —
+// good enough to read a range from, not a number to bid to.
+//
+// Returns zeroes where there is no band or no room above replacement to
+// measure a rate against.
+func (v PlayerValue) PriceBand() (low, high int) {
+	if v.VOB <= 0 || v.PointsHigh <= 0 || v.PointsLow <= 0 {
+		return 0, 0
+	}
+	rate := float64(v.Price) / v.VOB
+	low = int(math.Round(float64(v.Price) - (v.Points-v.PointsLow)*rate))
+	high = int(math.Round(float64(v.Price) + (v.PointsHigh-v.Points)*rate))
+	if low < 1 {
+		low = 1
+	}
+	if high < low {
+		high = low
+	}
+	return low, high
 }
 
 // PoolState is everything the valuation depends on. Change any of it and
@@ -126,6 +162,13 @@ type Projection struct {
 	Name     string
 	Position string
 	Points   float64
+	// PointsLow and PointsHigh bound the projection where the source
+	// published a range, both zero where it published only a median. They ride
+	// through Solve untouched: the solve prices the pool at its median, and the
+	// band is read against that price rather than solved for separately. See
+	// FPBand in signals.go for why.
+	PointsLow  float64
+	PointsHigh float64
 }
 
 // Solve prices every available player against the money and roster slots
@@ -165,6 +208,7 @@ func Solve(available []Projection, state PoolState) ([]PlayerValue, error) {
 		values = append(values, PlayerValue{
 			PlayerID: p.PlayerID, Name: p.Name, Position: p.Position,
 			Points: p.Points, BaselinePts: base, VOB: vob,
+			PointsLow: p.PointsLow, PointsHigh: p.PointsHigh,
 		})
 	}
 

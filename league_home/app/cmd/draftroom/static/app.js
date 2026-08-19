@@ -101,14 +101,17 @@ function flagHTML(p) {
     out.push(`<span class="flag blocked" title="off your board — ${esc(p.BlockedReason)}">blocked: ${esc(p.BlockedReason)}</span>`);
   }
 
-  // Naming the dissenting set, not just flagging dissent: you want to know
-  // which read to go and check before the bidding starts.
-  for (const by of (p.Lean && p.Lean.contestedBy) || []) {
-    out.push(`<span class="flag vs" title="${esc(by)}">vs ${esc(by.split(" ")[0])}</span>`);
-  }
-
   for (const t of p.Traits || []) {
     out.push(`<span class="flag trait trait-${esc(t)}">${esc(t)}</span>`);
+  }
+
+  // Signals start here, after the traits. A lean set disagreeing with your read
+  // leads them: it is the only one that names a specific read to go and check,
+  // where the rest report what the field thinks. It used to sit above the
+  // traits, which made it look like one of your own reads rather than an
+  // outside opinion.
+  for (const by of (p.Lean && p.Lean.contestedBy) || []) {
+    out.push(`<span class="flag vs" title="${esc(by)}">vs ${esc(by.split(" ")[0])}</span>`);
   }
 
   if (p.ECR === "contested") out.push(`<span class="flag split">split</span>`);
@@ -133,6 +136,17 @@ function flagHTML(p) {
   }
   const spread = baselineSpread(p);
   if (spread >= 10) out.push(`<span class="flag">swing $${spread.toFixed(0)}</span>`);
+
+  // FantasyPros is the one source that publishes a high and a low rather than
+  // a single number, so it is the only place the board can show what a
+  // projection does not know. Distinct from swing above: swing is how much his
+  // price moves with where replacement is drawn, this is how little the
+  // projection itself commits to.
+  if (wideBand(p)) {
+    out.push(`<span class="flag range" title="FantasyPros' own high and low for him come out $${p.FPLow}–$${p.FPHigh}` +
+      ` against an FP value of $${p.FPValue} — a range wider than the number itself. The projection is not committing.">` +
+      `range $${p.FPLow}–$${p.FPHigh}</span>`);
+  }
   return out.join("");
 }
 
@@ -140,6 +154,37 @@ function baselineSpread(p) {
   const vals = Object.values(p.VBD || {});
   if (!vals.length) return 0;
   return Math.max(...vals) - Math.min(...vals);
+}
+
+// fpCellTitle explains the FP number on the row, and where FantasyPros
+// published a range, what that number is bracketed by. A dash means they rank
+// him but do not project him, which is a different thing from projecting him
+// low — worth saying, because the two look identical in an empty cell.
+function fpCellTitle(p) {
+  if (!p.FPValue) {
+    return p.ECRRank
+      ? "FantasyPros ranks him but publishes no projection for him, so there is no FP dollar figure — not the same thing as projecting him at nothing."
+      : "FantasyPros does not cover him.";
+  }
+  let s = "FantasyPros' projection, re-solved into dollars against the same pool as Value.";
+  if (p.FPLow && p.FPHigh) {
+    s += ` Their own low and high for him come out $${p.FPLow}–$${p.FPHigh}.`;
+  }
+  return s;
+}
+
+// A band is worth flagging when it is wide against the player's own value, not
+// when it is wide in dollars. Absolute width just finds expensive players:
+// Gibbs' band is the narrowest on the board proportionally (29%) and among the
+// widest in dollars, so a dollar threshold would flag the single most confident
+// projection there is. Requiring the high to clear a floor keeps it off players
+// who are noise at either end of the range.
+const BAND_RATIO = 1.5;   // band at least 1.5x the value itself
+const BAND_HIGH_FLOOR = 20; // and his high is a real roster piece
+function wideBand(p) {
+  if (!p.FPLow || !p.FPHigh || !p.FPValue) return false;
+  if (p.FPHigh < BAND_HIGH_FLOOR) return false;
+  return (p.FPHigh - p.FPLow) / p.FPValue >= BAND_RATIO;
 }
 
 function adjustedEdge(p) {
@@ -184,7 +229,7 @@ const COLUMN_HELP = [
   ["bc", "BC", "Boris Chen's half-PPR tier within the position; 1 is best. His tiers come from a mixture model over expert consensus, ours from dollar-value gaps \u2014 kept beside each other rather than blended."],
   ["cost", "Cost", "What it will take to win him. The national average auction value, restated against this room's money and slots."],
   ["value", "Value", "What he is worth. Median projections re-solved against the same pool. Pay this and you should get this production."],
-  ["fp", "FP", "FantasyPros' projection re-solved into dollars against the same pool as Value \u2014 a like-for-like second opinion, so where the two sources diverge is visible rather than blended away. QB interceptions are estimated (FantasyPros omits them), so QB FP is modelled, not published."],
+  ["fp", "FP", "FantasyPros' projection re-solved into dollars against the same pool as Value \u2014 a like-for-like second opinion, so where the two sources diverge is visible rather than blended away. Theirs is the one source that publishes a high and a low as well as a middle; hover the cell for that range. A dash means they rank him but do not project him, which is not the same as projecting him at nothing. See \u201cReasoning about FP\u201d in this guide."],
   ["edge", "Edge", "Value \u2212 Cost. Positive is a bargain; negative means you are paying for a range of outcomes a median projection cannot see."],
   ["vspos", "vs Pos", "Edge with the position's median edge subtracted \u2014 how much better he looks than the rest of his own position. This is the number to act on: a raw +$15 on a tight end when every tight end reads +$8 is a baseline artifact."],
   ["mymax", "My Max", "The most you will bid, once your reads are applied. A must-have is a deliberate overpay; a value clipped to what you can actually afford is marked; do-not-draft shows as \u2014."],
@@ -598,7 +643,7 @@ function drawRows() {
       <td class="num bc" title="Boris Chen half-PPR tier (within position; 1 is best)">${p.BorisTier ? "T" + p.BorisTier : "—"}</td>
       <td class="num">${p.Cost ? money(p.Cost) : "—"}</td>
       <td class="num">${money(p.Value)}</td>
-      <td class="num fp" title="FantasyPros second projection, re-solved into dollars against the same pool">${p.FPValue ? money(p.FPValue) : "—"}</td>
+      <td class="num fp" title="${esc(fpCellTitle(p))}">${p.FPValue ? money(p.FPValue) : "—"}</td>
       <td class="num">${p.Cost ? signed(p.Value - p.Cost) : "—"}</td>
       <td class="num">${p.Cost ? signed(Math.round(adjustedEdge(p))) : "—"}</td>
       <td class="num">${myMax}</td>
