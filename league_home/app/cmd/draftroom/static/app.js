@@ -766,6 +766,52 @@ function drawSold() {
     `<li>${esc(name)}<span class="price">${price ? "$" + price : "them"}</span></li>`).join("");
 }
 
+// SLOT_ORDER is the lineup read top to bottom: QB, RB, RB, WR, WR, WR, TE,
+// FLEX. Not alphabetical and not fullest-first — it is the order the lineup is
+// actually said in, so the shape is recognisable at a glance.
+const SLOT_ORDER = ["QB", "RB", "WR", "TE", "FLEX"];
+
+function slotRank(slot) {
+  const i = SLOT_ORDER.indexOf(slot);
+  // An unknown slot sorts last rather than first, so a roster shape this file
+  // has not been taught about still renders instead of leading the lineup.
+  return i < 0 ? SLOT_ORDER.length : i;
+}
+
+// lineupSlate is every starting slot in lineup order, filled or not.
+//
+// The server sends the filled spots and the empty slot names separately, and
+// drawing them in that order put every hole at the bottom in alphabetical
+// order — so the lineup rearranged itself as it filled up, and the empty RB
+// sat below the WRs. Mid-auction you read a roster by its shape, and a shape
+// whose rows move is one you have to re-read every time. Slots stay put; only
+// what sits in them changes.
+function lineupSlate(scratch) {
+  const filled = new Map();
+  for (const s of scratch.starters || []) {
+    if (!filled.has(s.slot)) filled.set(s.slot, []);
+    filled.get(s.slot).push(s);
+  }
+  const holes = new Map();
+  for (const slot of scratch.unfilled || []) {
+    holes.set(slot, (holes.get(slot) || 0) + 1);
+  }
+
+  // Only slots this league actually starts — the union of what is filled and
+  // what is missing is the whole lineup, so nothing has to be hardcoded.
+  const slots = [...new Set([...filled.keys(), ...holes.keys()])]
+    .sort((a, b) => slotRank(a) - slotRank(b));
+
+  const out = [];
+  for (const slot of slots) {
+    // Filled first within a slot, keeping the server's own order there
+    // (most expensive first), then its holes.
+    for (const spot of filled.get(slot) || []) out.push({ slot, spot });
+    for (let i = 0; i < (holes.get(slot) || 0); i++) out.push({ slot, spot: null });
+  }
+  return out;
+}
+
 function drawScratch() {
   if (!scratch) return;
   const m = scratch.metrics || {};
@@ -779,21 +825,22 @@ function drawScratch() {
     "v" + (scratch.budgetLeft < 0 ? " bad" : "");
 
   const rows = [];
-  for (const s of scratch.starters || []) {
-    // A keeper is already yours: no price to imagine, nothing to remove.
-    if (s.kept) {
-      rows.push(`<tr class="kept"><td class="slot">${esc(s.slot)}</td>` +
-        `<td>${esc(s.name)} <span class="tag">kept</span></td>` +
-        `<td class="price">$${s.price}</td><td></td></tr>`);
+  for (const { slot, spot } of lineupSlate(scratch)) {
+    if (!spot) {
+      rows.push(`<tr class="hole"><td class="slot">${esc(slot)}</td>` +
+        `<td colspan="3">empty</td></tr>`);
       continue;
     }
-    rows.push(`<tr><td class="slot">${esc(s.slot)}</td><td>${esc(s.name)}</td>` +
-      `<td class="price" data-reprice="${esc(s.name)}" title="click to change the price">$${s.price}</td>` +
-      `<td class="drop" data-drop="${esc(s.name)}" title="remove">&times;</td></tr>`);
-  }
-  for (const slot of scratch.unfilled || []) {
-    rows.push(`<tr class="hole"><td class="slot">${esc(slot)}</td>` +
-      `<td colspan="3">empty</td></tr>`);
+    // A keeper is already yours: no price to imagine, nothing to remove.
+    if (spot.kept) {
+      rows.push(`<tr class="kept"><td class="slot">${esc(slot)}</td>` +
+        `<td>${esc(spot.name)} <span class="tag">kept</span></td>` +
+        `<td class="price">$${spot.price}</td><td></td></tr>`);
+      continue;
+    }
+    rows.push(`<tr><td class="slot">${esc(slot)}</td><td>${esc(spot.name)}</td>` +
+      `<td class="price" data-reprice="${esc(spot.name)}" title="click to change the price">$${spot.price}</td>` +
+      `<td class="drop" data-drop="${esc(spot.name)}" title="remove">&times;</td></tr>`);
   }
   for (const s of scratch.bench || []) {
     rows.push(`<tr class="bench"><td class="slot">BN</td><td>${esc(s.name)}</td>` +
