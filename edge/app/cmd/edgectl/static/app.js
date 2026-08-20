@@ -81,14 +81,35 @@ function splitStored(market, s) {
     if (i < 0) return [s, ""];
     return [s.slice(0, i).trim(), s.slice(i + 1).trim()];
   }
-  if (!s) return ["", "", ""];
+  // On disk a lined market is one signed line plus both prices ("3.5 -110/-110"),
+  // because the two sides are never independent and storing both invites them
+  // to disagree. On screen it is four boxes, one line and one price per side,
+  // because that is how a book prints it and how it is read back.
+  if (!s) return ["", "", "", ""];
   const sp = s.indexOf(" ");
-  if (sp < 0) return [s, "", ""];
+  if (sp < 0) return [s, "", "", ""];
   const line = s.slice(0, sp).trim();
   const rest = s.slice(sp + 1);
   const i = rest.indexOf("/");
-  if (i < 0) return [line, rest.trim(), ""];
-  return [line, rest.slice(0, i).trim(), rest.slice(i + 1).trim()];
+  const oddsA = i < 0 ? rest.trim() : rest.slice(0, i).trim();
+  const oddsB = i < 0 ? "" : rest.slice(i + 1).trim();
+  return [signed(line), oddsA, market === "total" ? signed(line) : mirror(line), oddsB];
+}
+
+// mirror flips a spread for the other side: +3.5 becomes -3.5. A total is the
+// same number on both sides, so only a spread is mirrored.
+function mirror(line) {
+  const n = Number(line);
+  if (!line || Number.isNaN(n)) return "";
+  return signed(String(-n));
+}
+
+// signed writes an explicit + on a positive number. The sign is the whole
+// point of these boxes now, so it is never left implicit.
+function signed(v) {
+  const n = Number(v);
+  if (v === "" || Number.isNaN(n)) return v || "";
+  return n > 0 ? "+" + n : String(n);
 }
 
 function joinValue(market, vals) {
@@ -98,35 +119,53 @@ function joinValue(market, vals) {
     if (!a || !b) return { partial: true };
     return { value: a + "/" + b };
   }
-  let [line, a, b] = vals;
-  if (!line && !a && !b) return { value: "" };
-  if (!line) return { partial: true };
+
+  let [lineA, oddsA, lineB, oddsB] = vals;
+  if (!lineA && !oddsA && !lineB && !oddsB) return { value: "" };
+
+  // Either side alone is enough: the other line is implied, so typing one and
+  // moving on is a complete edit rather than a half-finished one.
+  if (!lineA && lineB) lineA = market === "total" ? lineB : mirror(lineB);
+  if (!lineA) return { partial: true };
+  const wantB = market === "total" ? signed(lineA) : mirror(lineA);
+  if (!lineB) lineB = wantB;
+
+  // Two sides that disagree is a transcription error, and a silent pick of one
+  // would bury it. -3.5 against +3.5 is a real market; -3.5 against +4.5 is a
+  // misread, and the whole point of showing both boxes is to catch it here.
+  if (signed(lineB) !== wantB) {
+    return { conflict: market === "total"
+      ? `over ${signed(lineA)} but under ${signed(lineB)} — a total is one number`
+      : `${signed(lineA)} against ${signed(lineB)} — the two sides must mirror` };
+  }
+
   // Standard juice fills itself in. A lined market is -110/-110 unless the
   // book says otherwise, and typing that thirty-two times a week is exactly
   // the friction this page exists to remove. The filled values are written
   // back into the boxes so nothing is saved that you cannot see.
-  const filled = [line, a || "-110", b || "-110"];
-  return { value: filled[0] + " " + filled[1] + "/" + filled[2], filled: filled };
-}
-
-function fmtCons(market, s) {
-  return s ? s : "";
+  const filled = [signed(lineA), oddsA || "-110", wantB, oddsB || "-110"];
+  return { value: filled[0] + " " + filled[1] + "/" + filled[3], filled: filled };
 }
 
 // ---- rendering ----------------------------------------------------------
 
-function fieldHTML(kind, value, placeholder) {
-  // kind: "price" (sign chip, defaults to -) | "spread" (sign chip, defaults
-  // to +) | "total" (no chip; a total is never negative).
-  const sign = value ? (value.trim()[0] === "-" ? "-" : "+")
-    : (kind === "price" ? "-" : "+");
-  const digits = (value || "").replace(/[^0-9.]/g, "");
-  const numeric = kind === "price" ? "numeric" : "decimal";
-  const hidden = kind === "total" ? " hidden" : "";
+function fieldHTML(value, label, placeholder) {
+  // No sign chip. It was split out so the keypad could stay numeric -- neither
+  // iOS nor Gboard puts a minus on a `numeric` layout -- but a chip you must
+  // remember to flip is worse than a keypad you must reach for: the first real
+  // board entered here came back with two markets at a NEGATIVE overround,
+  // which is an arbitrage no book posts. inputmode=tel keeps a keypad while
+  // giving + and - directly, so the sign is typed where it is read.
+  //
+  // The label is permanent rather than a placeholder, because a placeholder
+  // vanishes exactly when you still need to know which side you are on.
   return `<div class="field">
-    <button type="button" class="sign${hidden}" data-sign="${sign}">${sign === "-" ? "−" : "+"}</button>
-    <input inputmode="${numeric}" enterkeyhint="next" autocomplete="off"
-           spellcheck="false" value="${digits}" placeholder="${placeholder}">
+    <span class="lbl">${label}</span>
+    <div class="entry">
+      <input inputmode="tel" enterkeyhint="next" autocomplete="off"
+             spellcheck="false" value="${value || ""}" placeholder="${placeholder}"
+             aria-label="${label}">
+    </div>
   </div>`;
 }
 
@@ -177,11 +216,17 @@ function render() {
       row.dataset.market = market;
 
       const cons = state.book === "consensus" ? "" : fmtCons(market, consBook[market]);
+      // One labelled pair per side, laid out the way the book prints it:
+      // "ATL +3.5 -110" beside "PIT -3.5 -110", rather than one line and two
+      // detached prices.
+      const sideA = market === "total" ? "over" : g.away + " (away)";
+      const sideB = market === "total" ? "under" : g.home + " (home)";
       const fields = market === "ml"
-        ? fieldHTML("price", vals[0], g.away) + fieldHTML("price", vals[1], g.home)
-        : fieldHTML(market === "spread" ? "spread" : "total", vals[0], market === "spread" ? "line" : "total")
-        + fieldHTML("price", vals[1], market === "total" ? "over" : g.away)
-        + fieldHTML("price", vals[2], market === "total" ? "under" : g.home);
+        ? fieldHTML(vals[0], sideA, "-110") + fieldHTML(vals[1], sideB, "+100")
+        : fieldHTML(vals[0], sideA, market === "total" ? "44.5" : "+3.5")
+        + fieldHTML(vals[1], "&nbsp;", "-110")
+        + fieldHTML(vals[2], sideB, market === "total" ? "44.5" : "-3.5")
+        + fieldHTML(vals[3], "&nbsp;", "-110");
 
       row.innerHTML = `
         <div class="mkt">${market === "ml" ? "ML" : market}</div>
@@ -202,13 +247,7 @@ function render() {
 
 function readRow(row) {
   const out = [];
-  for (const f of row.querySelectorAll(".field")) {
-    const digits = f.querySelector("input").value.trim();
-    if (!digits) { out.push(""); continue; }
-    const btn = f.querySelector(".sign");
-    const sign = btn.classList.contains("hidden") ? "" : btn.dataset.sign;
-    out.push(sign === "+" ? "+" + digits : sign + digits);
-  }
+  for (const f of row.querySelectorAll(".field")) out.push(f.querySelector("input").value.trim());
   return out;
 }
 
@@ -216,16 +255,8 @@ function writeRow(row, vals) {
   const fields = row.querySelectorAll(".field");
   vals.forEach((v, i) => {
     const f = fields[i];
-    if (!f) return;
-    f.querySelector("input").value = (v || "").replace(/[^0-9.]/g, "");
-    const btn = f.querySelector(".sign");
-    if (v) setSign(btn, v.trim()[0] === "-" ? "-" : "+");
+    if (f) f.querySelector("input").value = v || "";
   });
-}
-
-function setSign(btn, sign) {
-  btn.dataset.sign = sign;
-  btn.textContent = sign === "-" ? "−" : "+";
 }
 
 function mark(row, cls, msg) {
@@ -247,6 +278,7 @@ async function saveRow(row) {
   const market = row.dataset.market;
   const joined = joinValue(market, readRow(row));
   if (joined.partial) { mark(row, "partial", ""); return; }
+  if (joined.conflict) { mark(row, "error", joined.conflict); return; }
   if (joined.filled) writeRow(row, joined.filled);
   if (joined.value === row.dataset.saved) { mark(row, joined.value ? "saved" : "", ""); return; }
 
@@ -288,8 +320,10 @@ function advanceFrom(input) {
 el.rows.addEventListener("input", (e) => {
   const input = e.target;
   if (input.tagName !== "INPUT") return;
-  // Digits (and a decimal point for a line) only; the sign lives on the chip.
-  const cleaned = input.value.replace(/[^0-9.]/g, "");
+  // Digits, a decimal point, and a leading sign. The sign is typed now rather
+  // than toggled on a chip, so it has to survive the filter.
+  let cleaned = input.value.replace(/[^0-9.+-]/g, "");
+  cleaned = cleaned.replace(/(?!^)[+-]/g, "");
   if (cleaned !== input.value) input.value = cleaned;
 
   // No timed auto-advance. It was not merely disliked, it corrupted input:
@@ -317,15 +351,6 @@ el.rows.addEventListener("focusout", (e) => {
   saveRow(row);
 });
 
-el.rows.addEventListener("click", (e) => {
-  const btn = e.target.closest(".sign");
-  if (!btn) return;
-  setSign(btn, btn.dataset.sign === "-" ? "+" : "-");
-  const row = btn.closest(".row");
-  // Flipping a sign is a finished edit on its own: it is the whole difference
-  // between a favourite and a dog.
-  if (!row.contains(document.activeElement)) saveRow(row);
-});
 
 // ---- selectors ----------------------------------------------------------
 

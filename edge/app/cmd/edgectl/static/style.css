@@ -93,6 +93,20 @@ body {
   font-size: 0.85rem;
 }
 
+/* A field is now a labelled stack: the side it belongs to above, the sign
+   chip and digits below. The label stays visible while you type, which the
+   old placeholder did not. */
+.field { display: flex; flex-direction: column; gap: 0.12rem; flex: 1 1 0; min-width: 0; }
+.lbl {
+  font-size: 0.62rem;
+  color: var(--dim);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.entry { display: flex; align-items: stretch; }
+
 /* ---- one game -------------------------------------------------------
    A card is one game and holds all three markets, so entering a game is one
    stop rather than three passes over the week under different tabs. Each
@@ -121,7 +135,11 @@ body {
   letter-spacing: 0.04em;
 }
 
-.row .fields { min-width: 0; }
+.row .fields { min-width: 0; display: flex; gap: 0.3rem; flex-wrap: wrap; }
+/* Four boxes for a lined market: on a narrow screen they wrap two and two,
+   which puts each side's line and price together rather than splitting a
+   pair across rows. */
+.row .fields .field { flex: 1 1 4.2rem; }
 
 /* The error belongs to its market row but needs the full width, so it drops
    to its own grid line under all four columns. */
@@ -159,12 +177,12 @@ body {
 
 .fields { display: flex; gap: 0.4rem; }
 
-/* A field is a sign chip plus digits. Splitting the sign out is what lets the
-   input be inputmode=numeric: the iOS number pad has no minus key, so a single
-   text box would either open the letter keyboard or make a dog untypeable. */
-.field {
+/* An entry is a sign chip plus digits. Splitting the sign out is what lets the
+   input be inputmode=numeric: neither the iOS number pad nor Gboard's numeric
+   layout has a minus key, so a single text box would either open the letter
+   keyboard or make a dog untypeable. */
+.entry {
   display: flex;
-  flex: 1 1 0;
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -172,9 +190,9 @@ body {
   background: var(--bg);
 }
 
-.field.err { border-color: var(--bad); }
+.field.err .entry { border-color: var(--bad); }
 
-.field .sign {
+.entry .sign--removed {
   flex: 0 0 34px;
   min-height: var(--tap);
   font-size: 20px;
@@ -184,10 +202,10 @@ body {
   border: 0;
   border-right: 1px solid var(--line);
 }
-.field .sign[data-sign="+"] { color: var(--good); }
-.field .sign.hidden { display: none; }
+.entry .sign[data-sign="+"] { color: var(--good); }
+.entry .sign.hidden { display: none; }
 
-.field input {
+.entry input {
   flex: 1 1 0;
   min-width: 0;
   min-height: var(--tap);
@@ -200,8 +218,8 @@ body {
   border: 0;
   outline: none;
 }
-.field input:focus { background: #232833; }
-.field input::placeholder { color: #4a515e; }
+.entry input:focus { background: #232833; }
+.entry input::placeholder { color: #4a515e; }
 
 .err-msg {
   margin-top: 0.3rem;
