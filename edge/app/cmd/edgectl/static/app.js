@@ -7,6 +7,18 @@
 // kickoff order, which is also the order the book's own page lists them, so
 // entering a week is a straight run down two columns with no hunting.
 
+// Every request is resolved against BASE rather than written as a root-
+// relative path, because this page is served two ways.
+//
+// Locally it sits at "/". Over Tailscale it is mounted with
+// `tailscale serve --set-path=/edge`, which strips the mount before
+// forwarding -- so the backend still sees /api/board and needs no prefix
+// awareness. The catch is on this side: a relative "api/board" resolves
+// against the CURRENT path, so it is correct at /edge/ and wrong at /edge,
+// where it escapes the mount and hits the tailnet root. Deriving the base and
+// forcing the trailing slash is correct at "/", "/edge" and "/edge/" alike.
+const BASE = location.pathname.endsWith("/") ? location.pathname : location.pathname + "/";
+
 const MARKETS = ["ml", "spread", "total"];
 const STORE = "edgectl.board";
 
@@ -224,7 +236,7 @@ async function saveRow(row) {
 
   mark(row, "saving", "");
   try {
-    const res = await fetch("api/price", {
+    const res = await fetch(BASE + "api/price", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -338,7 +350,7 @@ el.pasteToggle.addEventListener("click", () => {
 });
 
 async function importCall(path) {
-  const res = await fetch(path, {
+  const res = await fetch(BASE + path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ week: state.week, book: state.book, market: "ml", blob: el.blob.value }),
@@ -383,7 +395,7 @@ el.apply.addEventListener("click", async () => {
 
 async function refresh(retried) {
   try {
-    const res = await fetch("api/board?week=" + encodeURIComponent(state.week));
+    const res = await fetch(BASE + "api/board?week=" + encodeURIComponent(state.week));
     const body = await res.json();
     if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
     data = body;

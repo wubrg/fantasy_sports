@@ -59,6 +59,42 @@ board-report: ## Analyse one week: make board-report WEEK=1 [BOOK=consensus]
 	@$(MAKE) -C $(APP) build
 	@cd $(APP) && ./edgectl board report -week $(WEEK) -book $(or $(BOOK),consensus)
 
+## --- macOS-only: the board as a launchd agent + tailscale serve ---
+##
+## `tailscale serve` is tailnet-only. This board carries your wagering
+## positions and the prices you took; it must NEVER be `tailscale funnel`,
+## which would publish all of it to the public internet.
+##
+## One-time setup (plist placeholders, path-mount caveats) follows the same
+## shape as leagueweb and draftroom -- see league_home/README.md.
+
+EDGE_PLIST := com.edge.serve.plist
+EDGE_PLIST_DEST := $(HOME)/Library/LaunchAgents/$(EDGE_PLIST)
+
+board-install: ## (macOS) Copy the board plist template into ~/Library/LaunchAgents
+	cp $(APP)/com.edge.serve.plist.template $(EDGE_PLIST_DEST)
+	@echo "$(EDGE_PLIST_DEST) copied. Paths are pre-filled for this checkout; edit if yours differs, then: make board-load"
+
+board-load: ## (macOS) launchctl load the board launch agent
+	launchctl load $(EDGE_PLIST_DEST)
+
+board-unload: ## (macOS) launchctl unload the board launch agent
+	launchctl unload $(EDGE_PLIST_DEST)
+
+board-restart: board-unload board-load ## (macOS) unload then load the board launch agent
+
+board-status: ## (macOS) Show whether the board launch agent is loaded
+	launchctl list | grep com.edge.serve || echo "not loaded"
+
+board-serve-mount: ## (macOS) Mount the line board at /edge via tailscale serve
+	tailscale serve --bg --set-path=/edge localhost:8085
+
+board-serve-unmount: ## (macOS) Remove the /edge tailscale serve mount
+	tailscale serve --set-path=/edge off
+
+board-serve-status: ## (macOS) Show current tailscale serve mappings
+	tailscale serve status
+
 ## --- Data (open nflverse files; network, and it is large) ---
 
 data: ## Fetch the nflverse cache (~185 MB, idempotent, gitignored)

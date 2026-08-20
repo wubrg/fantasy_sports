@@ -1,6 +1,7 @@
 LEAGUEHOME_DIR := league_home/app
 CANTON_DIR     := canton/app
 EDGE_DIR       := edge/app
+EDGE_ROOT      := edge
 
 .PHONY: build test vet fmt fmt-check lint clean check list \
 	leagueweb-install leagueweb-load leagueweb-unload leagueweb-restart leagueweb-status \
@@ -8,7 +9,9 @@ EDGE_DIR       := edge/app
 	canton-install canton-load canton-unload canton-restart canton-status \
 	canton-serve-mount canton-serve-unmount canton-serve-status \
 	draftroom-install draftroom-load draftroom-unload draftroom-restart draftroom-status \
-	draftroom-serve-mount draftroom-serve-unmount draftroom-serve-status
+	draftroom-serve-mount draftroom-serve-unmount draftroom-serve-status \
+	board-install board-load board-unload board-restart board-status \
+	board-serve-mount board-serve-unmount board-serve-status
 
 # This repo holds three independent Go modules (league_home/app,
 # canton/app and edge/app), each with its own Makefile. This root Makefile
@@ -131,3 +134,27 @@ draftroom-serve-status: ## (macOS) Show current tailscale serve mappings
 
 canton-serve-status: ## (macOS) Show current tailscale serve mappings
 	$(MAKE) -C $(CANTON_DIR) canton-serve-status
+
+board-install: ## (macOS) Copy the line-board plist template into ~/Library/LaunchAgents
+	$(MAKE) -C $(EDGE_ROOT) board-install
+
+board-load: ## (macOS) launchctl load the line-board launch agent
+	$(MAKE) -C $(EDGE_ROOT) board-load
+
+board-unload: ## (macOS) launchctl unload the line-board launch agent
+	$(MAKE) -C $(EDGE_ROOT) board-unload
+
+board-restart: ## (macOS) unload then load the line-board launch agent
+	$(MAKE) -C $(EDGE_ROOT) board-restart
+
+board-status: ## (macOS) Show whether the line-board launch agent is loaded
+	$(MAKE) -C $(EDGE_ROOT) board-status
+
+board-serve-mount: ## (macOS) Mount the line board at /edge via tailscale serve
+	$(MAKE) -C $(EDGE_ROOT) board-serve-mount
+
+board-serve-unmount: ## (macOS) Remove the /edge tailscale serve mount
+	$(MAKE) -C $(EDGE_ROOT) board-serve-unmount
+
+board-serve-status: ## (macOS) Show current tailscale serve mappings
+	$(MAKE) -C $(EDGE_ROOT) board-serve-status

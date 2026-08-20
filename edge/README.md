@@ -248,6 +248,44 @@ make fit            # REWRITES the committed artifacts
 
 `make fit` changes what `edgectl` prices. Read the diff.
 
+## Running the board over Tailscale
+
+The line board is a phone-shaped form, and the phone is where the prices are.
+It runs as a launchd agent on the desktop and is mounted into the tailnet at
+`/edge`, the same way `leagueweb`, `canton` and `draftroom` are:
+
+```sh
+make board-install     # copy the plist into ~/Library/LaunchAgents
+make board-load        # start it, and start it at every login
+make board-serve-mount # tailscale serve --bg --set-path=/edge localhost:8085
+```
+
+Then, from anything on the tailnet:
+
+```
+https://<desktop-name>.<your-tailnet>.ts.net/edge
+```
+
+`make board-status` / `board-serve-status` show whether each half is up;
+`board-unload` and `board-serve-unmount` reverse them. The one-time setup
+(plist placeholders, launchd caveats) is the same as the other three apps and
+is written out in `league_home/README.md` — it is not repeated here.
+
+**`tailscale serve` is tailnet-only, and this must never become
+`tailscale funnel`.** The board records what you wagered and the prices you
+took. `funnel` would publish that to the public internet.
+
+### Why the page uses base-relative URLs
+
+`--set-path` strips the mount before forwarding, so the server itself needs no
+prefix awareness: a request to `/edge/api/board` reaches it as `/api/board`.
+The subtlety is in the browser. A relative `fetch("api/board")` resolves
+against the *current* path, which is right at `/edge/` and wrong at `/edge` —
+there it resolves to the tailnet root, outside the mount, and 404s. So
+`static/app.js` derives a `BASE` that forces the trailing slash and is correct
+at `/`, `/edge` and `/edge/` alike. Test the **no-slash** URL when changing
+this; it is the one that breaks.
+
 ## Layout
 
 ```
