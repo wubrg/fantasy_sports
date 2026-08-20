@@ -39,6 +39,8 @@ func main() {
 		err = logCmd(os.Args[2:])
 	case "board":
 		err = boardCmd(os.Args[2:])
+	case "ledger":
+		err = ledgerCmd(os.Args[2:])
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -103,6 +105,12 @@ func usage() {
         Backfill one week's moneylines from a blob copied off a book
         ("SF +150, LAR -150, ..."), read from stdin unless -file is given.
         Prints the diff; -n stops before writing.
+
+  edgectl ledger add|balances|expiring [-file ~/bankroll.jsonl]
+        The bankroll: what you hold, per book, and when each piece of it dies.
+        Balances are replayed from the log rather than stored, so -as-of answers
+        what you held on a past date. expiring is the one that earns its keep —
+        every meaningful loss last campaign was a deadline, not a bad price.
 
   edgectl log list|settle|score -file <path>
         The calibration log. Predictions are recorded before the outcome and
