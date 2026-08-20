@@ -88,6 +88,12 @@ func usage() {
         never overwrites a price you have already entered; validate parses
         every cell and reports the malformed ones.
 
+  edgectl board report -week <n> [-book <name>] [-stake <amount>] [-shots <n>]
+        Read one week's board: de-vig every moneyline and flag implausible
+        overrounds, rank the dogs by what a bonus bet actually converts, build
+        disjoint two-leg parlays that share no team, and show where the best
+        bettable price sits against consensus.
+
   edgectl board serve [-addr :8085] [-dir <path>]
         A phone-shaped form for typing prices into the board, scoped to one
         week, book and market at a time. Every field saves as it loses focus;

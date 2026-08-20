@@ -4,6 +4,7 @@ PY     := python3
 DEMO_LOG := /tmp/edgectl-demo.jsonl
 
 .PHONY: help build check test vet fmt fmt-check lint clean \
+	board board-check board-report \
 	data data-status data-clean \
 	fit fit-residuals fit-conditionals verify-model lag findings \
 	demo demo-clean
@@ -51,6 +52,12 @@ board: ## Scaffold the per-week line board from the schedule (never overwrites a
 
 board-check: ## Parse every board cell and report the malformed ones
 	@cd $(APP) && ./edgectl board validate
+
+# WEEK and BOOK are the only knobs worth a Make variable; everything else
+# (stake, shots, target) is a per-run decision and belongs on the command line.
+board-report: ## Analyse one week: make board-report WEEK=1 [BOOK=consensus]
+	@$(MAKE) -C $(APP) build
+	@cd $(APP) && ./edgectl board report -week $(WEEK) -book $(or $(BOOK),consensus)
 
 ## --- Data (open nflverse files; network, and it is large) ---
 
