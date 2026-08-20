@@ -2,6 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+// MUST be first: it has to run before the stylesheet or app.js are resolved.
+//
+// This page is served at "/" locally and under `tailscale serve
+// --set-path=/edge` remotely. Tailscale strips the mount before forwarding, so
+// the server sees "/" either way and cannot tell the difference -- it has no
+// way to issue this redirect itself.
+//
+// Every relative URL in this document resolves against the CURRENT path. At
+// "/edge/" that is the mount and everything works. At "/edge" it is the tailnet
+// ROOT, so style.css and app.js resolve outside the mount and 404: the page
+// renders unstyled with no script at all. A fix inside app.js cannot help,
+// because app.js is precisely what failed to load. Only inline HTML runs early
+// enough.
+if (!location.pathname.endsWith("/")) {
+  location.replace(location.pathname + "/" + location.search + location.hash);
+}
+</script>
 <!-- maximum-scale is deliberately NOT pinned: forbidding zoom to stop iOS
      focus-zoom would also stop a squint. The inputs are 16px+ instead, which
      is the size at which Safari leaves the page alone. -->
@@ -14,11 +32,6 @@
 <header id="bar">
   <select id="week" aria-label="week"></select>
   <select id="book" aria-label="book"></select>
-  <div id="markets" class="seg" role="group" aria-label="market">
-    <button type="button" data-market="ml">ML</button>
-    <button type="button" data-market="spread">spread</button>
-    <button type="button" data-market="total">total</button>
-  </div>
 </header>
 
 <p id="hint"></p>

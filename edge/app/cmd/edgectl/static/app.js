@@ -22,17 +22,18 @@ const BASE = location.pathname.endsWith("/") ? location.pathname : location.path
 const MARKETS = ["ml", "spread", "total"];
 const STORE = "edgectl.board";
 
-// Auto-advance waits for a pause rather than a field length, because a price
-// can be three digits (+150) or four (+1000) and there is no way to tell which
-// you are halfway through. A length rule would jump the cursor out of +1000
-// after the "100". A pause never truncates a number: the next keystroke
-// cancels it.
-const ADVANCE_MS = 700;
+// There is deliberately no automatic advance between fields.
+//
+// A pause-based one lived here and was removed: it could not distinguish "I
+// have finished this number" from "I am reading the next one off the app", and
+// it silently split 3.5 across two fields, putting ".5" into a price. A
+// length-based rule is no better -- a price is three digits (+150) or four
+// (+1000) and there is no way to tell which you are halfway through. Enter and
+// Tab advance. Nothing else moves the cursor.
 
 const el = {
   week: document.getElementById("week"),
   book: document.getElementById("book"),
-  markets: document.getElementById("markets"),
   rows: document.getElementById("rows"),
   hint: document.getElementById("hint"),
   banner: document.getElementById("banner"),
@@ -59,7 +60,6 @@ function load() {
   return {
     week: Number(s.week) || 1,
     book: s.book || "fanatics",
-    market: MARKETS.includes(s.market) ? s.market : "ml",
   };
 }
 
@@ -146,40 +146,55 @@ function render() {
   inputs = [];
   if (!data) return;
 
-  const market = state.market;
-  el.hint.textContent = market === "ml"
-    ? "Digits only — tap −/+ to flip a side to a dog. Saves as you leave each field."
-    : "Line first, then the two prices; leave the prices blank for −110/−110.";
+  el.hint.textContent =
+    "All three markets per game. Digits only — tap −/+ to flip a side. " +
+    "Lines take a decimal (3.5). Leave the two prices blank for −110/−110. " +
+    "Enter or Tab moves on; each row saves when you leave it.";
 
   for (const g of data.games) {
     const lines = g.books[state.book] || {};
-    const stored = lines[market] || "";
-    const vals = splitStored(market, stored);
+    const consBook = g.books.consensus || {};
 
-    const row = document.createElement("div");
-    row.className = "row";
-    row.dataset.game = g.id;
-
-    const cons = state.book === "consensus" ? "" : fmtCons(market, (g.books.consensus || {})[market]);
-    const fields = market === "ml"
-      ? fieldHTML("price", vals[0], g.away) + fieldHTML("price", vals[1], g.home)
-      : fieldHTML(market === "spread" ? "spread" : "total", vals[0], market === "spread" ? "line" : "total")
-      + fieldHTML("price", vals[1], market === "total" ? "over" : g.away)
-      + fieldHTML("price", vals[2], market === "total" ? "under" : g.home);
-
-    row.innerHTML = `
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
       <div class="head">
         <span class="teams">${g.away} @ ${g.home}</span>
         <span class="kick">${kickoffLabel(g.kickoff)}</span>
+      </div>`;
+
+    // One .row per market, each its own save unit. Splitting by market rather
+    // than by game keeps a bad spread from blocking a good moneyline: the two
+    // are separate cells on disk and separate POSTs, so one can be rejected
+    // while the other is already saved.
+    for (const market of MARKETS) {
+      const stored = lines[market] || "";
+      const vals = splitStored(market, stored);
+
+      const row = document.createElement("div");
+      row.className = "row";
+      row.dataset.game = g.id;
+      row.dataset.market = market;
+
+      const cons = state.book === "consensus" ? "" : fmtCons(market, consBook[market]);
+      const fields = market === "ml"
+        ? fieldHTML("price", vals[0], g.away) + fieldHTML("price", vals[1], g.home)
+        : fieldHTML(market === "spread" ? "spread" : "total", vals[0], market === "spread" ? "line" : "total")
+        + fieldHTML("price", vals[1], market === "total" ? "over" : g.away)
+        + fieldHTML("price", vals[2], market === "total" ? "under" : g.home);
+
+      row.innerHTML = `
+        <div class="mkt">${market === "ml" ? "ML" : market}</div>
+        <div class="fields">${fields}</div>
         <span class="cons">${cons}</span>
         <span class="dot"></span>
-      </div>
-      <div class="fields">${fields}</div>
-      <div class="err-msg" hidden></div>`;
+        <div class="err-msg" hidden></div>`;
 
-    row.dataset.saved = stored;
-    el.rows.appendChild(row);
-    for (const inp of row.querySelectorAll("input")) inputs.push(inp);
+      row.dataset.saved = stored;
+      card.appendChild(row);
+      for (const inp of row.querySelectorAll("input")) inputs.push(inp);
+    }
+    el.rows.appendChild(card);
   }
 }
 
@@ -229,7 +244,8 @@ function mark(row, cls, msg) {
 // built to avoid, and the only defence that always works is to never be
 // holding unsaved work.
 async function saveRow(row) {
-  const joined = joinValue(state.market, readRow(row));
+  const market = row.dataset.market;
+  const joined = joinValue(market, readRow(row));
   if (joined.partial) { mark(row, "partial", ""); return; }
   if (joined.filled) writeRow(row, joined.filled);
   if (joined.value === row.dataset.saved) { mark(row, joined.value ? "saved" : "", ""); return; }
@@ -241,7 +257,7 @@ async function saveRow(row) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         week: state.week, game_id: row.dataset.game,
-        book: state.book, market: state.market, value: joined.value,
+        book: state.book, market: market, value: joined.value,
       }),
     });
     const body = await res.json();
@@ -253,7 +269,7 @@ async function saveRow(row) {
     }
     row.dataset.saved = body.value || "";
     // Show exactly what landed on disk, sign and all.
-    writeRow(row, splitStored(state.market, body.value || ""));
+    writeRow(row, splitStored(market, body.value || ""));
     mark(row, body.value ? "saved" : "", "");
   } catch (e) {
     mark(row, "error", "not saved: " + e.message);
@@ -262,7 +278,6 @@ async function saveRow(row) {
 
 // ---- input behaviour ----------------------------------------------------
 
-let advanceTimer = null;
 
 function advanceFrom(input) {
   const i = inputs.indexOf(input);
@@ -277,15 +292,17 @@ el.rows.addEventListener("input", (e) => {
   const cleaned = input.value.replace(/[^0-9.]/g, "");
   if (cleaned !== input.value) input.value = cleaned;
 
-  clearTimeout(advanceTimer);
-  if (!cleaned) return;
-  advanceTimer = setTimeout(() => advanceFrom(input), ADVANCE_MS);
+  // No timed auto-advance. It was not merely disliked, it corrupted input:
+  // a spread is 3.5, and typing "3" then pausing to read the next number moved
+  // focus to the odds field, so ".5" landed there and the row was rejected as
+  // "not an integer". Any timeout long enough to be safe is long enough to be
+  // useless, because there is no way to know whether a pause means "done" or
+  // "reading". Enter and Tab advance; nothing else does.
 });
 
 el.rows.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && e.target.tagName === "INPUT") {
     e.preventDefault();
-    clearTimeout(advanceTimer);
     advanceFrom(e.target);
   }
 });
@@ -318,17 +335,7 @@ el.week.addEventListener("change", () => {
 el.book.addEventListener("change", () => {
   state.book = el.book.value; save(); render();
 });
-el.markets.addEventListener("click", (e) => {
-  const b = e.target.closest("button");
-  if (!b) return;
-  state.market = b.dataset.market; save(); syncMarketButtons(); render();
-});
 
-function syncMarketButtons() {
-  for (const b of el.markets.querySelectorAll("button")) {
-    b.classList.toggle("on", b.dataset.market === state.market);
-  }
-}
 
 function fillSelect(sel, values, current, label) {
   sel.innerHTML = "";
@@ -406,8 +413,7 @@ async function refresh(retried) {
     // edit, so it is never offered as a target.
     const books = data.books.filter((b) => b !== "consensus");
     state.book = fillSelect(el.book, books, state.book, (b) => b);
-    syncMarketButtons();
-    save();
+        save();
     render();
   } catch (e) {
     // A remembered week whose file has since been removed would otherwise
@@ -422,5 +428,4 @@ async function refresh(retried) {
   }
 }
 
-syncMarketButtons();
 refresh();

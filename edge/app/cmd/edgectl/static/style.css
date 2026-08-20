@@ -93,18 +93,45 @@ body {
   font-size: 0.85rem;
 }
 
-/* ---- one game ------------------------------------------------------- */
+/* ---- one game -------------------------------------------------------
+   A card is one game and holds all three markets, so entering a game is one
+   stop rather than three passes over the week under different tabs. Each
+   market is still its own .row and its own save, because they are separate
+   cells on disk: a rejected spread must not block a saved moneyline. */
 
-.row {
-  padding: 0.45rem 0.6rem 0.55rem;
+.card {
+  padding: 0.5rem 0.6rem 0.6rem;
   border-bottom: 1px solid var(--line);
 }
+
+.row {
+  display: grid;
+  grid-template-columns: 3.1rem 1fr auto auto;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.15rem 0;
+}
+
+/* The market label is a fixed column so the three rows line up as a block
+   rather than reading as three unrelated lines. */
+.mkt {
+  font-size: 0.72rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.row .fields { min-width: 0; }
+
+/* The error belongs to its market row but needs the full width, so it drops
+   to its own grid line under all four columns. */
+.row .err-msg { grid-column: 1 / -1; }
 
 .head {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.35rem;
 }
 
 .teams { font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -114,7 +141,6 @@ body {
    a sanity check, not a suggestion: a price two hundred points away from it is
    almost always a mistyped one. */
 .cons {
-  margin-left: auto;
   font-size: 0.8rem;
   color: var(--dim);
   font-variant-numeric: tabular-nums;
