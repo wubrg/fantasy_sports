@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 
 	"edge/internal/wager"
 )
@@ -335,7 +336,7 @@ const maxPoolLegs = 16
 // maximise that -- pairing the two longest dogs together burns both on one
 // ticket -- so the search is exhaustive over disjoint pairings rather than
 // greedy.
-func BuildSet(legs []Side, shots int) (ParlaySet, error) {
+func BuildSet(legs []Side, shots int, o Objective, floor float64) (ParlaySet, error) {
 	if shots < 0 {
 		return ParlaySet{}, fmt.Errorf("shots %d must not be negative", shots)
 	}
@@ -350,7 +351,7 @@ func BuildSet(legs []Side, shots int) (ParlaySet, error) {
 		return ParlaySet{Unfilled: shots}, nil
 	}
 
-	pairs, err := pairWeights(pool)
+	pairs, err := pairWeights(pool, o, floor)
 	if err != nil {
 		return ParlaySet{}, err
 	}
@@ -418,7 +419,61 @@ func usablePool(legs []Side) []Side {
 // construction rather than by a check after the fact.
 var forbidden = math.Inf(-1)
 
-func pairWeights(pool []Side) ([][]float64, error) {
+// Objective is what a set of parlays is chosen to maximise. The two pull in
+// opposite directions and there is no set that is best at both.
+type Objective int
+
+const (
+	// MaxHitRate maximises P(at least one ticket hits). This is the default
+	// because it is why a stake is split at all: four shots exist to stop the
+	// median outcome being zero, and a set that lifts conversion while
+	// dropping the hit rate defeats its own purpose. Optimising conversion
+	// alone on a real Week 1 board produced 82.9% conversion at a 31.9% hit
+	// rate -- worse, on the metric that motivated splitting, than a hand-built
+	// set at 75.1% and 51.1%.
+	MaxHitRate Objective = iota
+
+	// MaxConversion maximises total conversion: the most expected value per
+	// dollar of face, variance disregarded. Correct when the stake is large
+	// enough, or repeated often enough, for the median to stop mattering.
+	MaxConversion
+)
+
+func (o Objective) String() string {
+	if o == MaxConversion {
+		return "conversion"
+	}
+	return "hitrate"
+}
+
+// ParseObjective reads the flag value.
+func ParseObjective(s string) (Objective, error) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "hitrate", "hit-rate", "":
+		return MaxHitRate, nil
+	case "conversion", "conv":
+		return MaxConversion, nil
+	}
+	return 0, fmt.Errorf("unknown objective %q (want 'hitrate' or 'conversion')", s)
+}
+
+// pairWeight turns one candidate parlay into an additive DP weight.
+//
+// Conversion is already additive across a set, so it is its own weight. Hit
+// rate is not: P(at least one hits) is 1 - product(1-p), and a product cannot
+// be accumulated by a sum. Maximising it is the same as minimising the
+// product, which is the same as maximising the sum of -log(1-p) -- so the
+// existing matching DP carries over untouched, with only the weight changed.
+func pairWeight(p Parlay, o Objective) float64 {
+	if o == MaxConversion {
+		return p.Conversion
+	}
+	// Log1p(-x) is log(1-x) computed without the cancellation that 1-x
+	// suffers for small x, which is exactly the range longshot legs live in.
+	return -math.Log1p(-p.TrueProb)
+}
+
+func pairWeights(pool []Side, o Objective, floor float64) ([][]float64, error) {
 	n := len(pool)
 	w := make([][]float64, n)
 	for i := range w {
@@ -436,7 +491,17 @@ func pairWeights(pool []Side) ([][]float64, error) {
 			if err != nil {
 				return nil, err
 			}
-			w[i][j], w[j][i] = p.Conversion, p.Conversion
+			// Under MaxHitRate the objective pulls towards SHORT prices, which
+			// is the opposite of what MaxConversion does, so nothing stops it
+			// running down to near-even-money pairs that convert terribly.
+			// The floor is what bounds it. MaxConversion needs no such guard:
+			// it is already climbing away from the floor by construction, and
+			// applying one there would change long-standing behaviour.
+			if o == MaxHitRate && p.Conversion < floor {
+				continue
+			}
+			ww := pairWeight(p, o)
+			w[i][j], w[j][i] = ww, ww
 		}
 	}
 	return w, nil
@@ -567,9 +632,10 @@ type Analysis struct {
 
 // Options configures Analyze.
 type Options struct {
-	Book   string  // which book's prices to read
-	Target float64 // bonus-bet conversion floor
-	Shots  int     // how many disjoint parlays to build
+	Book      string    // which book's prices to read
+	Target    float64   // bonus-bet conversion floor
+	Shots     int       // how many disjoint parlays to build
+	Objective Objective // what the parlay set is chosen to maximise
 }
 
 // Analyze reads the whole week for one book.
@@ -631,7 +697,7 @@ func Analyze(d *Doc, opt Options) (*Analysis, error) {
 		legs = append(legs, l.Dog())
 	}
 	sort.SliceStable(legs, func(i, j int) bool { return legs[i].Conversion > legs[j].Conversion })
-	if a.Set, err = BuildSet(legs, opt.Shots); err != nil {
+	if a.Set, err = BuildSet(legs, opt.Shots, opt.Objective, opt.Target); err != nil {
 		return nil, err
 	}
 

@@ -291,7 +291,7 @@ func TestDisjointSetContract(t *testing.T) {
 		pool = append(pool, dog(t, d, Consensus, team))
 	}
 
-	set, err := BuildSet(pool, 4)
+	set, err := BuildSet(pool, 4, MaxConversion, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -350,7 +350,7 @@ func TestSetIsAlwaysDisjoint(t *testing.T) {
 	}
 
 	for shots := 0; shots <= 12; shots++ {
-		set, err := BuildSet(pool, shots)
+		set, err := BuildSet(pool, shots, MaxConversion, 0)
 		if err != nil {
 			t.Fatalf("shots=%d: %v", shots, err)
 		}
@@ -398,7 +398,7 @@ func TestSameGameLegsRejected(t *testing.T) {
 	}
 
 	// The pool-level guard: two entries for one game must not become a ticket.
-	set, err := BuildSet([]Side{l.Away, l.Home}, 1)
+	set, err := BuildSet([]Side{l.Away, l.Home}, 1, MaxConversion, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -549,5 +549,65 @@ func TestShop(t *testing.T) {
 	}
 	if len(a.Shop) != 2 { // ARI and LAC, the two sides of the one shopped game
 		t.Errorf("shop rows = %d, want 2", len(a.Shop))
+	}
+}
+
+// TestObjectiveTradeoff pins the reason -objective exists.
+//
+// Maximising conversion drives the set towards the longest parlays available,
+// which is the right answer for expected value per dollar and the wrong one
+// for why a stake gets split in the first place. On the real Week 1 board that
+// produced 82.9% conversion at a 31.9% hit rate -- worse, on the metric that
+// motivated splitting, than the hand-built set it replaced.
+func TestObjectiveTradeoff(t *testing.T) {
+	d := contractDoc(Consensus)
+	var pool []Side
+	for _, team := range []string{"ARI", "CLE", "NO", "MIA", "WAS", "TB", "SF", "NE", "IND", "ATL", "NYJ", "NYG", "DEN", "CAR", "GB"} {
+		pool = append(pool, dog(t, d, Consensus, team))
+	}
+
+	conv, err := BuildSet(pool, 4, MaxConversion, DefaultTarget)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hit, err := BuildSet(pool, 4, MaxHitRate, DefaultTarget)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Each objective must win on its own metric, or the flag does nothing.
+	if hit.AnyHit <= conv.AnyHit {
+		t.Errorf("hitrate objective HitRate %.4f, want > conversion's %.4f", hit.AnyHit, conv.AnyHit)
+	}
+	if conv.AvgConversion <= hit.AvgConversion {
+		t.Errorf("conversion objective AvgConversion %.4f, want > hitrate's %.4f",
+			conv.AvgConversion, hit.AvgConversion)
+	}
+	// The trade is real in both directions: this is not a free lunch, and a
+	// change that made one objective dominate the other would be a bug.
+	if hit.AvgConversion >= conv.AvgConversion {
+		t.Error("hitrate should give up conversion; it did not")
+	}
+
+	// Under MaxHitRate the objective pulls towards short prices, so without the
+	// floor it would run down to near-even-money pairs. Every ticket must still
+	// clear it.
+	for _, p := range hit.Parlays {
+		if p.Conversion < DefaultTarget {
+			t.Errorf("%v converts %.4f, below the %.2f floor", p.Teams(), p.Conversion, DefaultTarget)
+		}
+	}
+
+	// Disjointness is structural and must hold under either objective.
+	for _, set := range []ParlaySet{conv, hit} {
+		seen := map[string]bool{}
+		for _, p := range set.Parlays {
+			for _, tm := range p.Teams() {
+				if seen[tm] {
+					t.Errorf("team %s appears twice in a set", tm)
+				}
+				seen[tm] = true
+			}
+		}
 	}
 }

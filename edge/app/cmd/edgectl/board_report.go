@@ -25,6 +25,8 @@ func boardReport(args []string) error {
 	stake := fs.Float64("stake", 25, "bonus bet face value, for the dollar columns")
 	shots := fs.Int("shots", 4, "how many disjoint parlays to build")
 	target := fs.Float64("target", board.DefaultTarget, "bonus-bet conversion floor")
+	objective := fs.String("objective", "hitrate",
+		"what the parlay set maximises: 'hitrate' (P at least one hits) or 'conversion' (EV per dollar)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -53,7 +55,13 @@ func boardReport(args []string) error {
 		return err
 	}
 
-	a, err := board.Analyze(doc, board.Options{Book: *book, Target: *target, Shots: *shots})
+	obj, err := board.ParseObjective(*objective)
+	if err != nil {
+		return err
+	}
+	a, err := board.Analyze(doc, board.Options{
+		Book: *book, Target: *target, Shots: *shots, Objective: obj,
+	})
 	if err != nil {
 		return err
 	}
