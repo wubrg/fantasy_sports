@@ -88,6 +88,16 @@ func usage() {
         never overwrites a price you have already entered; validate parses
         every cell and reports the malformed ones.
 
+  edgectl board serve [-addr :8085] [-dir <path>]
+        A phone-shaped form for typing prices into the board, scoped to one
+        week, book and market at a time. Every field saves as it loses focus;
+        there is no submit button and nothing to lose to a reload.
+
+  edgectl board import -week <n> -book <name> [-file <path>] [-n]
+        Backfill one week's moneylines from a blob copied off a book
+        ("SF +150, LAR -150, ..."), read from stdin unless -file is given.
+        Prints the diff; -n stops before writing.
+
   edgectl log list|settle|score -file <path>
         The calibration log. Predictions are recorded before the outcome and
         settled by appending, never by rewriting, so nothing can be re-predicted

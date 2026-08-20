@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- maximum-scale is deliberately NOT pinned: forbidding zoom to stop iOS
+     focus-zoom would also stop a squint. The inputs are 16px+ instead, which
+     is the size at which Safari leaves the page alone. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>line board</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="bar">
+  <select id="week" aria-label="week"></select>
+  <select id="book" aria-label="book"></select>
+  <div id="markets" class="seg" role="group" aria-label="market">
+    <button type="button" data-market="ml">ML</button>
+    <button type="button" data-market="spread">spread</button>
+    <button type="button" data-market="total">total</button>
+  </div>
+</header>
+
+<p id="hint"></p>
+<p id="banner" hidden></p>
+
+<main id="rows"></main>
+
+<!-- Desktop-only. A blob is copied from a book's odds page, which is not
+     something you do on the phone the rest of this page is built for; the
+     media query in style.css hides it rather than offering a paste target
+     that would need app-switching to fill. -->
+<section id="paste">
+  <button type="button" id="pasteToggle">paste a blob from a book</button>
+  <div id="pasteBody" hidden>
+    <p class="note">Moneylines only, consecutive away/home pairs, as copied:
+      <code>SF +150, LAR -150, GB +105, MN -125</code>. Nothing is written until
+      you have read the diff.</p>
+    <textarea id="blob" rows="4" spellcheck="false"
+      placeholder="SF +150, LAR -150, GB +105, MN -125"></textarea>
+    <div class="pasteActions">
+      <button type="button" id="preview">preview</button>
+      <button type="button" id="apply" disabled>apply</button>
+    </div>
+    <div id="diff"></div>
+  </div>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>

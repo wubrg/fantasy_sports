@@ -1,0 +1,275 @@
+package board
+
+import (
+	"fmt"
+	"sort"
+	"strings"
+)
+
+// Pasting a blob is the desktop-only escape hatch from typing prices one at a
+// time. A book's odds page copies as a flat run of team/price entries:
+//
+//	SF +150, LAR -150, GB +105, MN -125, DAL -165, NYG +135
+//
+// There is no matchup punctuation in that text -- the pairing is positional,
+// away team first. That is the whole risk of the format: an entry that is
+// dropped or duplicated in the copy shifts every pair after it, and the result
+// would still look plausible. So nothing here guesses. Every pair must land on
+// a real matchup in the week being imported, and one that does not stops the
+// whole import rather than being skipped.
+
+// teamAliases maps the abbreviations sportsbooks print to the ones the
+// nflverse schedule uses.
+//
+// Exactly two of the 32 teams differ, and both are longstanding: the Rams are
+// LA in nflverse and LAR nearly everywhere else, and the Vikings are MIN in
+// nflverse and MN at several books. Every other abbreviation agrees. This map
+// is deliberately not a general-purpose team-name resolver -- a full-name or
+// nickname parser would let a typo resolve to the wrong club, and the paste
+// path has no human reading each row.
+var teamAliases = map[string]string{
+	"LAR": "LA",
+	"MN":  "MIN",
+}
+
+// CanonicalTeam converts a pasted abbreviation to the schedule's spelling.
+// Unknown input is returned upper-cased and unchanged; whether it names a real
+// team is decided later, by whether it matches a game on the schedule.
+func CanonicalTeam(s string) string {
+	s = strings.ToUpper(strings.TrimSpace(s))
+	if c, ok := teamAliases[s]; ok {
+		return c
+	}
+	return s
+}
+
+// KnownBook reports whether a key is one of the canonical Books.
+func KnownBook(s string) bool {
+	for _, b := range Books {
+		if b == s {
+			return true
+		}
+	}
+	return false
+}
+
+// PastePair is one matchup lifted out of a blob, away side first.
+type PastePair struct {
+	Away, Home           string // canonical schedule abbreviations
+	AwayPrice, HomePrice string // normalised American prices, e.g. "+150"
+}
+
+// ParsePaste splits a pasted blob into consecutive away/home pairs.
+//
+// Entries are separated by commas or newlines, and each entry is a team then a
+// price. Prices are validated here rather than at write time so a blob with
+// one bad number is rejected before any part of it is applied.
+func ParsePaste(blob string) ([]PastePair, error) {
+	fields := strings.FieldsFunc(blob, func(r rune) bool {
+		return r == ',' || r == '\n' || r == ';'
+	})
+
+	type entry struct {
+		team, price string
+	}
+	var entries []entry
+	for _, f := range fields {
+		parts := strings.Fields(f)
+		if len(parts) == 0 {
+			continue
+		}
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("entry %q: want a team and a price (e.g. SF +150)", strings.TrimSpace(f))
+		}
+		p, err := parseAmerican(parts[1])
+		if err != nil {
+			return nil, fmt.Errorf("entry %q: %w", strings.TrimSpace(f), err)
+		}
+		entries = append(entries, entry{CanonicalTeam(parts[0]), formatAmerican(p)})
+	}
+
+	if len(entries) == 0 {
+		return nil, fmt.Errorf("nothing to import: no team/price entries found")
+	}
+	// An odd count means an entry was lost in the copy. Every pair after the
+	// gap would be silently wrong, so refuse the whole blob.
+	if len(entries)%2 != 0 {
+		return nil, fmt.Errorf(
+			"got %d entries, which cannot pair up away/home -- one was probably lost in the copy",
+			len(entries))
+	}
+
+	pairs := make([]PastePair, 0, len(entries)/2)
+	for i := 0; i < len(entries); i += 2 {
+		pairs = append(pairs, PastePair{
+			Away:      entries[i].team,
+			Home:      entries[i+1].team,
+			AwayPrice: entries[i].price,
+			HomePrice: entries[i+1].price,
+		})
+	}
+	return pairs, nil
+}
+
+// ImportChange is one cell a paste would rewrite, shown for confirmation
+// before anything is written.
+type ImportChange struct {
+	GameID string `json:"game_id"`
+	Away   string `json:"away"`
+	Home   string `json:"home"`
+	Book   string `json:"book"`
+	Market string `json:"market"`
+	Old    string `json:"old"`
+	New    string `json:"new"`
+}
+
+func (c ImportChange) String() string {
+	old := c.Old
+	if old == "" {
+		old = "(empty)"
+	}
+	return fmt.Sprintf("%-18s %s @ %s  %s -> %s", c.GameID, c.Away, c.Home, old, c.New)
+}
+
+// PlanImport matches pasted pairs against this week's schedule and returns the
+// cells they would change. It writes nothing.
+//
+// Only the moneyline is supported: a blob is a run of one price per team, and
+// spreads and totals carry a line as well as two prices, which no book copies
+// in this shape. Asking for one is a mistake worth naming rather than a market
+// to half-support.
+func (d *Doc) PlanImport(pairs []PastePair, book, market string) ([]ImportChange, error) {
+	if market != "ml" {
+		return nil, fmt.Errorf("paste import only handles the moneyline, not %q", market)
+	}
+	if book == "" {
+		return nil, fmt.Errorf("no book named")
+	}
+	if book == Consensus {
+		// consensus comes from games.csv and is regenerated by scaffold;
+		// typing over it would be lost on the next run and would also destroy
+		// the reference the other columns are checked against.
+		return nil, fmt.Errorf("consensus is a generated reference column, not a book you can import into")
+	}
+	if !KnownBook(book) {
+		return nil, fmt.Errorf("unknown book %q", book)
+	}
+
+	// The schedule is indexed both ways round. Books nearly always list the
+	// away side first, but a page that lists the home team first is a
+	// consistent, recognisable shape rather than a corrupted one, and since a
+	// team plays at most once a week the reversed match is unambiguous.
+	type slot struct {
+		id       string
+		reversed bool
+	}
+	index := map[[2]string]slot{}
+	for id, g := range d.Games {
+		index[[2]string{g.Away, g.Home}] = slot{id, false}
+		index[[2]string{g.Home, g.Away}] = slot{id, true}
+	}
+
+	var changes []ImportChange
+	seen := map[string]string{}
+	for _, p := range pairs {
+		s, ok := index[[2]string{p.Away, p.Home}]
+		if !ok {
+			return nil, fmt.Errorf(
+				"%s/%s is not a week %d matchup -- check the alias spelling, or an entry may be missing from the paste",
+				p.Away, p.Home, d.Week)
+		}
+		if prev, dup := seen[s.id]; dup {
+			return nil, fmt.Errorf("%s appears twice in the paste (as %s and %s/%s)",
+				s.id, prev, p.Away, p.Home)
+		}
+		seen[s.id] = p.Away + "/" + p.Home
+
+		away, home := p.AwayPrice, p.HomePrice
+		if s.reversed {
+			away, home = home, away
+		}
+		// Stored as away/home regardless of the order it was pasted in, so the
+		// file's meaning never depends on how the blob was copied.
+		value := away + "/" + home
+		if _, _, err := ParseMarket(value); err != nil {
+			return nil, fmt.Errorf("%s: %w", s.id, err)
+		}
+
+		g := d.Games[s.id]
+		old := g.Books[book].ML
+		if old == value {
+			continue // no-op; nothing to confirm
+		}
+		changes = append(changes, ImportChange{
+			GameID: s.id, Away: g.Away, Home: g.Home,
+			Book: book, Market: market, Old: old, New: value,
+		})
+	}
+
+	sort.Slice(changes, func(i, j int) bool { return changes[i].GameID < changes[j].GameID })
+	return changes, nil
+}
+
+// ApplyImport writes a plan produced by PlanImport into the document.
+//
+// It is a separate step so the caller can show the diff first: a paste that
+// shifted by one entry looks entirely reasonable until you read it.
+func (d *Doc) ApplyImport(changes []ImportChange) error {
+	for _, c := range changes {
+		if err := d.SetPrice(c.GameID, c.Book, c.Market, c.New); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SetPrice validates and stores one cell.
+//
+// An empty value is an erase, not an error: clearing a price you mistyped has
+// to be as easy as entering it, and most cells on a board are empty anyway.
+func (d *Doc) SetPrice(gameID, book, market, value string) error {
+	g, ok := d.Games[gameID]
+	if !ok {
+		return fmt.Errorf("no game %q in week %d", gameID, d.Week)
+	}
+	if book == "" {
+		return fmt.Errorf("no book named")
+	}
+	if book == Consensus {
+		return fmt.Errorf("consensus is a generated reference column, not a book you can edit")
+	}
+	// A book that is not on the canonical list is a typo in a request, not a
+	// new column: accepting it would write prices into a key nothing reads.
+	if !KnownBook(book) {
+		return fmt.Errorf("unknown book %q", book)
+	}
+
+	value = strings.TrimSpace(value)
+	switch market {
+	case "ml":
+		if _, _, err := ParseMarket(value); err != nil {
+			return err
+		}
+	case "spread", "total":
+		if _, _, _, err := ParseHandicap(value); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unknown market %q (want ml, spread or total)", market)
+	}
+
+	if g.Books == nil {
+		g.Books = map[string]Lines{}
+	}
+	l := g.Books[book]
+	switch market {
+	case "ml":
+		l.ML = value
+	case "spread":
+		l.Spread = value
+	case "total":
+		l.Total = value
+	}
+	g.Books[book] = l
+	return nil
+}
