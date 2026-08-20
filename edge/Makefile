@@ -43,6 +43,15 @@ test: ## Run go test ./...
 vet fmt fmt-check lint clean:
 	$(MAKE) -C $(APP) $@
 
+## --- Line board ---
+
+board: ## Scaffold the per-week line board from the schedule (never overwrites a price)
+	@$(MAKE) -C $(APP) build
+	@cd $(APP) && ./edgectl board scaffold
+
+board-check: ## Parse every board cell and report the malformed ones
+	@cd $(APP) && ./edgectl board validate
+
 ## --- Data (open nflverse files; network, and it is large) ---
 
 data: ## Fetch the nflverse cache (~185 MB, idempotent, gitignored)

@@ -255,13 +255,15 @@ edge/
   Makefile             working entry point: Go + the Python model pipeline
   README.md
   docs/frameworks/     transcribed source material + operative template
-  app/                 Go, zero dependencies
+  moneylines/          the line board: one file per week, prices per book
+  app/                 Go, one dependency (gopkg.in/yaml.v3, for the board)
     Makefile           build / test / vet / fmt / lint / check
     cmd/edgectl/       CLI
     internal/wager/    odds, vig, de-vigging, EV, hit rate, belief decomposition
     internal/scenario/ game line -> scenario probability; pooled q/r grid
       artifacts/       committed JSON, read via go:embed
     internal/betlog/   append-only prediction log and calibration
+    internal/board/    per-week line board: schema, scaffold, validation
   model/               Python, stdlib only
     FINDINGS.md        every measured claim, with the script that produced it
     ingest/            nflverse -> local cache (gitignored)

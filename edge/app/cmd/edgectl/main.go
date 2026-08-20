@@ -37,6 +37,8 @@ func main() {
 		err = scenarioCmd(os.Args[2:])
 	case "log":
 		err = logCmd(os.Args[2:])
+	case "board":
+		err = boardCmd(os.Args[2:])
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -79,6 +81,12 @@ func usage() {
         What you would have to believe for a wager to be +EV, against what the
         game line already implies. Add -rungs line:price:q:r,... for a ladder,
         or -log <path> to record the prediction.
+
+  edgectl board scaffold|validate [-dir <path>] [-season <year>] [-week <n>]
+        The per-week line board: every game on the schedule, with a slot for
+        each sportsbook. scaffold generates the week files from games.csv and
+        never overwrites a price you have already entered; validate parses
+        every cell and reports the malformed ones.
 
   edgectl log list|settle|score -file <path>
         The calibration log. Predictions are recorded before the outcome and
