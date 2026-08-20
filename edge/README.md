@@ -255,7 +255,9 @@ edge/
   Makefile             working entry point: Go + the Python model pipeline
   README.md
   docs/frameworks/     transcribed source material + operative template
+  docs/ADR-*.md        architecture decisions
   moneylines/          the line board: one file per week, prices per book
+                       (tracked in git on purpose -- see docs/ADR-001)
   app/                 Go, one dependency (gopkg.in/yaml.v3, for the board)
     Makefile           build / test / vet / fmt / lint / check
     cmd/edgectl/       CLI
