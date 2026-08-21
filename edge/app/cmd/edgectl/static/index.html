@@ -32,12 +32,17 @@ if (!location.pathname.endsWith("/")) {
 <header id="bar">
   <select id="week" aria-label="week"></select>
   <select id="book" aria-label="book"></select>
+  <div id="views" class="seg" role="group" aria-label="view">
+    <button type="button" data-view="enter" class="on">enter</button>
+    <button type="button" data-view="bets">bets</button>
+  </div>
 </header>
 
 <p id="hint"></p>
 <p id="banner" hidden></p>
 
 <main id="rows"></main>
+<main id="report" hidden></main>
 
 <!-- Desktop-only. A blob is copied from a book's odds page, which is not
      something you do on the phone the rest of this page is built for; the

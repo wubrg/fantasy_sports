@@ -272,3 +272,67 @@ body {
 @media (max-width: 700px) {
   #paste { display: none; }
 }
+
+/* ---- the bets view --------------------------------------------------
+   The answer the board is for. Wagers sit above the reasoning that
+   produced them, because the reasoning is only consulted when a number
+   looks wrong. */
+
+#report { padding: 0.2rem 0 2rem; }
+
+.rep {
+  padding: 0.7rem 0.75rem 0.8rem;
+  border-bottom: 1px solid var(--line);
+}
+.rep h2 {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--dim);
+}
+.rep.warn h2 { color: var(--bad); }
+.rep .muted { font-size: 0.74rem; color: var(--dim); margin: 0.35rem 0 0; line-height: 1.45; }
+.mono { font-variant-numeric: tabular-nums; }
+
+/* A wager is the thing you act on, so it gets the largest type on the page. */
+.bet {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.bet:last-of-type { border-bottom: 0; }
+.bet .legs { font-size: 1rem; font-weight: 600; }
+.bet .nums { text-align: right; white-space: nowrap; }
+.bet .price { font-size: 1rem; color: var(--accent); margin-right: 0.4rem; }
+.bet .muted { display: block; margin: 0; font-size: 0.68rem; }
+
+.sum { margin: 0.5rem 0 0; font-size: 0.82rem; }
+
+.dog {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.22rem 0;
+  font-size: 0.86rem;
+}
+.dog .team { flex: 0 0 3.2rem; font-weight: 600; }
+.dog .price { flex: 0 0 3.6rem; font-variant-numeric: tabular-nums; }
+.dog .conv { color: var(--dim); font-variant-numeric: tabular-nums; }
+.dog.under { opacity: 0.55; }
+.dog .conv.good { color: var(--good); }
+.dog .conv.bad { color: var(--bad); }
+.dog .tag {
+  margin-left: auto;
+  font-size: 0.62rem;
+  color: var(--bad);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.srow { padding: 0.25rem 0; font-size: 0.86rem; }
+.srow + .srow { border-top: 1px solid var(--line); }

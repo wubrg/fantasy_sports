@@ -145,6 +145,55 @@ tryRender("render() with consensus selected", 'data = __sample; state.book = "co
 tryRender("render() against a game with no prices",
   'data = { games: [{ id: "x", away: "A", home: "B", kickoff: "2026-09-09T20:20", books: {} }] }; state.book = "fanatics"');
 
+// ---- the bets view ------------------------------------------------------
+// Same reasoning as render(): this path is reachable only by tapping a tab, so
+// a ReferenceError in it would ship unnoticed for as long as nobody tapped.
+
+const sampleReport = {
+  week: 1, book: "fanatics", priced: 16, total: 16, target: 0.7, floor: 234,
+  suspect: [{ game: "NE @ SEA", price: "-165/+200", overround: -0.044, why: "no book posts a market this thin" }],
+  dogs: [
+    { team: "ARI", game: "g1", price: 455, fair: 0.173, conversion: 0.787, clears: true, suspect: false },
+    { team: "NO", game: "g2", price: 250, fair: 0.274, conversion: 0.686, clears: false, suspect: false },
+    { team: "SEA", game: "g3", price: 200, fair: 0.349, conversion: 0.697, clears: false, suspect: true },
+  ],
+  set: [{ teams: ["WAS", "GB"], price: 494, true_prob: 0.154, conversion: 0.762 }],
+  avg_conversion: 0.762, any_hit: 0.154, unfilled: 3,
+  shop: [{ team: "ARI", best: 390, book: "fanatics", cons: 455, points: -65, points_valid: true }],
+  notes: [],
+};
+
+function tryReport(what, payload) {
+  try {
+    sandbox.__rep = payload;
+    inCtx("renderReport(__rep)");
+    const html = inCtx("el.report.innerHTML");
+    if (html && html.length > 0) ok(`${what}`);
+    else fail(`${what}: produced nothing`);
+  } catch (e) {
+    fail(`${what}: ${e.message}`);
+  }
+}
+
+tryReport("renderReport() on a full report", sampleReport);
+tryReport("renderReport() with nothing priced",
+  { week: 1, book: "fanatics", priced: 0, total: 16, target: 0.7, floor: 234,
+    suspect: [], dogs: [], set: [], avg_conversion: 0, any_hit: 0, unfilled: 4, shop: [], notes: [] });
+tryReport("renderReport() with prices but no buildable set",
+  Object.assign({}, sampleReport, { set: [], suspect: [], shop: [], notes: [] }));
+tryReport("renderReport() with null collections (Go emits null, not [])",
+  { week: 1, book: "fanatics", priced: 2, total: 16, target: 0.7, floor: 234,
+    suspect: null, dogs: [], set: null, avg_conversion: 0, any_hit: 0, unfilled: 4,
+    shop: null, notes: null });
+
+try {
+  inCtx('state.view = "bets"; syncView(); 0');
+  ok("syncView() switches to the bets view");
+  inCtx('state.view = "enter"; syncView(); 0');
+} catch (e) {
+  fail("syncView() threw: " + e.message);
+}
+
 // ---- value model --------------------------------------------------------
 
 function eq(what, got, want) {

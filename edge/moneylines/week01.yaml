@@ -369,9 +369,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: +160/-195
+        spread: +3.5 -105/-115
+        total: +44.5 -110/-110
       fanduel:
         ml: ""
         spread: ""
@@ -468,9 +468,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: +150/-180
+        spread: +3.5 -110/-110
+        total: +48.5 -110/-110
       fanduel:
         ml: ""
         spread: ""

@@ -92,6 +92,7 @@ func (s *boardServer) routes(mux *http.ServeMux) error {
 	}
 	mux.Handle("/", http.FileServer(http.FS(content)))
 	mux.HandleFunc("/api/board", s.handleBoard)
+	mux.HandleFunc("/api/report", s.handleReport)
 	mux.HandleFunc("/api/price", s.handlePrice)
 	mux.HandleFunc("/api/import/preview", s.handleImportPreview)
 	mux.HandleFunc("/api/import/apply", s.handleImportApply)

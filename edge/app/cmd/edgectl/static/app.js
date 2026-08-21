@@ -33,6 +33,8 @@ const STORE = "edgectl.board";
 
 const el = {
   week: document.getElementById("week"),
+  views: document.getElementById("views"),
+  report: document.getElementById("report"),
   book: document.getElementById("book"),
   rows: document.getElementById("rows"),
   hint: document.getElementById("hint"),
@@ -46,6 +48,7 @@ const el = {
 };
 
 const state = load();
+if (state.view !== "bets") state.view = "enter";
 let data = null;      // last /api/board payload
 let inputs = [];      // every input in tab order, for auto-advance
 
@@ -360,13 +363,146 @@ el.rows.addEventListener("focusout", (e) => {
 });
 
 
+// ---- the bets view -------------------------------------------------------
+//
+// The whole point of entering a board is to find out what to bet, and that
+// answer used to live only in `edgectl board report` on a terminal. Prices are
+// typed on a phone with a book's app open next to it; making the operator walk
+// to a desk to read the result is the friction this page exists to remove.
+
+function pct(x) { return (x * 100).toFixed(1) + "%"; }
+function amer(n) { return n > 0 ? "+" + n : String(n); }
+
+async function loadReport() {
+  el.report.innerHTML = `<p class="muted">working…</p>`;
+  try {
+    const res = await fetch(BASE + "api/report?week=" + encodeURIComponent(state.week) +
+      "&book=" + encodeURIComponent(state.book) + "&shots=4");
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
+    renderReport(r);
+  } catch (e) {
+    el.report.innerHTML = `<p class="muted">could not build the report: ${e.message}</p>`;
+  }
+}
+
+function renderReport(r) {
+  const out = [];
+
+  if (!r.priced) {
+    out.push(`<section class="rep"><h2>nothing priced</h2>
+      <p class="muted">No ${r.book} prices in week ${r.week} yet. Enter some on the
+      enter tab, or switch the book selector to consensus to see the schedule's
+      own numbers.</p></section>`);
+    el.report.innerHTML = out.join("");
+    return;
+  }
+
+  // Suspect lines come first. A price the tool cannot believe is the one thing
+  // here that is probably a typo rather than a decision, and it is cheapest to
+  // fix while the book is still open in the other app.
+  if (r.suspect && r.suspect.length) {
+    out.push(`<section class="rep warn">
+      <h2>check these first</h2>
+      ${r.suspect.map(s => `<div class="srow">
+        <b>${s.game}</b> <span class="mono">${s.price}</span>
+        <div class="muted">${pct(s.overround)} overround — ${s.why}</div>
+      </div>`).join("")}
+      <p class="muted">Held out of the wagers below: a de-vig you cannot trust
+      should not propagate into three more numbers.</p>
+    </section>`);
+  }
+
+  // The wagers. This is the answer the page is for, so it goes above the
+  // reasoning rather than below it.
+  if (r.set && r.set.length) {
+    out.push(`<section class="rep">
+      <h2>wagers — ${r.set.length} disjoint shot${r.set.length > 1 ? "s" : ""}</h2>
+      ${r.set.map(p => `<div class="bet">
+        <div class="legs">${p.teams.join(" + ")}</div>
+        <div class="nums"><span class="price mono">${amer(p.price)}</span>
+          <span class="muted">${pct(p.conversion)} conv · ${pct(p.true_prob)} to hit</span></div>
+      </div>`).join("")}
+      <p class="sum">avg conversion <b>${pct(r.avg_conversion)}</b> ·
+        <b>${pct(r.any_hit)}</b> chance at least one hits</p>
+      <p class="muted">No team appears twice, so every ticket can be live at
+      once without one hedging another.${r.unfilled ? ` ${r.unfilled} shot(s)
+      could not be built from the games priced so far.` : ""}</p>
+    </section>`);
+  } else {
+    out.push(`<section class="rep"><h2>no wagers yet</h2>
+      <p class="muted">Not enough priced games from distinct matchups to build a
+      disjoint set. Enter a few more.</p></section>`);
+  }
+
+  // Dogs, ranked by what a bonus bet actually converts rather than by price --
+  // the distinction the whole tool turns on.
+  out.push(`<section class="rep">
+    <h2>dogs by conversion</h2>
+    <p class="muted">Floor is ${amer(r.floor)} (${pct(r.target)}). Ranked by what a
+    bonus bet returns after the vig comes off, not by price.</p>
+    ${r.dogs.map(d => `<div class="dog${d.clears ? "" : " under"}">
+      <span class="team">${d.team}</span>
+      <span class="price mono">${amer(d.price)}</span>
+      <span class="conv">${pct(d.conversion)}</span>
+      ${d.suspect ? `<span class="tag">suspect</span>`
+        : d.clears ? "" : `<span class="tag">below floor</span>`}
+    </div>`).join("")}
+  </section>`);
+
+  // Line shopping only says something once a second book has prices in it.
+  const shop = (r.shop || []).filter(s => s.points_valid && Math.abs(s.points) >= 10);
+  if (shop.length) {
+    out.push(`<section class="rep">
+      <h2>vs consensus</h2>
+      ${shop.map(s => `<div class="dog">
+        <span class="team">${s.team}</span>
+        <span class="price mono">${amer(s.best)}</span>
+        <span class="conv ${s.points > 0 ? "good" : "bad"}">${s.points > 0 ? "+" : ""}${s.points}</span>
+      </div>`).join("")}
+      <p class="muted">Points against the consensus number. A large negative gap
+      is a worse price than the market's, and worth a second look before taking it.</p>
+    </section>`);
+  }
+
+  if (r.notes && r.notes.length) {
+    out.push(`<section class="rep warn"><h2>unreadable cells</h2>
+      ${r.notes.map(n => `<div class="muted">${n}</div>`).join("")}</section>`);
+  }
+
+  el.report.innerHTML = out.join("");
+}
+
+function syncView() {
+  const bets = state.view === "bets";
+  el.rows.hidden = bets;
+  el.report.hidden = !bets;
+  el.hint.hidden = bets;
+  for (const b of el.views.querySelectorAll("button")) {
+    b.classList.toggle("on", (b.dataset.view === "bets") === bets);
+  }
+  if (bets) loadReport();
+}
+
+el.views.addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  state.view = b.dataset.view;
+  save();
+  syncView();
+});
+
 // ---- selectors ----------------------------------------------------------
 
 el.week.addEventListener("change", () => {
   state.week = Number(el.week.value); save(); refresh();
 });
 el.book.addEventListener("change", () => {
-  state.book = el.book.value; save(); render();
+  state.book = el.book.value; save();
+  // Both views are book-scoped, so whichever is showing has to follow the
+  // selector. Rebuilding the hidden one as well would fetch a report nobody
+  // is looking at.
+  if (state.view === "bets") loadReport(); else render();
 });
 
 
@@ -440,6 +576,7 @@ async function refresh(retried) {
     if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
     data = body;
     el.banner.hidden = true;
+    syncView();
 
     state.week = fillSelect(el.week, data.weeks, data.week, (w) => "Week " + w) * 1;
     // consensus is a generated reference column, not a book you can bet or
