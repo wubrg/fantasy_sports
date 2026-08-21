@@ -170,3 +170,78 @@ func Report(m Market, pTrue float64, stake float64) (EdgeReport, error) {
 		BeatsMarket:  pTrue > fair,
 	}, nil
 }
+
+// Hedge is a bonus bet converted to guaranteed cash by backing the opposite
+// side elsewhere.
+type Hedge struct {
+	// Stake is the cash to put on the opposing outcome.
+	Stake float64
+	// Profit is what is kept whichever way the game goes.
+	Profit float64
+	// Conversion is Profit as a share of the bonus bet's face value. The
+	// analytical-hobbyist framework calls 70%+ the goal, 60% acceptable, and
+	// below 50% highly inefficient.
+	Conversion float64
+	// Hold is the combined vig across the two books. It is the whole story:
+	// conversion is 100% determined by it, which is why a low-hold market
+	// matters far more than a clever choice of side.
+	Hold float64
+}
+
+// ConvertBonus computes the cash hedge that turns a bonus bet into guaranteed
+// profit, given the price it was placed at and the price available on the
+// other side at a DIFFERENT book.
+//
+// A stake-not-returned bonus bet pays face x m if it wins and costs nothing if
+// it loses, so backing the other side for H equalises the two outcomes when
+//
+//	face x m_back  -  H  =  H x m_hedge
+//	          H     =  face x m_back / decimal_hedge
+//
+// The guaranteed profit is then H x m_hedge, whichever result lands.
+//
+// Two things follow, and both are in the framework. The bonus bet still
+// belongs on the LONGSHOT -- the hedge does not change what a bonus bet is
+// worth, only its variance -- and the conversion rate is decided entirely by
+// the combined hold of the two prices. A high-hold market cannot be rescued by
+// sizing the hedge well.
+//
+// The hedge must be at a different book. Backing both sides at one is the
+// "cardinal sin" of Part 5: it is the single clearest signal of an arber and
+// is what gets an account promo-banned.
+func ConvertBonus(face float64, back, hedge American) (Hedge, error) {
+	if face <= 0 {
+		return Hedge{}, fmt.Errorf("wager: bonus face %v must be positive", face)
+	}
+	mb, err := back.ProfitMultiple()
+	if err != nil {
+		return Hedge{}, fmt.Errorf("wager: back price: %w", err)
+	}
+	dh, err := hedge.Decimal()
+	if err != nil {
+		return Hedge{}, fmt.Errorf("wager: hedge price: %w", err)
+	}
+	mh, err := hedge.ProfitMultiple()
+	if err != nil {
+		return Hedge{}, err
+	}
+
+	h := face * mb / dh
+	profit := h * mh
+
+	// The combined hold across the two books, which is what conversion
+	// actually depends on. Below zero it is an arbitrage: the two books
+	// disagree enough that both sides can be backed at a profit.
+	rb, err := back.ImpliedRaw()
+	if err != nil {
+		return Hedge{}, err
+	}
+	rh, err := hedge.ImpliedRaw()
+	if err != nil {
+		return Hedge{}, err
+	}
+
+	return Hedge{
+		Stake: h, Profit: profit, Conversion: profit / face, Hold: rb + rh - 1,
+	}, nil
+}

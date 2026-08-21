@@ -374,3 +374,67 @@ func TestNonFiniteInputsAreRejected(t *testing.T) {
 		t.Error("Decimal must reject an unrepresentable price rather than return 1.0")
 	}
 }
+
+// TestConvertBonus checks the hedge against the analytical-hobbyist worked
+// example -- specifically the CORRECTED figures.
+//
+// The document prints a $458.33 hedge and 41.67% conversion for a $100 bonus
+// at +500 against a -550 hedge. Those numbers correspond to a hedge line near
+// -1100, not -550, and 41.67% would fail the document's own "below 50% is
+// highly inefficient" test in the next paragraph. The transcription flags this
+// as ERROR 2; the right answer is $423.08 and 76.92%.
+func TestConvertBonus(t *testing.T) {
+	h, err := ConvertBonus(100, 500, -550)
+	if err != nil {
+		t.Fatal(err)
+	}
+	near := func(name string, got, want float64) {
+		if diff := got - want; diff > 0.01 || diff < -0.01 {
+			t.Errorf("%s = %.4f, want %.4f", name, got, want)
+		}
+	}
+	near("stake", h.Stake, 423.08)
+	near("profit", h.Profit, 76.92)
+	near("conversion", h.Conversion, 0.7692)
+
+	// Whichever way the game goes, the same money is kept. That is the entire
+	// point, so it is asserted rather than assumed.
+	backWins := 100*5.0 - h.Stake
+	hedgeWins := h.Stake * (100.0 / 550.0)
+	near("outcomes equal", backWins, hedgeWins)
+
+	// Conversion is decided by the combined hold. A tighter hedge converts
+	// better at the same back price, which is why the framework says to hunt
+	// low-hold markets rather than clever sides.
+	tight, err := ConvertBonus(100, 500, -520)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tight.Conversion <= h.Conversion {
+		t.Errorf("a tighter hedge converted %.4f, not better than %.4f",
+			tight.Conversion, h.Conversion)
+	}
+	if tight.Hold >= h.Hold {
+		t.Errorf("hold %.4f should be lower on the tighter market than %.4f", tight.Hold, h.Hold)
+	}
+
+	// A longshot back price converts better than a short one, which is the
+	// same rule bonus bets already follow -- hedging changes the variance, not
+	// what the asset is worth.
+	short, err := ConvertBonus(100, 150, -170)
+	if err != nil {
+		t.Fatal(err)
+	}
+	long, err := ConvertBonus(100, 600, -700)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if long.Conversion <= short.Conversion {
+		t.Errorf("longshot converted %.4f, not better than the favourite's %.4f",
+			long.Conversion, short.Conversion)
+	}
+
+	if _, err := ConvertBonus(0, 500, -550); err == nil {
+		t.Error("a zero-face bonus bet should be rejected")
+	}
+}

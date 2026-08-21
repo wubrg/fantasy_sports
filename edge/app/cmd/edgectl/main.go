@@ -37,6 +37,8 @@ func main() {
 		err = scenarioCmd(os.Args[2:])
 	case "log":
 		err = logCmd(os.Args[2:])
+	case "hedge":
+		err = hedgeCmd(os.Args[2:])
 	case "board":
 		err = boardCmd(os.Args[2:])
 	case "ledger":
@@ -83,6 +85,12 @@ func usage() {
         What you would have to believe for a wager to be +EV, against what the
         game line already implies. Add -rungs line:price:q:r,... for a ladder,
         or -log <path> to record the prediction.
+
+  edgectl hedge -face <amount> -back <american> -against <american>
+        Convert a bonus bet to guaranteed cash by backing the other side at a
+        DIFFERENT book. Reports the hedge stake, locked-in profit and the
+        conversion rate. Phase 1 of the analytical-hobbyist framework: bank the
+        asset first, then deploy cash into high-variance betting.
 
   edgectl board scaffold|validate [-dir <path>] [-season <year>] [-week <n>]
         The per-week line board: every game on the schedule, with a slot for
