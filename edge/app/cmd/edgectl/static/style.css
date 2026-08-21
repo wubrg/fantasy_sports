@@ -479,3 +479,17 @@ body {
   border-left: 2px solid var(--accent);
   border-radius: 0 4px 4px 0;
 }
+
+/* The book pool: which sportsbooks this report draws prices from. Separate
+   from the entry selector in the header, because entering is one book at a
+   time and pooling is many. */
+.chips { display: flex; flex-wrap: wrap; gap: 0.3rem; padding: 0.5rem 0.75rem 0; }
+.chip {
+  display: flex; flex-direction: column; align-items: flex-start;
+  min-height: 44px; padding: 0.25rem 0.6rem;
+  font-size: 0.78rem; text-align: left;
+  color: var(--dim); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 999px;
+}
+.chip.on { color: var(--accent); border-color: var(--accent); }
+.chip .muted { font-size: 0.6rem; }

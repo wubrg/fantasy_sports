@@ -398,10 +398,30 @@ function renderReport(r) {
   const out = [];
 
   // What this is a report OF. After switching selectors -- or looking at a
-  // screenshot later -- there must be no ambiguity about which book and how
-  // much of it produced these numbers.
-  out.push(`<div class="scope">week ${r.week} · <b>${r.book}</b> ·
+  // screenshot later -- there must be no ambiguity about which books and how
+  // much of them produced these numbers.
+  out.push(`<div class="scope">week ${r.week} · <b>${(r.books || [r.book]).join(" + ")}</b> ·
     ${r.priced} of ${r.total} priced</div>`);
+
+  // The book pool is a SEPARATE control from the entry selector, deliberately.
+  // Entering prices is one book at a time -- you are looking at one app --
+  // while pooling for a report is many. One multi-select serving both would
+  // make the enter tab nonsensical.
+  //
+  // Each chip says why it is worth tapping: whether the book has prices this
+  // week, and whether it holds funds. A book with neither is the commonest
+  // wrong tap, and nothing on the chip would otherwise say so.
+  const pooled = new Set(r.books || [r.book]);
+  const priced = new Set(r.priced_books || []);
+  const funded = r.funds || {};
+  out.push(`<div class="chips">${(data && data.books ? data.books : []).map((b) => {
+    const bits = [];
+    if (priced.has(b)) bits.push("priced");
+    if (funded[b] > 0) bits.push(money(funded[b]));
+    return `<button type="button" class="chip${pooled.has(b) ? " on" : ""}" data-book="${b}">
+      ${b}${bits.length ? `<span class="muted">${bits.join(" · ")}</span>` : ""}
+    </button>`;
+  }).join("")}</div>`);
 
   if (!r.priced) {
     out.push(`<section class="rep"><h2>nothing priced</h2>
@@ -710,10 +730,13 @@ function renderBoosts(r) {
   }
   const chase = b.filter(x => x.chase);
   const rest = b.filter(x => !x.chase);
+  // The equivalent face value, not just the ceiling. They are the same number,
+  // but "a $12 bonus bet" says what the ranking MEANS in a unit already
+  // understood, where "$12 max" reads as a cap and explains nothing.
   const row = (x) => `<div class="dog${x.chase ? "" : " under"}">
       <span class="team">${x.book}</span>
       <span class="price">${Math.round(x.percent * 100)}% \u00d7 ${money(x.max_stake)}</span>
-      <span class="conv">${money(x.ceiling)} max</span>
+      <span class="conv">= a ${money(x.ceiling)} bonus bet</span>
       ${x.restricted ? `<span class="tag mkt">${x.market}</span>` : ""}
       ${x.min_odds ? `<span class="tag when">${x.min_odds > 0 ? "+" : ""}${x.min_odds} or longer</span>` : ""}
       ${x.needs_cash ? `<span class="tag">cash only</span>` : ""}
@@ -731,9 +754,13 @@ function renderBoosts(r) {
       to a wager you already want \u2014 but not worth building a bet around. A
       market-restricted one still points at a market you would otherwise not price.</p>`
       : ""}
-    <p class="muted">Ranked by ceiling, not headline percentage. A boost multiplies
-    PROFIT, so it is worth most on a long price at a low-vig market, and nothing at
-    all on a losing wager.</p>
+    <p class="muted">A boost pays <b>percent \u00d7 stake \u00d7 (1 \u2212 raw) \u00f7 (1 + hold)</b>
+    and a bonus bet pays <b>face \u00d7 (1 \u2212 raw) \u00f7 (1 + hold)</b> \u2014 the same instrument
+    when <b>face = percent \u00d7 stake</b>. That is why a 100% boost capped at $5 ranks below a
+    30% boost capped at $50, however the promo page prints it, and why a boost belongs where a
+    bonus bet belongs: the longest price you will take, on the lowest-vig market.</p>
+    <p class="muted">The equivalence hides one thing. A bonus bet risks nothing; a boost needs
+    the whole stake at risk, and the cash wager under it is negative EV by the vig.</p>
   </section>`;
 }
 
@@ -933,6 +960,20 @@ function syncView() {
   if (v === "funds") loadFunds();
 }
 
+// Toggling a book re-runs the report over the new pool. Emptying it falls back
+// to the entry book rather than sending nothing, because an empty pool is a
+// question with no answer, not a request for every book.
+el.report.addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  const b = chip.dataset.book;
+  const cur = new Set(state.books && state.books.length ? state.books : [state.book]);
+  if (cur.has(b)) cur.delete(b); else cur.add(b);
+  state.books = cur.size ? [...cur] : [state.book];
+  save();
+  loadReport();
+});
+
 // Choosing a frontier row re-runs the report at that split.
 el.report.addEventListener("click", (e) => {
   const row = e.target.closest(".frow");
@@ -960,6 +1001,10 @@ el.book.addEventListener("change", () => {
   // Both views are book-scoped, so whichever is showing has to follow the
   // selector. Rebuilding the hidden one as well would fetch a report nobody
   // is looking at.
+  // Changing the entry book resets the pool to it. Leaving a stale pool behind
+  // would mean the bets tab quietly reporting on books the header no longer
+  // names.
+  state.books = [state.book];
   if (state.view === "bets") loadReport(); else render();
 });
 

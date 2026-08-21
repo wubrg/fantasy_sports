@@ -346,6 +346,40 @@ tryReport("renderReport() with a boost pointing past the set",
     boost_adds: 1, prop_boosts: 0,
   }));
 
+// The chip row reads data.books, which is the BOARD payload, not the report's.
+// Rendering the bets view before a board has loaded is the ordinary state on a
+// cold start, and it must not throw.
+try {
+  inCtx("data = null; 0");
+  sandbox.__r2 = Object.assign({}, sampleReport, { books: ["fanatics", "bet365"] });
+  inCtx("renderReport(__r2)");
+  ok("renderReport() with no board loaded yet (chip row has no books to draw)");
+  inCtx("data = __sample; 0");
+} catch (e) {
+  fail("renderReport() threw with data unset: " + e.message);
+}
+
+tryReport("renderReport() pooling two books",
+  Object.assign({}, sampleReport, {
+    books: ["fanatics", "bet365"], priced_books: ["fanatics"],
+    funds: { fanatics: 50 },
+    alloc: [
+      { book: "fanatics", tickets: 2, funds: 50, stake: 25, unfunded: false, idle: false },
+      { book: "bet365", tickets: 2, funds: 0, stake: 0, unfunded: true, idle: false },
+    ],
+  }));
+
+// A boost list whose order inverts the promo page: biggest percentage, least
+// worth. If the rendering ever sorts client-side this catches it.
+tryBoosts("renderBoosts() keeps ceiling order against headline percentage", { floor: 5, boosts: [
+  { book: "f", label: "30%", percent: 0.3, max_stake: 50, market: "atd", needs_cash: false,
+    min_odds: -200, expires: "", in_hours: 0, ceiling: 14.35, at_500: 11.96,
+    chase: true, restricted: true },
+  { book: "b", label: "100%", percent: 1.0, max_stake: 5, market: "ftd", needs_cash: false,
+    min_odds: 0, expires: "", in_hours: 0, ceiling: 4.78, at_500: 3.99,
+    chase: false, restricted: true },
+]});
+
 // ---- value model --------------------------------------------------------
 
 function eq(what, got, want) {
