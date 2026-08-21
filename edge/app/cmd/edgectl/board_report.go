@@ -25,6 +25,8 @@ func boardReport(args []string) error {
 	stake := fs.Float64("stake", 25, "bonus bet face value, for the dollar columns")
 	shots := fs.Int("shots", 4, "how many disjoint parlays to build")
 	target := fs.Float64("target", board.DefaultTarget, "bonus-bet conversion floor")
+	exclude := fs.String("exclude", "",
+		"comma-separated teams to leave out (e.g. already committed elsewhere)")
 	lined := fs.Bool("lined", false,
 		"admit spread and total sides as parlay legs (only safe where a push returns the stake)")
 	objective := fs.String("objective", "hitrate",
@@ -73,6 +75,7 @@ func boardReport(args []string) error {
 	}
 	a, err := board.Analyze(doc, board.Options{
 		Book: *book, Target: *target, Shots: *shots, Objective: obj, Lined: *lined,
+		Exclude: splitCSV(*exclude),
 	})
 	if err != nil {
 		return err
@@ -330,4 +333,15 @@ func coverageTable(doc *board.Doc, week int) string {
 	}
 	fmt.Fprintf(&b, "\n  e.g. edgectl board report -week %d -book fanatics\n", week)
 	return b.String()
+}
+
+// splitCSV turns a comma list into trimmed, non-empty entries.
+func splitCSV(v string) []string {
+	var out []string
+	for _, p := range strings.Split(v, ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }

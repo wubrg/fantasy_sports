@@ -726,6 +726,15 @@ type Options struct {
 	// dogs. Only safe at a book that returns the stake on a push -- see
 	// LinedLegs -- so it is opt-in rather than assumed.
 	Lined bool
+	// Exclude drops every leg belonging to these teams, by nflverse code.
+	//
+	// A set is only independent if nothing in it is already committed
+	// elsewhere. Five tokens placed on this week's board tie up seven teams,
+	// and a report that does not know about them will happily propose a
+	// ticket riding a team you are already on -- which is not a fifth chance,
+	// it is more of the fourth. Until placements are recorded and this can be
+	// derived, it is passed in.
+	Exclude []string
 }
 
 // Analyze reads the whole week for one book.
@@ -804,6 +813,31 @@ func Analyze(d *Doc, opt Options) (*Analysis, error) {
 			}
 			legs = append(legs, extra...)
 		}
+	}
+	// Excluded teams are dropped before pairing rather than filtered after, so
+	// the search optimises over what is actually available instead of
+	// returning its best answer and having it struck out. This runs AFTER the
+	// lined legs are added: a spread on a committed team is just as correlated
+	// as its moneyline.
+	if len(opt.Exclude) > 0 {
+		drop := make(map[string]bool, len(opt.Exclude))
+		for _, t := range opt.Exclude {
+			if t = strings.ToUpper(strings.TrimSpace(t)); t != "" {
+				drop[t] = true
+			}
+		}
+		kept := legs[:0]
+		for _, l := range legs {
+			// A lined leg's Team carries a label -- "ATL +3.5", or "over 44.5"
+			// with no team in it at all -- so match the leading word and let
+			// anything wordless through.
+			f := strings.Fields(l.Team)
+			if len(f) > 0 && drop[strings.ToUpper(f[0])] {
+				continue
+			}
+			kept = append(kept, l)
+		}
+		legs = kept
 	}
 	sort.SliceStable(legs, func(i, j int) bool { return legs[i].Conversion > legs[j].Conversion })
 	if a.Set, err = BuildSet(legs, opt.Shots, opt.Objective, opt.Target); err != nil {

@@ -3,6 +3,7 @@ package board
 import (
 	"fmt"
 	"math"
+	"strings"
 	"testing"
 
 	"edge/internal/wager"
@@ -750,5 +751,61 @@ func TestLinedLegsWidenThePool(t *testing.T) {
 	if lined.Set.AnyHit < plain.Set.AnyHit {
 		t.Errorf("lined AnyHit %.4f, worse than %.4f without it",
 			lined.Set.AnyHit, plain.Set.AnyHit)
+	}
+}
+
+// TestExcludeDropsCommittedTeams pins that a team already wagered elsewhere
+// cannot reappear in a proposed set.
+//
+// Five tokens placed on one week tie up seven teams. A ticket riding a team
+// you are already on is not another chance, it is more of the same one, and
+// the hit-rate figure would count it as independent.
+func TestExcludeDropsCommittedTeams(t *testing.T) {
+	d := contractDoc(Consensus)
+	for _, id := range d.GameIDs() {
+		l := d.Games[id].Books[Consensus]
+		l.Spread = "+3.5 -110/-110"
+		d.Games[id].Books[Consensus] = l
+	}
+	committed := []string{"ARI", "NO", "CLE", "IND", "NE", "SF", "MIA"}
+
+	// Lined too: a spread on a committed team is exactly as correlated as its
+	// moneyline, and an exclusion that only reached moneylines would look like
+	// it worked while leaking through the other market.
+	for _, lined := range []bool{false, true} {
+		a, err := Analyze(d, Options{
+			Book: Consensus, Target: DefaultTarget, Shots: 6,
+			Objective: MaxHitRate, Lined: lined, Exclude: committed,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, p := range a.Set.Parlays {
+			for _, leg := range p.Legs {
+				word := strings.Fields(leg.Team)[0]
+				for _, c := range committed {
+					if strings.EqualFold(word, c) {
+						t.Errorf("lined=%v: excluded team %s appeared as %q", lined, c, leg.Team)
+					}
+				}
+			}
+		}
+		if len(a.Set.Parlays) == 0 {
+			t.Errorf("lined=%v: excluding 7 of 32 teams left nothing buildable", lined)
+		}
+	}
+
+	// Case sensitivity must not be a way past it.
+	a, err := Analyze(d, Options{Book: Consensus, Target: DefaultTarget, Shots: 6,
+		Objective: MaxHitRate, Exclude: []string{"ari", " Cle "}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range a.Set.Parlays {
+		for _, leg := range p.Legs {
+			if strings.EqualFold(leg.Team, "ARI") || strings.EqualFold(leg.Team, "CLE") {
+				t.Errorf("lowercase/padded exclusion leaked %q", leg.Team)
+			}
+		}
 	}
 }
