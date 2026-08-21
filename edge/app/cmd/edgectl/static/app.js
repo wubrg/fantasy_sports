@@ -443,9 +443,30 @@ function renderReport(r) {
       could not be built from the games priced so far.` : ""}</p>
     </section>`);
   } else {
-    out.push(`<section class="rep"><h2>no wagers yet</h2>
-      <p class="muted">Not enough priced games from distinct matchups to build a
-      disjoint set. Enter a few more.</p></section>`);
+    // Distinguish "the board is empty" from "you have already bet it all".
+    // Both show no wagers, and only one of them is a problem.
+    const n = (r.committed || []).length;
+    out.push(`<section class="rep"><h2>no wagers available</h2>
+      <p class="muted">${n
+        ? `Every priced game is already carrying an open wager, or was excluded.
+           This week is spent \u2014 settle what is open, or move to a later week.`
+        : `Not enough priced games from distinct matchups to build a disjoint set.
+           Enter a few more.`}</p></section>`);
+  }
+
+  // Committed wagers, always shown when there are any. A derived exclusion has
+  // to be visible: silently dropping half the board leaves "you already bet it"
+  // and "the tool is broken" looking identical from outside.
+  if ((r.committed || []).length) {
+    out.push(`<section class="rep">
+      <h2>already committed \u2014 ${r.committed.length} open</h2>
+      ${r.committed.map(c => `<div class="dog">
+        <span class="team">${c.teams.join(",")}</span>
+        <span class="conv muted">${c.selection}</span>
+      </div>`).join("")}
+      <p class="muted">These games are off the board until they settle. Two tickets on
+      one game are one chance counted twice, not two.</p>
+    </section>`);
   }
 
   // Dogs, ranked by what a bonus bet actually converts rather than by price --
