@@ -55,6 +55,11 @@ type Side struct {
 	// parlay of NE and a spread is not a parlay of NE twice, and the ticket
 	// has to be readable back at the book.
 	Market string
+	// Book is where this price was seen. A parlay's legs must share one --
+	// there is no ticket spanning two sportsbooks -- and the stake comes from
+	// that book's balance, so a leg that does not know its book cannot be
+	// placed or funded.
+	Book string
 	// Label is what to write on the ticket -- "ATL +3.5" or "over 44.5".
 	// Empty for a moneyline, where the team name is the whole selection.
 	Label string
@@ -142,6 +147,7 @@ func Devig(gameID string, g *Game, book string) (GameLine, bool, error) {
 	if err != nil {
 		return GameLine{}, false, err
 	}
+	away.Book, home.Book = book, book
 
 	l := GameLine{
 		GameID:    gameID,
@@ -573,6 +579,14 @@ func pairWeights(pool []gameLegs, o Objective, floor float64) ([][]float64, [][]
 					if a.Team == b.Team {
 						continue
 					}
+					// No ticket spans two sportsbooks. With several books in
+					// the pool the best leg for one game and the best for
+					// another are frequently at different ones, and pairing
+					// them would produce a wager that cannot be placed
+					// anywhere.
+					if a.Book != b.Book {
+						continue
+					}
 					p, err := MakeParlay(a, b)
 					if err != nil {
 						return nil, nil, err
@@ -709,6 +723,7 @@ type Analysis struct {
 	Season int
 	Week   int
 	Book   string
+	Books  []string
 	Target float64
 	// Floor is the shortest price that meets Target at fair odds (+234 at
 	// 0.70). It is a ceiling-based bound, so a price above it can still fail
@@ -751,7 +766,8 @@ type Analysis struct {
 
 // Options configures Analyze.
 type Options struct {
-	Book      string    // which book's prices to read
+	Book      string    // which book's prices to read; ignored when Books is set
+	Books     []string  // several books' prices, pooled; a ticket still lives at one
 	Target    float64   // bonus-bet conversion floor
 	Shots     int       // how many disjoint parlays to build
 	Objective Objective // what the parlay set is chosen to maximise
@@ -791,10 +807,18 @@ func Analyze(d *Doc, opt Options) (*Analysis, error) {
 	if d == nil {
 		return nil, fmt.Errorf("board: no document")
 	}
-	book := opt.Book
-	if book == "" {
-		book = Consensus
+	// Books generalises Book. A ticket still belongs to one book -- the
+	// pairing refuses to span them -- but the POOL spans all of them, so a
+	// game can contribute its best-priced side wherever that is.
+	books := opt.Books
+	if len(books) == 0 {
+		b := opt.Book
+		if b == "" {
+			b = Consensus
+		}
+		books = []string{b}
 	}
+	book := books[0]
 	target := opt.Target
 	if target <= 0 {
 		target = DefaultTarget
@@ -804,24 +828,40 @@ func Analyze(d *Doc, opt Options) (*Analysis, error) {
 		return nil, err
 	}
 
-	a := &Analysis{Season: d.Season, Week: d.Week, Book: book, Target: target, Floor: floor}
+	a := &Analysis{Season: d.Season, Week: d.Week, Book: book, Books: books, Target: target, Floor: floor}
 	a.PricedBooks = d.BettableBooks()
+	// A game counts as priced when ANY selected book prices it, and Lines
+	// carries the best-converting dog among them. Reporting a game as missing
+	// because the first book skipped it would understate coverage whenever the
+	// pool spans more than one.
 	for _, id := range d.GameIDs() {
 		g := d.Games[id]
-		l, ok, err := Devig(id, g, book)
-		if err != nil {
-			a.Problems = append(a.Problems, err.Error())
-			continue
+		var best *GameLine
+		anyPriced := false
+		for _, bk := range books {
+			l, ok, err := Devig(id, g, bk)
+			if err != nil {
+				a.Problems = append(a.Problems, err.Error())
+				continue
+			}
+			if !ok {
+				continue
+			}
+			anyPriced = true
+			if best == nil || l.Dog().Conversion > best.Dog().Conversion {
+				cp := l
+				best = &cp
+			}
 		}
-		if !ok {
+		if !anyPriced {
 			a.Missing = append(a.Missing, id)
 			continue
 		}
-		a.Lines = append(a.Lines, l)
-		if l.Suspect {
-			a.Suspect = append(a.Suspect, l)
+		a.Lines = append(a.Lines, *best)
+		if best.Suspect {
+			a.Suspect = append(a.Suspect, *best)
 		}
-		a.Dogs = append(a.Dogs, l.Dog())
+		a.Dogs = append(a.Dogs, best.Dog())
 	}
 	sort.SliceStable(a.Dogs, func(i, j int) bool { return a.Dogs[i].Conversion > a.Dogs[j].Conversion })
 
@@ -839,24 +879,34 @@ func Analyze(d *Doc, opt Options) (*Analysis, error) {
 	// A game with an implausible overround is held back, because its de-vig is
 	// the number in doubt and a parlay would propagate it into three more
 	// figures. The caller reports the exclusion rather than hiding it.
+	// The leg pool takes every book's version of every game, not just the
+	// best-converting one recorded in Lines. Which side of a pair is best
+	// depends on its partner, and the partner is chosen later -- so narrowing
+	// to one book per game here would decide the assignment before the
+	// objective could weigh it.
 	var legs []Side
-	for _, l := range a.Lines {
-		if l.Suspect {
-			continue
+	for _, id := range d.GameIDs() {
+		for _, bk := range books {
+			l, ok, err := Devig(id, d.Games[id], bk)
+			if err != nil || !ok || l.Suspect {
+				continue
+			}
+			legs = append(legs, l.Dog())
 		}
-		legs = append(legs, l.Dog())
 	}
 	if opt.Lined {
 		// Lined legs come from every game with a spread or total, including
 		// games whose moneyline is missing or suspect: a spread stands on its
 		// own and does not inherit a doubt about a different market.
 		for _, id := range d.GameIDs() {
-			extra, err := LinedLegs(id, d.Games[id], book)
-			if err != nil {
-				a.Problems = append(a.Problems, err.Error())
-				continue
+			for _, bk := range books {
+				extra, err := LinedLegs(id, d.Games[id], bk)
+				if err != nil {
+					a.Problems = append(a.Problems, err.Error())
+					continue
+				}
+				legs = append(legs, extra...)
 			}
-			legs = append(legs, extra...)
 		}
 	}
 	// Excluded teams are dropped before pairing rather than filtered after, so
@@ -1050,8 +1100,8 @@ func LinedLegs(gameID string, g *Game, book string) ([]Side, error) {
 		if err != nil {
 			return nil, err
 		}
-		a.Market, a.Label = m.name, m.awayLabel(line)
-		b.Market, b.Label = m.name, m.homeLabel(line)
+		a.Market, a.Label, a.Book = m.name, m.awayLabel(line), book
+		b.Market, b.Label, b.Book = m.name, m.homeLabel(line), book
 		out = append(out, a, b)
 	}
 	return out, nil
@@ -1328,3 +1378,77 @@ func (a *Advice) appendWaitLine(expiry, now time.Time, placeable bool) {
 // lines held out, exclusions applied, lined markets included or not. The
 // frontier is exactly that: the same pool, matched several ways.
 func (a *Analysis) Legs() []Side { return a.pool }
+
+// BookAllocation is what one book is asked to fund.
+type BookAllocation struct {
+	Book    string
+	Tickets int
+	// Funds is the balance available there, Stake what each of its tickets
+	// gets. A book with funds and no tickets has Stake zero and Idle set.
+	Funds float64
+	Stake float64
+	// Unfunded marks a book the set wants to bet at but where no balance was
+	// declared. The set cannot be placed as given.
+	Unfunded bool
+	// Idle marks a balance the set never uses. Harmless for a bonus locked to
+	// its book, and a prompt to move money when the funds are cash.
+	Idle bool
+}
+
+// Allocate works out what each book is asked to fund, given a set and the
+// balances available.
+//
+// Stakes are per book rather than uniform across the set, because that is how
+// the money actually sits: a promotional balance belongs to one sportsbook and
+// cannot be moved, so the only way to deploy all of it is to spread that book's
+// own balance across that book's own tickets. A single global stake would
+// leave the smaller book's money stranded whenever the better prices were
+// elsewhere.
+//
+// Cash is the exception -- it can be withdrawn and moved, in practice in
+// chunks of about ten dollars -- which is why Idle is reported rather than
+// ignored. The tool cannot tell which kind a balance is, so it reports the
+// shape and leaves the judgement to whoever knows.
+func Allocate(set ParlaySet, funds map[string]float64) []BookAllocation {
+	counts := map[string]int{}
+	var order []string
+	for _, p := range set.Parlays {
+		bk := p.Book()
+		if _, seen := counts[bk]; !seen {
+			order = append(order, bk)
+		}
+		counts[bk]++
+	}
+	// A book holding a balance the set never touches still has to appear, or
+	// stranded money is invisible.
+	for bk := range funds {
+		if _, seen := counts[bk]; !seen {
+			order = append(order, bk)
+		}
+	}
+	sort.Strings(order)
+
+	out := make([]BookAllocation, 0, len(order))
+	for _, bk := range order {
+		a := BookAllocation{Book: bk, Tickets: counts[bk], Funds: funds[bk]}
+		switch {
+		case a.Tickets == 0:
+			a.Idle = a.Funds > 0
+		case a.Funds <= 0:
+			a.Unfunded = true
+		default:
+			a.Stake = a.Funds / float64(a.Tickets)
+		}
+		out = append(out, a)
+	}
+	return out
+}
+
+// Book returns where this parlay must be placed. Legs share a book by
+// construction, so the first one answers for all of them.
+func (p Parlay) Book() string {
+	if len(p.Legs) == 0 {
+		return ""
+	}
+	return p.Legs[0].Book
+}

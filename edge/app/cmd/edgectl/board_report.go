@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,9 +23,12 @@ func boardReport(args []string) error {
 	fs := flag.NewFlagSet("board report", flag.ExitOnError)
 	dir := fs.String("dir", defaultBoardDir, "directory holding the week files")
 	week := fs.Int("week", 0, "week to report on (required)")
-	book := fs.String("book", "", "which book's prices to read (required)")
+	book := fs.String("book", "", "which book's prices to read (required unless -books)")
+	books := fs.String("books", "", "several books, pooled: fanatics,bet365 (a ticket still lives at one)")
 	stake := fs.Float64("stake", 25, "bonus bet face value, when not deploying a bankroll")
-	funds := fs.Float64("funds", 0, "bankroll to deploy; with this, stake is derived rather than given")
+	funds := fs.Float64("funds", 0, "bankroll to deploy at -book; with this, stake is derived rather than given")
+	bookFunds := fs.String("book-funds", "",
+		"per-book balances: fanatics=50,bet365=25 (a promotional balance cannot move between books)")
 	minBet := fs.Float64("min-bet", 1, "smallest wager the book accepts; bounds how far funds can split")
 	expiry := fs.String("expiry", "", "when the funds die (2026-08-26); decides whether waiting is an option")
 	shots := fs.Int("shots", 4, "how many disjoint parlays to build")
@@ -49,9 +53,15 @@ func boardReport(args []string) error {
 	}
 	// A book the board has no column for would otherwise report as "no prices
 	// anywhere", which is what a typo and an untyped book look like alike.
-	if *book != "" && !slices.Contains(board.Books, *book) {
-		return fmt.Errorf("no column for book %q (have: %s)",
-			*book, strings.Join(board.Books, ", "))
+	bookList := splitCSV(*books)
+	if len(bookList) == 0 && *book != "" {
+		bookList = []string{*book}
+	}
+	for _, b := range bookList {
+		if !slices.Contains(board.Books, b) {
+			return fmt.Errorf("no column for book %q (have: %s)",
+				b, strings.Join(board.Books, ", "))
+		}
 	}
 
 	path := filepath.Join(*dir, fmt.Sprintf("week%02d.yaml", *week))
@@ -72,14 +82,19 @@ func boardReport(args []string) error {
 	// so is always complete -- meaning the tool produced a confident-looking
 	// report even when not one real price had been entered. Defaulting to the
 	// one column that is never empty is the most misleading possible default.
-	if *book == "" {
-		return fmt.Errorf("-book is required\n%s", coverageTable(doc, *week))
+	if len(bookList) == 0 {
+		return fmt.Errorf("-book or -books is required\n%s", coverageTable(doc, *week))
 	}
 
 	obj, err := board.ParseObjective(*objective)
 	if err != nil {
 		return err
 	}
+	perBookFunds, err := parseBookFunds(*bookFunds, bookList, *funds)
+	if err != nil {
+		return err
+	}
+
 	// Teams already carrying an open wager are excluded by default. Deriving
 	// this from the log is the point of keeping one: retyping the list every
 	// run only had to be forgotten once to put two tickets on one game.
@@ -96,9 +111,9 @@ func boardReport(args []string) error {
 	}
 
 	a, err := board.Analyze(doc, board.Options{
-		Book: *book, Target: *target, Shots: *shots, Objective: obj, Lined: *lined,
+		Books: bookList, Target: *target, Shots: *shots, Objective: obj, Lined: *lined,
 		Exclude: excl,
-		Funds:   map[string]float64{*book: *funds},
+		Funds:   perBookFunds,
 		MinBet:  *minBet,
 	})
 	if err != nil {
@@ -139,7 +154,8 @@ func boardReport(args []string) error {
 		}
 	}
 	printCommitments(committed, splitCSV(*exclude), *ignoreLog)
-	if err := printSet(a, useStake); err != nil {
+	printAllocation(a.Set, perBookFunds)
+	if err := printSet(a, useStake, perBookFunds); err != nil {
 		return err
 	}
 	printShop(a)
@@ -333,7 +349,20 @@ func printDogs(a *board.Analysis, stake float64) {
 	}
 }
 
-func printSet(a *board.Analysis, stake float64) error {
+func printSet(a *board.Analysis, stake float64, funds map[string]float64) error {
+	// With per-book balances the stake is NOT uniform: each book spreads its
+	// own balance across its own tickets, because a promotional balance cannot
+	// move. Printing one figure over a set whose tickets are funded
+	// differently states something false in the column the money is read from.
+	perBook := map[string]float64{}
+	if len(funds) > 0 {
+		for _, al := range board.Allocate(a.Set, funds) {
+			if al.Stake > 0 {
+				perBook[al.Book] = al.Stake
+			}
+		}
+	}
+	multi := len(a.Books) > 1
 	set := a.Set
 	fmt.Println()
 	if len(set.Parlays) == 0 {
@@ -355,16 +384,31 @@ func printSet(a *board.Analysis, stake float64) error {
 	fmt.Printf("  No team appears twice and no game is used twice, so every ticket can\n")
 	fmt.Printf("  be live at once without one hedging another.\n")
 	fmt.Println()
-	fmt.Printf("  %-38s %7s %7s %7s %9s\n", "legs", "price", "true p", "conv", "on "+money(stake))
+	header := "on " + money(stake)
+	if len(perBook) > 0 {
+		header = "return"
+	}
+	lead := "legs"
+	if multi {
+		lead = "book      legs"
+	}
+	fmt.Printf("  %-38s %7s %7s %7s %9s\n", lead, "price", "true p", "conv", header)
 	fmt.Printf("  %s\n", strings.Repeat("-", 74))
 	converted := 0.0
 	for _, p := range set.Parlays {
 		// Conversion comes from the exact decimal, not the rounded ticket
 		// price, so the dollar column is not moved by a display decision.
+		st := stake
+		if s, ok := perBook[p.Book()]; ok {
+			st = s
+		}
+		legs := strings.Join(p.Tickets(), " + ")
+		if multi {
+			legs = fmt.Sprintf("%-9s %s", p.Book(), legs)
+		}
 		fmt.Printf("  %-38s %7s %6.1f%% %6.1f%% %9s\n",
-			strings.Join(p.Tickets(), " + "), price(p.Price),
-			p.TrueProb*100, p.Conversion*100, money(p.Conversion*stake))
-		converted += p.Conversion * stake
+			legs, price(p.Price), p.TrueProb*100, p.Conversion*100, money(p.Conversion*st))
+		converted += p.Conversion * st
 	}
 	fmt.Println()
 	fmt.Printf("  average conversion %.1f%%   P(at least one hits) %.1f%%   total %s\n",
@@ -493,4 +537,78 @@ func printCommitments(c []Commitment, manual []string, ignored bool) {
 	}
 	fmt.Printf("  Two tickets on one game are one chance counted twice, so a game with an\n")
 	fmt.Printf("  open wager is off the board until it settles.\n")
+}
+
+// parseBookFunds reads "fanatics=50,bet365=25", falling back to -funds spread
+// over a single named book.
+//
+// Balances are per book because a promotional one cannot leave the book that
+// granted it. Cash can be moved -- in practice in chunks of roughly ten
+// dollars -- but the tool has no way to tell which kind a balance is, so it
+// treats every balance as fixed and reports idle money rather than silently
+// assuming it can be shifted.
+func parseBookFunds(spec string, books []string, single float64) (map[string]float64, error) {
+	out := map[string]float64{}
+	if strings.TrimSpace(spec) == "" {
+		if single > 0 {
+			if len(books) != 1 {
+				return nil, fmt.Errorf(
+					"-funds names no book, so it only works with a single -book; "+
+						"with %d books use -book-funds %s=...", len(books), books[0])
+			}
+			out[books[0]] = single
+		}
+		return out, nil
+	}
+	for _, part := range strings.Split(spec, ",") {
+		k, v, ok := strings.Cut(strings.TrimSpace(part), "=")
+		if !ok {
+			return nil, fmt.Errorf("-book-funds %q: want book=amount", part)
+		}
+		k = strings.TrimSpace(k)
+		amt, err := strconv.ParseFloat(strings.TrimSpace(v), 64)
+		if err != nil || amt < 0 {
+			return nil, fmt.Errorf("-book-funds %q: %q is not an amount", part, v)
+		}
+		if !slices.Contains(books, k) {
+			return nil, fmt.Errorf(
+				"-book-funds names %q, which is not in -books; funds at a book you are not "+
+					"reading cannot be deployed", k)
+		}
+		out[k] = amt
+	}
+	return out, nil
+}
+
+// printAllocation shows what each book is asked to fund.
+func printAllocation(set board.ParlaySet, funds map[string]float64) {
+	if len(funds) == 0 || len(set.Parlays) == 0 {
+		return
+	}
+	alloc := board.Allocate(set, funds)
+	fmt.Println()
+	fmt.Printf("  PER-BOOK ALLOCATION\n")
+	fmt.Printf("  %-12s %8s %10s %10s\n", "book", "tickets", "balance", "stake")
+	fmt.Printf("  %s\n", strings.Repeat("-", 44))
+	for _, a := range alloc {
+		note := ""
+		switch {
+		case a.Unfunded:
+			note = "  <- no balance declared; cannot be placed"
+		case a.Idle:
+			note = "  <- unused"
+		}
+		stake := "\u2014"
+		if a.Stake > 0 {
+			stake = money(a.Stake)
+		}
+		fmt.Printf("  %-12s %8d %10s %10s%s\n", a.Book, a.Tickets, money(a.Funds), stake, note)
+	}
+	for _, a := range alloc {
+		if a.Idle {
+			fmt.Printf("  %s holds %s the set never uses. A promotional balance cannot move;\n",
+				a.Book, money(a.Funds))
+			fmt.Printf("  cash can, so this is only stranded if it is bonus money.\n")
+		}
+	}
 }

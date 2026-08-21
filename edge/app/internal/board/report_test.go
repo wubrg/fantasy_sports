@@ -993,3 +993,131 @@ func TestAdviseJudgesWeaknessOnTheBestRow(t *testing.T) {
 		t.Error("a frontier topping out at 70.8% should be called weak")
 	}
 }
+
+// multiBookDoc prices every game at two books, with fanatics ALTERNATELY
+// better and worse than consensus on the away side.
+//
+// Making one book uniformly worse is a trap: the optimiser then sends every
+// ticket to the other one, and a test that never mixes books cannot detect a
+// pairing that spans them or an allocation that misses one. Alternating forces
+// a genuinely mixed set.
+func multiBookDoc(t *testing.T) *Doc {
+	t.Helper()
+	d := contractDoc(Consensus)
+	for i, id := range d.GameIDs() {
+		c := d.Games[id].Books[Consensus]
+		m, ok, err := ParseMarket(c.ML)
+		if err != nil || !ok {
+			continue
+		}
+		// BOTH sides move. Lengthening the dog alone drops the overround --
+		// often below zero, which the de-vig correctly flags as suspect and
+		// holds out of the pool, so the second book would silently never
+		// appear in a set at all. An earlier version of this fixture did
+		// exactly that and the tests passed while proving nothing.
+		delta := wager.American(20)
+		if i%2 == 1 {
+			delta = -20
+		}
+		aa, bb := m.A+delta, m.B-delta
+		if (aa > -100 && aa < 100) || (bb > -100 && bb < 100) {
+			aa, bb = m.A, m.B // not representable; leave this game matched
+		}
+		d.Games[id].Books["fanatics"] = Lines{ML: FormatMarket(wager.Market{A: aa, B: bb})}
+	}
+	return d
+}
+
+// TestParlayLegsShareABook is the invariant multi-book pairing exists to
+// protect. There is no ticket spanning two sportsbooks, and with several books
+// pooled the best leg for one game and the best for another are routinely at
+// different ones -- so an unguarded pairing produces wagers that cannot be
+// placed anywhere.
+func TestParlayLegsShareABook(t *testing.T) {
+	d := multiBookDoc(t)
+	for _, lined := range []bool{false, true} {
+		for _, obj := range []Objective{MaxHitRate, MaxConversion} {
+			a, err := Analyze(d, Options{
+				Books: []string{Consensus, "fanatics"}, Target: DefaultTarget,
+				Shots: 6, Objective: obj, Lined: lined,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(a.Set.Parlays) == 0 {
+				t.Fatalf("lined=%v %v: no set built from a two-book pool", lined, obj)
+			}
+			for _, p := range a.Set.Parlays {
+				first := p.Legs[0].Book
+				if first == "" {
+					t.Errorf("leg %q carries no book, so it cannot be placed or funded", p.Legs[0].Team)
+				}
+				for _, l := range p.Legs[1:] {
+					if l.Book != first {
+						t.Errorf("lined=%v %v: parlay %v spans %s and %s",
+							lined, obj, p.Teams(), first, l.Book)
+					}
+				}
+			}
+		}
+	}
+}
+
+// TestAllocateSplitsPerBook pins that each book funds its own tickets from its
+// own balance. A single global stake would strand the smaller book's money
+// whenever the better prices sat elsewhere, and promotional money cannot move.
+func TestAllocateSplitsPerBook(t *testing.T) {
+	d := multiBookDoc(t)
+	a, err := Analyze(d, Options{
+		Books: []string{Consensus, "fanatics"}, Target: DefaultTarget,
+		Shots: 4, Objective: MaxHitRate,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	funds := map[string]float64{Consensus: 30, "fanatics": 20}
+	alloc := Allocate(a.Set, funds)
+
+	total := 0
+	for _, al := range alloc {
+		total += al.Tickets
+		if al.Tickets > 0 && al.Funds > 0 {
+			if got := al.Stake * float64(al.Tickets); math.Abs(got-al.Funds) > 0.01 {
+				t.Errorf("%s deploys %.2f of a %.2f balance", al.Book, got, al.Funds)
+			}
+		}
+	}
+	if total != len(a.Set.Parlays) {
+		t.Errorf("allocation covers %d tickets, set has %d", total, len(a.Set.Parlays))
+	}
+	// The fixture alternates which book is better, so a set that never mixes
+	// means the pool is not really spanning both and the rest of this test
+	// proves nothing.
+	seen := map[string]bool{}
+	for _, p := range a.Set.Parlays {
+		seen[p.Book()] = true
+	}
+	if len(seen) < 2 {
+		t.Fatalf("set used only %v; the fixture must produce a mixed set for this to test anything", seen)
+	}
+
+	// A balance the set never touches has to be visible, not silently dropped:
+	// it is stranded if it is bonus money and movable if it is cash, and only
+	// the operator knows which.
+	idle := Allocate(ParlaySet{}, map[string]float64{"bet365": 40})
+	if len(idle) != 1 || !idle[0].Idle {
+		t.Errorf("an unused balance was not reported idle: %+v", idle)
+	}
+
+	// A book the set wants but no balance was declared for cannot be placed.
+	one := Allocate(a.Set, map[string]float64{Consensus: 30})
+	found := false
+	for _, al := range one {
+		if al.Book == "fanatics" && al.Unfunded {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("a book with tickets and no declared balance must be flagged unfunded")
+	}
+}
