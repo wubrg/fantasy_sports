@@ -21,7 +21,7 @@ func boardReport(args []string) error {
 	fs := flag.NewFlagSet("board report", flag.ExitOnError)
 	dir := fs.String("dir", defaultBoardDir, "directory holding the week files")
 	week := fs.Int("week", 0, "week to report on (required)")
-	book := fs.String("book", board.Consensus, "which book's prices to read")
+	book := fs.String("book", "", "which book's prices to read (required)")
 	stake := fs.Float64("stake", 25, "bonus bet face value, for the dollar columns")
 	shots := fs.Int("shots", 4, "how many disjoint parlays to build")
 	target := fs.Float64("target", board.DefaultTarget, "bonus-bet conversion floor")
@@ -38,7 +38,7 @@ func boardReport(args []string) error {
 	}
 	// A book the board has no column for would otherwise report as "no prices
 	// anywhere", which is what a typo and an untyped book look like alike.
-	if !slices.Contains(board.Books, *book) {
+	if *book != "" && !slices.Contains(board.Books, *book) {
 		return fmt.Errorf("no column for book %q (have: %s)",
 			*book, strings.Join(board.Books, ", "))
 	}
@@ -53,6 +53,16 @@ func boardReport(args []string) error {
 	doc, err := board.Parse(f)
 	if err != nil {
 		return err
+	}
+
+	// -book is required rather than defaulting.
+	//
+	// It used to default to consensus, which is prefilled from the schedule and
+	// so is always complete -- meaning the tool produced a confident-looking
+	// report even when not one real price had been entered. Defaulting to the
+	// one column that is never empty is the most misleading possible default.
+	if *book == "" {
+		return fmt.Errorf("-book is required\n%s", coverageTable(doc, *week))
 	}
 
 	obj, err := board.ParseObjective(*objective)
@@ -203,7 +213,18 @@ func printSet(a *board.Analysis, stake float64) error {
 		fmt.Printf("  PARLAY SET: nothing to build (needs two dogs from two games).\n")
 		return nil
 	}
-	fmt.Printf("  DISJOINT PARLAY SET — %d shot(s) at %s\n", len(set.Parlays), money(stake))
+	if a.Provisional {
+		// Said before the tickets, not after them. A caveat under a table is
+		// read once the numbers have already been believed.
+		fmt.Printf("  DISJOINT PARLAY SET — PROVISIONAL (%d of %d games priced at %s)\n",
+			len(a.Lines), len(a.Lines)+len(a.Missing), a.Book)
+		fmt.Printf("  %d game(s) have no %s price. This is the best pairing of the %d that\n",
+			len(a.Missing), a.Book, len(a.Lines))
+		fmt.Printf("  do, which is not the same as the best pairing of the week — expect it\n")
+		fmt.Printf("  to change as you enter more.\n")
+	} else {
+		fmt.Printf("  DISJOINT PARLAY SET — %d shot(s) at %s\n", len(set.Parlays), money(stake))
+	}
 	fmt.Printf("  No team appears twice and no game is used twice, so every ticket can\n")
 	fmt.Printf("  be live at once without one hedging another.\n")
 	fmt.Println()
@@ -238,9 +259,22 @@ func printShop(a *board.Analysis) {
 		fmt.Printf("  filled, and consensus is not a book you can bet.\n")
 		return
 	}
-	fmt.Printf("  LINE SHOPPING — best bettable price vs consensus\n")
-	fmt.Printf("  %-6s %10s %-11s %10s %8s %9s\n",
-		"side", "best", "at", "consensus", "gap", "payout")
+	// With one bettable book the "best at" column has exactly one possible
+	// value, so calling it shopping dresses a tautology as a choice. The
+	// comparison against consensus is still worth having -- it is what caught
+	// a fanatics +390 against a +455 consensus -- so it stays, renamed.
+	if len(a.PricedBooks) < 2 {
+		fmt.Printf("  %s vs CONSENSUS\n", strings.ToUpper(a.PricedBooks[0]))
+		fmt.Printf("  Only %s has prices this week, so there is nothing to shop yet —\n",
+			a.PricedBooks[0])
+		fmt.Printf("  this is that book against the schedule's own number.\n")
+		fmt.Printf("  %-6s %10s %10s %8s %9s\n", "side", "price", "consensus", "gap", "payout")
+	} else {
+		fmt.Printf("  LINE SHOPPING — best bettable price vs consensus (comparing %d books)\n",
+			len(a.PricedBooks))
+		fmt.Printf("  %-6s %10s %-11s %10s %8s %9s\n",
+			"side", "best", "at", "consensus", "gap", "payout")
+	}
 	fmt.Printf("  %s\n", strings.Repeat("-", 62))
 	for _, r := range a.Shop {
 		gap := "n/a"
@@ -253,8 +287,12 @@ func printShop(a *board.Analysis) {
 			cons = price(r.Consensus)
 			payout = fmt.Sprintf("%+.1f%%", r.PayoutGap*100)
 		}
-		fmt.Printf("  %-6s %10s %-11s %10s %8s %9s\n",
-			r.Team, price(r.Best.Price), r.Best.Book, cons, gap, payout)
+		if len(a.PricedBooks) < 2 {
+			fmt.Printf("  %-6s %10s %10s %8s %9s\n", r.Team, price(r.Best.Price), cons, gap, payout)
+		} else {
+			fmt.Printf("  %-6s %10s %-11s %10s %8s %9s\n",
+				r.Team, price(r.Best.Price), r.Best.Book, cons, gap, payout)
+		}
 	}
 	fmt.Printf("  gap is in American points and is blank where the two prices sit on\n")
 	fmt.Printf("  opposite sides of even money, where points are not a scale; payout is\n")
@@ -268,3 +306,26 @@ func matchup(l board.GameLine) string {
 func price(a wager.American) string { return fmt.Sprintf("%+d", a) }
 
 func money(v float64) string { return fmt.Sprintf("$%.2f", v) }
+
+// coverageTable lists what each book actually has for a week, so the answer to
+// "which book?" is on screen instead of being guessed at.
+func coverageTable(doc *board.Doc, week int) string {
+	cov := doc.Coverage()
+	total := len(doc.Games)
+	var b strings.Builder
+	fmt.Fprintf(&b, "\n  week %02d has %d games. Prices on hand:\n\n", week, total)
+	for _, bk := range board.Books {
+		note := ""
+		switch {
+		case bk == board.Consensus:
+			note = "  (reference only -- not a book you can bet)"
+		case cov[bk] == 0:
+			note = "  (nothing entered)"
+		case cov[bk] < total:
+			note = "  (partial)"
+		}
+		fmt.Fprintf(&b, "    %-12s %2d/%d%s\n", bk, cov[bk], total, note)
+	}
+	fmt.Fprintf(&b, "\n  e.g. edgectl board report -week %d -book fanatics\n", week)
+	return b.String()
+}

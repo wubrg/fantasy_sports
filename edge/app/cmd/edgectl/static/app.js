@@ -389,6 +389,12 @@ async function loadReport() {
 function renderReport(r) {
   const out = [];
 
+  // What this is a report OF. After switching selectors -- or looking at a
+  // screenshot later -- there must be no ambiguity about which book and how
+  // much of it produced these numbers.
+  out.push(`<div class="scope">week ${r.week} · <b>${r.book}</b> ·
+    ${r.priced} of ${r.total} priced</div>`);
+
   if (!r.priced) {
     out.push(`<section class="rep"><h2>nothing priced</h2>
       <p class="muted">No ${r.book} prices in week ${r.week} yet. Enter some on the
@@ -417,7 +423,11 @@ function renderReport(r) {
   // reasoning rather than below it.
   if (r.set && r.set.length) {
     out.push(`<section class="rep">
-      <h2>wagers — ${r.set.length} disjoint shot${r.set.length > 1 ? "s" : ""}</h2>
+      <h2>wagers — ${r.set.length} disjoint shot${r.set.length > 1 ? "s" : ""}${
+        r.provisional ? ` <span class="badge">provisional</span>` : ""}</h2>
+      ${r.provisional ? `<p class="muted prov">${r.missing} game${r.missing === 1 ? " has" : "s have"}
+        no ${r.book} price. This is the best pairing of the ${r.priced} that do, which is not the
+        same as the best pairing of the week — expect it to change as you enter more.</p>` : ""}
       ${r.set.map(p => `<div class="bet">
         <div class="legs">${p.teams.join(" + ")}</div>
         <div class="nums"><span class="price mono">${amer(p.price)}</span>
@@ -453,8 +463,11 @@ function renderReport(r) {
   // Line shopping only says something once a second book has prices in it.
   const shop = (r.shop || []).filter(s => s.points_valid && Math.abs(s.points) >= 10);
   if (shop.length) {
+    const nBooks = (r.priced_books || []).length;
     out.push(`<section class="rep">
-      <h2>vs consensus</h2>
+      <h2>${nBooks < 2 ? `${r.book} vs consensus` : `line shopping — ${nBooks} books`}</h2>
+      ${nBooks < 2 ? `<p class="muted">Only ${r.book} has prices this week, so there is nothing
+        to shop yet — this is that book against the schedule's own number.</p>` : ""}
       ${shop.map(s => `<div class="dog">
         <span class="team">${s.team}</span>
         <span class="price mono">${amer(s.best)}</span>

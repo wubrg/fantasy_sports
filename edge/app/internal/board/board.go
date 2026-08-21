@@ -142,3 +142,47 @@ func (d *Doc) GameIDs() []string {
 	})
 	return ids
 }
+
+// Coverage counts how many games in this week carry a moneyline for each book.
+//
+// A board is partly filled almost all of the time: a week is ~16 games across
+// seven books, and nobody finishes that in one sitting. Coverage exists so
+// callers can say what they do not know instead of quietly reporting on
+// whatever happens to be entered.
+//
+// Only the moneyline is counted. It is the market every other number is
+// derived from here -- dogs, conversions and parlays are all moneyline work --
+// so a game with a spread but no moneyline contributes nothing to a report
+// and should not read as covered.
+func (d *Doc) Coverage() map[string]int {
+	out := make(map[string]int, len(Books))
+	for _, bk := range Books {
+		out[bk] = 0
+	}
+	for _, g := range d.Games {
+		for bk, l := range g.Books {
+			if _, ok, err := ParseMarket(l.ML); ok && err == nil {
+				out[bk]++
+			}
+		}
+	}
+	return out
+}
+
+// BettableBooks lists the books with at least one price this week, excluding
+// consensus.
+//
+// Consensus is generated from the schedule and cannot be wagered, so counting
+// it as a book is what turns "best available price" into a sentence about a
+// number you cannot take. With fewer than two of these there is nothing to
+// shop, however many rows a comparison would produce.
+func (d *Doc) BettableBooks() []string {
+	cov := d.Coverage()
+	var out []string
+	for _, bk := range Books {
+		if bk != Consensus && cov[bk] > 0 {
+			out = append(out, bk)
+		}
+	}
+	return out
+}

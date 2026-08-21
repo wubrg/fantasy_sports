@@ -611,3 +611,63 @@ func TestObjectiveTradeoff(t *testing.T) {
 		}
 	}
 }
+
+// TestCoverageAndProvisional pins the distinction that a partly-filled board is
+// the normal state, not a broken one.
+//
+// The trap this guards: consensus is prefilled from the schedule and is
+// therefore always complete, so a provisional flag keyed on anything but
+// coverage would stay silent for every book that is actually entered by hand
+// and fire only on the one that never needs it.
+func TestCoverageAndProvisional(t *testing.T) {
+	d := contractDoc(Consensus) // consensus filled for every game
+
+	cov := d.Coverage()
+	if cov[Consensus] != len(d.Games) {
+		t.Fatalf("consensus coverage %d, want %d", cov[Consensus], len(d.Games))
+	}
+	if cov["fanatics"] != 0 {
+		t.Fatalf("fanatics coverage %d, want 0", cov["fanatics"])
+	}
+	if bb := d.BettableBooks(); len(bb) != 0 {
+		t.Fatalf("BettableBooks = %v, want none: consensus cannot be bet", bb)
+	}
+
+	full, err := Analyze(d, Options{Book: Consensus, Target: DefaultTarget, Shots: 4})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if full.Provisional {
+		t.Error("a fully priced book reported provisional")
+	}
+
+	// Price one game at one real book. That book is now partly covered, and
+	// there is exactly one book worth shopping between -- which is to say,
+	// none.
+	id := d.GameIDs()[0]
+	l := d.Games[id].Books["fanatics"]
+	l.ML = "+390/-525"
+	d.Games[id].Books["fanatics"] = l
+
+	if got := d.Coverage()["fanatics"]; got != 1 {
+		t.Fatalf("fanatics coverage %d, want 1", got)
+	}
+	bb := d.BettableBooks()
+	if len(bb) != 1 || bb[0] != "fanatics" {
+		t.Fatalf("BettableBooks = %v, want [fanatics]", bb)
+	}
+
+	part, err := Analyze(d, Options{Book: "fanatics", Target: DefaultTarget, Shots: 4})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !part.Provisional {
+		t.Error("a board with one of many games priced did not report provisional")
+	}
+	if len(part.Missing) != len(d.Games)-1 {
+		t.Errorf("Missing = %d, want %d", len(part.Missing), len(d.Games)-1)
+	}
+	if len(part.PricedBooks) != 1 {
+		t.Errorf("PricedBooks = %v, want exactly one", part.PricedBooks)
+	}
+}

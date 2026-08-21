@@ -628,6 +628,25 @@ type Analysis struct {
 	// Problems are cells that failed to parse. Reported rather than returned
 	// as an error so one bad cell does not hide the rest of the board.
 	Problems []string
+
+	// Provisional is true when any game in the week has no price at this book.
+	//
+	// It is not a warning about data quality; the prices that are there are
+	// fine. It is a statement about what the parlay set means. The set is the
+	// best pairing of what is entered, and the best pairing of six games is
+	// not the best pairing of sixteen -- entering the rest will usually change
+	// it. A board is partly filled nearly all of the time, so this is the
+	// normal case and has to be said out loud rather than inferred from a
+	// count the reader has to notice.
+	Provisional bool
+
+	// PricedBooks lists the books other than consensus with at least one price
+	// this week. Below two of them there is nothing to shop -- a "best
+	// available price" with one candidate is a tautology, not a choice.
+	//
+	// Named apart from the Bettable() method below, which asks a different
+	// question: whether the ONE book being reported on has any prices.
+	PricedBooks []string
 }
 
 // Options configures Analyze.
@@ -661,6 +680,7 @@ func Analyze(d *Doc, opt Options) (*Analysis, error) {
 	}
 
 	a := &Analysis{Season: d.Season, Week: d.Week, Book: book, Target: target, Floor: floor}
+	a.PricedBooks = d.BettableBooks()
 	for _, id := range d.GameIDs() {
 		g := d.Games[id]
 		l, ok, err := Devig(id, g, book)
@@ -679,6 +699,11 @@ func Analyze(d *Doc, opt Options) (*Analysis, error) {
 		a.Dogs = append(a.Dogs, l.Dog())
 	}
 	sort.SliceStable(a.Dogs, func(i, j int) bool { return a.Dogs[i].Conversion > a.Dogs[j].Conversion })
+
+	// A cell that failed to parse is a game this book has not usefully priced,
+	// so it counts towards provisional exactly as a blank one does. Otherwise
+	// a board full of typos would report itself complete.
+	a.Provisional = len(a.Missing) > 0 || len(a.Problems) > 0
 
 	// Every dog is a candidate leg, including the ones that fail the floor on
 	// their own. That is the point of pairing them: two dogs converting 0.53

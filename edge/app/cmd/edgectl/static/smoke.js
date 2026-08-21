@@ -160,7 +160,7 @@ const sampleReport = {
   set: [{ teams: ["WAS", "GB"], price: 494, true_prob: 0.154, conversion: 0.762 }],
   avg_conversion: 0.762, any_hit: 0.154, unfilled: 3,
   shop: [{ team: "ARI", best: 390, book: "fanatics", cons: 455, points: -65, points_valid: true }],
-  notes: [],
+  notes: [], provisional: false, missing: 0, priced_books: ["fanatics", "draftkings"],
 };
 
 function tryReport(what, payload) {
@@ -181,10 +181,19 @@ tryReport("renderReport() with nothing priced",
     suspect: [], dogs: [], set: [], avg_conversion: 0, any_hit: 0, unfilled: 4, shop: [], notes: [] });
 tryReport("renderReport() with prices but no buildable set",
   Object.assign({}, sampleReport, { set: [], suspect: [], shop: [], notes: [] }));
+// A partly-filled board is the normal state, so the provisional path is the
+// one most often on screen -- it must not be the untested one.
+tryReport("renderReport() provisional (partial board)",
+  Object.assign({}, sampleReport, { provisional: true, missing: 10, priced: 6 }));
+tryReport("renderReport() with a single bettable book",
+  Object.assign({}, sampleReport, { priced_books: ["fanatics"] }));
+tryReport("renderReport() with priced_books absent entirely",
+  Object.assign({}, sampleReport, { priced_books: undefined }));
+
 tryReport("renderReport() with null collections (Go emits null, not [])",
   { week: 1, book: "fanatics", priced: 2, total: 16, target: 0.7, floor: 234,
     suspect: null, dogs: [], set: null, avg_conversion: 0, any_hit: 0, unfilled: 4,
-    shop: null, notes: null });
+    shop: null, notes: null, provisional: true, missing: 14, priced_books: null });
 
 try {
   inCtx('state.view = "bets"; syncView(); 0');

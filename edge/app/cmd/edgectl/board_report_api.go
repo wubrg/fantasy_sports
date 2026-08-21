@@ -36,6 +36,13 @@ type reportJSON struct {
 	Unfille int          `json:"unfilled"`
 	Shop    []shopRow    `json:"shop"`
 	Notes   []string     `json:"notes"`
+	// Provisional says the set is the best pairing of what is entered, which
+	// is not the best pairing of the week. A board is partly filled nearly
+	// always, so this is the normal case and the UI has to show it rather
+	// than leave it to be inferred from a count.
+	Provisional bool     `json:"provisional"`
+	Missing     int      `json:"missing"`
+	PricedBooks []string `json:"priced_books"`
 }
 
 type suspectRow struct {
@@ -116,7 +123,8 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 		Week: a.Week, Book: a.Book, Target: a.Target, Floor: int(a.Floor),
 		Priced: len(a.Lines), Total: len(a.Lines) + len(a.Missing),
 		AvgConv: a.Set.AvgConversion, AnyHit: a.Set.AnyHit, Unfille: a.Set.Unfilled,
-		Notes: a.Problems,
+		Notes: a.Problems, Provisional: a.Provisional, Missing: len(a.Missing),
+		PricedBooks: a.PricedBooks,
 	}
 
 	// A suspect line is held out of the parlay pool but still shown, because

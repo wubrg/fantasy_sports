@@ -336,3 +336,25 @@ body {
 
 .srow { padding: 0.25rem 0; font-size: 0.86rem; }
 .srow + .srow { border-top: 1px solid var(--line); }
+
+/* The scope line: which book, and how much of it, produced what follows. */
+.scope {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.76rem;
+  color: var(--dim);
+  border-bottom: 1px solid var(--line);
+}
+.scope b { color: var(--text); }
+
+/* Provisional is a property of the answer, not a footnote about the data, so
+   it sits in the heading where the answer is claimed. */
+.badge {
+  margin-left: 0.4rem;
+  padding: 0.08rem 0.34rem;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  color: #0b0d10;
+  background: var(--warn);
+}
+.rep .muted.prov { margin-top: 0; margin-bottom: 0.45rem; }
