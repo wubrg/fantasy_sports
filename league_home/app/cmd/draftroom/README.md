@@ -403,6 +403,54 @@ because the binary in the checkout is built by `make draftroom`, which does
 not bake paths the way `make install` does. Without the owner ID the board
 reads every team as a flat $200 with no keepers deducted.
 
+### Letting someone else onto their board
+
+Sam's board (`:8084`, mounted at `/draftroom/sam`) is built for someone who is
+not on your tailnet, which means building it was only half the job. Tailscale
+shares a **machine**, not a URL, and its ACLs filter by **port** — never by HTTP
+path. Every service above is mounted on one hostname's `:443`, so a grant that
+let him reach `/draftroom/sam` would let him reach `/draftroom` just as well:
+your live board, your real leans, mid-auction. Path is not a boundary here.
+
+So give his board a port of its own, and fence him into that:
+
+```sh
+make draftroom-sam-share-mount    # serves :8084 at https://<machine>.<tailnet>:8443/
+```
+
+Then two things in the admin console that have no CLI equivalent:
+
+1. **Share the machine.** Machines → your host → `⋯` → Share, and send him the
+   invite link. Sharing is free and costs you no seat; only that one node
+   crosses into his tailnet, never your other devices.
+2. **Scope his grant to the port.** This is the step that does the work. A
+   personal tailnet's default policy is `{"src": ["*"], "dst": ["*:*"]}`, and
+   `*` includes shared users — leave it alone and he gets all six services. Narrow
+   the blanket rule to your own users, then grant him exactly one port:
+
+```json
+{
+  "acls": [
+    {"action": "accept", "src": ["autogroup:member"], "dst": ["*:*"]},
+    {"action": "accept", "src": ["him@example.com"],  "dst": ["<machine>:8443"]}
+  ]
+}
+```
+
+**The `src` string is a login, not an address.** Tailscale identifies a Google
+sign-in as the Gmail address and a GitHub sign-in as `<username>@github`, so
+agree on which one he uses before he accepts. Guessing wrong fails closed — the
+rule matches nobody and he gets nothing — which reads like a broken share rather
+than the leak it isn't. Read the exact string off the Users page once he's in.
+
+**Verify by what is refused, not by what works.** That his board loads proves
+almost nothing; the ACL could be wide open and it would still load. Have him
+try `/draftroom` and `/edge` on `:443` — both must fail. If either renders,
+the blanket rule is still `*` and he is standing in your whole tailnet.
+
+Still `serve`, still no `funnel`. The extra port is a fence, not a door: it is
+reachable only by someone the share and the ACL both let in.
+
 ### Rehearsing against a mock draft
 
 The board is a draft-night tool that gets used once a year, which is a bad

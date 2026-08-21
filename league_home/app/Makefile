@@ -7,7 +7,8 @@ BINS := leaguectl leaguebot leagueweb draftroom
 	draftroom-install draftroom-load draftroom-unload draftroom-restart draftroom-status \
 	draftroom-serve-mount draftroom-serve-unmount draftroom-serve-status \
 	draftroom-sam-install draftroom-sam-load draftroom-sam-unload draftroom-sam-restart draftroom-sam-status \
-	draftroom-sam-serve-mount draftroom-sam-serve-unmount
+	draftroom-sam-serve-mount draftroom-sam-serve-unmount \
+	draftroom-sam-share-mount draftroom-sam-share-unmount
 
 build: ## Build leaguectl, leaguebot, leagueweb, and draftroom binaries
 	go build -o leaguectl ./cmd/leaguectl
@@ -201,6 +202,19 @@ draftroom-sam-serve-mount: ## (macOS) Mount Sam's board at /draftroom/sam via ta
 
 draftroom-sam-serve-unmount: ## (macOS) Remove the /draftroom/sam tailscale serve mount
 	tailscale serve --set-path=/draftroom/sam off
+
+## Sam reaches his board over a shared node, and Tailscale ACLs filter by port
+## and never by path. Everything above is mounted on one hostname's :443, so a
+## grant that reached /draftroom/sam would reach /draftroom too — your live
+## board, with your real leans on it. Serving :8084 on a port of its own is what
+## gives the ACL something to bind to. Still `serve`, so still tailnet-only;
+## the port exists to fence a guest in, not to expose anything.
+
+draftroom-sam-share-mount: ## (macOS) Serve Sam's board on :8443, the port his ACL grant is scoped to
+	tailscale serve --bg --https=8443 localhost:8084
+
+draftroom-sam-share-unmount: ## (macOS) Stop serving Sam's board on :8443
+	tailscale serve --https=8443 off
 
 ## --- macOS-only: leagueweb persistence via launchd + tailscale serve ---
 ## Not exercised by `check`. See ../../league_home/README.md ("Running it
