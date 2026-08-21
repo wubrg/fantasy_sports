@@ -39,9 +39,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: +390/-525
-        spread: ""
-        total: ""
+        ml: +400/-550
+        spread: +10 -110/-110
+        total: +46.5 -110/-110
       fanduel:
         ml: ""
         spread: ""
@@ -72,9 +72,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: +145/-175
+        spread: +3 -105/-115
+        total: +42 -110/-110
       fanduel:
         ml: ""
         spread: ""
@@ -105,9 +105,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: -180/+150
+        spread: -3.5 +100/-120
+        total: +47.5 -110/-110
       fanduel:
         ml: ""
         spread: ""
@@ -138,9 +138,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: -110/-110
+        spread: +0.5 -110/-110
+        total: +44.5 -110/-110
       fanduel:
         ml: ""
         spread: ""
@@ -205,8 +205,8 @@ games:
         total: ""
       fanatics:
         ml: +290/-375
-        spread: ""
-        total: ""
+        spread: +7.5 -115/-105
+        total: +40.5 -110/-110
       fanduel:
         ml: ""
         spread: ""
@@ -237,9 +237,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: -165/+135
+        spread: -3 -105/-115
+        total: +48 -110/-110
       fanduel:
         ml: ""
         spread: ""
@@ -270,9 +270,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: +130/-155
+        spread: +2.5 +100/-120
+        total: +42.5 -110/-110
       fanduel:
         ml: ""
         spread: ""
@@ -303,9 +303,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: 100/-120
+        spread: +1 -105/-115
+        total: +45 -110/-110
       fanduel:
         ml: ""
         spread: ""
@@ -336,9 +336,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: +175/-215
+        spread: +4 -110/-110
+        total: +40.5 -110/-110
       fanduel:
         ml: ""
         spread: ""
@@ -402,9 +402,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: +265/-340
-        spread: ""
-        total: ""
+        ml: +260/-330
+        spread: +7 -115/-105
+        total: +49.5 -110/-110
       fanduel:
         ml: ""
         spread: ""
@@ -435,9 +435,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: 125/-150
+        spread: +2.5 +100/-120
+        total: +39 -110/-110
       fanduel:
         ml: ""
         spread: ""
@@ -501,9 +501,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: +155/-190
+        spread: +3.5 -115/-105
+        total: +51.5 -110/-110
       fanduel:
         ml: ""
         spread: ""
@@ -534,9 +534,9 @@ games:
         spread: ""
         total: ""
       fanatics:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: 190/-235
+        spread: +5 -110/-110
+        total: +46.5 -110/-110
       fanduel:
         ml: ""
         spread: ""

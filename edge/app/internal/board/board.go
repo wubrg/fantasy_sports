@@ -57,9 +57,13 @@ func (l Lines) Empty() bool { return l.ML == "" && l.Spread == "" && l.Total == 
 // can be split -- and wager.CheckBonusMarket hard-fails for any book whose
 // rules are not recorded. That hard failure is protective: clearing a wager at
 // a book whose push behaviour is unknown is the exact mistake it exists to
-// prevent. Fanatics and Caesars have no recorded rules, so they must not
-// become wager.Book values just to appear on a board. Line shopping needs a
-// label; it does not need, and must not silently acquire, a safety clearance.
+// prevent.
+//
+// The two are kept separate so that appearing on a board never implies a
+// safety clearance. Fanatics has recorded rules now (it returns the stake on
+// a push, so push-capable markets are eligible); Caesars still does not, and
+// must keep failing closed. Line shopping needs a label for every column,
+// including the ones nothing is known about.
 var Books = []string{
 	"consensus",
 	"fanatics",
