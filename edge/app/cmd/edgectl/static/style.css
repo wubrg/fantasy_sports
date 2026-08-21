@@ -466,3 +466,16 @@ body {
   flex: 1 1 7rem; font-size: 0.72rem; color: var(--dim);
 }
 .chk input { min-height: 0; }
+
+/* A matched boost belongs on the ticket it applies to, not in a list to be
+   cross-referenced while standing in a betslip. */
+.boosted {
+  flex: 1 1 100%;
+  margin-top: 0.3rem;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.72rem;
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+}

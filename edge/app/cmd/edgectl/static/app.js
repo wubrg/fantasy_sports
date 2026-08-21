@@ -469,13 +469,21 @@ function renderReport(r) {
       ${r.provisional ? `<p class="muted prov">${r.missing} game${r.missing === 1 ? " has" : "s have"}
         no ${r.book} price. This is the best pairing of the ${r.priced} that do, which is not the
         same as the best pairing of the week — expect it to change as you enter more.</p>` : ""}
-      ${r.set.map((p, i) => `<div class="bet" data-i="${i}">
+      ${r.set.map((p, i) => { const bst = (r.boosts || []).find(b => b.ticket === i); return `<div class="bet" data-i="${i}">
         <div class="legs">${p.book && (r.books || []).length > 1
           ? `<span class="bk">${p.book}</span> ` : ""}${p.teams.join(" + ")}</div>
         <div class="nums"><span class="price mono">${amer(p.price)}</span>
           <span class="muted">${pct(p.conversion)} conv · ${pct(p.true_prob)} to hit</span></div>
         <button type="button" class="rec" data-i="${i}">record</button>
-      </div>`).join("")}
+        ${bst ? `<div class="boosted">apply <b>${bst.label}</b> \u2014 adds ${money(bst.adds)}${
+          bst.capped ? " (capped at its max stake)" : ""}</div>` : ""}
+      </div>`; }).join("")}
+      ${r.boost_adds ? `<p class="sum">boosts add <b>${money(r.boost_adds)}</b> on top</p>` : ""}
+      ${r.prop_boosts ? `<p class="muted">${r.prop_boosts} prop-only boost(s) held and not
+        counted \u2014 the board carries no prop prices to match them against.</p>` : ""}
+      ${r.cash_boosts ? `<p class="muted">${r.cash_boosts} boost(s) held that need a
+        REAL-MONEY stake and will not attach to bonus money \u2014 worth nothing against
+        this bankroll, however good the terms look.</p>` : ""}
       <p class="sum">avg conversion <b>${pct(r.avg_conversion)}</b> ·
         <b>${pct(r.any_hit)}</b> chance at least one hits</p>
       <p class="muted">No team appears twice, so every ticket can be live at
@@ -707,6 +715,7 @@ function renderBoosts(r) {
       <span class="price">${Math.round(x.percent * 100)}% \u00d7 ${money(x.max_stake)}</span>
       <span class="conv">${money(x.ceiling)} max</span>
       ${x.restricted ? `<span class="tag mkt">${x.market}</span>` : ""}
+      ${x.min_odds ? `<span class="tag when">${x.min_odds > 0 ? "+" : ""}${x.min_odds} or longer</span>` : ""}
       ${x.needs_cash ? `<span class="tag">cash only</span>` : ""}
       ${x.expires ? `<span class="tag when">${x.in_hours < 48
         ? x.in_hours + "h" : Math.round(x.in_hours / 24) + "d"}</span>` : ""}
@@ -793,6 +802,7 @@ function renderFunds(r) {
         <select id="b-book">${books.map(x => `<option>${x}</option>`).join("")}</select>
         <input id="b-pct" inputmode="decimal" placeholder="50 (%)">
         <input id="b-max" inputmode="decimal" placeholder="max stake 25">
+        <input id="b-min" inputmode="tel" placeholder="min line -200">
         <input id="b-mkt" placeholder="market: any, atd, ftd">
         <input id="b-exp" placeholder="expires 2026-09-14">
         <label class="chk"><input type="checkbox" id="b-cash"> needs cash</label>
@@ -863,6 +873,7 @@ function renderFunds(r) {
           percent: pct100 / 100,
           max_stake: max,
           market: document.getElementById("b-mkt").value.trim() || "any",
+          min_odds: Number(document.getElementById("b-min").value) || 0,
           expires: document.getElementById("b-exp").value.trim(),
           needs_cash: document.getElementById("b-cash").checked,
           label: Math.round(pct100) + "% boost",

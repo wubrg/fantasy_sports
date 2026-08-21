@@ -206,6 +206,62 @@ func (b BoostSpec) WorthChasing() bool { return b.Ceiling(TypicalHold) >= ChaseF
 // building a bet around -- but it points at a market that would otherwise not
 // be priced at all, and a prop promo is often the only reason to look at one.
 // A generic token of the same size points at nothing and is simply noise.
+// Allows reports whether a price clears the boost's minimum line.
+//
+// The comparison is in DECIMAL, not on the American number, because American
+// odds do not order numerically. A boost quoted "-200 or longer" admits +250:
+// -200 is 1.5 decimal and +250 is 3.5, so the longer price is the larger
+// decimal while being the smaller signed integer. Comparing the integers would
+// reject exactly the long prices a boost is worth most on.
+//
+// A zero MinOdds means the promo stated none.
+func (b BoostSpec) Allows(price wager.American) (bool, error) {
+	if b.MinOdds == 0 {
+		return true, nil
+	}
+	pd, err := price.Decimal()
+	if err != nil {
+		return false, err
+	}
+	md, err := b.MinOdds.Decimal()
+	if err != nil {
+		return false, err
+	}
+	return pd >= md, nil
+}
+
+// UsableOn reports whether this boost can be applied to a wager on the given
+// market, funded from the given bankroll.
+//
+// Two rules, and the second is the expensive one. A restricted boost only
+// applies to its own market. And a boost requiring a cash stake will not
+// attach to a bonus bet at all -- which is what made four of them worth
+// exactly nothing while being carried as $19.03 apiece.
+func (b BoostSpec) UsableOn(market string, cashStake bool) bool {
+	if b.RequiresCashStake && !cashStake {
+		return false
+	}
+	if !b.Restricted() {
+		return true
+	}
+	return strings.EqualFold(strings.TrimSpace(market), strings.TrimSpace(b.Market))
+}
+
+// PropOnly reports whether this boost is tied to a player-prop market.
+//
+// Kept apart from Restricted because the board carries no prop prices, so a
+// prop boost cannot yet be reasoned about even though it is perfectly real.
+// Naming the cases rather than testing "is it any of the markets we support"
+// keeps the free-form Market field open: an unrecognised restriction is
+// something to look at, not something to silently treat as a prop.
+func (b BoostSpec) PropOnly() bool {
+	switch strings.ToLower(strings.TrimSpace(b.Market)) {
+	case "atd", "ftd", "ltd", "prop", "props", "sgp":
+		return true
+	}
+	return false
+}
+
 func (b BoostSpec) Restricted() bool {
 	m := strings.ToLower(strings.TrimSpace(b.Market))
 	return m != "" && m != "any"

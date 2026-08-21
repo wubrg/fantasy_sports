@@ -308,7 +308,7 @@ function tryBoosts(what, payload) {
 
 tryBoosts("renderBoosts() with a mixed inventory", { floor: 5, boosts: [
   { book: "fanatics", label: "ATD", percent: 0.3, max_stake: 50, market: "atd",
-    needs_cash: false, expires: "2026-09-14", in_hours: 500, ceiling: 14.35,
+    needs_cash: false, min_odds: -200, expires: "2026-09-14", in_hours: 500, ceiling: 14.35,
     at_500: 11.96, chase: true, restricted: true },
   // The promo-page illusion: biggest percentage, smallest worth.
   { book: "bet365", label: "FTD", percent: 1.0, max_stake: 5, market: "ftd",
@@ -324,6 +324,27 @@ tryBoosts("renderBoosts() with every boost above the line", { floor: 5, boosts: 
   { book: "f", label: "x", percent: 0.5, max_stake: 50, market: "any", needs_cash: false,
     expires: "", in_hours: 0, ceiling: 23.9, at_500: 19.9, chase: true, restricted: false },
 ]});
+
+// A boosted set, and the prop-only note. Both paths are reachable only once a
+// boost is held, so neither would be exercised by an ordinary run.
+tryReport("renderReport() with a boost matched to a ticket",
+  Object.assign({}, sampleReport, {
+    boosts: [{ ticket: 0, book: "fanatics", label: "50% boost", percent: 0.5,
+               adds: 9.97, capped: false }],
+    boost_adds: 9.97, prop_boosts: 2, cash_boosts: 1,
+  }));
+tryReport("renderReport() with a capped boost and no props",
+  Object.assign({}, sampleReport, {
+    boosts: [{ ticket: 0, book: "fanatics", label: "30% ATD", percent: 0.3,
+               adds: 4.2, capped: true }],
+    boost_adds: 4.2, prop_boosts: 0,
+  }));
+// A boost naming a ticket index the set does not have must not throw.
+tryReport("renderReport() with a boost pointing past the set",
+  Object.assign({}, sampleReport, {
+    boosts: [{ ticket: 99, book: "fanatics", label: "x", percent: 0.5, adds: 1, capped: false }],
+    boost_adds: 1, prop_boosts: 0,
+  }));
 
 // ---- value model --------------------------------------------------------
 

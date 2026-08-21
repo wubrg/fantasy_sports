@@ -644,3 +644,77 @@ func TestBoostValueRisesWithPrice(t *testing.T) {
 		t.Error("value reached the ceiling, which no real price should")
 	}
 }
+
+// TestBoostAllowsComparesInDecimal is the trap in a minimum line.
+//
+// American odds do not order numerically: -200 is 1.5 decimal and +250 is 3.5,
+// so the LONGER price is the larger decimal while being the smaller signed
+// integer. A boost is worth most on a long price, so comparing the integers
+// would reject exactly the wagers it exists for.
+func TestBoostAllowsComparesInDecimal(t *testing.T) {
+	tests := []struct {
+		min   wager.American
+		price wager.American
+		want  bool
+	}{
+		// "-200 or longer" admits everything longer, on both sides of zero.
+		{-200, -200, true},
+		{-200, -150, true},
+		{-200, 100, true},
+		{-200, 250, true},
+		{-200, -300, false}, // shorter than the line
+		// "+250 or longer" excludes every favourite, though -200 < +250 as
+		// integers. This is the case a naive comparison inverts.
+		{250, 250, true},
+		{250, 400, true},
+		{250, 200, false},
+		{250, -200, false},
+		// No stated minimum admits anything.
+		{0, -900, true},
+	}
+	for _, tc := range tests {
+		b := BoostSpec{Percent: 0.5, MaxStake: 25, MinOdds: tc.min}
+		got, err := b.Allows(tc.price)
+		if err != nil {
+			t.Fatalf("min %+d price %+d: %v", tc.min, tc.price, err)
+		}
+		if got != tc.want {
+			t.Errorf("min %+d allows %+d = %v, want %v", tc.min, tc.price, got, tc.want)
+		}
+	}
+}
+
+// TestBoostUsableOn pins the rule that cost a campaign its whole boost value.
+func TestBoostUsableOn(t *testing.T) {
+	cashOnly := BoostSpec{Percent: 0.5, MaxStake: 25, RequiresCashStake: true}
+	if cashOnly.UsableOn("ml", false) {
+		t.Error("a cash-only boost must not attach to a bonus bet")
+	}
+	if !cashOnly.UsableOn("ml", true) {
+		t.Error("a cash-only boost applies to a cash stake")
+	}
+
+	general := BoostSpec{Percent: 0.5, MaxStake: 25, Market: "any"}
+	for _, m := range []string{"ml", "spread", "total"} {
+		if !general.UsableOn(m, false) {
+			t.Errorf("an unrestricted boost should apply to %s", m)
+		}
+	}
+
+	atd := BoostSpec{Percent: 0.3, MaxStake: 50, Market: "atd"}
+	if atd.UsableOn("ml", false) {
+		t.Error("an ATD boost must not apply to a moneyline")
+	}
+	if !atd.UsableOn("ATD", false) {
+		t.Error("market matching should ignore case")
+	}
+	if !atd.PropOnly() || general.PropOnly() {
+		t.Error("PropOnly should separate market promos from general tokens")
+	}
+	// An unrecognised restriction is not silently a prop: it is something to
+	// look at, which is what keeps the free-form Market field open.
+	odd := BoostSpec{Percent: 0.5, MaxStake: 25, Market: "same-game-2-leg"}
+	if odd.PropOnly() {
+		t.Error("an unknown restriction must not be assumed to be a prop")
+	}
+}

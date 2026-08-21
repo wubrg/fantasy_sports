@@ -1,8 +1,11 @@
 package main
 
 import (
+	"edge/internal/ledger"
 	"fmt"
 	"net/http"
+	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -57,6 +60,17 @@ type reportJSON struct {
 	Frontier  []frontJSON        `json:"frontier"`
 	Advice    []string           `json:"advice"`
 	FreeSplit bool               `json:"free_split"`
+	// Boosts matched to tickets, and what applying each is worth. Prop-only
+	// tokens are absent by design: the board has no prop prices to match them
+	// against.
+	Boosts     []boostPick `json:"boosts"`
+	BoostAdds  float64     `json:"boost_adds"`
+	PropBoosts int         `json:"prop_boosts"`
+	// CashBoosts is boosts held that require a real-money stake while this
+	// bankroll is bonus money. Counted and reported rather than filtered
+	// silently: a token quietly dropped is a token still believed in, and four
+	// of these were carried as $19.03 apiece until someone tested one.
+	CashBoosts int `json:"cash_boosts"`
 }
 
 type allocJSON struct {
@@ -249,6 +263,31 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 	for _, v := range funds {
 		total += v
 	}
+	// Boosts join the campaign math whenever they can actually be used. The
+	// bankroll here is bonus money, so a cash-only token is correctly excluded
+	// rather than counted and later discovered to be worthless.
+	if lots, err := s.boostLots(books); err == nil && len(lots) > 0 {
+		stakes := map[string]float64{}
+		for _, al := range board.Allocate(a.Set, funds) {
+			if al.Stake > 0 {
+				stakes[al.Book] = al.Stake
+			}
+		}
+		out.Boosts = matchBoosts(a.Set, lots, stakes, false)
+		for _, bp := range out.Boosts {
+			out.BoostAdds += bp.Adds
+		}
+		for _, l := range lots {
+			switch {
+			case l.Boost == nil:
+			case l.Boost.PropOnly():
+				out.PropBoosts++
+			case l.Boost.RequiresCashStake:
+				out.CashBoosts++
+			}
+		}
+	}
+
 	if total > 0 {
 		for _, al := range board.Allocate(a.Set, funds) {
 			out.Alloc = append(out.Alloc, allocJSON{
@@ -285,4 +324,119 @@ func toCommitJSON(c []Commitment) []commitJSON {
 		out = append(out, commitJSON{Selection: x.Selection, Teams: x.Teams})
 	}
 	return out
+}
+
+// boostPick is a boost matched to one proposed ticket.
+type boostPick struct {
+	Ticket  int     `json:"ticket"`
+	Book    string  `json:"book"`
+	Label   string  `json:"label"`
+	Percent float64 `json:"percent"`
+	// Adds is what applying it is worth on THIS ticket at its stake, which is
+	// the only figure that means anything. A boost quoted as a flat dollar
+	// value states a number that depends on a wager not yet chosen.
+	Adds float64 `json:"adds"`
+	// Capped marks a ticket staked above the boost's maximum, where the boost
+	// applies to part of the stake only.
+	Capped bool `json:"capped"`
+}
+
+// matchBoosts assigns held boosts to proposed tickets, best first.
+//
+// Only boosts that can actually be used: the price must clear the minimum
+// line, the market must match, and a cash-only boost is excluded outright
+// while the bankroll is bonus money. That last rule is the one that matters --
+// four boosts were once carried as $19.03 apiece before anyone checked it.
+//
+// Prop-restricted boosts are held out entirely for now. They are real and
+// often the most valuable thing on offer, but the board carries no prop
+// prices, so there is nothing here to match them against. Reporting them as
+// unusable would be wrong; reporting them as applicable would be worse.
+//
+// One boost per ticket, greedily from the most valuable. A token is spent
+// whole, so two on one wager is not a thing, and the greedy order is exact
+// here because every ticket can take any eligible boost.
+func matchBoosts(set board.ParlaySet, boosts []ledger.Lot, stakes map[string]float64, cash bool) []boostPick {
+	type cand struct {
+		lot    ledger.Lot
+		adds   float64
+		idx    int
+		capped bool
+	}
+	var all []cand
+	for i, p := range set.Parlays {
+		stake := stakes[p.Book()]
+		if stake <= 0 {
+			continue
+		}
+		for _, l := range boosts {
+			b := l.Boost
+			if b == nil || l.Book != p.Book() || b.PropOnly() {
+				continue
+			}
+			if !b.UsableOn("ml", cash) {
+				continue
+			}
+			if ok, err := b.Allows(p.Price); err != nil || !ok {
+				continue
+			}
+			// The boost applies to at most its own maximum stake.
+			eff := stake
+			capped := false
+			if b.MaxStake > 0 && eff > b.MaxStake {
+				eff, capped = b.MaxStake, true
+			}
+			m, err := p.Price.ProfitMultiple()
+			if err != nil {
+				continue
+			}
+			all = append(all, cand{l, b.Percent * eff * m * p.TrueProb, i, capped})
+		}
+	}
+	sort.SliceStable(all, func(i, j int) bool { return all[i].adds > all[j].adds })
+
+	usedLot, usedTicket := map[string]bool{}, map[int]bool{}
+	var out []boostPick
+	for _, c := range all {
+		if usedLot[c.lot.ID] || usedTicket[c.idx] {
+			continue
+		}
+		usedLot[c.lot.ID], usedTicket[c.idx] = true, true
+		label := c.lot.Boost.Label
+		if label == "" {
+			label = fmt.Sprintf("%.0f%% boost", c.lot.Boost.Percent*100)
+		}
+		out = append(out, boostPick{
+			Ticket: c.idx, Book: c.lot.Book, Label: label,
+			Percent: c.lot.Boost.Percent, Adds: c.adds, Capped: c.capped,
+		})
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Ticket < out[j].Ticket })
+	return out
+}
+
+// boostLots reads the held boosts for the named books.
+func (s *boardServer) boostLots(books []string) ([]ledger.Lot, error) {
+	events, err := ledger.Load(s.ledgerPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	pos, err := ledger.Balances(events, time.Now())
+	if err != nil {
+		return nil, err
+	}
+	want := map[string]bool{}
+	for _, b := range books {
+		want[b] = true
+	}
+	var out []ledger.Lot
+	for _, l := range pos.Lots {
+		if l.Boost != nil && want[l.Book] {
+			out = append(out, l)
+		}
+	}
+	return out, nil
 }
