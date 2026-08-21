@@ -50,7 +50,14 @@ type Side struct {
 	GameID string
 	Team   string
 	Home   bool
-	Price  wager.American
+	// Market is "ml", "spread" or "total". A leg has to say which it is: a
+	// parlay of NE and a spread is not a parlay of NE twice, and the ticket
+	// has to be readable back at the book.
+	Market string
+	// Label is what to write on the ticket -- "ATL +3.5" or "over 44.5".
+	// Empty for a moneyline, where the team name is the whole selection.
+	Label string
+	Price wager.American
 	// Fair is the de-vigged probability this side wins -- the market's actual
 	// estimate. It is NOT Price.ImpliedRaw(), which is inflated by the vig.
 	Fair float64
@@ -169,6 +176,7 @@ func makeSide(gameID, team string, home bool, price wager.American, fair float64
 		GameID:     gameID,
 		Team:       team,
 		Home:       home,
+		Market:     "ml",
 		Price:      price,
 		Fair:       fair,
 		Conversion: fair * profit,
@@ -315,17 +323,16 @@ type ParlaySet struct {
 	Unfilled int
 }
 
-// maxPoolLegs caps the exhaustive pairing search.
+// maxPoolGames caps the exhaustive pairing search.
 //
-// The search is exact: it considers every way of choosing disjoint pairs, via
-// a bitmask over the pool. That is affordable up to 16 legs, which is exactly
-// one dog per game in the largest NFL week, so the cap never binds in practice.
-// A larger pool (both sides of every game, say) is trimmed to the best legs by
-// standalone conversion first. That trim is the only heuristic in this file
-// and it is worth naming: a leg outside the top 16 by conversion could in
-// principle belong to an optimal pair, though it would have to be rescued by a
-// partner far better than any of the 16 it lost to.
-const maxPoolLegs = 16
+// The search is exact over the pool: it considers every way of choosing
+// disjoint pairs of GAMES, via a bitmask. 16 is the largest NFL week, so the
+// cap does not bind on a single week's board. A larger pool is trimmed to the
+// games whose best leg converts highest, which is the only heuristic in this
+// file and worth naming: a game outside the top 16 could in principle belong
+// to an optimal pair, though it would have to be rescued by a partner far
+// better than any of the 16 it lost to.
+const maxPoolGames = 16
 
 // BuildSet chooses `shots` two-leg parlays that share no team and no game,
 // maximising total conversion across the set.
@@ -340,9 +347,9 @@ func BuildSet(legs []Side, shots int, o Objective, floor float64) (ParlaySet, er
 	if shots < 0 {
 		return ParlaySet{}, fmt.Errorf("shots %d must not be negative", shots)
 	}
-	pool := usablePool(legs)
-	// Each shot consumes two legs from two distinct games, so a pool of n legs
-	// supports at most n/2 shots however they are arranged.
+	pool := gamePool(legs)
+	// Each shot consumes two games, so a pool of n games supports at most n/2
+	// shots however they are arranged.
 	want := shots
 	if most := len(pool) / 2; want > most {
 		want = most
@@ -351,7 +358,7 @@ func BuildSet(legs []Side, shots int, o Objective, floor float64) (ParlaySet, er
 		return ParlaySet{Unfilled: shots}, nil
 	}
 
-	pairs, err := pairWeights(pool, o, floor)
+	pairs, picks, err := pairWeights(pool, o, floor)
 	if err != nil {
 		return ParlaySet{}, err
 	}
@@ -359,14 +366,15 @@ func BuildSet(legs []Side, shots int, o Objective, floor float64) (ParlaySet, er
 
 	set := ParlaySet{Unfilled: shots - len(chosen)}
 	if len(chosen) == 0 {
-		// Every candidate pair was disallowed -- a pool of legs that all come
-		// from one game, say. An empty set is the right answer; an average
-		// over no parlays is not.
+		// Every candidate pair was disallowed -- a pool whose games all fail
+		// the floor together, say. An empty set is the right answer; an
+		// average over no parlays is not.
 		return set, nil
 	}
 	total, miss := 0.0, 1.0
 	for _, pr := range chosen {
-		p, err := MakeParlay(pool[pr[0]], pool[pr[1]])
+		lp := picks[pr[0]][pr[1]]
+		p, err := MakeParlay(pool[pr[0]].legs[lp[0]], pool[pr[1]].legs[lp[1]])
 		if err != nil {
 			return ParlaySet{}, err
 		}
@@ -384,13 +392,29 @@ func BuildSet(legs []Side, shots int, o Objective, floor float64) (ParlaySet, er
 	return set, nil
 }
 
-// usablePool drops legs that cannot be bet and trims to maxPoolLegs.
+// gamePool groups usable legs by game and trims to maxPoolGames.
 //
-// A leg with an unusable price is dropped rather than rejected: the pool comes
-// from a board where most cells are empty, and one bad cell must not cost the
-// whole set.
-func usablePool(legs []Side) []Side {
-	out := make([]Side, 0, len(legs))
+// Grouping by GAME rather than by leg is a correctness requirement, not a
+// tidying. A set is only independent if no game appears twice across it: two
+// tickets both riding on ARI @ LAC are not two chances, they are one chance
+// counted twice, and every hit-rate figure in the report would be inflated.
+// While a game could offer only one leg -- the moneyline dog -- keeping legs
+// flat was equivalent. Admitting spread and total sides makes it wrong, since
+// two parlays could otherwise each take a different leg from the same game.
+//
+// So the matching runs over games, and the choice of WHICH leg a game
+// contributes is made per candidate pair, where the objective can actually
+// judge it. A leg with an unusable price is dropped rather than rejected: the
+// pool comes from a board where most cells are empty, and one bad cell must
+// not cost the whole set.
+type gameLegs struct {
+	gameID string
+	legs   []Side
+}
+
+func gamePool(legs []Side) []gameLegs {
+	byGame := map[string][]Side{}
+	var order []string
 	seen := make(map[string]bool, len(legs))
 	for _, l := range legs {
 		if _, err := l.Price.Decimal(); err != nil {
@@ -399,17 +423,32 @@ func usablePool(legs []Side) []Side {
 		if l.Fair <= 0 || l.Fair >= 1 || math.IsNaN(l.Conversion) {
 			continue
 		}
-		// A team may be offered once. Two entries for one team would let the
-		// matching pair a team with itself across two books.
-		if seen[l.Team] {
+		// One entry per distinct selection. Without this the same side
+		// arriving from two books could be paired with itself.
+		key := l.GameID + "|" + l.Market + "|" + l.Team
+		if seen[key] {
 			continue
 		}
-		seen[l.Team] = true
-		out = append(out, l)
+		seen[key] = true
+		if _, ok := byGame[l.GameID]; !ok {
+			order = append(order, l.GameID)
+		}
+		byGame[l.GameID] = append(byGame[l.GameID], l)
 	}
-	sort.SliceStable(out, func(i, j int) bool { return out[i].Conversion > out[j].Conversion })
-	if len(out) > maxPoolLegs {
-		out = out[:maxPoolLegs]
+
+	out := make([]gameLegs, 0, len(order))
+	for _, id := range order {
+		ls := byGame[id]
+		sort.SliceStable(ls, func(i, j int) bool { return ls[i].Conversion > ls[j].Conversion })
+		out = append(out, gameLegs{gameID: id, legs: ls})
+	}
+	// Trim by each game's best leg. The bitmask search is exponential in the
+	// number of games, so the cap is a hard ceiling rather than a preference.
+	sort.SliceStable(out, func(i, j int) bool {
+		return out[i].legs[0].Conversion > out[j].legs[0].Conversion
+	})
+	if len(out) > maxPoolGames {
+		out = out[:maxPoolGames]
 	}
 	return out
 }
@@ -473,38 +512,66 @@ func pairWeight(p Parlay, o Objective) float64 {
 	return -math.Log1p(-p.TrueProb)
 }
 
-func pairWeights(pool []Side, o Objective, floor float64) ([][]float64, error) {
+// pairWeights precomputes the weight of every legal game pair, and remembers
+// which legs achieved it.
+//
+// A pair of games can be combined several ways once spreads and totals are in
+// play -- ARI's moneyline with SEA's total, or ARI's spread with SEA's
+// moneyline. The best combination depends on the objective, so it is chosen
+// here rather than guessed at when the pool is built: picking one leg per game
+// up front would have to decide without knowing the partner, and the longest
+// leg in a game is the right choice under MaxConversion and the wrong one
+// under MaxHitRate.
+func pairWeights(pool []gameLegs, o Objective, floor float64) ([][]float64, [][][2]int, error) {
 	n := len(pool)
 	w := make([][]float64, n)
+	picks := make([][][2]int, n)
 	for i := range w {
 		w[i] = make([]float64, n)
+		picks[i] = make([][2]int, n)
 		for j := range w[i] {
 			w[i][j] = forbidden
 		}
 	}
 	for i := 0; i < n; i++ {
 		for j := i + 1; j < n; j++ {
-			if pool[i].GameID == pool[j].GameID || pool[i].Team == pool[j].Team {
+			best, bi, bj := forbidden, -1, -1
+			for ii, a := range pool[i].legs {
+				for jj, b := range pool[j].legs {
+					// Games differ by construction here, but a selection can
+					// still collide across books, and a leg must never face
+					// itself.
+					if a.Team == b.Team {
+						continue
+					}
+					p, err := MakeParlay(a, b)
+					if err != nil {
+						return nil, nil, err
+					}
+					// Under MaxHitRate the objective pulls towards SHORT
+					// prices, which is the opposite of what MaxConversion
+					// does, so nothing stops it running down to near-even-money
+					// pairs that convert terribly. The floor is what bounds it.
+					// MaxConversion needs no such guard: it is already climbing
+					// away from the floor by construction, and applying one
+					// there would change long-standing behaviour.
+					if o == MaxHitRate && p.Conversion < floor {
+						continue
+					}
+					if ww := pairWeight(p, o); ww > best {
+						best, bi, bj = ww, ii, jj
+					}
+				}
+			}
+			if bi < 0 {
 				continue
 			}
-			p, err := MakeParlay(pool[i], pool[j])
-			if err != nil {
-				return nil, err
-			}
-			// Under MaxHitRate the objective pulls towards SHORT prices, which
-			// is the opposite of what MaxConversion does, so nothing stops it
-			// running down to near-even-money pairs that convert terribly.
-			// The floor is what bounds it. MaxConversion needs no such guard:
-			// it is already climbing away from the floor by construction, and
-			// applying one there would change long-standing behaviour.
-			if o == MaxHitRate && p.Conversion < floor {
-				continue
-			}
-			ww := pairWeight(p, o)
-			w[i][j], w[j][i] = ww, ww
+			w[i][j], w[j][i] = best, best
+			picks[i][j] = [2]int{bi, bj}
+			picks[j][i] = [2]int{bj, bi}
 		}
 	}
-	return w, nil
+	return w, picks, nil
 }
 
 // bestMatching returns the `shots` disjoint pairs with the greatest total
@@ -655,6 +722,10 @@ type Options struct {
 	Target    float64   // bonus-bet conversion floor
 	Shots     int       // how many disjoint parlays to build
 	Objective Objective // what the parlay set is chosen to maximise
+	// Lined admits spread and total sides as parlay legs alongside moneyline
+	// dogs. Only safe at a book that returns the stake on a push -- see
+	// LinedLegs -- so it is opt-in rather than assumed.
+	Lined bool
 }
 
 // Analyze reads the whole week for one book.
@@ -720,6 +791,19 @@ func Analyze(d *Doc, opt Options) (*Analysis, error) {
 			continue
 		}
 		legs = append(legs, l.Dog())
+	}
+	if opt.Lined {
+		// Lined legs come from every game with a spread or total, including
+		// games whose moneyline is missing or suspect: a spread stands on its
+		// own and does not inherit a doubt about a different market.
+		for _, id := range d.GameIDs() {
+			extra, err := LinedLegs(id, d.Games[id], book)
+			if err != nil {
+				a.Problems = append(a.Problems, err.Error())
+				continue
+			}
+			legs = append(legs, extra...)
+		}
 	}
 	sort.SliceStable(legs, func(i, j int) bool { return legs[i].Conversion > legs[j].Conversion })
 	if a.Set, err = BuildSet(legs, opt.Shots, opt.Objective, opt.Target); err != nil {
@@ -803,4 +887,81 @@ func shopRows(d *Doc) []ShopRow {
 		}
 	}
 	return out
+}
+
+// LinedLegs returns the spread and total sides of one game as parlay legs.
+//
+// These exist as legs because Fanatics returns the stake on a push (House
+// Rules, recorded 2026-08-21), so a whole-number line no longer risks the
+// asset. Under a forfeit-on-push book they would have to stay out: there the
+// downside is losing the bonus outright, not converting less.
+//
+// A standard -110/-110 line de-vigs to exactly 50% a side, which makes it the
+// least biased leg on a board -- a moneyline carries favourite-longshot bias,
+// and a longshot carries the most vig of anything quoted. That does NOT make a
+// spread leg a better bet than a long dog: at a matched parlay price the two
+// convert within a point of each other.
+//
+// What it buys is REACH ALONG THE FRONTIER, and it is not free. Measured on a
+// full 16-game board at 8 shots: under MaxConversion it changes nothing at all,
+// because moneyline dogs already maximise conversion and a 50% leg cannot
+// improve on them. Under MaxHitRate it moves 77.9%/70.5% to 71.4%/83.5% --
+// thirteen points of hit rate bought with thirteen dollars of expected value.
+// A spread leg is a way to reach a SHORTER parlay that still clears the floor,
+// which is exactly what a hit-rate objective wants and a conversion objective
+// does not.
+//
+// It also relieves the pool when few games have a dog past the floor: every
+// game has a spread, so tickets can be built where moneylines alone would run
+// out. That case is a genuine gain rather than a trade.
+//
+// Both sides of a lined market are returned. They are mutually exclusive, but
+// the pairing already refuses two legs from one game, so nothing has to be
+// decided here.
+func LinedLegs(gameID string, g *Game, book string) ([]Side, error) {
+	if g == nil {
+		return nil, fmt.Errorf("%s: no such game", gameID)
+	}
+	var out []Side
+	l := g.Books[book]
+
+	for _, m := range []struct {
+		name, raw string
+		awayLabel func(line float64) string
+		homeLabel func(line float64) string
+	}{
+		{"spread", l.Spread,
+			func(v float64) string { return fmt.Sprintf("%s %+g", g.Away, v) },
+			func(v float64) string { return fmt.Sprintf("%s %+g", g.Home, -v) }},
+		{"total", l.Total,
+			func(v float64) string { return fmt.Sprintf("over %g", v) },
+			func(v float64) string { return fmt.Sprintf("under %g", v) }},
+	} {
+		line, mkt, ok, err := ParseHandicap(m.raw)
+		if err != nil {
+			return nil, fmt.Errorf("%s %s %s: %w", gameID, book, m.name, err)
+		}
+		if !ok {
+			continue
+		}
+		fairA, fairB, err := mkt.FairDevig()
+		if err != nil {
+			return nil, fmt.Errorf("%s %s %s: %w", gameID, book, m.name, err)
+		}
+		// The team field carries the label rather than a bare team name: two
+		// legs from one game must never look interchangeable in a set, and
+		// "over 44.5" has no team at all.
+		a, err := makeSide(gameID, m.awayLabel(line), false, mkt.A, fairA)
+		if err != nil {
+			return nil, err
+		}
+		b, err := makeSide(gameID, m.homeLabel(line), true, mkt.B, fairB)
+		if err != nil {
+			return nil, err
+		}
+		a.Market, a.Label = m.name, m.awayLabel(line)
+		b.Market, b.Label = m.name, m.homeLabel(line)
+		out = append(out, a, b)
+	}
+	return out, nil
 }

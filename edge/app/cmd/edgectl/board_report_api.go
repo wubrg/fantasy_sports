@@ -96,6 +96,7 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 	if v, err := strconv.Atoi(q.Get("shots")); err == nil && v > 0 && v <= 12 {
 		shots = v
 	}
+	lined := q.Get("lined") == "1" || q.Get("lined") == "true"
 	obj, err := board.ParseObjective(q.Get("objective"))
 	if err != nil {
 		httpError(w, http.StatusBadRequest, err.Error())
@@ -112,7 +113,7 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a, err := board.Analyze(wf.doc, board.Options{
-		Book: book, Target: board.DefaultTarget, Shots: shots, Objective: obj,
+		Book: book, Target: board.DefaultTarget, Shots: shots, Objective: obj, Lined: lined,
 	})
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, err.Error())

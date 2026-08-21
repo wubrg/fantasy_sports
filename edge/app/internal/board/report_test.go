@@ -671,3 +671,84 @@ func TestCoverageAndProvisional(t *testing.T) {
 		t.Errorf("PricedBooks = %v, want exactly one", part.PricedBooks)
 	}
 }
+
+// TestLinedLegsStayGameDisjoint guards the correctness property that admitting
+// spread and total legs put at risk.
+//
+// The pairing has always refused two legs from one game WITHIN a parlay. While
+// each game offered a single leg -- its moneyline dog -- that was also enough
+// to keep games distinct ACROSS the set. Adding spread and total sides breaks
+// that equivalence: two different parlays could each take a different leg from
+// the same game, and a set riding one game twice is not two independent
+// chances. Every hit-rate figure in the report would be inflated by exactly
+// the correlation it claims to have excluded.
+func TestLinedLegsStayGameDisjoint(t *testing.T) {
+	d := contractDoc(Consensus)
+	// Give every game a spread and a total, so each one offers five candidate
+	// legs (dog, two spread sides, two total sides) instead of one.
+	for _, id := range d.GameIDs() {
+		l := d.Games[id].Books[Consensus]
+		l.Spread = "+3.5 -110/-110"
+		l.Total = "44.5 -110/-110"
+		d.Games[id].Books[Consensus] = l
+	}
+
+	for _, obj := range []Objective{MaxHitRate, MaxConversion} {
+		for shots := 1; shots <= 8; shots++ {
+			a, err := Analyze(d, Options{
+				Book: Consensus, Target: DefaultTarget, Shots: shots,
+				Objective: obj, Lined: true,
+			})
+			if err != nil {
+				t.Fatalf("%v shots=%d: %v", obj, shots, err)
+			}
+			games := map[string]string{}
+			for _, p := range a.Set.Parlays {
+				for _, leg := range p.Legs {
+					if prev, dup := games[leg.GameID]; dup {
+						t.Fatalf("%v shots=%d: game %s used twice (%s and %s)",
+							obj, shots, leg.GameID, prev, leg.Team)
+					}
+					games[leg.GameID] = leg.Team
+				}
+			}
+		}
+	}
+}
+
+// TestLinedLegsWidenThePool pins what the flag actually buys, which is not
+// what it first appeared to buy.
+//
+// Spread and total sides do not beat a long dog at a matched price; they
+// convert within a point of each other. Under MaxConversion they change
+// nothing, since moneyline dogs already maximise it. Under MaxHitRate they
+// give the search shorter pairings that still clear the floor, which raises
+// the hit rate at some cost in expected value -- a trade, not a free lunch.
+// The assertion here is only that the hit rate never gets WORSE, since the
+// lined pool is a superset of the plain one and the objective is free to
+// ignore it.
+func TestLinedLegsWidenThePool(t *testing.T) {
+	d := contractDoc(Consensus)
+	for _, id := range d.GameIDs() {
+		l := d.Games[id].Books[Consensus]
+		l.Spread = "+3.5 -110/-110"
+		d.Games[id].Books[Consensus] = l
+	}
+
+	plain, err := Analyze(d, Options{Book: Consensus, Target: DefaultTarget, Shots: 8, Objective: MaxHitRate})
+	if err != nil {
+		t.Fatal(err)
+	}
+	lined, err := Analyze(d, Options{Book: Consensus, Target: DefaultTarget, Shots: 8, Objective: MaxHitRate, Lined: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(lined.Set.Parlays) < len(plain.Set.Parlays) {
+		t.Errorf("lined built %d shots, fewer than %d without it",
+			len(lined.Set.Parlays), len(plain.Set.Parlays))
+	}
+	if lined.Set.AnyHit < plain.Set.AnyHit {
+		t.Errorf("lined AnyHit %.4f, worse than %.4f without it",
+			lined.Set.AnyHit, plain.Set.AnyHit)
+	}
+}
