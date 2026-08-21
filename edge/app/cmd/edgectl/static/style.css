@@ -446,3 +446,13 @@ body {
   color: #0b0d10; background: var(--accent);
   border: 0; border-radius: 6px; font-weight: 600;
 }
+
+/* A correction is a normal thing to need, not an admin escape hatch, so it
+   sits on the balance it corrects. */
+.dog .fix {
+  margin-left: auto;
+  min-height: 30px; padding: 0 0.5rem;
+  font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--dim); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 5px;
+}

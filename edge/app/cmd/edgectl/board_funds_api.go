@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -246,6 +247,146 @@ func (s *boardServer) drawFrom(book string, stake float64) ([]ledger.Event, erro
 			take = left
 		}
 		out = append(out, ledger.Event{Kind: "place", Lot: l.ID, Amount: take})
+		left -= take
+	}
+	return out, nil
+}
+
+type adjustReq struct {
+	Book   string  `json:"book"`
+	Asset  string  `json:"asset"`
+	Target float64 `json:"target"`
+	Note   string  `json:"note"`
+}
+
+// handleAdjust corrects a balance to what it should be.
+//
+// It appends a compensating entry rather than editing anything. An append-only
+// log with no way to fix a fat-fingered entry is a log that gets abandoned the
+// first time one happens -- but a log that can be edited cannot answer "what
+// did I hold on the 20th", which is the whole reason for keeping it. A
+// correction is itself a fact worth recording: "I believed I had $80 and
+// actually had $50" is history, not noise.
+//
+// The caller states the CORRECT balance and the difference is derived. Asking
+// for a delta instead would make the operator do arithmetic against a number
+// they have just discovered they got wrong.
+func (s *boardServer) handleAdjust(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		httpError(w, http.StatusMethodNotAllowed, "POST required")
+		return
+	}
+	var req adjustReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httpError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if strings.TrimSpace(req.Book) == "" {
+		httpError(w, http.StatusBadRequest, "which book?")
+		return
+	}
+	if req.Asset == "" {
+		req.Asset = "bonus"
+	}
+	if req.Target < 0 {
+		httpError(w, http.StatusBadRequest, "a balance cannot be negative")
+		return
+	}
+
+	events, err := ledger.Load(s.ledgerPath)
+	if err != nil && !os.IsNotExist(err) {
+		httpError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	now := time.Now()
+	pos, err := ledger.Balances(events, now)
+	if err != nil {
+		httpError(w, http.StatusConflict, "the bankroll log does not replay: "+err.Error())
+		return
+	}
+	current := pos.Total(req.Book, req.Asset)
+	delta := req.Target - current
+	if math.Abs(delta) < 0.005 {
+		writeJSON(w, map[string]any{"ok": true, "unchanged": true, "balance": current})
+		return
+	}
+
+	note := req.Note
+	if note == "" {
+		note = fmt.Sprintf("correction: recorded %.2f, actually %.2f", current, req.Target)
+	}
+
+	if delta > 0 {
+		// Under-declared. A grant is the honest shape: money that turned out to
+		// be there arrived at some point, and this is the first the log hears
+		// of it.
+		e := ledger.Event{
+			Kind: "grant", ID: ledger.NewID(now, req.Book+"-correction"), Time: now,
+			Creates: &ledger.Lot{Book: req.Book, Asset: req.Asset, Amount: delta},
+			Note:    note,
+		}
+		if err := ledger.AppendFile(s.ledgerPath, e); err != nil {
+			httpError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		writeJSON(w, map[string]any{"ok": true, "delta": delta, "balance": req.Target})
+		return
+	}
+
+	// Over-declared. Withdraw the excess, newest lot first -- the opposite of
+	// spending order. A correction almost always undoes what was just typed,
+	// and taking it out of the oldest lot would eat a balance that has been
+	// sitting there correctly while leaving the mistake in place.
+	draws, err := s.withdrawFrom(req.Book, req.Asset, -delta, pos)
+	if err != nil {
+		httpError(w, http.StatusConflict, err.Error())
+		return
+	}
+	for _, e := range draws {
+		e.ID = ledger.NewID(now, req.Book+"-correction")
+		e.Time = now
+		e.Note = note
+		if err := ledger.AppendFile(s.ledgerPath, e); err != nil {
+			httpError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	writeJSON(w, map[string]any{"ok": true, "delta": delta, "balance": req.Target})
+}
+
+// withdrawFrom builds the events removing an over-declared amount, newest lot
+// first. See handleAdjust for why the order is the reverse of spending.
+func (s *boardServer) withdrawFrom(book, asset string, amount float64, pos ledger.Position) ([]ledger.Event, error) {
+	var open []ledger.Lot
+	for _, l := range pos.Lots {
+		if l.Book == book && l.Asset == asset && !l.Unit() && l.Amount > 0 {
+			open = append(open, l)
+		}
+	}
+	sort.SliceStable(open, func(i, j int) bool { return open[i].ID > open[j].ID })
+
+	var total float64
+	for _, l := range open {
+		total += l.Amount
+	}
+	if total+1e-9 < amount {
+		return nil, fmt.Errorf(
+			"%s holds %.2f of %s, so %.2f cannot be removed. Some of it is already "+
+				"staked on an open wager, which has to settle before the balance can drop",
+			book, total, asset, amount)
+	}
+
+	var out []ledger.Event
+	left := amount
+	for _, l := range open {
+		if left <= 1e-9 {
+			break
+		}
+		take := l.Amount
+		if take > left {
+			take = left
+		}
+		out = append(out, ledger.Event{Kind: "withdraw", Lot: l.ID, Amount: take})
 		left -= take
 	}
 	return out, nil

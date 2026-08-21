@@ -713,6 +713,8 @@ function renderFunds(r) {
         <span class="team">${b.book}</span>
         <span class="price">${b.asset}</span>
         <span class="conv">${b.units ? b.units + " unit(s)" : m(b.amount)}</span>
+        ${b.units ? "" : `<button type="button" class="fix" data-book="${b.book}"
+          data-asset="${b.asset}" data-amt="${b.amount}">fix</button>`}
       </div>`).join("") : `<p class="muted">Nothing recorded yet.</p>`}
       <p class="muted">Amounts and units are not addable. A boost is a right to a
       better price, not a sum of money.</p>
@@ -730,6 +732,43 @@ function renderFunds(r) {
       <p class="muted">Recorded as a grant, so the balance stays derived from what
       arrived and what has been spent since.</p>
     </section>`;
+
+  // Correcting a balance appends a compensating entry rather than editing
+  // one. A log you cannot fix gets abandoned the first time a number is
+  // fat-fingered; a log you can edit cannot answer "what did I hold on the
+  // 20th", which is the only reason to keep one. So a mistake and its
+  // correction both stay on the record.
+  //
+  // You state what the balance SHOULD be and the difference is derived --
+  // asking for a delta would mean doing arithmetic against the number you
+  // have just discovered you got wrong.
+  for (const f of el.funds.querySelectorAll(".fix")) {
+    f.addEventListener("click", async () => {
+      const cur = Number(f.dataset.amt);
+      const raw = prompt(
+        `Correct balance for ${f.dataset.book} ${f.dataset.asset}?\n` +
+        `Recorded as ${m(cur)}. Enter what it actually is.`, cur.toFixed(2));
+      if (raw === null) return;
+      const target = Number(raw);
+      if (Number.isNaN(target) || target < 0) { alert("not an amount"); return; }
+      f.disabled = true;
+      try {
+        const res = await fetch(BASE + "api/funds/adjust", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            book: f.dataset.book, asset: f.dataset.asset, target: target,
+          }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+        loadFunds();
+      } catch (e) {
+        f.disabled = false;
+        alert("not corrected: " + e.message);
+      }
+    });
+  }
 
   const btn = document.getElementById("f-add");
   if (btn) btn.addEventListener("click", async () => {
