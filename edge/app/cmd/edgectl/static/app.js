@@ -513,15 +513,19 @@ function renderLog(r) {
     <div class="scope">${r.count} recorded · ${Math.round(r.open)} open ·
       ${money(r.staked)} staked · <b>${money(r.ev)}</b> expected</div>
     <section class="rep">
-      ${r.entries.map(e => `<div class="logrow ${e.result}">
+      ${r.entries.map(e => `<div class="logrow ${e.result}" data-id="${e.id}">
         <div class="sel">${e.selection}</div>
         <div class="meta">
           <span class="mono">${e.price > 0 ? "+" : ""}${e.price}</span>
           <span class="muted">${money(e.stake)} ${e.bankroll}</span>
           <span class="muted">pred ${(e.predicted * 100).toFixed(1)}%</span>
           <span class="res">${e.result}</span>
+          <span class="when muted">${e.placed}</span>
         </div>
-        <div class="when muted">${e.placed}</div>
+        ${e.result === "open" ? `<div class="settle">
+          ${["won", "lost", "push", "void"].map(x =>
+            `<button type="button" data-res="${x}" data-id="${e.id}">${x}</button>`).join("")}
+        </div>` : ""}
       </div>`).join("")}
     </section>
     <section class="rep">
@@ -571,6 +575,31 @@ el.report.addEventListener("click", async (e) => {
     btn.disabled = false;
     btn.textContent = "record";
     alert("not recorded: " + err.message);
+  }
+});
+
+// Settling appends an outcome; it never edits the prediction. A result that
+// could rewrite the number predicted would make the whole log worthless, so
+// the only thing these buttons can send is an id and an outcome.
+el.betlog.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".settle button");
+  if (!btn) return;
+  const res = btn.dataset.res;
+  if (!confirm(`Settle as ${res.toUpperCase()}? This cannot be undone from here.`)) return;
+
+  for (const b of btn.parentElement.querySelectorAll("button")) b.disabled = true;
+  try {
+    const r = await fetch(BASE + "api/settle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: btn.dataset.id, result: res, note: "settled from the board" }),
+    });
+    const body = await r.json();
+    if (!r.ok) throw new Error(body.error || ("HTTP " + r.status));
+    loadLog();
+  } catch (err) {
+    for (const b of btn.parentElement.querySelectorAll("button")) b.disabled = false;
+    alert("not settled: " + err.message);
   }
 });
 

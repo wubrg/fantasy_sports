@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -195,4 +196,66 @@ func (s *boardServer) placedTeams() []string {
 		}
 	}
 	return out
+}
+
+type settleReq struct {
+	ID     string `json:"id"`
+	Result string `json:"result"`
+	Note   string `json:"note"`
+}
+
+// handleSettle records an outcome against an already-logged prediction.
+//
+// Settling APPENDS; it never rewrites the bet. That is the property the whole
+// log turns on -- a prediction that could be edited after the result is known
+// is not a prediction -- and it is why this endpoint takes an id and a result
+// and nothing else. There is deliberately no way here to correct a price or a
+// predicted probability: if one of those is wrong, the honest repair is a note
+// on the record, not a quiet overwrite.
+func (s *boardServer) handleSettle(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		httpError(w, http.StatusMethodNotAllowed, "POST required")
+		return
+	}
+	var req settleReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httpError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if req.ID == "" {
+		httpError(w, http.StatusBadRequest, "which bet? an id is required")
+		return
+	}
+
+	// Refuse to settle something already settled. betlog would append it
+	// happily and Load folds the last one on top, so a double tap on a phone
+	// could quietly flip a win to a loss.
+	bets, err := betlog.Load(s.betlogPath)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	found := false
+	for _, b := range bets {
+		if b.ID != req.ID {
+			continue
+		}
+		found = true
+		if b.Result != "" && b.Result != betlog.Open {
+			httpError(w, http.StatusConflict, fmt.Sprintf(
+				"%s is already settled as %q; settling again would append a second "+
+					"outcome and the later one would win", req.ID, b.Result))
+			return
+		}
+	}
+	if !found {
+		httpError(w, http.StatusNotFound, "no bet with id "+req.ID)
+		return
+	}
+
+	if err := betlog.Settle(s.betlogPath, req.ID, betlog.Result(req.Result), req.Note); err != nil {
+		httpError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, map[string]any{"ok": true, "id": req.ID, "result": req.Result})
 }

@@ -389,3 +389,23 @@ body {
 }
 .bet .rec.done { color: var(--good); border-color: var(--good); }
 .bet .rec:disabled { opacity: 0.6; }
+
+/* Settling is a four-way choice on an open row. push and void are separated
+   because they are not the same thing: a push returns the stake, a void
+   cancels the wager, and at a book that forfeits a bonus on a push the
+   difference is the whole asset. */
+.settle { display: flex; gap: 0.3rem; margin-top: 0.35rem; }
+.settle button {
+  flex: 1 1 0;
+  min-height: 34px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.settle button[data-res="won"] { color: var(--good); }
+.settle button[data-res="lost"] { color: var(--bad); }
+.settle button:disabled { opacity: 0.45; }

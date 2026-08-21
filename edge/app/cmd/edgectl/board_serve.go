@@ -100,6 +100,7 @@ func (s *boardServer) routes(mux *http.ServeMux) error {
 	mux.HandleFunc("/api/report", s.handleReport)
 	mux.HandleFunc("/api/log", s.handleLog)
 	mux.HandleFunc("/api/place", s.handlePlace)
+	mux.HandleFunc("/api/settle", s.handleSettle)
 	mux.HandleFunc("/api/price", s.handlePrice)
 	mux.HandleFunc("/api/import/preview", s.handleImportPreview)
 	mux.HandleFunc("/api/import/apply", s.handleImportApply)
