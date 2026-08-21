@@ -409,3 +409,40 @@ body {
 .settle button[data-res="won"] { color: var(--good); }
 .settle button[data-res="lost"] { color: var(--bad); }
 .settle button:disabled { opacity: 0.45; }
+
+/* ---- frontier and funds ---------------------------------------------- */
+
+/* Each row of the frontier is a button: how far to split the bankroll is a
+   choice, so it should be tappable rather than read off a table and typed
+   somewhere else. */
+.front { display: flex; flex-direction: column; gap: 0.3rem; margin: 0.4rem 0; }
+.frow {
+  display: flex; align-items: baseline; gap: 0.5rem;
+  min-height: 40px; padding: 0 0.6rem;
+  font-size: 0.86rem; text-align: left;
+  color: var(--text); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 6px;
+}
+.frow.on { border-color: var(--accent); color: var(--accent); }
+/* A dominated row is beaten on both metrics by a later one. Dimmed rather
+   than hidden: it is still a legal choice, just never the reason to make one. */
+.frow.dom { opacity: 0.55; }
+.frow .muted { font-size: 0.7rem; }
+
+.bk {
+  font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--dim); margin-right: 0.2rem;
+}
+
+.fundform { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.3rem; }
+.fundform select, .fundform input {
+  flex: 1 1 6rem; min-width: 0; min-height: var(--tap);
+  padding: 0 0.4rem; font-size: 16px;
+  color: var(--text); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px;
+}
+.fundform button {
+  flex: 0 0 4rem; min-height: var(--tap);
+  color: #0b0d10; background: var(--accent);
+  border: 0; border-radius: 6px; font-weight: 600;
+}

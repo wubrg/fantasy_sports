@@ -36,6 +36,7 @@ const el = {
   views: document.getElementById("views"),
   report: document.getElementById("report"),
   betlog: document.getElementById("betlog"),
+  funds: document.getElementById("funds"),
   book: document.getElementById("book"),
   rows: document.getElementById("rows"),
   hint: document.getElementById("hint"),
@@ -49,7 +50,7 @@ const el = {
 };
 
 const state = load();
-if (!["bets", "log"].includes(state.view)) state.view = "enter";
+if (!["bets", "log", "funds"].includes(state.view)) state.view = "enter";
 let data = null;      // last /api/board payload
 let inputs = [];      // every input in tab order, for auto-advance
 
@@ -372,13 +373,18 @@ el.rows.addEventListener("focusout", (e) => {
 // to a desk to read the result is the friction this page exists to remove.
 
 function pct(x) { return (x * 100).toFixed(1) + "%"; }
+// Shared rather than defined inside one renderer. It was local to renderLog,
+// and using it from renderReport threw at the moment a bankroll existed --
+// which is to say, the first time the feature it formats was exercised.
+function money(x) { return "$" + Number(x || 0).toFixed(2); }
 function amer(n) { return n > 0 ? "+" + n : String(n); }
 
 async function loadReport() {
   el.report.innerHTML = `<p class="muted">working…</p>`;
   try {
     const res = await fetch(BASE + "api/report?week=" + encodeURIComponent(state.week) +
-      "&book=" + encodeURIComponent(state.book) + "&shots=4");
+      "&books=" + encodeURIComponent((state.books || [state.book]).join(",")) +
+      "&shots=" + encodeURIComponent(state.shots || 4));
     const r = await res.json();
     if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
     renderReport(r);
@@ -421,6 +427,39 @@ function renderReport(r) {
     </section>`);
   }
 
+  // The bankroll, when there is one. How far to split it is the deployment
+  // decision, and it belongs above the tickets it produces.
+  if ((r.frontier || []).length) {
+    out.push(`<section class="rep">
+      <h2>deploying ${money(Object.values(r.funds || {}).reduce((a, b) => a + b, 0))}</h2>
+      ${r.free_split ? `<p class="muted">Splitting further costs nothing here: every row
+        below is beaten by the last on BOTH conversion and hit rate.</p>` : ""}
+      <div class="front">
+        ${r.frontier.map(f => `<button type="button" class="frow${
+            f.shots === (state.shots || 4) ? " on" : ""}${f.dominated ? " dom" : ""}"
+            data-shots="${f.shots}">
+          <b>${f.shots}</b> \u00d7 ${money(f.stake)}
+          <span class="muted">${pct(f.conversion)} \u00b7 ${pct(f.any_hit)} hit \u00b7 ${money(f.ev)}</span>
+        </button>`).join("")}
+      </div>
+      ${(r.advice || []).map(x => `<p class="muted">\u2014 ${x}</p>`).join("")}
+    </section>`);
+  }
+  if ((r.alloc || []).length) {
+    out.push(`<section class="rep">
+      <h2>per-book allocation</h2>
+      ${r.alloc.map(a => `<div class="dog${a.idle ? " under" : ""}">
+        <span class="team">${a.book}</span>
+        <span class="price">${a.tickets} ticket(s)</span>
+        <span class="conv">${a.stake ? money(a.stake) + " each" : "\u2014"}</span>
+        ${a.unfunded ? `<span class="tag">no balance</span>`
+          : a.idle ? `<span class="tag">unused</span>` : ""}
+      </div>`).join("")}
+      <p class="muted">Each book funds its own tickets: a promotional balance cannot
+      move between books. An unused balance is only stranded if it is bonus money.</p>
+    </section>`);
+  }
+
   // The wagers. This is the answer the page is for, so it goes above the
   // reasoning rather than below it.
   if (r.set && r.set.length) {
@@ -431,7 +470,8 @@ function renderReport(r) {
         no ${r.book} price. This is the best pairing of the ${r.priced} that do, which is not the
         same as the best pairing of the week — expect it to change as you enter more.</p>` : ""}
       ${r.set.map((p, i) => `<div class="bet" data-i="${i}">
-        <div class="legs">${p.teams.join(" + ")}</div>
+        <div class="legs">${p.book && (r.books || []).length > 1
+          ? `<span class="bk">${p.book}</span> ` : ""}${p.teams.join(" + ")}</div>
         <div class="nums"><span class="price mono">${amer(p.price)}</span>
           <span class="muted">${pct(p.conversion)} conv · ${pct(p.true_prob)} to hit</span></div>
         <button type="button" class="rec" data-i="${i}">record</button>
@@ -529,7 +569,6 @@ function renderLog(r) {
       it lands here.</p></section>`;
     return;
   }
-  const money = (x) => "$" + x.toFixed(2);
   el.betlog.innerHTML = `
     <div class="scope">${r.count} recorded · ${Math.round(r.open)} open ·
       ${money(r.staked)} staked · <b>${money(r.ev)}</b> expected</div>
@@ -569,7 +608,11 @@ el.report.addEventListener("click", async (e) => {
   const p = lastReport.set[Number(btn.dataset.i)];
   if (!p) return;
 
-  const stake = Number(prompt("Stake for " + p.teams.join(" + ") + "?", "12.50"));
+  // Default to the stake this row of the frontier implies, not a hardcoded
+  // figure: the deployment decision was already made above.
+  const al = (lastReport.alloc || []).find((a) => a.book === p.book);
+  const suggested = al && al.stake ? al.stake.toFixed(2) : "12.50";
+  const stake = Number(prompt("Stake for " + p.teams.join(" + ") + "?", suggested));
   if (!stake || stake <= 0) return;
 
   btn.disabled = true;
@@ -581,7 +624,7 @@ el.report.addEventListener("click", async (e) => {
       body: JSON.stringify({
         selection: p.teams.join(" + ") + " (Week " + lastReport.week + ")",
         price: p.price, stake: stake, predicted: p.true_prob,
-        bankroll: "bonus bet",
+        bankroll: "bonus bet", book: p.book,
         narrative: "Placed from the board at " + lastReport.book + ", week " +
           lastReport.week + ". Conversion " + pct(p.conversion) +
           ". predicted is the product of the de-vigged leg probabilities, not a " +
@@ -624,18 +667,119 @@ el.betlog.addEventListener("click", async (e) => {
   }
 });
 
+// ---- the bankroll -------------------------------------------------------
+//
+// Funds are declared here rather than on a command line because the board is
+// used from a phone, and a bankroll nobody can enter is a bankroll nobody
+// keeps -- the ledger sat built and empty for exactly that reason. Declaring
+// APPENDS a grant rather than setting a total: "I was given $50" and "I have
+// $50 left" are different facts, and only the first can be recorded honestly
+// after the event.
+
+async function loadFunds() {
+  el.funds.innerHTML = `<p class="muted">reading the bankroll\u2026</p>`;
+  try {
+    const res = await fetch(BASE + "api/funds");
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
+    renderFunds(r);
+  } catch (e) {
+    el.funds.innerHTML = `<p class="muted">could not read the bankroll: ${e.message}</p>`;
+  }
+}
+
+function renderFunds(r) {
+  const m = money;
+  const books = (data && data.books) || ["fanatics"];
+  const bal = r.balances || [];
+  const exp = r.expiring || [];
+
+  el.funds.innerHTML = `
+    ${exp.length ? `<section class="rep warn">
+      <h2>expiring</h2>
+      ${exp.map(e => `<div class="dog${e.expired ? " under" : ""}">
+        <span class="team">${e.book}</span>
+        <span class="price">${e.label}</span>
+        <span class="conv">${e.expired ? "EXPIRED"
+          : e.in_hours < 48 ? `${e.in_hours}h left` : `${Math.round(e.in_hours / 24)}d left`}</span>
+      </div>`).join("")}
+      <p class="muted">Every meaningful loss last campaign was a deadline, not a bad
+      price. This is the part of a bankroll worth looking at.</p>
+    </section>` : ""}
+
+    <section class="rep">
+      <h2>balances</h2>
+      ${bal.length ? bal.map(b => `<div class="dog">
+        <span class="team">${b.book}</span>
+        <span class="price">${b.asset}</span>
+        <span class="conv">${b.units ? b.units + " unit(s)" : m(b.amount)}</span>
+      </div>`).join("") : `<p class="muted">Nothing recorded yet.</p>`}
+      <p class="muted">Amounts and units are not addable. A boost is a right to a
+      better price, not a sum of money.</p>
+    </section>
+
+    <section class="rep">
+      <h2>declare funds</h2>
+      <div class="fundform">
+        <select id="f-book">${books.map(b => `<option>${b}</option>`).join("")}</select>
+        <select id="f-asset"><option>bonus</option><option>cash</option><option>fancash</option></select>
+        <input id="f-amt" inputmode="decimal" placeholder="50.00">
+        <input id="f-exp" inputmode="numeric" placeholder="expires 2026-08-26">
+        <button type="button" id="f-add">add</button>
+      </div>
+      <p class="muted">Recorded as a grant, so the balance stays derived from what
+      arrived and what has been spent since.</p>
+    </section>`;
+
+  const btn = document.getElementById("f-add");
+  if (btn) btn.addEventListener("click", async () => {
+    const amt = Number(document.getElementById("f-amt").value);
+    if (!amt || amt <= 0) { alert("amount?"); return; }
+    btn.disabled = true;
+    try {
+      const res = await fetch(BASE + "api/funds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          book: document.getElementById("f-book").value,
+          asset: document.getElementById("f-asset").value,
+          amount: amt,
+          expires: document.getElementById("f-exp").value.trim(),
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+      loadFunds();
+    } catch (e) {
+      btn.disabled = false;
+      alert("not recorded: " + e.message);
+    }
+  });
+}
+
 function syncView() {
   const v = state.view;
   el.rows.hidden = v !== "enter";
   el.report.hidden = v !== "bets";
   el.betlog.hidden = v !== "log";
+  el.funds.hidden = v !== "funds";
   el.hint.hidden = v !== "enter";
   for (const b of el.views.querySelectorAll("button")) {
     b.classList.toggle("on", b.dataset.view === v);
   }
   if (v === "bets") loadReport();
   if (v === "log") loadLog();
+  if (v === "funds") loadFunds();
 }
+
+// Choosing a frontier row re-runs the report at that split.
+el.report.addEventListener("click", (e) => {
+  const row = e.target.closest(".frow");
+  if (!row) return;
+  state.shots = Number(row.dataset.shots);
+  save();
+  loadReport();
+});
 
 el.views.addEventListener("click", (e) => {
   const b = e.target.closest("button");

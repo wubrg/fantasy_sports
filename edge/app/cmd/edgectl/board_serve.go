@@ -65,6 +65,10 @@ type boardServer struct {
 	// what was true when a wager was placed, and the two must never be the
 	// same storage.
 	betlogPath string
+	// ledgerPath is the bankroll. Separate from the betlog because they answer
+	// different questions -- what was predicted, and what is held -- and
+	// joining them into one file would make either hard to read.
+	ledgerPath string
 
 	mu   sync.Mutex
 	docs map[int]*weekFile
@@ -87,7 +91,7 @@ func newBoardServer(dir string) (*boardServer, error) {
 	if len(paths) == 0 {
 		return nil, fmt.Errorf("no week files in %s -- run `edgectl board scaffold` first", dir)
 	}
-	return &boardServer{dir: dir, betlogPath: defaultBetlog(), docs: map[int]*weekFile{}}, nil
+	return &boardServer{dir: dir, betlogPath: defaultBetlog(), ledgerPath: defaultLedger(), docs: map[int]*weekFile{}}, nil
 }
 
 func (s *boardServer) routes(mux *http.ServeMux) error {
@@ -101,6 +105,7 @@ func (s *boardServer) routes(mux *http.ServeMux) error {
 	mux.HandleFunc("/api/log", s.handleLog)
 	mux.HandleFunc("/api/place", s.handlePlace)
 	mux.HandleFunc("/api/settle", s.handleSettle)
+	mux.HandleFunc("/api/funds", s.handleFunds)
 	mux.HandleFunc("/api/price", s.handlePrice)
 	mux.HandleFunc("/api/import/preview", s.handleImportPreview)
 	mux.HandleFunc("/api/import/apply", s.handleImportApply)

@@ -245,6 +245,57 @@ try {
   inCtx('state.view = "enter"; syncView(); 0');
 } catch (e) { fail("syncView(log) threw: " + e.message); }
 
+// ---- the funds view -----------------------------------------------------
+
+function tryFunds(what, payload) {
+  try {
+    sandbox.__f = payload;
+    inCtx("renderFunds(__f)");
+    const html = inCtx("el.funds.innerHTML");
+    if (html && html.length) ok(what); else fail(what + ": produced nothing");
+  } catch (e) { fail(`${what}: ${e.message}`); }
+}
+
+tryFunds("renderFunds() with balances and an expiry", {
+  path: "/x", balances: [
+    { book: "fanatics", asset: "bonus", amount: 37.5, units: 0 },
+    { book: "fanatics", asset: "boost", amount: 0, units: 2 },
+  ],
+  expiring: [{ book: "fanatics", asset: "bonus", label: "bonus",
+               at: "2026-08-26", in_hours: 30, expired: false }],
+});
+tryFunds("renderFunds() with an empty bankroll",
+  { path: "/x", balances: [], expiring: [] });
+// Go emits null for an empty slice, which is not the same as [].
+tryFunds("renderFunds() with null collections",
+  { path: "/x", balances: null, expiring: null });
+// An expiry already past must render, not crash -- it means the log has not
+// caught up with a loss, which is exactly when it needs looking at.
+tryFunds("renderFunds() with an already-expired lot",
+  { path: "/x", balances: [], expiring: [{ book: "dk", asset: "bonus", label: "bonus",
+    at: "2026-08-01", in_hours: -400, expired: true }] });
+
+// The frontier and allocation, which only appear once a bankroll exists.
+tryReport("renderReport() with a frontier and allocation",
+  Object.assign({}, sampleReport, {
+    funds: { fanatics: 50 }, free_split: true,
+    frontier: [
+      { shots: 1, stake: 50, conversion: 0.70, any_hit: 0.21, ev: 35, dominated: true },
+      { shots: 4, stake: 12.5, conversion: 0.74, any_hit: 0.54, ev: 37, dominated: false },
+    ],
+    alloc: [{ book: "fanatics", tickets: 4, funds: 50, stake: 12.5, unfunded: false, idle: false }],
+    advice: ["the funds outlast this window"],
+    books: ["fanatics", "bet365"],
+  }));
+tryReport("renderReport() with an unfunded and an idle book",
+  Object.assign({}, sampleReport, {
+    funds: { fanatics: 0, bet365: 25 },
+    alloc: [
+      { book: "fanatics", tickets: 2, funds: 0, stake: 0, unfunded: true, idle: false },
+      { book: "bet365", tickets: 0, funds: 25, stake: 0, unfunded: false, idle: true },
+    ],
+  }));
+
 // ---- value model --------------------------------------------------------
 
 function eq(what, got, want) {

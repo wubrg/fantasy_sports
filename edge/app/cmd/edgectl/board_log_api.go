@@ -1,11 +1,14 @@
 package main
 
 import (
+	"edge/internal/ledger"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"edge/internal/betlog"
 	"edge/internal/wager"
@@ -107,6 +110,10 @@ type placeReq struct {
 	Predicted float64 `json:"predicted"`
 	Bankroll  string  `json:"bankroll"`
 	Narrative string  `json:"narrative"`
+	// Book is where it was placed. With it, the stake is drawn from that
+	// book's balance so the bankroll follows the bet; without it the wager is
+	// still recorded and the balance simply is not touched.
+	Book string `json:"book"`
 }
 
 func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
@@ -149,12 +156,36 @@ func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
 	// nine entries all omit it -- adding it to new ones only would split the
 	// log's history against itself for no gain.
 
+	// The bankroll is debited BEFORE the prediction is written.
+	//
+	// Order matters and this is the safe one. A ledger draw that fails leaves
+	// no betlog entry, so the operator retries and nothing is lost. The
+	// reverse -- log the bet, then fail to debit -- leaves a prediction with
+	// no funding behind it, and the two logs disagree with no record of why.
+	draws, drawErr := s.debit(req.Book, req.Stake)
+	if drawErr != nil {
+		httpError(w, http.StatusConflict, drawErr.Error())
+		return
+	}
+
 	id, err := betlog.PlaceBet(s.betlogPath, b)
 	if err != nil {
 		httpError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	writeJSON(w, map[string]any{"ok": true, "id": id})
+	// Tie the ledger events to the wager now that it has an id. Several draws
+	// can share one, which is how a stake spanning two lots stays one wager.
+	for _, ev := range draws {
+		ev.Wager = id
+		if err := ledger.AppendFile(s.ledgerPath, ev); err != nil {
+			// The bet is already recorded, so this cannot be undone by
+			// refusing. Say what is inconsistent rather than pretending.
+			httpError(w, http.StatusInternalServerError, fmt.Sprintf(
+				"the wager was recorded as %s but the bankroll could not be debited: %v", id, err))
+			return
+		}
+	}
+	writeJSON(w, map[string]any{"ok": true, "id": id, "debited": len(draws) > 0})
 }
 
 type settleReq struct {
@@ -217,4 +248,30 @@ func (s *boardServer) handleSettle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, map[string]any{"ok": true, "id": req.ID, "result": req.Result})
+}
+
+// debit prepares the ledger events for a stake, or nothing when no book was
+// named or no bankroll is recorded.
+//
+// Recording a wager against an unknown bankroll is normal -- the ledger is
+// opt-in, and a board can be used without one -- so its absence is not an
+// error. An insufficient balance IS: it means the operator believes they hold
+// money they do not, and that is worth stopping for.
+func (s *boardServer) debit(book string, stake float64) ([]ledger.Event, error) {
+	if strings.TrimSpace(book) == "" {
+		return nil, nil
+	}
+	if _, err := os.Stat(s.ledgerPath); os.IsNotExist(err) {
+		return nil, nil
+	}
+	now := time.Now()
+	draws, err := s.drawFrom(book, stake)
+	if err != nil {
+		return nil, err
+	}
+	for i := range draws {
+		draws[i].ID = ledger.NewID(now, book+"-place")
+		draws[i].Time = now
+	}
+	return draws, nil
 }

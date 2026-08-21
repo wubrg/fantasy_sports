@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"edge/internal/board"
 )
@@ -47,6 +48,33 @@ type reportJSON struct {
 	Committed   []commitJSON `json:"committed"`
 	Missing     int          `json:"missing"`
 	PricedBooks []string     `json:"priced_books"`
+
+	// The bankroll half. Books is what was pooled; Funds what each holds;
+	// Alloc what the set asks of each; Frontier the ways it could be split.
+	Books     []string           `json:"books"`
+	Funds     map[string]float64 `json:"funds"`
+	Alloc     []allocJSON        `json:"alloc"`
+	Frontier  []frontJSON        `json:"frontier"`
+	Advice    []string           `json:"advice"`
+	FreeSplit bool               `json:"free_split"`
+}
+
+type allocJSON struct {
+	Book     string  `json:"book"`
+	Tickets  int     `json:"tickets"`
+	Funds    float64 `json:"funds"`
+	Stake    float64 `json:"stake"`
+	Unfunded bool    `json:"unfunded"`
+	Idle     bool    `json:"idle"`
+}
+
+type frontJSON struct {
+	Shots     int     `json:"shots"`
+	Stake     float64 `json:"stake"`
+	Conv      float64 `json:"conversion"`
+	AnyHit    float64 `json:"any_hit"`
+	EV        float64 `json:"ev"`
+	Dominated bool    `json:"dominated"`
 }
 
 type commitJSON struct {
@@ -73,6 +101,7 @@ type dogRow struct {
 
 type parlayRow struct {
 	Teams      []string `json:"teams"`
+	Book       string   `json:"book"`
 	Price      int      `json:"price"`
 	TrueProb   float64  `json:"true_prob"`
 	Conversion float64  `json:"conversion"`
@@ -97,9 +126,18 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusBadRequest, "week must be a positive number")
 		return
 	}
-	book := q.Get("book")
-	if book == "" {
-		book = board.Consensus
+	books := []string{}
+	for _, b := range strings.Split(q.Get("books"), ",") {
+		if b = strings.TrimSpace(b); b != "" {
+			books = append(books, b)
+		}
+	}
+	if len(books) == 0 {
+		if b := q.Get("book"); b != "" {
+			books = []string{b}
+		} else {
+			books = []string{board.Consensus}
+		}
 	}
 	shots := 4
 	if v, err := strconv.Atoi(q.Get("shots")); err == nil && v > 0 && v <= 12 {
@@ -140,9 +178,30 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Funds come from the ledger unless the caller overrides. That is the
+	// point of connecting them: the balance the report plans against should be
+	// the balance the log says is held, not a number typed twice.
+	funds, err := s.fundsFor(books)
+	if err != nil {
+		httpError(w, http.StatusConflict, "the bankroll log does not replay: "+err.Error())
+		return
+	}
+	for _, part := range strings.Split(q.Get("funds"), ",") {
+		k, v, ok := strings.Cut(strings.TrimSpace(part), "=")
+		if !ok {
+			continue
+		}
+		if amt, err := strconv.ParseFloat(strings.TrimSpace(v), 64); err == nil && amt >= 0 {
+			if funds == nil {
+				funds = map[string]float64{}
+			}
+			funds[strings.TrimSpace(k)] = amt
+		}
+	}
+
 	a, err := board.Analyze(wf.doc, board.Options{
-		Book: book, Target: board.DefaultTarget, Shots: shots, Objective: obj, Lined: lined,
-		Exclude: excl,
+		Books: books, Target: board.DefaultTarget, Shots: shots, Objective: obj, Lined: lined,
+		Exclude: excl, Funds: funds, MinBet: 1,
 	})
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, err.Error())
@@ -156,6 +215,8 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 		Notes: a.Problems, Provisional: a.Provisional, Missing: len(a.Missing),
 		Committed:   toCommitJSON(committed),
 		PricedBooks: a.PricedBooks,
+		Books:       books,
+		Funds:       funds,
 	}
 
 	// A suspect line is held out of the parlay pool but still shown, because
@@ -179,9 +240,33 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 
 	for _, p := range a.Set.Parlays {
 		out.Set = append(out.Set, parlayRow{
-			Teams: p.Teams(), Price: int(p.Price),
-			TrueProb: p.TrueProb, Conversion: p.Conversion,
+			Teams: p.Tickets(), Price: int(p.Price),
+			TrueProb: p.TrueProb, Conversion: p.Conversion, Book: p.Book(),
 		})
+	}
+
+	total := 0.0
+	for _, v := range funds {
+		total += v
+	}
+	if total > 0 {
+		for _, al := range board.Allocate(a.Set, funds) {
+			out.Alloc = append(out.Alloc, allocJSON{
+				Book: al.Book, Tickets: al.Tickets, Funds: al.Funds,
+				Stake: al.Stake, Unfunded: al.Unfunded, Idle: al.Idle,
+			})
+		}
+		if f, err := board.Frontier(a.Legs(), total, 1, obj, a.Target); err == nil {
+			out.FreeSplit = board.FreeToSplit(f)
+			for _, d := range f {
+				out.Frontier = append(out.Frontier, frontJSON{
+					Shots: d.Shots, Stake: d.Stake, Conv: d.Set.AvgConversion,
+					AnyHit: d.Set.AnyHit, EV: d.EV, Dominated: d.Dominated,
+				})
+			}
+			out.Advice = board.Advise(f, shots, total, a.Target,
+				time.Time{}, wf.doc.LastKickoff(), time.Now()).Reasons
+		}
 	}
 
 	for _, sh := range a.Shop {
