@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"leaguehome/internal/draft"
@@ -220,4 +221,33 @@ func writeSavedTeams(path string, teams []SavedTeam) error {
 	return os.Rename(tmp, path)
 }
 
-func savedTeamsPath(configDir string) string { return filepath.Join(configDir, savedTeamsFile) }
+// savedTeamsPath scopes the shortlist to one owner, because boards for
+// different owners share a config directory. A guest board runs the same
+// binary against the same directory under its own owner id, and `-leans blank`
+// withholds your reads while saying nothing about saved teams -- which the
+// board fetches on load. One file would put your bid plan on a leaguemate's
+// screen, and let him overwrite it. The owner id is already what makes a board
+// someone's, so it is what separates the files.
+func savedTeamsPath(configDir, ownerID string) string {
+	tag := ownerFileTag(ownerID)
+	if tag == "" {
+		return filepath.Join(configDir, savedTeamsFile)
+	}
+	ext := filepath.Ext(savedTeamsFile)
+	return filepath.Join(configDir, strings.TrimSuffix(savedTeamsFile, ext)+"-"+tag+ext)
+}
+
+// ownerFileTag reduces an owner id to what is safe in a filename. Sleeper ids
+// are digits, but this one arrives from the environment and is joined onto a
+// path, so anything that could climb out of the config directory is dropped
+// rather than trusted.
+func ownerFileTag(ownerID string) string {
+	var b strings.Builder
+	for _, r := range ownerID {
+		switch {
+		case r >= '0' && r <= '9', r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r == '-', r == '_':
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}

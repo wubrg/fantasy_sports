@@ -78,7 +78,7 @@ func newServer(s *staticData, configDir string) (*server, error) {
 	srv := &server{
 		static: s, taken: map[string]gone{}, manual: map[string]gone{},
 		scratch: newScratchpad(), leans: newLeanEdits(), configDir: configDir,
-		savedPath: savedTeamsPath(configDir),
+		savedPath: savedTeamsPath(configDir, s.ownerID),
 	}
 	saved, err := loadSavedTeams(srv.savedPath)
 	if err != nil {

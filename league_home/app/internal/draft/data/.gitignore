@@ -8,6 +8,7 @@ draftroom_2026.md
 preferences.yaml
 
 # The durable shortlist of sampled target rosters — your strategy, and written
-# by the board at runtime.
-saved-teams.json
-saved-teams.json.tmp
+# by the board at runtime. One file per owner id, because a guest board shares
+# this directory and must not read or overwrite yours.
+saved-teams*.json
+saved-teams*.json.tmp
