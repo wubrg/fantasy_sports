@@ -233,14 +233,14 @@ func printSet(a *board.Analysis, stake float64) error {
 	fmt.Printf("  No team appears twice and no game is used twice, so every ticket can\n")
 	fmt.Printf("  be live at once without one hedging another.\n")
 	fmt.Println()
-	fmt.Printf("  %-14s %9s %9s %9s %10s\n", "legs", "price", "true p", "conv", "on "+money(stake))
-	fmt.Printf("  %s\n", strings.Repeat("-", 62))
+	fmt.Printf("  %-38s %7s %7s %7s %9s\n", "legs", "price", "true p", "conv", "on "+money(stake))
+	fmt.Printf("  %s\n", strings.Repeat("-", 74))
 	converted := 0.0
 	for _, p := range set.Parlays {
 		// Conversion comes from the exact decimal, not the rounded ticket
 		// price, so the dollar column is not moved by a display decision.
-		fmt.Printf("  %-14s %9s %8.1f%% %8.1f%% %10s\n",
-			strings.Join(p.Teams(), "+"), price(p.Price),
+		fmt.Printf("  %-38s %7s %6.1f%% %6.1f%% %9s\n",
+			strings.Join(p.Tickets(), " + "), price(p.Price),
 			p.TrueProb*100, p.Conversion*100, money(p.Conversion*stake))
 		converted += p.Conversion * stake
 	}

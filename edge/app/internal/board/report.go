@@ -215,6 +215,34 @@ func (p Parlay) Teams() []string {
 	return out
 }
 
+// Tickets renders each leg the way it has to be found at the book: the
+// selection, then the matchup it belongs to.
+//
+// A moneyline names its own game -- "CAR" is unambiguous. A lined leg does
+// not: three games on one week's board carried a total of 47.5, so "over 47.5"
+// identifies nothing on its own and cannot be placed from. Anything printed
+// for someone about to put money down has to say which game.
+func (p Parlay) Tickets() []string {
+	out := make([]string, 0, len(p.Legs))
+	for _, l := range p.Legs {
+		if l.Market == "ml" {
+			out = append(out, l.Team)
+			continue
+		}
+		out = append(out, fmt.Sprintf("%s [%s]", l.Team, matchupOf(l.GameID)))
+	}
+	return out
+}
+
+// matchupOf turns an nflverse game id into "AWAY@HOME".
+func matchupOf(gameID string) string {
+	f := strings.Split(gameID, "_")
+	if len(f) < 4 {
+		return gameID
+	}
+	return f[len(f)-2] + "@" + f[len(f)-1]
+}
+
 // MakeParlay prices a straight parlay from legs that have already been
 // de-vigged.
 //
@@ -828,11 +856,22 @@ func Analyze(d *Doc, opt Options) (*Analysis, error) {
 		}
 		kept := legs[:0]
 		for _, l := range legs {
-			// A lined leg's Team carries a label -- "ATL +3.5", or "over 44.5"
-			// with no team in it at all -- so match the leading word and let
-			// anything wordless through.
-			f := strings.Fields(l.Team)
-			if len(f) > 0 && drop[strings.ToUpper(f[0])] {
+			// Match on the GAME, not the label. A committed team makes its
+			// whole game unavailable: "over 49.5" in NO @ DET carries no team
+			// name at all, but a token is already riding that game, and two
+			// wagers on one game are not two chances. Matching labels alone
+			// let exactly that through.
+			//
+			// The game id is nflverse's "2026_01_NO_DET", so the team codes
+			// are its trailing fields.
+			excluded := false
+			for _, part := range strings.Split(strings.ToUpper(l.GameID), "_") {
+				if drop[part] {
+					excluded = true
+					break
+				}
+			}
+			if excluded {
 				continue
 			}
 			kept = append(kept, l)
