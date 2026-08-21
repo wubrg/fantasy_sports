@@ -147,6 +147,14 @@ function joinValue(market, vals) {
   return { value: filled[0] + " " + filled[1] + "/" + filled[3], filled: filled };
 }
 
+// fmtCons renders the consensus cell shown greyed beside a row. Consensus is
+// stored in the same string form as anything else, so there is nothing to
+// reformat -- but keeping the seam means a future change to how it is
+// displayed has one place to happen.
+function fmtCons(market, s) {
+  return s ? s : "";
+}
+
 // ---- rendering ----------------------------------------------------------
 
 function fieldHTML(value, label, placeholder) {
