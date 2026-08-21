@@ -203,6 +203,37 @@ try {
   fail("syncView() threw: " + e.message);
 }
 
+// ---- the log view -------------------------------------------------------
+
+const sampleLog = {
+  path: "/Users/x/fanatics-bonus.jsonl", count: 2, open: 1, staked: 62.5, ev: 46.1,
+  entries: [
+    { id: "a", placed: "2026-08-21", selection: "CAR ML + GB ML 2-leg parlay (Week 1)",
+      price: 350, stake: 12.5, bankroll: "bonus bet", predicted: 0.2035, result: "open", narrative: "" },
+    { id: "b", placed: "2026-08-14", selection: "ARI ML @ LAC (Week 1)",
+      price: 390, stake: 50, bankroll: "bonus bet", predicted: 0.1955, result: "won", narrative: "" },
+  ],
+};
+
+function tryLog(what, payload) {
+  try {
+    sandbox.__log = payload;
+    inCtx("renderLog(__log)");
+    const html = inCtx("el.betlog.innerHTML");
+    if (html && html.length) ok(what); else fail(what + ": produced nothing");
+  } catch (e) { fail(`${what}: ${e.message}`); }
+}
+
+tryLog("renderLog() with entries", sampleLog);
+tryLog("renderLog() with an empty log",
+  { path: "/tmp/x.jsonl", count: 0, open: 0, staked: 0, ev: 0, entries: [] });
+
+try {
+  inCtx('state.view = "log"; syncView(); 0');
+  ok("syncView() switches to the log view");
+  inCtx('state.view = "enter"; syncView(); 0');
+} catch (e) { fail("syncView(log) threw: " + e.message); }
+
 // ---- value model --------------------------------------------------------
 
 function eq(what, got, want) {

@@ -60,6 +60,11 @@ func boardServe(args []string) error {
 // has to be a cache, not a second source of truth.
 type boardServer struct {
 	dir string
+	// betlogPath is the prediction log. It sits beside the board rather than
+	// inside it: a board cell holds the latest price, while a log entry holds
+	// what was true when a wager was placed, and the two must never be the
+	// same storage.
+	betlogPath string
 
 	mu   sync.Mutex
 	docs map[int]*weekFile
@@ -82,7 +87,7 @@ func newBoardServer(dir string) (*boardServer, error) {
 	if len(paths) == 0 {
 		return nil, fmt.Errorf("no week files in %s -- run `edgectl board scaffold` first", dir)
 	}
-	return &boardServer{dir: dir, docs: map[int]*weekFile{}}, nil
+	return &boardServer{dir: dir, betlogPath: defaultBetlog(), docs: map[int]*weekFile{}}, nil
 }
 
 func (s *boardServer) routes(mux *http.ServeMux) error {
@@ -93,6 +98,8 @@ func (s *boardServer) routes(mux *http.ServeMux) error {
 	mux.Handle("/", http.FileServer(http.FS(content)))
 	mux.HandleFunc("/api/board", s.handleBoard)
 	mux.HandleFunc("/api/report", s.handleReport)
+	mux.HandleFunc("/api/log", s.handleLog)
+	mux.HandleFunc("/api/place", s.handlePlace)
 	mux.HandleFunc("/api/price", s.handlePrice)
 	mux.HandleFunc("/api/import/preview", s.handleImportPreview)
 	mux.HandleFunc("/api/import/apply", s.handleImportApply)

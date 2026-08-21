@@ -35,6 +35,7 @@ if (!location.pathname.endsWith("/")) {
   <div id="views" class="seg" role="group" aria-label="view">
     <button type="button" data-view="enter" class="on">enter</button>
     <button type="button" data-view="bets">bets</button>
+    <button type="button" data-view="log">log</button>
   </div>
 </header>
 
@@ -43,6 +44,7 @@ if (!location.pathname.endsWith("/")) {
 
 <main id="rows"></main>
 <main id="report" hidden></main>
+<main id="betlog" hidden></main>
 
 <!-- Desktop-only. A blob is copied from a book's odds page, which is not
      something you do on the phone the rest of this page is built for; the

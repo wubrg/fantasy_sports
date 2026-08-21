@@ -358,3 +358,34 @@ body {
   background: var(--warn);
 }
 .rep .muted.prov { margin-top: 0; margin-bottom: 0.45rem; }
+
+/* ---- the log view ---------------------------------------------------- */
+
+.logrow { padding: 0.45rem 0; border-bottom: 1px solid var(--line); }
+.logrow:last-child { border-bottom: 0; }
+.logrow .sel { font-size: 0.9rem; font-weight: 600; }
+.logrow .meta {
+  display: flex; flex-wrap: wrap; gap: 0.5rem;
+  align-items: baseline; margin-top: 0.15rem; font-size: 0.75rem;
+}
+.logrow .when { font-size: 0.68rem; margin-top: 0.1rem; }
+.logrow .res { text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.64rem; }
+.logrow.open  .res { color: var(--warn); }
+.logrow.won   .res { color: var(--good); }
+.logrow.lost  .res { color: var(--bad); opacity: 0.8; }
+.logrow.lost  { opacity: 0.6; }
+
+/* Recording is the last step of placing a bet, so the control sits on the
+   wager it records rather than in a separate confirm flow. */
+.bet .rec {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 0.6rem;
+  font-size: 0.7rem;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.bet .rec.done { color: var(--good); border-color: var(--good); }
+.bet .rec:disabled { opacity: 0.6; }

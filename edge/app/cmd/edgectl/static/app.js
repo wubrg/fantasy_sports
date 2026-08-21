@@ -35,6 +35,7 @@ const el = {
   week: document.getElementById("week"),
   views: document.getElementById("views"),
   report: document.getElementById("report"),
+  betlog: document.getElementById("betlog"),
   book: document.getElementById("book"),
   rows: document.getElementById("rows"),
   hint: document.getElementById("hint"),
@@ -48,7 +49,7 @@ const el = {
 };
 
 const state = load();
-if (state.view !== "bets") state.view = "enter";
+if (!["bets", "log"].includes(state.view)) state.view = "enter";
 let data = null;      // last /api/board payload
 let inputs = [];      // every input in tab order, for auto-advance
 
@@ -387,6 +388,7 @@ async function loadReport() {
 }
 
 function renderReport(r) {
+  lastReport = r;
   const out = [];
 
   // What this is a report OF. After switching selectors -- or looking at a
@@ -428,10 +430,11 @@ function renderReport(r) {
       ${r.provisional ? `<p class="muted prov">${r.missing} game${r.missing === 1 ? " has" : "s have"}
         no ${r.book} price. This is the best pairing of the ${r.priced} that do, which is not the
         same as the best pairing of the week — expect it to change as you enter more.</p>` : ""}
-      ${r.set.map(p => `<div class="bet">
+      ${r.set.map((p, i) => `<div class="bet" data-i="${i}">
         <div class="legs">${p.teams.join(" + ")}</div>
         <div class="nums"><span class="price mono">${amer(p.price)}</span>
           <span class="muted">${pct(p.conversion)} conv · ${pct(p.true_prob)} to hit</span></div>
+        <button type="button" class="rec" data-i="${i}">record</button>
       </div>`).join("")}
       <p class="sum">avg conversion <b>${pct(r.avg_conversion)}</b> ·
         <b>${pct(r.any_hit)}</b> chance at least one hits</p>
@@ -486,15 +489,102 @@ function renderReport(r) {
   el.report.innerHTML = out.join("");
 }
 
-function syncView() {
-  const bets = state.view === "bets";
-  el.rows.hidden = bets;
-  el.report.hidden = !bets;
-  el.hint.hidden = bets;
-  for (const b of el.views.querySelectorAll("button")) {
-    b.classList.toggle("on", (b.dataset.view === "bets") === bets);
+async function loadLog() {
+  el.betlog.innerHTML = `<p class="muted">reading the log…</p>`;
+  try {
+    const res = await fetch(BASE + "api/log");
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
+    renderLog(r);
+  } catch (e) {
+    el.betlog.innerHTML = `<p class="muted">could not read the log: ${e.message}</p>`;
   }
-  if (bets) loadReport();
+}
+
+function renderLog(r) {
+  if (!r.entries.length) {
+    el.betlog.innerHTML = `<section class="rep"><h2>no bets recorded</h2>
+      <p class="muted">Nothing in ${r.path} yet. Place a wager from the bets tab and
+      it lands here.</p></section>`;
+    return;
+  }
+  const money = (x) => "$" + x.toFixed(2);
+  el.betlog.innerHTML = `
+    <div class="scope">${r.count} recorded · ${Math.round(r.open)} open ·
+      ${money(r.staked)} staked · <b>${money(r.ev)}</b> expected</div>
+    <section class="rep">
+      ${r.entries.map(e => `<div class="logrow ${e.result}">
+        <div class="sel">${e.selection}</div>
+        <div class="meta">
+          <span class="mono">${e.price > 0 ? "+" : ""}${e.price}</span>
+          <span class="muted">${money(e.stake)} ${e.bankroll}</span>
+          <span class="muted">pred ${(e.predicted * 100).toFixed(1)}%</span>
+          <span class="res">${e.result}</span>
+        </div>
+        <div class="when muted">${e.placed}</div>
+      </div>`).join("")}
+    </section>
+    <section class="rep">
+      <p class="muted">Predictions are recorded before the outcome and settled by
+      appending, never by rewriting — so nothing here can be re-predicted after the
+      fact. Settle with <span class="mono">edgectl log settle</span>, score with
+      <span class="mono">edgectl log score</span>.</p>
+    </section>`;
+}
+
+// Recording sends the numbers the report DISPLAYED, not a reference to the
+// board. A cell holds only the latest price and re-entering prices is what the
+// board is for, so anything that recomputed later would let a price update
+// rewrite what was predicted -- the hindsight the log exists to prevent.
+let lastReport = null;
+
+el.report.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".rec");
+  if (!btn || !lastReport) return;
+  const p = lastReport.set[Number(btn.dataset.i)];
+  if (!p) return;
+
+  const stake = Number(prompt("Stake for " + p.teams.join(" + ") + "?", "12.50"));
+  if (!stake || stake <= 0) return;
+
+  btn.disabled = true;
+  btn.textContent = "recording…";
+  try {
+    const res = await fetch(BASE + "api/place", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        selection: p.teams.join(" + ") + " (Week " + lastReport.week + ")",
+        price: p.price, stake: stake, predicted: p.true_prob,
+        bankroll: "bonus bet",
+        narrative: "Placed from the board at " + lastReport.book + ", week " +
+          lastReport.week + ". Conversion " + pct(p.conversion) +
+          ". predicted is the product of the de-vigged leg probabilities, not a " +
+          "de-vig of the parlay price.",
+      }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+    btn.textContent = "recorded";
+    btn.classList.add("done");
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = "record";
+    alert("not recorded: " + err.message);
+  }
+});
+
+function syncView() {
+  const v = state.view;
+  el.rows.hidden = v !== "enter";
+  el.report.hidden = v !== "bets";
+  el.betlog.hidden = v !== "log";
+  el.hint.hidden = v !== "enter";
+  for (const b of el.views.querySelectorAll("button")) {
+    b.classList.toggle("on", b.dataset.view === v);
+  }
+  if (v === "bets") loadReport();
+  if (v === "log") loadLog();
 }
 
 el.views.addEventListener("click", (e) => {
