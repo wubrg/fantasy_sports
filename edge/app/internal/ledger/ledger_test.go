@@ -718,3 +718,42 @@ func TestBoostUsableOn(t *testing.T) {
 		t.Error("an unknown restriction must not be assumed to be a prop")
 	}
 }
+
+// TestBoostEqualsABonusBet pins the equivalence the valuation rests on.
+//
+// edge-of-vigor.md gives a bonus bet's closed form as EV = stake x (1 - p).
+// The same algebra makes a percent boost on a stake identical to a bonus bet
+// of face = percent x stake. If this ever stops holding, one of the two
+// valuations has drifted.
+func TestBoostEqualsABonusBet(t *testing.T) {
+	const hold = TypicalHold
+	for _, price := range []wager.American{100, 200, 400, 600, 1000, -150} {
+		b := BoostSpec{Percent: 0.5, MaxStake: 25}
+		got, err := b.Value(price, hold)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// The equivalent bonus bet: half the stake, no boost.
+		raw, err := price.ImpliedRaw()
+		if err != nil {
+			t.Fatal(err)
+		}
+		m, err := price.ProfitMultiple()
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := (raw / (1 + hold)) * 12.5 * m
+
+		if diff := got - want; diff > 1e-9 || diff < -1e-9 {
+			t.Errorf("at %+d: boost adds %.6f, equivalent $12.50 bonus bet returns %.6f",
+				price, got, want)
+		}
+
+		// And both equal face x (1 - raw) / (1 + hold), the source's form.
+		closed := 12.5 * (1 - raw) / (1 + hold)
+		if diff := got - closed; diff > 1e-9 || diff < -1e-9 {
+			t.Errorf("at %+d: %.6f does not match the closed form %.6f", price, got, closed)
+		}
+	}
+}

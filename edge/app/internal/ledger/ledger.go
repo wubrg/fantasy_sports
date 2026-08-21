@@ -146,8 +146,29 @@ type BoostSpec struct {
 	Label string `json:"label,omitempty"`
 }
 
-// Value is the most a boost can add on a wager at this price, assuming the
-// price is fairly quoted at the given hold.
+// Value is what a boost adds on a wager at this price, assuming the price is
+// fairly quoted at the given hold.
+//
+// A BOOST IS A BONUS BET IN DISGUISE. edge-of-vigor.md's verified correction
+// gives the closed form for a bonus bet as EV = stake x (1 - p): its value is
+// the stake times the LOSS probability, which is why longshots convert best.
+// The same algebra applies here. A boost pays percent x stake x m x p, and at
+// fair odds m x p reduces to (1 - raw), so:
+//
+//	boost EV = percent x stake x (1 - raw) / (1 + hold)
+//	bonus EV =           face x (1 - raw) / (1 + hold)
+//
+// which are equal when face = percent x stake. A 50% boost capped at $25 is a
+// $12.50 bonus bet, exactly, and belongs in the same place: the longest price
+// you will tolerate, on the lowest-vig market available.
+//
+// The equivalence hides one thing, and it is the expensive one. A bonus bet
+// risks nothing -- the stake was never yours. A boost requires you to put the
+// whole stake at risk to collect the uplift, and the underlying cash wager is
+// itself negative EV by the vig. At +600 with 4.5% hold a 50%/$25 boost adds
+// $10.25 while the $25 wager beneath it loses $0.91 in expectation, so the
+// package is worth about 9% less than the equivalent bonus bet AND carries $25
+// of variance the bonus bet does not.
 //
 // A boost multiplies PROFIT, so its worth is percent x stake x profit-multiple
 // x win-probability -- and at fair odds p*m rises towards 1/(1+hold) as the
