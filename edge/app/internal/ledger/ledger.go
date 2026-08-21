@@ -128,6 +128,87 @@ type BoostSpec struct {
 	// true the boost will not attach to a bonus bet; it needs real money at
 	// risk. Replay enforces it at settlement -- see state.settle.
 	RequiresCashStake bool `json:"requires_cash_stake,omitempty"`
+
+	// Market restricts what the boost may be used on: "any" for a general
+	// token, or a promo's own market -- "atd" for anytime touchdown, "ftd" for
+	// first, "sgp" for same-game parlay, and so on.
+	//
+	// Free-form for the same reason the asset name is: books invent these
+	// faster than an enum can be updated, and a token whose restriction cannot
+	// be written down gets recorded as unrestricted, which is the one error
+	// that turns a tracked boost into a wasted one.
+	//
+	// A restricted boost is often the interesting kind. A general 10% token is
+	// noise; a prop-specific one can be the only reason to look at a market.
+	Market string `json:"market,omitempty"`
+
+	// Label is the promo's own name, for finding it again in the app.
+	Label string `json:"label,omitempty"`
+}
+
+// Value is the most a boost can add on a wager at this price, assuming the
+// price is fairly quoted at the given hold.
+//
+// A boost multiplies PROFIT, so its worth is percent x stake x profit-multiple
+// x win-probability -- and at fair odds p*m rises towards 1/(1+hold) as the
+// price lengthens. That is why a boost belongs on a long price and on the
+// lowest-vig market available, and why quoting one as a flat dollar figure
+// (as "$19.03 of value" once was) overstates it.
+func (b BoostSpec) Value(price wager.American, hold float64) (float64, error) {
+	m, err := price.ProfitMultiple()
+	if err != nil {
+		return 0, err
+	}
+	raw, err := price.ImpliedRaw()
+	if err != nil {
+		return 0, err
+	}
+	if hold < 0 {
+		hold = 0
+	}
+	return b.Percent * b.MaxStake * m * (raw / (1 + hold)), nil
+}
+
+// Ceiling is the most a boost could ever be worth: the limit of Value as the
+// price lengthens, which is percent x max stake / (1 + hold).
+//
+// It is an upper bound nothing reaches -- an infinitely long price wins never
+// -- but it is the right number for deciding whether a token is worth any
+// attention at all. A 10% boost capped at a $5 stake tops out under 50 cents,
+// and no cleverness about which market to use it on changes that.
+func (b BoostSpec) Ceiling(hold float64) float64 {
+	if hold < 0 {
+		hold = 0
+	}
+	return b.Percent * b.MaxStake / (1 + hold)
+}
+
+// TypicalHold is the two-way overround on a mainstream market, measured off a
+// real board: game moneylines ran 4.26% to 4.82% across a week.
+const TypicalHold = 0.045
+
+// ChaseFloor is the ceiling below which a boost is not worth planning around.
+//
+// Not a claim that a smaller token is worthless -- if it applies to a wager
+// already being placed, applying it costs nothing and should be done. The
+// floor separates "worth building a bet around" from "worth ticking if it is
+// already there", and only the first belongs in a deployment plan.
+const ChaseFloor = 5.0
+
+// WorthChasing reports whether a boost could repay the effort of constructing
+// a wager for it.
+func (b BoostSpec) WorthChasing() bool { return b.Ceiling(TypicalHold) >= ChaseFloor }
+
+// Restricted reports whether this boost is tied to a particular market.
+//
+// Worth surfacing separately from WorthChasing, because the two answer
+// different questions. A restricted token below the floor is still not worth
+// building a bet around -- but it points at a market that would otherwise not
+// be priced at all, and a prop promo is often the only reason to look at one.
+// A generic token of the same size points at nothing and is simply noise.
+func (b BoostSpec) Restricted() bool {
+	m := strings.ToLower(strings.TrimSpace(b.Market))
+	return m != "" && m != "any"
 }
 
 // Lot is one distinct holding: a specific $25 bonus token with its own clock,

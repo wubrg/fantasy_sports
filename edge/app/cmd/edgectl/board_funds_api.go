@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"edge/internal/ledger"
+	"edge/internal/wager"
 )
 
 // The bankroll, over HTTP.
@@ -390,4 +391,152 @@ func (s *boardServer) withdrawFrom(book, asset string, amount float64, pos ledge
 		left -= take
 	}
 	return out, nil
+}
+
+type boostJSON struct {
+	ID        string  `json:"id"`
+	Book      string  `json:"book"`
+	Label     string  `json:"label"`
+	Percent   float64 `json:"percent"`
+	MaxStake  float64 `json:"max_stake"`
+	MinOdds   int     `json:"min_odds"`
+	Market    string  `json:"market"`
+	NeedsCash bool    `json:"needs_cash"`
+	Expires   string  `json:"expires"`
+	InHours   int     `json:"in_hours"`
+	// Ceiling is the most this token could ever add; At500 is what it is worth
+	// on a realistic long price. Both are reported because the first decides
+	// whether to bother and the second is what you actually get.
+	Ceiling    float64 `json:"ceiling"`
+	At500      float64 `json:"at_500"`
+	Chase      bool    `json:"chase"`
+	Restricted bool    `json:"restricted"`
+}
+
+// handleBoosts lists the profit-boost inventory, best first.
+//
+// Ranked by ceiling rather than by percentage. A 100% boost capped at a $5
+// stake is worth less than a 25% boost capped at $50, and sorting by the
+// headline number would put the useless one on top -- which is how a promo
+// page is designed to be read.
+func (s *boardServer) handleBoosts(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		s.addBoost(w, r)
+		return
+	}
+	events, err := ledger.Load(s.ledgerPath)
+	if err != nil && !os.IsNotExist(err) {
+		httpError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	now := time.Now()
+	pos, err := ledger.Balances(events, now)
+	if err != nil {
+		httpError(w, http.StatusConflict, "the bankroll log does not replay: "+err.Error())
+		return
+	}
+
+	var out []boostJSON
+	for _, l := range pos.Lots {
+		if l.Boost == nil {
+			continue
+		}
+		b := *l.Boost
+		v500, _ := b.Value(500, ledger.TypicalHold)
+		row := boostJSON{
+			ID: l.ID, Book: l.Book, Label: b.Label, Percent: b.Percent,
+			MaxStake: b.MaxStake, MinOdds: int(b.MinOdds), Market: b.Market,
+			NeedsCash: b.RequiresCashStake,
+			Ceiling:   b.Ceiling(ledger.TypicalHold), At500: v500,
+			Chase:      b.WorthChasing(),
+			Restricted: b.Restricted(),
+		}
+		if l.Expires != nil {
+			row.Expires = l.Expires.Format("2006-01-02")
+			row.InHours = int(l.Expires.Sub(now).Hours())
+		}
+		out = append(out, row)
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Ceiling > out[j].Ceiling })
+
+	writeJSON(w, map[string]any{
+		"boosts": out,
+		"floor":  ledger.ChaseFloor,
+		"note": "Ranked by ceiling, not headline percentage: a 100% boost capped at a " +
+			"$5 stake is worth less than a 25% boost capped at $50.",
+	})
+}
+
+type addBoostReq struct {
+	Book      string  `json:"book"`
+	Label     string  `json:"label"`
+	Percent   float64 `json:"percent"`
+	MaxStake  float64 `json:"max_stake"`
+	MinOdds   int     `json:"min_odds"`
+	Market    string  `json:"market"`
+	NeedsCash bool    `json:"needs_cash"`
+	Expires   string  `json:"expires"`
+}
+
+func (s *boardServer) addBoost(w http.ResponseWriter, r *http.Request) {
+	var req addBoostReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httpError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if strings.TrimSpace(req.Book) == "" {
+		httpError(w, http.StatusBadRequest, "which book granted it?")
+		return
+	}
+	if req.Percent <= 0 {
+		httpError(w, http.StatusBadRequest, "percent must be positive (0.5 for a 50% boost)")
+		return
+	}
+	// Percent is a fraction. Accepting 50 as well as 0.5 would make a
+	// hundredfold error indistinguishable from a legitimate entry.
+	if req.Percent > 5 {
+		httpError(w, http.StatusBadRequest,
+			"percent is a fraction: 0.5 for a 50% boost, not 50")
+		return
+	}
+	if req.MaxStake <= 0 {
+		httpError(w, http.StatusBadRequest,
+			"a boost with no stake cap cannot be valued; enter the promo's maximum wager")
+		return
+	}
+	if req.Market == "" {
+		req.Market = "any"
+	}
+
+	spec := ledger.BoostSpec{
+		Percent: req.Percent, MaxStake: req.MaxStake,
+		MinOdds: wager.American(req.MinOdds), Market: req.Market,
+		RequiresCashStake: req.NeedsCash, Label: req.Label,
+	}
+	// A boost is a unit lot: spent whole, never drawn down. That is what keeps
+	// it out of the deployable balance, where it would put money on the board
+	// that cannot be wagered.
+	lot := ledger.Lot{Book: req.Book, Asset: "boost", Boost: &spec}
+	if strings.TrimSpace(req.Expires) != "" {
+		t, err := time.ParseInLocation("2006-01-02", strings.TrimSpace(req.Expires), time.Local)
+		if err != nil {
+			httpError(w, http.StatusBadRequest, "expires: want a date like 2026-08-26")
+			return
+		}
+		lot.Expires = &t
+	}
+
+	now := time.Now()
+	e := ledger.Event{
+		Kind: "grant", ID: ledger.NewID(now, req.Book+"-boost"), Time: now, Creates: &lot,
+	}
+	if err := ledger.AppendFile(s.ledgerPath, e); err != nil {
+		httpError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, map[string]any{
+		"ok": true, "id": e.ID,
+		"ceiling": spec.Ceiling(ledger.TypicalHold),
+		"chase":   spec.WorthChasing(),
+	})
 }

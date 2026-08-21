@@ -456,3 +456,13 @@ body {
   color: var(--dim); background: var(--panel);
   border: 1px solid var(--line); border-radius: 5px;
 }
+
+/* A market restriction is the interesting fact about a prop boost, so it reads
+   as a label rather than a warning. */
+.tag.mkt { color: var(--accent); }
+.tag.when { color: var(--dim); margin-left: 0.3rem; }
+.chk {
+  display: flex; align-items: center; gap: 0.3rem;
+  flex: 1 1 7rem; font-size: 0.72rem; color: var(--dim);
+}
+.chk input { min-height: 0; }

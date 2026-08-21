@@ -676,6 +676,58 @@ el.betlog.addEventListener("click", async (e) => {
 // $50 left" are different facts, and only the first can be recorded honestly
 // after the event.
 
+// Boosts are inventory, not balance. They are listed by CEILING rather than by
+// headline percentage, because a promo page is written to be read the other
+// way: a 100% boost capped at a $5 stake is worth less than a 25% boost capped
+// at $50, and sorting by the big number puts the useless one on top.
+async function loadBoosts() {
+  try {
+    const res = await fetch(BASE + "api/boosts");
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
+    return renderBoosts(r);
+  } catch (e) {
+    return `<section class="rep"><h2>boosts</h2>
+      <p class="muted">could not read them: ${e.message}</p></section>`;
+  }
+}
+
+function renderBoosts(r) {
+  const b = r.boosts || [];
+  if (!b.length) {
+    return `<section class="rep"><h2>profit boosts</h2>
+      <p class="muted">None recorded. Worth entering only the ones worth planning
+      around \u2014 a small token on a bet you already want is just ticked in the
+      slip.</p></section>`;
+  }
+  const chase = b.filter(x => x.chase);
+  const rest = b.filter(x => !x.chase);
+  const row = (x) => `<div class="dog${x.chase ? "" : " under"}">
+      <span class="team">${x.book}</span>
+      <span class="price">${Math.round(x.percent * 100)}% \u00d7 ${money(x.max_stake)}</span>
+      <span class="conv">${money(x.ceiling)} max</span>
+      ${x.restricted ? `<span class="tag mkt">${x.market}</span>` : ""}
+      ${x.needs_cash ? `<span class="tag">cash only</span>` : ""}
+      ${x.expires ? `<span class="tag when">${x.in_hours < 48
+        ? x.in_hours + "h" : Math.round(x.in_hours / 24) + "d"}</span>` : ""}
+    </div>`;
+
+  return `<section class="rep">
+    <h2>profit boosts \u2014 worth planning around</h2>
+    ${chase.length ? chase.map(row).join("")
+      : `<p class="muted">None above the ${money(r.floor)} line.</p>`}
+    ${rest.length ? `<h2 style="margin-top:.7rem">below the line</h2>
+      ${rest.map(row).join("")}
+      <p class="muted">Under ${money(r.floor)} at their best. Not worthless \u2014 apply one
+      to a wager you already want \u2014 but not worth building a bet around. A
+      market-restricted one still points at a market you would otherwise not price.</p>`
+      : ""}
+    <p class="muted">Ranked by ceiling, not headline percentage. A boost multiplies
+    PROFIT, so it is worth most on a long price at a low-vig market, and nothing at
+    all on a losing wager.</p>
+  </section>`;
+}
+
 async function loadFunds() {
   el.funds.innerHTML = `<p class="muted">reading the bankroll\u2026</p>`;
   try {
@@ -720,6 +772,8 @@ function renderFunds(r) {
       better price, not a sum of money.</p>
     </section>
 
+    <div id="boostbox"></div>
+
     <section class="rep">
       <h2>declare funds</h2>
       <div class="fundform">
@@ -731,6 +785,21 @@ function renderFunds(r) {
       </div>
       <p class="muted">Recorded as a grant, so the balance stays derived from what
       arrived and what has been spent since.</p>
+    </section>
+
+    <section class="rep">
+      <h2>declare a boost</h2>
+      <div class="fundform">
+        <select id="b-book">${books.map(x => `<option>${x}</option>`).join("")}</select>
+        <input id="b-pct" inputmode="decimal" placeholder="50 (%)">
+        <input id="b-max" inputmode="decimal" placeholder="max stake 25">
+        <input id="b-mkt" placeholder="market: any, atd, ftd">
+        <input id="b-exp" placeholder="expires 2026-09-14">
+        <label class="chk"><input type="checkbox" id="b-cash"> needs cash</label>
+        <button type="button" id="b-add">add</button>
+      </div>
+      <p class="muted">A boost is a unit, not a balance: spent whole, and never
+      counted as money you can wager.</p>
     </section>`;
 
   // Correcting a balance appends a compensating entry rather than editing
@@ -769,6 +838,48 @@ function renderFunds(r) {
       }
     });
   }
+
+  loadBoosts().then((html) => {
+    const box = document.getElementById("boostbox");
+    if (box) box.innerHTML = html;
+  });
+
+  const badd = document.getElementById("b-add");
+  if (badd) badd.addEventListener("click", async () => {
+    // Percent is entered as a whole number because that is how a promo states
+    // it, and divided here. Asking for 0.5 invites 50, which is a hundredfold
+    // error that looks like a legitimate entry.
+    const pct100 = Number(document.getElementById("b-pct").value);
+    const max = Number(document.getElementById("b-max").value);
+    if (!pct100 || pct100 <= 0) { alert("percent? e.g. 50"); return; }
+    if (!max || max <= 0) { alert("max stake? a boost with no cap cannot be valued"); return; }
+    badd.disabled = true;
+    try {
+      const res = await fetch(BASE + "api/boosts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          book: document.getElementById("b-book").value,
+          percent: pct100 / 100,
+          max_stake: max,
+          market: document.getElementById("b-mkt").value.trim() || "any",
+          expires: document.getElementById("b-exp").value.trim(),
+          needs_cash: document.getElementById("b-cash").checked,
+          label: Math.round(pct100) + "% boost",
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+      if (!body.chase) {
+        alert(`Recorded, but its ceiling is ${money(body.ceiling)} \u2014 below the line ` +
+              `worth building a bet around. Apply it to something you already want.`);
+      }
+      loadFunds();
+    } catch (e) {
+      badd.disabled = false;
+      alert("not recorded: " + e.message);
+    }
+  });
 
   const btn = document.getElementById("f-add");
   if (btn) btn.addEventListener("click", async () => {

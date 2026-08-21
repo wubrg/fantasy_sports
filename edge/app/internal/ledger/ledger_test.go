@@ -2,6 +2,7 @@ package ledger
 
 import (
 	"bytes"
+	"edge/internal/wager"
 	"math"
 	"strings"
 	"testing"
@@ -582,5 +583,64 @@ func TestNewIDsAreDistinctWithinATick(t *testing.T) {
 	a, b := NewID(now, "fanatics bonus"), NewID(now, "fanatics bonus")
 	if a == b {
 		t.Fatalf("NewID collided within one tick: %s", a)
+	}
+}
+
+// TestBoostWorthChasing pins the line between a token worth building a wager
+// around and one worth ticking if it happens to be there.
+//
+// The distinction is the operator's, and it is a real one: a 10% boost capped
+// at a $5 stake tops out under fifty cents, so constructing a bet to use it is
+// worse than not bothering. A 50% boost capped at $25 is worth about twelve,
+// which is a plan.
+func TestBoostWorthChasing(t *testing.T) {
+	tests := []struct {
+		name  string
+		spec  BoostSpec
+		chase bool
+	}{
+		{"50% max $25", BoostSpec{Percent: 0.50, MaxStake: 25}, true},
+		{"50% max $50", BoostSpec{Percent: 0.50, MaxStake: 50}, true},
+		{"25% max $25", BoostSpec{Percent: 0.25, MaxStake: 25}, true},
+		// The case the operator named: not worth constructing a bet for.
+		{"10% max $5", BoostSpec{Percent: 0.10, MaxStake: 5}, false},
+		{"10% max $25", BoostSpec{Percent: 0.10, MaxStake: 25}, false},
+		{"100% max $5", BoostSpec{Percent: 1.00, MaxStake: 5}, false},
+	}
+	for _, tc := range tests {
+		if got := tc.spec.WorthChasing(); got != tc.chase {
+			t.Errorf("%s: ceiling %.2f, WorthChasing=%v want %v",
+				tc.name, tc.spec.Ceiling(TypicalHold), got, tc.chase)
+		}
+	}
+}
+
+// TestBoostValueRisesWithPrice pins why a boost belongs on a long price.
+//
+// It multiplies profit, so its worth is percent x stake x m x p, and at fair
+// odds that climbs towards the ceiling as the price lengthens. Quoting a boost
+// as one flat dollar figure -- as "$19.03 of value" once was -- states a number
+// that depends on a wager not yet chosen.
+func TestBoostValueRisesWithPrice(t *testing.T) {
+	b := BoostSpec{Percent: 0.50, MaxStake: 25}
+	var last float64
+	for _, price := range []wager.American{100, 200, 400, 600, 1000} {
+		v, err := b.Value(price, TypicalHold)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if v <= last {
+			t.Errorf("value at %+d is %.2f, not more than %.2f at the shorter price",
+				price, v, last)
+		}
+		if c := b.Ceiling(TypicalHold); v > c {
+			t.Errorf("value at %+d is %.2f, above the %.2f ceiling", price, v, c)
+		}
+		last = v
+	}
+	// The ceiling is approached, never reached: an infinitely long price wins
+	// never.
+	if last >= b.Ceiling(TypicalHold) {
+		t.Error("value reached the ceiling, which no real price should")
 	}
 }

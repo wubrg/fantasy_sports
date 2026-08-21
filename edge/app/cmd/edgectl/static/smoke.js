@@ -296,6 +296,35 @@ tryReport("renderReport() with an unfunded and an idle book",
     ],
   }));
 
+// ---- boosts -------------------------------------------------------------
+
+function tryBoosts(what, payload) {
+  try {
+    sandbox.__b = payload;
+    const html = inCtx("renderBoosts(__b)");
+    if (html && html.length) ok(what); else fail(what + ": produced nothing");
+  } catch (e) { fail(`${what}: ${e.message}`); }
+}
+
+tryBoosts("renderBoosts() with a mixed inventory", { floor: 5, boosts: [
+  { book: "fanatics", label: "ATD", percent: 0.3, max_stake: 50, market: "atd",
+    needs_cash: false, expires: "2026-09-14", in_hours: 500, ceiling: 14.35,
+    at_500: 11.96, chase: true, restricted: true },
+  // The promo-page illusion: biggest percentage, smallest worth.
+  { book: "bet365", label: "FTD", percent: 1.0, max_stake: 5, market: "ftd",
+    needs_cash: false, expires: "", in_hours: 0, ceiling: 4.78, at_500: 3.99,
+    chase: false, restricted: true },
+  { book: "draftkings", label: "10%", percent: 0.1, max_stake: 5, market: "any",
+    needs_cash: true, expires: "", in_hours: 0, ceiling: 0.48, at_500: 0.40,
+    chase: false, restricted: false },
+]});
+tryBoosts("renderBoosts() with none held", { floor: 5, boosts: [] });
+tryBoosts("renderBoosts() with null (Go emits null, not [])", { floor: 5, boosts: null });
+tryBoosts("renderBoosts() with every boost above the line", { floor: 5, boosts: [
+  { book: "f", label: "x", percent: 0.5, max_stake: 50, market: "any", needs_cash: false,
+    expires: "", in_hours: 0, ceiling: 23.9, at_500: 19.9, chase: true, restricted: false },
+]});
+
 // ---- value model --------------------------------------------------------
 
 function eq(what, got, want) {
