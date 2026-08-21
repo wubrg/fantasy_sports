@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"time"
 
 	"edge/internal/wager"
 )
@@ -735,6 +736,10 @@ type Analysis struct {
 	// count the reader has to notice.
 	Provisional bool
 
+	// pool is the leg set the parlays were built from, kept so the frontier can
+	// re-match it without rebuilding the admissibility decisions.
+	pool []Side
+
 	// PricedBooks lists the books other than consensus with at least one price
 	// this week. Below two of them there is nothing to shop -- a "best
 	// available price" with one candidate is a tautology, not a choice.
@@ -754,6 +759,18 @@ type Options struct {
 	// dogs. Only safe at a book that returns the stake on a push -- see
 	// LinedLegs -- so it is opt-in rather than assumed.
 	Lined bool
+	// Funds is what is available to deploy, keyed by book.
+	//
+	// A map with one entry today, because the report reads one book. It is a
+	// map anyway because the destination is a cross-book campaign, and a
+	// scalar would have to be widened later with every caller changed to
+	// match. Absent or zero means the caller is not deploying a bankroll and
+	// only wants a set at a supplied stake.
+	Funds map[string]float64
+	// MinBet is the smallest wager the book will take. It bounds how many ways
+	// a bankroll can be split, which is the only thing that bounds the
+	// frontier from below.
+	MinBet float64
 	// Exclude drops every leg belonging to these teams, by nflverse code.
 	//
 	// A set is only independent if nothing in it is already committed
@@ -879,6 +896,7 @@ func Analyze(d *Doc, opt Options) (*Analysis, error) {
 		legs = kept
 	}
 	sort.SliceStable(legs, func(i, j int) bool { return legs[i].Conversion > legs[j].Conversion })
+	a.pool = legs
 	if a.Set, err = BuildSet(legs, opt.Shots, opt.Objective, opt.Target); err != nil {
 		return nil, err
 	}
@@ -1038,3 +1056,259 @@ func LinedLegs(gameID string, g *Game, book string) ([]Side, error) {
 	}
 	return out, nil
 }
+
+// Deployment is one way of splitting a bankroll: how many tickets, at what
+// stake, and what that buys.
+type Deployment struct {
+	Shots int
+	Stake float64
+	Set   ParlaySet
+	// EV is the whole bankroll's expected return, not one ticket's.
+	EV float64
+	// Dominated marks a row beaten by a later one on BOTH conversion and hit
+	// rate, meaning splitting further costs nothing.
+	//
+	// This is not a rare corner. Under MaxHitRate it is the usual case, and it
+	// surprised the author: the objective takes the highest-probability pairs
+	// first, which are the shortest ones scraping the floor and so the
+	// WORST-converting, and adding shots forces it out towards longer pairs
+	// that convert better. Both metrics improve together. Presenting that as a
+	// trade would ask the operator to weigh a choice that does not exist.
+	Dominated bool
+}
+
+// Frontier builds a deployment for every way the bankroll can be split.
+//
+// The number of shots is the deployment decision, and it was previously a
+// flag with an arbitrary default. It is not a free choice: total face is
+// fixed, so more shots means smaller stakes, worse available pairings, and a
+// lower average conversion -- bought with a higher chance that something
+// hits. Neither end dominates, and which one is wanted depends on whether
+// this is a slice of a bankroll or the whole of it. So the tool computes the
+// trade and declines to pick.
+//
+// Splitting is bounded below by the book's minimum wager and above by the
+// pool: each ticket consumes two games, so a window of n games supports n/2.
+func Frontier(legs []Side, funds, minBet float64, o Objective, floor float64) ([]Deployment, error) {
+	if funds <= 0 {
+		return nil, fmt.Errorf("board: funds %v must be positive to plan a deployment", funds)
+	}
+	if minBet <= 0 {
+		minBet = 1
+	}
+	max := int(funds / minBet)
+	if max < 1 {
+		return nil, fmt.Errorf(
+			"board: %.2f will not cover a single %.2f wager", funds, minBet)
+	}
+	if most := len(gamePool(legs)) / 2; max > most {
+		max = most
+	}
+	if max > maxFrontierShots {
+		max = maxFrontierShots
+	}
+
+	var out []Deployment
+	for n := 1; n <= max; n++ {
+		stake := funds / float64(n)
+		set, err := BuildSet(legs, n, o, floor)
+		if err != nil {
+			return nil, err
+		}
+		// A row that could not be filled is not a way of splitting the money;
+		// reporting it as one would offer a deployment that cannot be placed.
+		if len(set.Parlays) < n {
+			break
+		}
+		out = append(out, Deployment{
+			Shots: n, Stake: stake, Set: set,
+			EV: set.AvgConversion * funds,
+		})
+	}
+	if len(out) == 0 {
+		return nil, nil
+	}
+	// A row is dominated when some later row is at least as good on both
+	// metrics and strictly better on one. Scanning backwards keeps the running
+	// best of everything further down the table.
+	bestConv, bestHit := math.Inf(-1), math.Inf(-1)
+	for i := len(out) - 1; i >= 0; i-- {
+		c, h := out[i].Set.AvgConversion, out[i].Set.AnyHit
+		if c <= bestConv+1e-12 && h <= bestHit+1e-12 {
+			out[i].Dominated = true
+		}
+		bestConv, bestHit = math.Max(bestConv, c), math.Max(bestHit, h)
+	}
+	return out, nil
+}
+
+// FreeToSplit reports whether every row but the last is dominated -- that is,
+// whether taking the most shots available costs nothing at all.
+//
+// Worth saying out loud rather than leaving to be read off a table: when it is
+// true there is no decision here, and the report should say so instead of
+// printing a frontier that implies one.
+func FreeToSplit(f []Deployment) bool {
+	if len(f) < 2 {
+		return false
+	}
+	for _, d := range f[:len(f)-1] {
+		if !d.Dominated {
+			return false
+		}
+	}
+	return true
+}
+
+// maxFrontierShots caps how far the table is computed. Beyond a dozen the
+// stakes are trivial, the pairings are the dregs of the board, and each row
+// costs a full exhaustive matching.
+const maxFrontierShots = 12
+
+// Prefer returns the deployment this objective would choose, which is the row
+// the operator sees expanded unless they name another.
+//
+// MaxHitRate takes the most shots available. Under that objective the extra
+// shots are usually free -- see Deployment.Dominated -- so this is not merely
+// the extreme of its own metric but the better row outright.
+//
+// MaxConversion takes the fewest: there the trade is real, and the tightest
+// pairings genuinely are the best-converting ones. That is why the whole table
+// is printed rather than only this row.
+func Prefer(f []Deployment, o Objective) Deployment {
+	if len(f) == 0 {
+		return Deployment{}
+	}
+	if o == MaxConversion {
+		return f[0]
+	}
+	return f[len(f)-1]
+}
+
+// Advice is what the report says about deploying now versus later.
+type Advice struct {
+	// Fillable is how many tickets the window can actually support above the
+	// floor, which may be fewer than were asked for.
+	Fillable int
+	// HoldBack is funds better kept for a later week than stretched into this
+	// one. Distinct from Weak: this says "place what works and keep the rest",
+	// not "place nothing".
+	//
+	// It is only ever advised when the money can actually wait. Every frontier
+	// row deploys the WHOLE bankroll -- a thin window is met by staking more
+	// per ticket, not by holding some back -- so holding is a choice to spend
+	// less than is available, and that is only sane if the balance survives to
+	// be spent later. On expiring funds an unplaced balance is worth zero, so
+	// stretching the stake is strictly better however thin the board.
+	HoldBack float64
+	// StretchedTo is the per-ticket stake when a thin window is met by staking
+	// up rather than holding back.
+	StretchedTo float64
+	// Weak is set when even the best set sits close to the floor, so the
+	// window itself is poor rather than merely small.
+	Weak bool
+	// CanWait is whether the money survives long enough to try a later week.
+	// This is the field the advice turns on: telling someone to wait with
+	// funds that expire first is worse than saying nothing, because it reads
+	// as permission to do nothing.
+	CanWait bool
+	Reasons []string
+}
+
+// weakMargin is how close to the floor a set may average before the window is
+// called weak. Two points: inside that, the ordering of tickets is within the
+// error of a de-vig built on an assumed overround.
+const weakMargin = 0.02
+
+// Advise reads a frontier and says whether to deploy, deploy partially, or
+// wait.
+//
+// The two signals are easy to conflate and mean different things. A thin pool
+// is a small window: there are good tickets, just not many, so place them and
+// hold the rest. A weak window is a bad one: the tickets available are barely
+// worth the face value, and a later week will likely be better.
+//
+// expiry is when the funds die, and now is the clock. If the money does not
+// outlive the window there is nothing to wait for, and the advice has to say
+// so rather than recommending a delay that would forfeit the balance.
+func Advise(f []Deployment, want int, funds, target float64, expiry, lastKick time.Time, now time.Time) Advice {
+	a := Advice{CanWait: expiry.IsZero() || expiry.After(lastKick)}
+
+	if len(f) == 0 {
+		a.Reasons = append(a.Reasons,
+			"no ticket in this window clears the floor, so there is nothing worth placing")
+		a.appendWaitLine(expiry, now)
+		return a
+	}
+
+	best := f[len(f)-1]
+	a.Fillable = best.Shots
+	if want > 0 && best.Shots < want {
+		a.StretchedTo = best.Stake
+		a.Reasons = append(a.Reasons, fmt.Sprintf(
+			"the window supports %d ticket(s), not %d: each uses two games and there are not "+
+				"enough left that clear the floor. The %d are staked at %.2f rather than %.2f, "+
+				"so the whole balance is still deployed",
+			best.Shots, want, best.Shots, best.Stake, funds/float64(want)))
+		if a.CanWait {
+			// Only now is holding back a real option, and it is a preference
+			// rather than an improvement: less money at a good price this
+			// week, against the chance of a better board next.
+			a.HoldBack = funds - (funds/float64(want))*float64(best.Shots)
+			a.Reasons = append(a.Reasons, fmt.Sprintf(
+				"alternatively, since these funds outlast the window: place %d at %.2f and hold "+
+					"%.2f for a later week", best.Shots, funds/float64(want), a.HoldBack))
+		}
+	}
+
+	// Weakness is judged on the BEST conversion anywhere on the frontier, found
+	// by scanning rather than assumed to sit at either end.
+	//
+	// An earlier version read f[0], on the reasoning that splitting always
+	// costs conversion so the fewest shots must convert best. That is true
+	// under MaxConversion and false under MaxHitRate, where the objective
+	// takes the shortest pairs scraping the floor first and reaching further
+	// IMPROVES conversion. It called a 73.9% board weak on the strength of its
+	// 70.1% single-shot row.
+	bestConv := 0.0
+	for _, d := range f {
+		if d.Set.AvgConversion > bestConv {
+			bestConv = d.Set.AvgConversion
+		}
+	}
+	if bestConv < target+weakMargin {
+		a.Weak = true
+		a.Reasons = append(a.Reasons, fmt.Sprintf(
+			"the best split available averages %.1f%%, within %.0f points of the %.0f%% floor -- "+
+				"this is a poor week to deploy into, not merely a small one",
+			bestConv*100, weakMargin*100, target*100))
+	}
+	// Any advice at all gets the expiry line. Telling someone the window is
+	// thin invites "then I will wait", so whether waiting is even possible has
+	// to travel with it -- and HoldBack is zero on expiring funds by design,
+	// so keying on that suppressed the warning exactly when it mattered most.
+	if len(a.Reasons) > 0 {
+		a.appendWaitLine(expiry, now)
+	}
+	return a
+}
+
+func (a *Advice) appendWaitLine(expiry, now time.Time) {
+	if a.CanWait {
+		a.Reasons = append(a.Reasons,
+			"the funds outlast this window, so waiting for a better board is available")
+		return
+	}
+	a.Reasons = append(a.Reasons, fmt.Sprintf(
+		"the funds expire %s, before these games are played -- waiting is NOT available, "+
+			"and an unplaced balance is worth nothing. Place the best of what is here",
+		expiry.Format("Mon 2006-01-02")))
+}
+
+// Legs returns the candidate legs this analysis built its set from.
+//
+// Exposed so a caller can re-run the pairing at other shot counts without
+// re-reading the board or re-deriving which legs were admissible -- suspect
+// lines held out, exclusions applied, lined markets included or not. The
+// frontier is exactly that: the same pool, matched several ways.
+func (a *Analysis) Legs() []Side { return a.pool }

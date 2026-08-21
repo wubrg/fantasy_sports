@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"edge/internal/board"
 	"edge/internal/wager"
@@ -22,7 +23,10 @@ func boardReport(args []string) error {
 	dir := fs.String("dir", defaultBoardDir, "directory holding the week files")
 	week := fs.Int("week", 0, "week to report on (required)")
 	book := fs.String("book", "", "which book's prices to read (required)")
-	stake := fs.Float64("stake", 25, "bonus bet face value, for the dollar columns")
+	stake := fs.Float64("stake", 25, "bonus bet face value, when not deploying a bankroll")
+	funds := fs.Float64("funds", 0, "bankroll to deploy; with this, stake is derived rather than given")
+	minBet := fs.Float64("min-bet", 1, "smallest wager the book accepts; bounds how far funds can split")
+	expiry := fs.String("expiry", "", "when the funds die (2026-08-26); decides whether waiting is an option")
 	shots := fs.Int("shots", 4, "how many disjoint parlays to build")
 	target := fs.Float64("target", board.DefaultTarget, "bonus-bet conversion floor")
 	exclude := fs.String("exclude", "",
@@ -76,6 +80,8 @@ func boardReport(args []string) error {
 	a, err := board.Analyze(doc, board.Options{
 		Book: *book, Target: *target, Shots: *shots, Objective: obj, Lined: *lined,
 		Exclude: splitCSV(*exclude),
+		Funds:   map[string]float64{*book: *funds},
+		MinBet:  *minBet,
 	})
 	if err != nil {
 		return err
@@ -98,11 +104,101 @@ func boardReport(args []string) error {
 	printSuspect(a)
 	printDevig(a)
 	printDogs(a, *stake)
-	if err := printSet(a, *stake); err != nil {
+	// With a bankroll, the stake is a consequence of how far it is split rather
+	// than a number supplied alongside it.
+	useStake := *stake
+	if *funds > 0 {
+		exp, err := parseExpiry(*expiry)
+		if err != nil {
+			return err
+		}
+		chosen, err := printDeployment(a, doc, *funds, *minBet, *shots, obj, exp)
+		if err != nil {
+			return err
+		}
+		if chosen > 0 {
+			useStake = chosen
+		}
+	}
+	if err := printSet(a, useStake); err != nil {
 		return err
 	}
 	printShop(a)
 	return nil
+}
+
+// parseExpiry reads a plain date in local time. Local because a promo's expiry
+// is read off a book's page in the operator's own timezone, and shifting it to
+// UTC would move a Tuesday deadline into Monday for anyone west of Greenwich.
+func parseExpiry(s string) (time.Time, error) {
+	if strings.TrimSpace(s) == "" {
+		return time.Time{}, nil
+	}
+	t, err := time.ParseInLocation("2006-01-02", strings.TrimSpace(s), time.Local)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("-expiry %q: want a date like 2026-08-26", s)
+	}
+	return t, nil
+}
+
+// printDeployment prints the frontier and the advice, returning the stake of
+// the row the operator should use.
+func printDeployment(a *board.Analysis, doc *board.Doc, funds, minBet float64,
+	want int, obj board.Objective, expiry time.Time) (float64, error) {
+
+	f, err := board.Frontier(a.Legs(), funds, minBet, obj, a.Target)
+	if err != nil {
+		return 0, err
+	}
+	fmt.Println()
+	if len(f) == 0 {
+		fmt.Printf("  DEPLOYING %s: nothing in this week clears the %.0f%% floor.\n",
+			money(funds), a.Target*100)
+		return 0, nil
+	}
+
+	fmt.Printf("  DEPLOYING %s  (minimum wager %s)\n", money(funds), money(minBet))
+	free := board.FreeToSplit(f)
+	if free {
+		// Saying this plainly matters more than the table. Asking someone to
+		// weigh a trade that does not exist wastes the one judgement the tool
+		// is asking them for.
+		fmt.Printf("  Splitting further costs nothing here: every row below is beaten by the\n")
+		fmt.Printf("  last on BOTH conversion and hit rate, so take the most shots available.\n")
+	}
+	fmt.Println()
+	fmt.Printf("  %6s %9s %10s %9s %9s\n", "shots", "stake", "avg conv", "P(>=1)", "EV")
+	fmt.Printf("  %s\n", strings.Repeat("-", 48))
+	for _, d := range f {
+		mark := " "
+		if d.Dominated {
+			mark = "\u00b7"
+		}
+		fmt.Printf(" %s%5d %9s %9.1f%% %8.1f%% %9s\n",
+			mark, d.Shots, money(d.Stake), d.Set.AvgConversion*100,
+			d.Set.AnyHit*100, money(d.EV))
+	}
+	if !free {
+		fmt.Printf("  \u00b7 marks a row beaten by a later one on both metrics.\n")
+	}
+
+	adv := board.Advise(f, want, funds, a.Target, expiry, doc.LastKickoff(), time.Now())
+	if len(adv.Reasons) > 0 {
+		fmt.Println()
+		for _, r := range adv.Reasons {
+			fmt.Printf("  - %s\n", r)
+		}
+	}
+
+	chosen := board.Prefer(f, obj)
+	for _, d := range f {
+		if d.Shots == want {
+			chosen = d
+		}
+	}
+	fmt.Println()
+	fmt.Printf("  Showing %d shot(s) at %s.\n", chosen.Shots, money(chosen.Stake))
+	return chosen.Stake, nil
 }
 
 // reportEmpty is the normal state of every book but consensus. It is not an

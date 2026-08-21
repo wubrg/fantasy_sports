@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -189,4 +190,26 @@ func (d *Doc) BettableBooks() []string {
 		}
 	}
 	return out
+}
+
+// LastKickoff is when the final game of this week starts.
+//
+// It is the point after which nothing here can be bet, so it is what an
+// expiry has to be compared against: funds outliving it can wait for another
+// week's board, and funds that do not must be spent on this one.
+func (d *Doc) LastKickoff() time.Time {
+	var last time.Time
+	for _, g := range d.Games {
+		t, err := time.ParseInLocation("2006-01-02T15:04", g.Kickoff, time.Local)
+		if err != nil {
+			// A date with no time still bounds the day.
+			if t, err = time.ParseInLocation("2006-01-02", g.Kickoff, time.Local); err != nil {
+				continue
+			}
+		}
+		if t.After(last) {
+			last = t
+		}
+	}
+	return last
 }

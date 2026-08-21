@@ -5,6 +5,7 @@ import (
 	"math"
 	"strings"
 	"testing"
+	"time"
 
 	"edge/internal/wager"
 )
@@ -807,5 +808,188 @@ func TestExcludeDropsCommittedTeams(t *testing.T) {
 				t.Errorf("lowercase/padded exclusion leaked %q", leg.Team)
 			}
 		}
+	}
+}
+
+func mkFrontier(t *testing.T, book string, shots int) []Deployment {
+	t.Helper()
+	d := contractDoc(book)
+	var legs []Side
+	for _, id := range d.GameIDs() {
+		l, ok, err := Devig(id, d.Games[id], book)
+		if err != nil || !ok || l.Suspect {
+			continue
+		}
+		legs = append(legs, l.Dog())
+	}
+	f, err := Frontier(legs, 50, 1, MaxHitRate, DefaultTarget)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return f
+}
+
+// TestFrontierShowsTheTrade pins the frontier's shape: rows ordered by shots,
+// stakes falling, hit rate never worsening, and every row deploying the whole
+// bankroll. Conversion is not asserted either way -- see the note below.
+func TestFrontierShowsTheTrade(t *testing.T) {
+	f := mkFrontier(t, Consensus, 0)
+	if len(f) < 2 {
+		t.Fatalf("frontier has %d rows, need at least 2 to show a trade", len(f))
+	}
+	for i := 1; i < len(f); i++ {
+		if f[i].Shots <= f[i-1].Shots {
+			t.Fatalf("rows not ordered by shots: %d then %d", f[i-1].Shots, f[i].Shots)
+		}
+		if f[i].Stake >= f[i-1].Stake {
+			t.Errorf("%d shots staked %.2f, not less than %.2f at %d",
+				f[i].Shots, f[i].Stake, f[i-1].Stake, f[i-1].Shots)
+		}
+		if f[i].Set.AnyHit < f[i-1].Set.AnyHit {
+			t.Errorf("%d shots hit %.3f, worse than %.3f at %d -- more shots must not lower the hit rate",
+				f[i].Shots, f[i].Set.AnyHit, f[i-1].Set.AnyHit, f[i-1].Shots)
+		}
+		// Conversion is deliberately NOT asserted monotonic. Under MaxHitRate
+		// it RISES with shots: the objective takes the shortest pairs clearing
+		// the floor first, and those convert worst, so reaching further
+		// improves conversion too. An earlier version of this test asserted a
+		// trade that does not exist under that objective.
+		// Every row must be placeable: the whole bankroll, no more.
+		if got := f[i].Stake * float64(f[i].Shots); math.Abs(got-50) > 0.01 {
+			t.Errorf("%d shots deploys %.2f, not the 50.00 available", f[i].Shots, got)
+		}
+	}
+}
+
+func TestFrontierRespectsMinBet(t *testing.T) {
+	d := contractDoc(Consensus)
+	var legs []Side
+	for _, id := range d.GameIDs() {
+		if l, ok, err := Devig(id, d.Games[id], Consensus); err == nil && ok && !l.Suspect {
+			legs = append(legs, l.Dog())
+		}
+	}
+	// $50 at a $15 minimum cannot be split more than three ways.
+	f, err := Frontier(legs, 50, 15, MaxHitRate, DefaultTarget)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, dep := range f {
+		if dep.Shots > 3 {
+			t.Errorf("%d shots at a 15.00 minimum needs %.2f", dep.Shots, dep.Stake)
+		}
+		if dep.Stake < 15 {
+			t.Errorf("stake %.2f is below the 15.00 minimum", dep.Stake)
+		}
+	}
+	if _, err := Frontier(legs, 5, 15, MaxHitRate, DefaultTarget); err == nil {
+		t.Error("5.00 against a 15.00 minimum should be an error, not an empty plan")
+	}
+}
+
+// TestAdviseNeverTellsYouToWaitOnExpiringMoney is the case most likely to be
+// got backwards, and the most expensive one to get backwards.
+//
+// A weak window normally means wait. With funds that expire before the games
+// are played, waiting forfeits the balance outright -- so the same board
+// state has to produce the opposite advice.
+func TestAdviseNeverTellsYouToWaitOnExpiringMoney(t *testing.T) {
+	f := mkFrontier(t, Consensus, 0)
+	now := time.Date(2026, 8, 21, 12, 0, 0, 0, time.UTC)
+	lastKick := time.Date(2026, 9, 14, 20, 15, 0, 0, time.UTC)
+
+	expires := time.Date(2026, 8, 26, 0, 0, 0, 0, time.UTC) // before kickoff
+	a := Advise(f, 99, 50, DefaultTarget, expires, lastKick, now)
+	if a.CanWait {
+		t.Error("funds expiring before kickoff cannot wait for a later board")
+	}
+	joined := strings.Join(a.Reasons, " ")
+	if !strings.Contains(joined, "NOT available") {
+		t.Errorf("advice on expiring funds must say waiting is unavailable, got: %v", a.Reasons)
+	}
+
+	survives := time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC) // after the season
+	b := Advise(f, 99, 50, DefaultTarget, survives, lastKick, now)
+	if !b.CanWait {
+		t.Error("funds outlasting the window can wait")
+	}
+	if strings.Contains(strings.Join(b.Reasons, " "), "NOT available") {
+		t.Error("funds that survive must not be told waiting is unavailable")
+	}
+
+	// No expiry at all is not an expiry in the past.
+	if c := Advise(f, 1, 50, DefaultTarget, time.Time{}, lastKick, now); !c.CanWait {
+		t.Error("funds with no recorded expiry should be treated as able to wait")
+	}
+}
+
+// TestAdviseSeparatesThinFromWeak keeps the two signals distinct: a small
+// window means place what works and hold the rest; a bad window means the
+// tickets are not worth the face value.
+func TestAdviseSeparatesThinFromWeak(t *testing.T) {
+	f := mkFrontier(t, Consensus, 0)
+	now := time.Date(2026, 8, 21, 12, 0, 0, 0, time.UTC)
+	late := time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC)
+	kick := time.Date(2026, 9, 14, 20, 15, 0, 0, time.UTC)
+
+	a := Advise(f, 99, 50, DefaultTarget, late, kick, now)
+	if a.Fillable != f[len(f)-1].Shots {
+		t.Errorf("Fillable %d, want %d", a.Fillable, f[len(f)-1].Shots)
+	}
+	if a.StretchedTo <= 0 {
+		t.Error("a thin window must report the stretched stake that still deploys everything")
+	}
+	if a.HoldBack <= 0 {
+		t.Error("funds that outlast the window should be offered the hold-back alternative")
+	}
+
+	// The same thin window on EXPIRING funds must NOT offer to hold back:
+	// an unplaced balance is worth zero, so stretching is strictly better.
+	soon := time.Date(2026, 8, 26, 0, 0, 0, 0, time.UTC)
+	exp := Advise(f, 99, 50, DefaultTarget, soon, kick, now)
+	if exp.HoldBack != 0 {
+		t.Errorf("HoldBack %.2f advised on funds expiring before kickoff", exp.HoldBack)
+	}
+	if exp.StretchedTo <= 0 {
+		t.Error("expiring funds should still be stretched across what the window supports")
+	}
+
+	// Asking for exactly what fits is neither thin nor a hold-back.
+	b := Advise(f, f[len(f)-1].Shots, 50, DefaultTarget, late, kick, now)
+	if b.HoldBack != 0 {
+		t.Errorf("HoldBack %.2f when the window fills the request exactly", b.HoldBack)
+	}
+}
+
+// TestAdviseJudgesWeaknessOnTheBestRow guards a mistake made twice in this
+// file's history: assuming fewer shots convert better.
+//
+// That holds under MaxConversion and inverts under MaxHitRate, where the
+// objective takes the shortest pairs clearing the floor first -- the worst
+// converters -- so reaching further improves conversion. Reading the first row
+// as "the best split" called a healthy board weak.
+func TestAdviseJudgesWeaknessOnTheBestRow(t *testing.T) {
+	now := time.Date(2026, 8, 21, 12, 0, 0, 0, time.UTC)
+	kick := time.Date(2026, 9, 14, 20, 15, 0, 0, time.UTC)
+	late := time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC)
+
+	// A frontier whose first row scrapes the floor and whose last is well clear
+	// of it. Only a scan finds the best.
+	f := []Deployment{
+		{Shots: 1, Set: ParlaySet{AvgConversion: 0.701, AnyHit: 0.21}},
+		{Shots: 4, Set: ParlaySet{AvgConversion: 0.739, AnyHit: 0.54}},
+	}
+	if a := Advise(f, 4, 50, DefaultTarget, late, kick, now); a.Weak {
+		t.Errorf("called weak on a frontier reaching %.1f%%, %.1f points above the floor",
+			f[1].Set.AvgConversion*100, (f[1].Set.AvgConversion-DefaultTarget)*100)
+	}
+
+	// Genuinely weak: nothing on the frontier gets clear of the floor.
+	g := []Deployment{
+		{Shots: 1, Set: ParlaySet{AvgConversion: 0.703, AnyHit: 0.20}},
+		{Shots: 4, Set: ParlaySet{AvgConversion: 0.708, AnyHit: 0.52}},
+	}
+	if a := Advise(g, 4, 50, DefaultTarget, late, kick, now); !a.Weak {
+		t.Error("a frontier topping out at 70.8% should be called weak")
 	}
 }
