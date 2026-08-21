@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"edge/internal/board"
 )
@@ -40,9 +41,17 @@ type reportJSON struct {
 	// is not the best pairing of the week. A board is partly filled nearly
 	// always, so this is the normal case and the UI has to show it rather
 	// than leave it to be inferred from a count.
-	Provisional bool     `json:"provisional"`
-	Missing     int      `json:"missing"`
-	PricedBooks []string `json:"priced_books"`
+	Provisional bool `json:"provisional"`
+	// Committed is what the log shows already wagered, so the UI can say why a
+	// team it can see priced never appears in a set.
+	Committed   []commitJSON `json:"committed"`
+	Missing     int          `json:"missing"`
+	PricedBooks []string     `json:"priced_books"`
+}
+
+type commitJSON struct {
+	Selection string   `json:"selection"`
+	Teams     []string `json:"teams"`
 }
 
 type suspectRow struct {
@@ -112,8 +121,28 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Same default as the CLI: teams carrying an open wager are excluded unless
+	// explicitly ignored. The UI has no way to retype a list every time, so a
+	// derived exclusion is the only one it can have.
+	var committed []Commitment
+	var excl []string
+	if q.Get("ignore_log") != "1" {
+		c, teams, err := PlacedCommitments(s.betlogPath, wf.doc)
+		if err != nil {
+			httpError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		committed, excl = c, teams
+	}
+	for _, t := range strings.Split(q.Get("exclude"), ",") {
+		if t = strings.TrimSpace(t); t != "" {
+			excl = append(excl, t)
+		}
+	}
+
 	a, err := board.Analyze(wf.doc, board.Options{
 		Book: book, Target: board.DefaultTarget, Shots: shots, Objective: obj, Lined: lined,
+		Exclude: excl,
 	})
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, err.Error())
@@ -125,6 +154,7 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 		Priced: len(a.Lines), Total: len(a.Lines) + len(a.Missing),
 		AvgConv: a.Set.AvgConversion, AnyHit: a.Set.AnyHit, Unfille: a.Set.Unfilled,
 		Notes: a.Problems, Provisional: a.Provisional, Missing: len(a.Missing),
+		Committed:   toCommitJSON(committed),
 		PricedBooks: a.PricedBooks,
 	}
 
@@ -162,4 +192,12 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, out)
+}
+
+func toCommitJSON(c []Commitment) []commitJSON {
+	out := make([]commitJSON, 0, len(c))
+	for _, x := range c {
+		out = append(out, commitJSON{Selection: x.Selection, Teams: x.Teams})
+	}
+	return out
 }

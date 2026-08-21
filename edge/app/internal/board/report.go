@@ -1237,7 +1237,7 @@ func Advise(f []Deployment, want int, funds, target float64, expiry, lastKick ti
 	if len(f) == 0 {
 		a.Reasons = append(a.Reasons,
 			"no ticket in this window clears the floor, so there is nothing worth placing")
-		a.appendWaitLine(expiry, now)
+		a.appendWaitLine(expiry, now, false)
 		return a
 	}
 
@@ -1288,15 +1288,31 @@ func Advise(f []Deployment, want int, funds, target float64, expiry, lastKick ti
 	// to travel with it -- and HoldBack is zero on expiring funds by design,
 	// so keying on that suppressed the warning exactly when it mattered most.
 	if len(a.Reasons) > 0 {
-		a.appendWaitLine(expiry, now)
+		a.appendWaitLine(expiry, now, true)
 	}
 	return a
 }
 
-func (a *Advice) appendWaitLine(expiry, now time.Time) {
+// appendWaitLine says whether waiting is available. placeable is whether the
+// window offers anything at all, which changes what the advice can honestly
+// recommend when it is not.
+func (a *Advice) appendWaitLine(expiry, now time.Time, placeable bool) {
 	if a.CanWait {
 		a.Reasons = append(a.Reasons,
 			"the funds outlast this window, so waiting for a better board is available")
+		return
+	}
+	if !placeable {
+		// The worst case the tool can report, and it must not be dressed up.
+		// There is nothing worth placing and no time to find something, so the
+		// honest advice is that the balance is probably lost -- and that a bet
+		// below the floor is still better than a forfeit, because a bonus bet
+		// has no downside beyond the face value already at risk.
+		a.Reasons = append(a.Reasons, fmt.Sprintf(
+			"the funds expire %s, before these games are played, so there is no later board "+
+				"to wait for. Nothing here clears the floor: either widen the window, or accept "+
+				"a below-floor ticket -- a bonus bet placed badly still beats one left to expire",
+			expiry.Format("Mon 2006-01-02")))
 		return
 	}
 	a.Reasons = append(a.Reasons, fmt.Sprintf(

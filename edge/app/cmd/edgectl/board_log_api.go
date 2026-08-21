@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"edge/internal/betlog"
 	"edge/internal/wager"
@@ -156,46 +155,6 @@ func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, map[string]any{"ok": true, "id": id})
-}
-
-// placedTeams reads the log and returns the team codes already committed.
-//
-// This is what removes -exclude as something to remember. A wager already
-// riding a game makes that game unavailable, and the log is the record of what
-// is riding. Teams are recovered from the selection text, which is written by
-// the report and so follows a known shape ("CAR ML + GB ML 2-leg parlay").
-func (s *boardServer) placedTeams() []string {
-	bets, err := betlog.Load(s.betlogPath)
-	if err != nil {
-		return nil
-	}
-	seen := map[string]bool{}
-	var out []string
-	for _, b := range bets {
-		// A settled wager no longer ties up its game.
-		if b.Result != "" && b.Result != betlog.Open {
-			continue
-		}
-		for _, f := range strings.Fields(b.Bet.Selection) {
-			// Team codes are the all-caps 2-3 letter words. "ML", "2-leg" and
-			// "(Week" are not, and neither is a lowercase word.
-			if len(f) < 2 || len(f) > 3 || f != strings.ToUpper(f) || f == "ML" {
-				continue
-			}
-			ok := true
-			for _, r := range f {
-				if r < 'A' || r > 'Z' {
-					ok = false
-					break
-				}
-			}
-			if ok && !seen[f] {
-				seen[f] = true
-				out = append(out, f)
-			}
-		}
-	}
-	return out
 }
 
 type settleReq struct {

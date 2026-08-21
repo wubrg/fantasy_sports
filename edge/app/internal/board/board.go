@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -212,4 +213,42 @@ func (d *Doc) LastKickoff() time.Time {
 		}
 	}
 	return last
+}
+
+// Teams lists every team code appearing in this week, home and away.
+func (d *Doc) Teams() map[string]bool {
+	out := make(map[string]bool, len(d.Games)*2)
+	for _, g := range d.Games {
+		out[strings.ToUpper(g.Away)] = true
+		out[strings.ToUpper(g.Home)] = true
+	}
+	return out
+}
+
+// TeamsMentioned pulls the team codes out of free text, matching against the
+// teams actually on this board rather than guessing at their shape.
+//
+// The alternative -- treating any two-or-three-letter capitalised word as a
+// team -- has to special-case "ML" and would still admit anything else that
+// happened to look like a code. A selection is written for a person to read,
+// so it will accumulate words nobody planned for; checking against a known set
+// is the only way this stays correct as the prose drifts.
+//
+// Punctuation is trimmed because a selection reads "CAR ML + GB ML (Week 1)"
+// and a bare Fields() split leaves "(Week" and "1)" attached to their
+// neighbours.
+func (d *Doc) TeamsMentioned(text string) []string {
+	known := d.Teams()
+	seen := map[string]bool{}
+	var out []string
+	for _, f := range strings.FieldsFunc(text, func(r rune) bool {
+		return !(r >= 'A' && r <= 'Z') && !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9')
+	}) {
+		u := strings.ToUpper(f)
+		if known[u] && !seen[u] {
+			seen[u] = true
+			out = append(out, u)
+		}
+	}
+	return out
 }

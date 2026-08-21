@@ -30,7 +30,10 @@ func boardReport(args []string) error {
 	shots := fs.Int("shots", 4, "how many disjoint parlays to build")
 	target := fs.Float64("target", board.DefaultTarget, "bonus-bet conversion floor")
 	exclude := fs.String("exclude", "",
-		"comma-separated teams to leave out (e.g. already committed elsewhere)")
+		"extra teams to leave out, on top of those the log shows as committed")
+	logPath := fs.String("log", defaultBetlog(), "prediction log, read for teams already committed")
+	ignoreLog := fs.Bool("ignore-log", false,
+		"do not exclude teams carrying open wagers (they will be proposed again)")
 	lined := fs.Bool("lined", false,
 		"admit spread and total sides as parlay legs (only safe where a push returns the stake)")
 	objective := fs.String("objective", "hitrate",
@@ -77,9 +80,24 @@ func boardReport(args []string) error {
 	if err != nil {
 		return err
 	}
+	// Teams already carrying an open wager are excluded by default. Deriving
+	// this from the log is the point of keeping one: retyping the list every
+	// run only had to be forgotten once to put two tickets on one game.
+	excl := splitCSV(*exclude)
+	var committed []Commitment
+	if !*ignoreLog {
+		c, teams, err := PlacedCommitments(*logPath, doc)
+		if err != nil {
+			return fmt.Errorf("reading %s: %w\n"+
+				"pass -ignore-log to report without it", *logPath, err)
+		}
+		committed = c
+		excl = append(excl, teams...)
+	}
+
 	a, err := board.Analyze(doc, board.Options{
 		Book: *book, Target: *target, Shots: *shots, Objective: obj, Lined: *lined,
-		Exclude: splitCSV(*exclude),
+		Exclude: excl,
 		Funds:   map[string]float64{*book: *funds},
 		MinBet:  *minBet,
 	})
@@ -120,6 +138,7 @@ func boardReport(args []string) error {
 			useStake = chosen
 		}
 	}
+	printCommitments(committed, splitCSV(*exclude), *ignoreLog)
 	if err := printSet(a, useStake); err != nil {
 		return err
 	}
@@ -152,8 +171,15 @@ func printDeployment(a *board.Analysis, doc *board.Doc, funds, minBet float64,
 	}
 	fmt.Println()
 	if len(f) == 0 {
+		// The empty case needs the advice MORE than a full one, not less: this
+		// is precisely when "so should I wait?" is the next question, and
+		// whether the money survives to wait with is the answer.
 		fmt.Printf("  DEPLOYING %s: nothing in this week clears the %.0f%% floor.\n",
 			money(funds), a.Target*100)
+		adv := board.Advise(nil, want, funds, a.Target, expiry, doc.LastKickoff(), time.Now())
+		for _, r := range adv.Reasons {
+			fmt.Printf("  - %s\n", r)
+		}
 		return 0, nil
 	}
 
@@ -440,4 +466,31 @@ func splitCSV(v string) []string {
 		}
 	}
 	return out
+}
+
+// printCommitments says which teams were removed and why.
+//
+// A derived exclusion has to be visible. Silently dropping half the board
+// leaves the operator wondering why a team they can see priced never appears
+// in a set, and the honest answers -- "you already bet it" and "the tool is
+// broken" -- look identical from outside.
+func printCommitments(c []Commitment, manual []string, ignored bool) {
+	fmt.Println()
+	if ignored {
+		fmt.Printf("  COMMITMENTS: ignored (-ignore-log). Teams already carrying an open\n")
+		fmt.Printf("  wager may be proposed again, which would double an existing position.\n")
+		return
+	}
+	if len(c) == 0 && len(manual) == 0 {
+		return
+	}
+	fmt.Printf("  EXCLUDED — already committed, or asked for\n")
+	for _, x := range c {
+		fmt.Printf("    %-14s %s\n", strings.Join(x.Teams, ","), x.Selection)
+	}
+	if len(manual) > 0 {
+		fmt.Printf("    %-14s (-exclude)\n", strings.Join(manual, ","))
+	}
+	fmt.Printf("  Two tickets on one game are one chance counted twice, so a game with an\n")
+	fmt.Printf("  open wager is off the board until it settles.\n")
 }

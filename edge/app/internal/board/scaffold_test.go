@@ -172,3 +172,46 @@ func TestGameIDsSortByKickoff(t *testing.T) {
 		t.Fatalf("first game = %q, want the 13:00 kickoff", ids[0])
 	}
 }
+
+// TestTeamsMentioned pins that teams are recognised against the board's own
+// roster rather than by guessing at their shape.
+//
+// The shape heuristic this replaced -- any two-or-three-letter capitalised
+// word -- had to special-case "ML" and would have admitted any other short
+// capital that drifted into a selection. Since a selection is prose written
+// for a person, that drift is a matter of time.
+func TestTeamsMentioned(t *testing.T) {
+	games, _ := ReadSchedule(strings.NewReader(csvHead+
+		"2026_01_NYJ_TEN,2026,REG,1,2026-09-13,13:00,NYJ,TEN,130,-155,2.5,-110,-110,44.5,-110,-110\n"+
+		"2026_01_GB_MIN,2026,REG,1,2026-09-13,16:25,GB,MIN,105,-125,1.5,-110,-110,42.5,-110,-110\n"), 2026)
+	d := &Doc{Season: 2026, Week: 1, Games: map[string]*Game{}}
+	d.Scaffold(games)
+
+	for _, tc := range []struct {
+		in   string
+		want []string
+	}{
+		{"NYJ ML + GB ML 2-leg parlay (Week 1)", []string{"NYJ", "GB"}},
+		// "ML" is not special-cased any more; it is simply not a team here.
+		{"TEN ML vs NYJ (Week 1)", []string{"TEN", "NYJ"}},
+		// Punctuation must not hide a team behind a bracket.
+		{"over 44.5 [NYJ@TEN]", []string{"NYJ", "TEN"}},
+		// A wager from another week names nobody on this board.
+		{"DAL ML + PHI ML 2-leg parlay (Week 4)", nil},
+		// Case is normalised, and a repeat is reported once.
+		{"gb ML + GB spread", []string{"GB"}},
+		{"", nil},
+	} {
+		got := d.TeamsMentioned(tc.in)
+		if len(got) != len(tc.want) {
+			t.Errorf("TeamsMentioned(%q) = %v, want %v", tc.in, got, tc.want)
+			continue
+		}
+		for i := range got {
+			if got[i] != tc.want[i] {
+				t.Errorf("TeamsMentioned(%q) = %v, want %v", tc.in, got, tc.want)
+				break
+			}
+		}
+	}
+}

@@ -161,6 +161,7 @@ const sampleReport = {
   avg_conversion: 0.762, any_hit: 0.154, unfilled: 3,
   shop: [{ team: "ARI", best: 390, book: "fanatics", cons: 455, points: -65, points_valid: true }],
   notes: [], provisional: false, missing: 0, priced_books: ["fanatics", "draftkings"],
+  committed: [{ selection: "ARI ML @ LAC (Week 1)", teams: ["ARI", "LAC"] }],
 };
 
 function tryReport(what, payload) {
@@ -190,10 +191,20 @@ tryReport("renderReport() with a single bettable book",
 tryReport("renderReport() with priced_books absent entirely",
   Object.assign({}, sampleReport, { priced_books: undefined }));
 
+// The spent-week shape: nothing proposable BECAUSE everything is committed.
+// It must not read the same as an empty board.
+tryReport("renderReport() with a fully committed week",
+  Object.assign({}, sampleReport, { set: [], committed: [
+    { selection: "ARI ML @ LAC (Week 1)", teams: ["ARI", "LAC"] },
+    { selection: "NO ML @ DET (Week 1)", teams: ["NO", "DET"] }] }));
+tryReport("renderReport() with committed absent",
+  Object.assign({}, sampleReport, { committed: undefined }));
+
 tryReport("renderReport() with null collections (Go emits null, not [])",
   { week: 1, book: "fanatics", priced: 2, total: 16, target: 0.7, floor: 234,
     suspect: null, dogs: [], set: null, avg_conversion: 0, any_hit: 0, unfilled: 4,
-    shop: null, notes: null, provisional: true, missing: 14, priced_books: null });
+    shop: null, notes: null, provisional: true, missing: 14, priced_books: null,
+    committed: null });
 
 try {
   inCtx('state.view = "bets"; syncView(); 0');
