@@ -1,7 +1,100 @@
 {
- "generated_at": "2026-08-22T18:18:26Z",
+ "generated_at": "2026-08-22T23:29:00Z",
  "generated_by": "edge/model/analysis/fit_conditionals.py",
- "outcome": "receiving_yards",
+ "outcomes": {
+  "receiving_yards": {
+   "yards_field": "receiving_yards",
+   "opportunity": "targets",
+   "share_based": true,
+   "positions": [
+    "RB",
+    "TE",
+    "WR"
+   ],
+   "bands": [
+    [
+     0,
+     4
+    ],
+    [
+     4,
+     6
+    ],
+    [
+     6,
+     8
+    ],
+    [
+     8,
+     11
+    ],
+    [
+     11,
+     999
+    ]
+   ],
+   "trend_bands": [
+    [
+     -99.0,
+     -0.03
+    ],
+    [
+     -0.03,
+     0.03
+    ],
+    [
+     0.03,
+     0.06
+    ],
+    [
+     0.06,
+     99.0
+    ]
+   ],
+   "min_baseline": 0.05
+  },
+  "passing_yards": {
+   "yards_field": "passing_yards",
+   "opportunity": "attempts",
+   "share_based": false,
+   "positions": [
+    "QB"
+   ],
+   "bands": [
+    [
+     0,
+     28
+    ],
+    [
+     28,
+     33
+    ],
+    [
+     33,
+     38
+    ],
+    [
+     38,
+     999
+    ]
+   ],
+   "trend_bands": [
+    [
+     -99.0,
+     -2.0
+    ],
+    [
+     -2.0,
+     2.0
+    ],
+    [
+     2.0,
+     99.0
+    ]
+   ],
+   "min_baseline": 10.0
+  }
+ },
  "seasons": [
   2009,
   2025
@@ -129,235 +222,546 @@
   }
  },
  "scenario_status": {
-  "shootout": {
-   "validated": true,
-   "note": "positive in 16/16 cells; 12/16 bootstrap-resolved; 15/15 out of sample; 7 sub-noise crossings",
-   "evidence": {
-    "cells": 16,
-    "consistent": 16,
-    "sign": "positive",
-    "inversions": 7,
-    "inversion_detail": [
-     {
-      "targets": [
-       4,
-       6
-      ],
-      "trend": [
-       0.06,
-       99.0
-      ],
-      "line": 6.5,
-      "q": 0.8661,
-      "r": 0.8811,
-      "median_delta": 5.0
-     },
-     {
-      "targets": [
-       6,
-       8
-      ],
-      "trend": [
-       0.03,
-       0.06
-      ],
-      "line": 6.5,
-      "q": 0.9507,
-      "r": 0.9572,
-      "median_delta": 9.0
-     },
-     {
-      "targets": [
-       8,
-       11
-      ],
-      "trend": [
-       0.03,
-       0.06
-      ],
-      "line": 6.5,
-      "q": 0.9679,
-      "r": 0.9715,
-      "median_delta": 14.0
-     },
-     {
-      "targets": [
-       8,
-       11
-      ],
-      "trend": [
-       0.06,
-       99.0
-      ],
-      "line": 10.5,
-      "q": 0.9496,
-      "r": 0.9559,
-      "median_delta": 8.0
-     },
-     {
-      "targets": [
-       8,
-       11
-      ],
-      "trend": [
-       0.06,
-       99.0
-      ],
-      "line": 14.5,
-      "q": 0.8993,
-      "r": 0.9322,
-      "median_delta": 8.0
-     },
-     {
-      "targets": [
-       8,
-       11
-      ],
-      "trend": [
-       0.06,
-       99.0
-      ],
-      "line": 20.5,
-      "q": 0.8705,
-      "r": 0.8949,
-      "median_delta": 8.0
-     }
-    ],
-    "resolved": 12,
-    "oos_cells": 15,
-    "oos_agree": 15,
-    "bootstrap_resamples": 1000,
-    "bootstrap_seed": 20260822,
-    "oos_split": 2021
+  "receiving_yards": {
+   "shootout": {
+    "validated": true,
+    "note": "positive in 16/16 cells; 12/16 bootstrap-resolved; 15/15 out of sample; 7 sub-noise crossings",
+    "evidence": {
+     "cells": 16,
+     "consistent": 16,
+     "sign": "positive",
+     "inversions": 7,
+     "inversion_detail": [
+      {
+       "targets": [
+        4,
+        6
+       ],
+       "trend": [
+        0.06,
+        99.0
+       ],
+       "line": 6.5,
+       "q": 0.8661,
+       "r": 0.8811,
+       "median_delta": 5.0
+      },
+      {
+       "targets": [
+        6,
+        8
+       ],
+       "trend": [
+        0.03,
+        0.06
+       ],
+       "line": 6.5,
+       "q": 0.9507,
+       "r": 0.9572,
+       "median_delta": 9.0
+      },
+      {
+       "targets": [
+        8,
+        11
+       ],
+       "trend": [
+        0.03,
+        0.06
+       ],
+       "line": 6.5,
+       "q": 0.9679,
+       "r": 0.9715,
+       "median_delta": 14.0
+      },
+      {
+       "targets": [
+        8,
+        11
+       ],
+       "trend": [
+        0.06,
+        99.0
+       ],
+       "line": 10.5,
+       "q": 0.9496,
+       "r": 0.9559,
+       "median_delta": 8.0
+      },
+      {
+       "targets": [
+        8,
+        11
+       ],
+       "trend": [
+        0.06,
+        99.0
+       ],
+       "line": 14.5,
+       "q": 0.8993,
+       "r": 0.9322,
+       "median_delta": 8.0
+      },
+      {
+       "targets": [
+        8,
+        11
+       ],
+       "trend": [
+        0.06,
+        99.0
+       ],
+       "line": 20.5,
+       "q": 0.8705,
+       "r": 0.8949,
+       "median_delta": 8.0
+      }
+     ],
+     "resolved": 12,
+     "oos_cells": 15,
+     "oos_agree": 15,
+     "bootstrap_resamples": 1000,
+     "bootstrap_seed": 20260822,
+     "oos_split": 2021
+    }
+   },
+   "blowout_loss": {
+    "validated": false,
+    "note": "negative in 14/16 cells; 6/16 bootstrap-resolved; 12/15 out of sample; 16 sub-noise crossings. Needs a play-by-play definition (time remaining crossed with score differential) rather than final margin, which is the measurement this result argues for.",
+    "evidence": {
+     "cells": 16,
+     "consistent": 14,
+     "sign": "negative",
+     "inversions": 16,
+     "inversion_detail": [
+      {
+       "targets": [
+        0,
+        4
+       ],
+       "trend": [
+        -99.0,
+        -0.03
+       ],
+       "line": 24.5,
+       "q": 0.2544,
+       "r": 0.2689,
+       "median_delta": 2.0
+      },
+      {
+       "targets": [
+        0,
+        4
+       ],
+       "trend": [
+        -99.0,
+        -0.03
+       ],
+       "line": 30.5,
+       "q": 0.1967,
+       "r": 0.2049,
+       "median_delta": 2.0
+      },
+      {
+       "targets": [
+        0,
+        4
+       ],
+       "trend": [
+        -99.0,
+        -0.03
+       ],
+       "line": 40.5,
+       "q": 0.1131,
+       "r": 0.1347,
+       "median_delta": 2.0
+      },
+      {
+       "targets": [
+        0,
+        4
+       ],
+       "trend": [
+        -99.0,
+        -0.03
+       ],
+       "line": 50.5,
+       "q": 0.0766,
+       "r": 0.0895,
+       "median_delta": 2.0
+      },
+      {
+       "targets": [
+        0,
+        4
+       ],
+       "trend": [
+        -99.0,
+        -0.03
+       ],
+       "line": 60.5,
+       "q": 0.0518,
+       "r": 0.0531,
+       "median_delta": 2.0
+      },
+      {
+       "targets": [
+        0,
+        4
+       ],
+       "trend": [
+        -99.0,
+        -0.03
+       ],
+       "line": 75.5,
+       "q": 0.0236,
+       "r": 0.0263,
+       "median_delta": 2.0
+      }
+     ],
+     "resolved": 6,
+     "oos_cells": 15,
+     "oos_agree": 12,
+     "bootstrap_resamples": 1000,
+     "bootstrap_seed": 20260822,
+     "oos_split": 2021
+    }
+   },
+   "pass_heavy": {
+    "validated": false,
+    "note": "positive in 17/17 cells; 13/17 bootstrap-resolved; 15/16 out of sample. Fails out of sample in one cell of sixteen (6-8 targets, +3 to +6 pt trend): +14.5 yards of separation in 2009-2021, -0.5 in 2022-2025 on 65 observations. It clears every other criterion, and by wider margins than shootout -- consistent in 17/17 cells against 16/16, resolved in 13/17 against 12/16. The single failure is a half-yard median gap straddling zero, which is noise rather than a reversal. It is gated off regardless, because the rule requires every out-of-sample cell and was written before this scenario existed. Loosening it here would be fitting the bar to the answer -- and the loosening was tried and rejected: it makes every scenario pass. See FINDINGS.md 4.",
+    "evidence": {
+     "cells": 17,
+     "consistent": 17,
+     "sign": "positive",
+     "inversions": 0,
+     "inversion_detail": [],
+     "resolved": 13,
+     "oos_cells": 16,
+     "oos_agree": 15,
+     "bootstrap_resamples": 1000,
+     "bootstrap_seed": 20260822,
+     "oos_split": 2021
+    }
    }
   },
-  "blowout_loss": {
-   "validated": false,
-   "note": "negative in 14/16 cells; 6/16 bootstrap-resolved; 12/15 out of sample; 16 sub-noise crossings. Needs a play-by-play definition (time remaining crossed with score differential) rather than final margin, which is the measurement this result argues for.",
-   "evidence": {
-    "cells": 16,
-    "consistent": 14,
-    "sign": "negative",
-    "inversions": 16,
-    "inversion_detail": [
-     {
-      "targets": [
-       0,
-       4
-      ],
-      "trend": [
-       -99.0,
-       -0.03
-      ],
-      "line": 24.5,
-      "q": 0.2544,
-      "r": 0.2689,
-      "median_delta": 2.0
-     },
-     {
-      "targets": [
-       0,
-       4
-      ],
-      "trend": [
-       -99.0,
-       -0.03
-      ],
-      "line": 30.5,
-      "q": 0.1967,
-      "r": 0.2049,
-      "median_delta": 2.0
-     },
-     {
-      "targets": [
-       0,
-       4
-      ],
-      "trend": [
-       -99.0,
-       -0.03
-      ],
-      "line": 40.5,
-      "q": 0.1131,
-      "r": 0.1347,
-      "median_delta": 2.0
-     },
-     {
-      "targets": [
-       0,
-       4
-      ],
-      "trend": [
-       -99.0,
-       -0.03
-      ],
-      "line": 50.5,
-      "q": 0.0766,
-      "r": 0.0895,
-      "median_delta": 2.0
-     },
-     {
-      "targets": [
-       0,
-       4
-      ],
-      "trend": [
-       -99.0,
-       -0.03
-      ],
-      "line": 60.5,
-      "q": 0.0518,
-      "r": 0.0531,
-      "median_delta": 2.0
-     },
-     {
-      "targets": [
-       0,
-       4
-      ],
-      "trend": [
-       -99.0,
-       -0.03
-      ],
-      "line": 75.5,
-      "q": 0.0236,
-      "r": 0.0263,
-      "median_delta": 2.0
-     }
-    ],
-    "resolved": 6,
-    "oos_cells": 15,
-    "oos_agree": 12,
-    "bootstrap_resamples": 1000,
-    "bootstrap_seed": 20260822,
-    "oos_split": 2021
-   }
-  },
-  "pass_heavy": {
-   "validated": false,
-   "note": "positive in 17/17 cells; 13/17 bootstrap-resolved; 15/16 out of sample. Fails out of sample in one cell of sixteen (6-8 targets, +3 to +6 pt trend): +14.5 yards of separation in 2009-2021, -0.5 in 2022-2025 on 65 observations. It clears every other criterion, and by wider margins than shootout -- consistent in 17/17 cells against 16/16, resolved in 13/17 against 12/16. The single failure is a half-yard median gap straddling zero, which is noise rather than a reversal. It is gated off regardless, because the rule requires every out-of-sample cell and was written before this scenario existed. Loosening it here would be fitting the bar to the answer.",
-   "evidence": {
-    "cells": 17,
-    "consistent": 17,
-    "sign": "positive",
-    "inversions": 0,
-    "inversion_detail": [],
-    "resolved": 13,
-    "oos_cells": 16,
-    "oos_agree": 15,
-    "bootstrap_resamples": 1000,
-    "bootstrap_seed": 20260822,
-    "oos_split": 2021
+  "passing_yards": {
+   "shootout": {
+    "validated": true,
+    "note": "positive in 10/10 cells; 10/10 bootstrap-resolved; 6/6 out of sample; 45 sub-noise crossings",
+    "evidence": {
+     "cells": 10,
+     "consistent": 10,
+     "sign": "positive",
+     "inversions": 45,
+     "inversion_detail": [
+      {
+       "targets": [
+        28,
+        33
+       ],
+       "trend": [
+        -2.0,
+        2.0
+       ],
+       "line": 6.5,
+       "q": 0.9892,
+       "r": 0.9944,
+       "median_delta": 56.5
+      },
+      {
+       "targets": [
+        28,
+        33
+       ],
+       "trend": [
+        -2.0,
+        2.0
+       ],
+       "line": 10.5,
+       "q": 0.9892,
+       "r": 0.9944,
+       "median_delta": 56.5
+      },
+      {
+       "targets": [
+        28,
+        33
+       ],
+       "trend": [
+        -2.0,
+        2.0
+       ],
+       "line": 14.5,
+       "q": 0.9892,
+       "r": 0.9916,
+       "median_delta": 56.5
+      },
+      {
+       "targets": [
+        28,
+        33
+       ],
+       "trend": [
+        2.0,
+        99.0
+       ],
+       "line": 6.5,
+       "q": 0.9809,
+       "r": 0.9851,
+       "median_delta": 53.0
+      },
+      {
+       "targets": [
+        28,
+        33
+       ],
+       "trend": [
+        2.0,
+        99.0
+       ],
+       "line": 10.5,
+       "q": 0.9809,
+       "r": 0.9851,
+       "median_delta": 53.0
+      },
+      {
+       "targets": [
+        28,
+        33
+       ],
+       "trend": [
+        2.0,
+        99.0
+       ],
+       "line": 14.5,
+       "q": 0.9809,
+       "r": 0.9826,
+       "median_delta": 53.0
+      }
+     ],
+     "resolved": 10,
+     "oos_cells": 6,
+     "oos_agree": 6,
+     "bootstrap_resamples": 1000,
+     "bootstrap_seed": 20260822,
+     "oos_split": 2021
+    }
+   },
+   "blowout_loss": {
+    "validated": true,
+    "note": "negative in 7/7 cells; 6/7 bootstrap-resolved; 5/5 out of sample; 23 sub-noise crossings. Validated HERE and gated for receiving yards. The effect is the same direction and comparable relative magnitude in both; the receiving grid is simply large enough to catch it disagreeing in 2 of 16 cells, while the passing grid has 7 and sees none of it. Treat with more suspicion than the flag implies.",
+    "evidence": {
+     "cells": 7,
+     "consistent": 7,
+     "sign": "negative",
+     "inversions": 23,
+     "inversion_detail": [
+      {
+       "targets": [
+        28,
+        33
+       ],
+       "trend": [
+        -99.0,
+        -2.0
+       ],
+       "line": 6.5,
+       "q": 1.0,
+       "r": 0.9739,
+       "median_delta": -31.0
+      },
+      {
+       "targets": [
+        28,
+        33
+       ],
+       "trend": [
+        -99.0,
+        -2.0
+       ],
+       "line": 10.5,
+       "q": 1.0,
+       "r": 0.9739,
+       "median_delta": -31.0
+      },
+      {
+       "targets": [
+        28,
+        33
+       ],
+       "trend": [
+        -99.0,
+        -2.0
+       ],
+       "line": 14.5,
+       "q": 1.0,
+       "r": 0.9739,
+       "median_delta": -31.0
+      },
+      {
+       "targets": [
+        28,
+        33
+       ],
+       "trend": [
+        -99.0,
+        -2.0
+       ],
+       "line": 20.5,
+       "q": 1.0,
+       "r": 0.9717,
+       "median_delta": -31.0
+      },
+      {
+       "targets": [
+        28,
+        33
+       ],
+       "trend": [
+        -99.0,
+        -2.0
+       ],
+       "line": 24.5,
+       "q": 0.9942,
+       "r": 0.9717,
+       "median_delta": -31.0
+      },
+      {
+       "targets": [
+        28,
+        33
+       ],
+       "trend": [
+        -99.0,
+        -2.0
+       ],
+       "line": 30.5,
+       "q": 0.9769,
+       "r": 0.9696,
+       "median_delta": -31.0
+      }
+     ],
+     "resolved": 6,
+     "oos_cells": 5,
+     "oos_agree": 5,
+     "bootstrap_resamples": 1000,
+     "bootstrap_seed": 20260822,
+     "oos_split": 2021
+    }
+   },
+   "pass_heavy": {
+    "validated": true,
+    "note": "positive in 10/10 cells; 10/10 bootstrap-resolved; 5/5 out of sample; 29 sub-noise crossings",
+    "evidence": {
+     "cells": 10,
+     "consistent": 10,
+     "sign": "positive",
+     "inversions": 29,
+     "inversion_detail": [
+      {
+       "targets": [
+        0,
+        28
+       ],
+       "trend": [
+        2.0,
+        99.0
+       ],
+       "line": 6.5,
+       "q": 0.9709,
+       "r": 0.9749,
+       "median_delta": 64.0
+      },
+      {
+       "targets": [
+        0,
+        28
+       ],
+       "trend": [
+        2.0,
+        99.0
+       ],
+       "line": 10.5,
+       "q": 0.9612,
+       "r": 0.9693,
+       "median_delta": 64.0
+      },
+      {
+       "targets": [
+        0,
+        28
+       ],
+       "trend": [
+        2.0,
+        99.0
+       ],
+       "line": 14.5,
+       "q": 0.9417,
+       "r": 0.9609,
+       "median_delta": 64.0
+      },
+      {
+       "targets": [
+        0,
+        28
+       ],
+       "trend": [
+        2.0,
+        99.0
+       ],
+       "line": 20.5,
+       "q": 0.932,
+       "r": 0.9581,
+       "median_delta": 64.0
+      },
+      {
+       "targets": [
+        0,
+        28
+       ],
+       "trend": [
+        2.0,
+        99.0
+       ],
+       "line": 24.5,
+       "q": 0.932,
+       "r": 0.9581,
+       "median_delta": 64.0
+      },
+      {
+       "targets": [
+        0,
+        28
+       ],
+       "trend": [
+        2.0,
+        99.0
+       ],
+       "line": 30.5,
+       "q": 0.932,
+       "r": 0.9525,
+       "median_delta": 64.0
+      }
+     ],
+     "resolved": 10,
+     "oos_cells": 5,
+     "oos_agree": 5,
+     "bootstrap_resamples": 1000,
+     "bootstrap_seed": 20260822,
+     "oos_split": 2021
+    }
    }
   }
  },
  "note": "quantiles are [[probability, yards], ...]; P(yards > L) is 1 minus the interpolated CDF. n supports a Wilson interval computed at query time.",
  "cells": [
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 1031,
@@ -573,10 +977,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 3281,
@@ -792,10 +1197,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 806,
@@ -1011,10 +1417,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 433,
@@ -1230,10 +1637,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 780,
@@ -1449,10 +1857,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 1604,
@@ -1668,10 +2077,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 480,
@@ -1887,10 +2297,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 336,
@@ -2106,10 +2517,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 513,
@@ -2325,10 +2737,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 1045,
@@ -2544,10 +2957,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 345,
@@ -2763,10 +3177,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 244,
@@ -2982,10 +3397,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 373,
@@ -3201,10 +3617,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 600,
@@ -3420,10 +3837,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 187,
@@ -3639,10 +4057,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": true,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 139,
@@ -3858,10 +4277,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 2209,
@@ -4077,10 +4497,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 6703,
@@ -4296,10 +4717,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 1747,
@@ -4515,10 +4937,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 885,
@@ -4734,10 +5157,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 1556,
@@ -4953,10 +5377,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 3127,
@@ -5172,10 +5597,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 970,
@@ -5391,10 +5817,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 681,
@@ -5610,10 +6037,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 1037,
@@ -5829,10 +6257,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 1840,
@@ -6048,10 +6477,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 607,
@@ -6267,10 +6697,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 522,
@@ -6486,10 +6917,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 637,
@@ -6705,10 +7137,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 1089,
@@ -6924,10 +7357,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 386,
@@ -7143,10 +7577,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 295,
@@ -7362,10 +7797,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 11,
-   "targets_max": 999,
+   "opportunity_min": 11,
+   "opportunity_max": 999,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 108,
@@ -7581,10 +8017,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "shootout",
    "occurred": false,
-   "targets_min": 11,
-   "targets_max": 999,
+   "opportunity_min": 11,
+   "opportunity_max": 999,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 179,
@@ -7800,10 +8237,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 849,
@@ -8019,10 +8457,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 2585,
@@ -8238,10 +8677,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 708,
@@ -8457,10 +8897,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 381,
@@ -8676,10 +9117,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 618,
@@ -8895,10 +9337,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 1221,
@@ -9114,10 +9557,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 370,
@@ -9333,10 +9777,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 262,
@@ -9552,10 +9997,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 408,
@@ -9771,10 +10217,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 734,
@@ -9990,10 +10437,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 242,
@@ -10209,10 +10657,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 216,
@@ -10428,10 +10877,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 216,
@@ -10647,10 +11097,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 437,
@@ -10866,10 +11317,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 143,
@@ -11085,10 +11537,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": true,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 112,
@@ -11304,10 +11757,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 2391,
@@ -11523,10 +11977,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 7399,
@@ -11742,10 +12197,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 1845,
@@ -11961,10 +12417,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 937,
@@ -12180,10 +12637,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 1718,
@@ -12399,10 +12857,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 3510,
@@ -12618,10 +13077,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 1080,
@@ -12837,10 +13297,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 755,
@@ -13056,10 +13517,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 1142,
@@ -13275,10 +13737,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 2151,
@@ -13494,10 +13957,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 710,
@@ -13713,10 +14177,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 550,
@@ -13932,10 +14397,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 794,
@@ -14151,10 +14617,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 1252,
@@ -14370,10 +14837,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 430,
@@ -14589,10 +15057,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 322,
@@ -14808,10 +15277,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 11,
-   "targets_max": 999,
+   "opportunity_min": 11,
+   "opportunity_max": 999,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 113,
@@ -15027,10 +15497,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "blowout_loss",
    "occurred": false,
-   "targets_min": 11,
-   "targets_max": 999,
+   "opportunity_min": 11,
+   "opportunity_max": 999,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 210,
@@ -15246,10 +15717,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 930,
@@ -15465,10 +15937,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 3014,
@@ -15684,10 +16157,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 755,
@@ -15903,10 +16377,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 351,
@@ -16122,10 +16597,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 707,
@@ -16341,10 +16817,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 1602,
@@ -16560,10 +17037,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 474,
@@ -16779,10 +17257,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 265,
@@ -16998,10 +17477,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 525,
@@ -17217,10 +17697,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 992,
@@ -17436,10 +17917,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 333,
@@ -17655,10 +18137,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 240,
@@ -17874,10 +18357,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 386,
@@ -18093,10 +18577,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 704,
@@ -18312,10 +18797,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 225,
@@ -18531,10 +19017,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 157,
@@ -18750,10 +19237,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": true,
-   "targets_min": 11,
-   "targets_max": 999,
+   "opportunity_min": 11,
+   "opportunity_max": 999,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 108,
@@ -18969,10 +19457,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 2310,
@@ -19188,10 +19677,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 6970,
@@ -19407,10 +19897,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 1798,
@@ -19626,10 +20117,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 0,
-   "targets_max": 4,
+   "opportunity_min": 0,
+   "opportunity_max": 4,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 967,
@@ -19845,10 +20337,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 1629,
@@ -20064,10 +20557,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 3129,
@@ -20283,10 +20777,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 976,
@@ -20502,10 +20997,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 4,
-   "targets_max": 6,
+   "opportunity_min": 4,
+   "opportunity_max": 6,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 752,
@@ -20721,10 +21217,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 1025,
@@ -20940,10 +21437,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 1893,
@@ -21159,10 +21657,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 619,
@@ -21378,10 +21877,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 6,
-   "targets_max": 8,
+   "opportunity_min": 6,
+   "opportunity_max": 8,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 526,
@@ -21597,10 +22097,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 624,
@@ -21816,10 +22317,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 985,
@@ -22035,10 +22537,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 348,
@@ -22254,10 +22757,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 8,
-   "targets_max": 11,
+   "opportunity_min": 8,
+   "opportunity_max": 11,
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 277,
@@ -22473,10 +22977,11 @@
    ]
   },
   {
+   "outcome": "receiving_yards",
    "scenario": "pass_heavy",
    "occurred": false,
-   "targets_min": 11,
-   "targets_max": 999,
+   "opportunity_min": 11,
+   "opportunity_max": 999,
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 167,
@@ -22688,6 +23193,13866 @@
     [
      1.0,
      259.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": true,
+   "opportunity_min": 0,
+   "opportunity_max": 28,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 133,
+   "n_eff": 114.6,
+   "players": 62,
+   "icc": 0.1418,
+   "median": 212.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     11.0
+    ],
+    [
+     0.04,
+     38.0
+    ],
+    [
+     0.06,
+     55.0
+    ],
+    [
+     0.08,
+     67.0
+    ],
+    [
+     0.1,
+     89.0
+    ],
+    [
+     0.12,
+     107.0
+    ],
+    [
+     0.14,
+     123.0
+    ],
+    [
+     0.16,
+     131.0
+    ],
+    [
+     0.18,
+     132.0
+    ],
+    [
+     0.2,
+     148.0
+    ],
+    [
+     0.22,
+     153.0
+    ],
+    [
+     0.24,
+     159.0
+    ],
+    [
+     0.26,
+     170.0
+    ],
+    [
+     0.28,
+     175.0
+    ],
+    [
+     0.3,
+     179.0
+    ],
+    [
+     0.32,
+     181.0
+    ],
+    [
+     0.34,
+     185.0
+    ],
+    [
+     0.36,
+     193.0
+    ],
+    [
+     0.38,
+     194.0
+    ],
+    [
+     0.4,
+     195.0
+    ],
+    [
+     0.42,
+     202.0
+    ],
+    [
+     0.44,
+     206.0
+    ],
+    [
+     0.46,
+     208.0
+    ],
+    [
+     0.48,
+     211.0
+    ],
+    [
+     0.5,
+     212.0
+    ],
+    [
+     0.52,
+     214.0
+    ],
+    [
+     0.54,
+     217.0
+    ],
+    [
+     0.56,
+     221.0
+    ],
+    [
+     0.58,
+     225.0
+    ],
+    [
+     0.6,
+     230.0
+    ],
+    [
+     0.62,
+     232.0
+    ],
+    [
+     0.64,
+     235.0
+    ],
+    [
+     0.66,
+     244.0
+    ],
+    [
+     0.68,
+     245.0
+    ],
+    [
+     0.7,
+     258.0
+    ],
+    [
+     0.72,
+     261.0
+    ],
+    [
+     0.74,
+     270.0
+    ],
+    [
+     0.76,
+     272.0
+    ],
+    [
+     0.78,
+     283.0
+    ],
+    [
+     0.8,
+     284.0
+    ],
+    [
+     0.82,
+     291.0
+    ],
+    [
+     0.84,
+     294.0
+    ],
+    [
+     0.86,
+     309.0
+    ],
+    [
+     0.88,
+     322.0
+    ],
+    [
+     0.9,
+     324.0
+    ],
+    [
+     0.92,
+     333.0
+    ],
+    [
+     0.94,
+     343.0
+    ],
+    [
+     0.96,
+     373.0
+    ],
+    [
+     0.98,
+     428.0
+    ],
+    [
+     1.0,
+     497.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": true,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 201,
+   "n_eff": 132.5,
+   "players": 72,
+   "icc": 0.2927,
+   "median": 243.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     68.0
+    ],
+    [
+     0.04,
+     91.0
+    ],
+    [
+     0.06,
+     112.0
+    ],
+    [
+     0.08,
+     121.0
+    ],
+    [
+     0.1,
+     137.0
+    ],
+    [
+     0.12,
+     146.0
+    ],
+    [
+     0.14,
+     152.0
+    ],
+    [
+     0.16,
+     156.0
+    ],
+    [
+     0.18,
+     162.0
+    ],
+    [
+     0.2,
+     169.0
+    ],
+    [
+     0.22,
+     175.0
+    ],
+    [
+     0.24,
+     186.0
+    ],
+    [
+     0.26,
+     194.0
+    ],
+    [
+     0.28,
+     202.0
+    ],
+    [
+     0.3,
+     206.0
+    ],
+    [
+     0.32,
+     212.0
+    ],
+    [
+     0.34,
+     214.0
+    ],
+    [
+     0.36,
+     217.0
+    ],
+    [
+     0.38,
+     223.0
+    ],
+    [
+     0.4,
+     227.0
+    ],
+    [
+     0.42,
+     232.0
+    ],
+    [
+     0.44,
+     234.0
+    ],
+    [
+     0.46,
+     236.0
+    ],
+    [
+     0.48,
+     240.0
+    ],
+    [
+     0.5,
+     243.0
+    ],
+    [
+     0.52,
+     247.0
+    ],
+    [
+     0.54,
+     254.0
+    ],
+    [
+     0.56,
+     262.0
+    ],
+    [
+     0.58,
+     266.0
+    ],
+    [
+     0.6,
+     276.0
+    ],
+    [
+     0.62,
+     280.0
+    ],
+    [
+     0.64,
+     284.0
+    ],
+    [
+     0.66,
+     287.0
+    ],
+    [
+     0.68,
+     292.0
+    ],
+    [
+     0.7,
+     295.0
+    ],
+    [
+     0.72,
+     299.0
+    ],
+    [
+     0.74,
+     301.0
+    ],
+    [
+     0.76,
+     306.0
+    ],
+    [
+     0.78,
+     309.0
+    ],
+    [
+     0.8,
+     313.0
+    ],
+    [
+     0.82,
+     318.0
+    ],
+    [
+     0.84,
+     324.0
+    ],
+    [
+     0.86,
+     330.0
+    ],
+    [
+     0.88,
+     336.0
+    ],
+    [
+     0.9,
+     361.0
+    ],
+    [
+     0.92,
+     370.0
+    ],
+    [
+     0.94,
+     380.0
+    ],
+    [
+     0.96,
+     384.0
+    ],
+    [
+     0.98,
+     404.0
+    ],
+    [
+     1.0,
+     527.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": true,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 185,
+   "n_eff": 147.8,
+   "players": 80,
+   "icc": 0.1942,
+   "median": 269.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     90.0
+    ],
+    [
+     0.04,
+     123.0
+    ],
+    [
+     0.06,
+     140.0
+    ],
+    [
+     0.08,
+     158.0
+    ],
+    [
+     0.1,
+     163.0
+    ],
+    [
+     0.12,
+     175.0
+    ],
+    [
+     0.14,
+     182.0
+    ],
+    [
+     0.16,
+     195.0
+    ],
+    [
+     0.18,
+     205.0
+    ],
+    [
+     0.2,
+     211.0
+    ],
+    [
+     0.22,
+     219.0
+    ],
+    [
+     0.24,
+     223.0
+    ],
+    [
+     0.26,
+     228.0
+    ],
+    [
+     0.28,
+     230.0
+    ],
+    [
+     0.3,
+     237.0
+    ],
+    [
+     0.32,
+     242.0
+    ],
+    [
+     0.34,
+     247.0
+    ],
+    [
+     0.36,
+     248.0
+    ],
+    [
+     0.38,
+     251.0
+    ],
+    [
+     0.4,
+     253.0
+    ],
+    [
+     0.42,
+     256.0
+    ],
+    [
+     0.44,
+     256.0
+    ],
+    [
+     0.46,
+     263.0
+    ],
+    [
+     0.48,
+     266.0
+    ],
+    [
+     0.5,
+     269.0
+    ],
+    [
+     0.52,
+     272.0
+    ],
+    [
+     0.54,
+     275.0
+    ],
+    [
+     0.56,
+     280.0
+    ],
+    [
+     0.58,
+     284.0
+    ],
+    [
+     0.6,
+     290.0
+    ],
+    [
+     0.62,
+     297.0
+    ],
+    [
+     0.64,
+     298.0
+    ],
+    [
+     0.66,
+     303.0
+    ],
+    [
+     0.68,
+     307.0
+    ],
+    [
+     0.7,
+     313.0
+    ],
+    [
+     0.72,
+     316.0
+    ],
+    [
+     0.74,
+     323.0
+    ],
+    [
+     0.76,
+     326.0
+    ],
+    [
+     0.78,
+     328.0
+    ],
+    [
+     0.8,
+     334.0
+    ],
+    [
+     0.82,
+     340.0
+    ],
+    [
+     0.84,
+     342.0
+    ],
+    [
+     0.86,
+     355.0
+    ],
+    [
+     0.88,
+     363.0
+    ],
+    [
+     0.9,
+     369.0
+    ],
+    [
+     0.92,
+     374.0
+    ],
+    [
+     0.94,
+     378.0
+    ],
+    [
+     0.96,
+     391.0
+    ],
+    [
+     0.98,
+     420.0
+    ],
+    [
+     1.0,
+     463.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": true,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 209,
+   "n_eff": 183.5,
+   "players": 80,
+   "icc": 0.0873,
+   "median": 262.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     20.0
+    ],
+    [
+     0.04,
+     56.0
+    ],
+    [
+     0.06,
+     120.0
+    ],
+    [
+     0.08,
+     149.0
+    ],
+    [
+     0.1,
+     166.0
+    ],
+    [
+     0.12,
+     172.0
+    ],
+    [
+     0.14,
+     180.0
+    ],
+    [
+     0.16,
+     190.0
+    ],
+    [
+     0.18,
+     196.0
+    ],
+    [
+     0.2,
+     202.0
+    ],
+    [
+     0.22,
+     208.0
+    ],
+    [
+     0.24,
+     210.0
+    ],
+    [
+     0.26,
+     219.0
+    ],
+    [
+     0.28,
+     222.0
+    ],
+    [
+     0.3,
+     228.0
+    ],
+    [
+     0.32,
+     233.0
+    ],
+    [
+     0.34,
+     241.0
+    ],
+    [
+     0.36,
+     243.0
+    ],
+    [
+     0.38,
+     246.0
+    ],
+    [
+     0.4,
+     248.0
+    ],
+    [
+     0.42,
+     251.0
+    ],
+    [
+     0.44,
+     255.0
+    ],
+    [
+     0.46,
+     257.0
+    ],
+    [
+     0.48,
+     259.0
+    ],
+    [
+     0.5,
+     262.0
+    ],
+    [
+     0.52,
+     266.0
+    ],
+    [
+     0.54,
+     268.0
+    ],
+    [
+     0.56,
+     273.0
+    ],
+    [
+     0.58,
+     279.0
+    ],
+    [
+     0.6,
+     281.0
+    ],
+    [
+     0.62,
+     285.0
+    ],
+    [
+     0.64,
+     291.0
+    ],
+    [
+     0.66,
+     298.0
+    ],
+    [
+     0.68,
+     303.0
+    ],
+    [
+     0.7,
+     305.0
+    ],
+    [
+     0.72,
+     308.0
+    ],
+    [
+     0.74,
+     312.0
+    ],
+    [
+     0.76,
+     316.0
+    ],
+    [
+     0.78,
+     319.0
+    ],
+    [
+     0.8,
+     323.0
+    ],
+    [
+     0.82,
+     331.0
+    ],
+    [
+     0.84,
+     337.0
+    ],
+    [
+     0.86,
+     344.0
+    ],
+    [
+     0.88,
+     349.0
+    ],
+    [
+     0.9,
+     365.0
+    ],
+    [
+     0.92,
+     373.0
+    ],
+    [
+     0.94,
+     384.0
+    ],
+    [
+     0.96,
+     414.0
+    ],
+    [
+     0.98,
+     424.0
+    ],
+    [
+     1.0,
+     509.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": true,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 239,
+   "n_eff": 211.1,
+   "players": 66,
+   "icc": 0.0513,
+   "median": 276.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     37.0
+    ],
+    [
+     0.04,
+     120.0
+    ],
+    [
+     0.06,
+     147.0
+    ],
+    [
+     0.08,
+     167.0
+    ],
+    [
+     0.1,
+     184.0
+    ],
+    [
+     0.12,
+     195.0
+    ],
+    [
+     0.14,
+     199.0
+    ],
+    [
+     0.16,
+     205.0
+    ],
+    [
+     0.18,
+     212.0
+    ],
+    [
+     0.2,
+     220.0
+    ],
+    [
+     0.22,
+     226.0
+    ],
+    [
+     0.24,
+     229.0
+    ],
+    [
+     0.26,
+     233.0
+    ],
+    [
+     0.28,
+     237.0
+    ],
+    [
+     0.3,
+     241.0
+    ],
+    [
+     0.32,
+     244.0
+    ],
+    [
+     0.34,
+     247.0
+    ],
+    [
+     0.36,
+     251.0
+    ],
+    [
+     0.38,
+     255.0
+    ],
+    [
+     0.4,
+     259.0
+    ],
+    [
+     0.42,
+     263.0
+    ],
+    [
+     0.44,
+     269.0
+    ],
+    [
+     0.46,
+     272.0
+    ],
+    [
+     0.48,
+     273.0
+    ],
+    [
+     0.5,
+     276.0
+    ],
+    [
+     0.52,
+     278.0
+    ],
+    [
+     0.54,
+     283.0
+    ],
+    [
+     0.56,
+     285.0
+    ],
+    [
+     0.58,
+     288.0
+    ],
+    [
+     0.6,
+     291.0
+    ],
+    [
+     0.62,
+     293.0
+    ],
+    [
+     0.64,
+     296.0
+    ],
+    [
+     0.66,
+     302.0
+    ],
+    [
+     0.68,
+     304.0
+    ],
+    [
+     0.7,
+     308.0
+    ],
+    [
+     0.72,
+     312.0
+    ],
+    [
+     0.74,
+     319.0
+    ],
+    [
+     0.76,
+     321.0
+    ],
+    [
+     0.78,
+     330.0
+    ],
+    [
+     0.8,
+     334.0
+    ],
+    [
+     0.82,
+     341.0
+    ],
+    [
+     0.84,
+     346.0
+    ],
+    [
+     0.86,
+     351.0
+    ],
+    [
+     0.88,
+     360.0
+    ],
+    [
+     0.9,
+     368.0
+    ],
+    [
+     0.92,
+     373.0
+    ],
+    [
+     0.94,
+     385.0
+    ],
+    [
+     0.96,
+     412.0
+    ],
+    [
+     0.98,
+     441.0
+    ],
+    [
+     1.0,
+     503.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": true,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 237,
+   "n_eff": 187.8,
+   "players": 62,
+   "icc": 0.0949,
+   "median": 280.0,
+   "quantiles": [
+    [
+     0.0,
+     28.0
+    ],
+    [
+     0.02,
+     98.0
+    ],
+    [
+     0.04,
+     138.0
+    ],
+    [
+     0.06,
+     166.0
+    ],
+    [
+     0.08,
+     170.0
+    ],
+    [
+     0.1,
+     176.0
+    ],
+    [
+     0.12,
+     192.0
+    ],
+    [
+     0.14,
+     197.0
+    ],
+    [
+     0.16,
+     204.0
+    ],
+    [
+     0.18,
+     207.0
+    ],
+    [
+     0.2,
+     216.0
+    ],
+    [
+     0.22,
+     220.0
+    ],
+    [
+     0.24,
+     224.0
+    ],
+    [
+     0.26,
+     229.0
+    ],
+    [
+     0.28,
+     233.0
+    ],
+    [
+     0.3,
+     236.0
+    ],
+    [
+     0.32,
+     243.0
+    ],
+    [
+     0.34,
+     246.0
+    ],
+    [
+     0.36,
+     249.0
+    ],
+    [
+     0.38,
+     254.0
+    ],
+    [
+     0.4,
+     257.0
+    ],
+    [
+     0.42,
+     262.0
+    ],
+    [
+     0.44,
+     265.0
+    ],
+    [
+     0.46,
+     272.0
+    ],
+    [
+     0.48,
+     278.0
+    ],
+    [
+     0.5,
+     280.0
+    ],
+    [
+     0.52,
+     281.0
+    ],
+    [
+     0.54,
+     283.0
+    ],
+    [
+     0.56,
+     286.0
+    ],
+    [
+     0.58,
+     289.0
+    ],
+    [
+     0.6,
+     295.0
+    ],
+    [
+     0.62,
+     299.0
+    ],
+    [
+     0.64,
+     305.0
+    ],
+    [
+     0.66,
+     309.0
+    ],
+    [
+     0.68,
+     316.0
+    ],
+    [
+     0.7,
+     318.0
+    ],
+    [
+     0.72,
+     323.0
+    ],
+    [
+     0.74,
+     327.0
+    ],
+    [
+     0.76,
+     335.0
+    ],
+    [
+     0.78,
+     337.0
+    ],
+    [
+     0.8,
+     340.0
+    ],
+    [
+     0.82,
+     346.0
+    ],
+    [
+     0.84,
+     355.0
+    ],
+    [
+     0.86,
+     364.0
+    ],
+    [
+     0.88,
+     368.0
+    ],
+    [
+     0.9,
+     375.0
+    ],
+    [
+     0.92,
+     388.0
+    ],
+    [
+     0.94,
+     393.0
+    ],
+    [
+     0.96,
+     406.0
+    ],
+    [
+     0.98,
+     437.0
+    ],
+    [
+     1.0,
+     522.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": true,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 229,
+   "n_eff": 157.7,
+   "players": 66,
+   "icc": 0.1855,
+   "median": 277.0,
+   "quantiles": [
+    [
+     0.0,
+     -7.0
+    ],
+    [
+     0.02,
+     134.0
+    ],
+    [
+     0.04,
+     153.0
+    ],
+    [
+     0.06,
+     162.0
+    ],
+    [
+     0.08,
+     173.0
+    ],
+    [
+     0.1,
+     180.0
+    ],
+    [
+     0.12,
+     196.0
+    ],
+    [
+     0.14,
+     199.0
+    ],
+    [
+     0.16,
+     204.0
+    ],
+    [
+     0.18,
+     211.0
+    ],
+    [
+     0.2,
+     219.0
+    ],
+    [
+     0.22,
+     221.0
+    ],
+    [
+     0.24,
+     226.0
+    ],
+    [
+     0.26,
+     232.0
+    ],
+    [
+     0.28,
+     240.0
+    ],
+    [
+     0.3,
+     244.0
+    ],
+    [
+     0.32,
+     252.0
+    ],
+    [
+     0.34,
+     254.0
+    ],
+    [
+     0.36,
+     259.0
+    ],
+    [
+     0.38,
+     261.0
+    ],
+    [
+     0.4,
+     265.0
+    ],
+    [
+     0.42,
+     268.0
+    ],
+    [
+     0.44,
+     269.0
+    ],
+    [
+     0.46,
+     271.0
+    ],
+    [
+     0.48,
+     274.0
+    ],
+    [
+     0.5,
+     277.0
+    ],
+    [
+     0.52,
+     279.0
+    ],
+    [
+     0.54,
+     283.0
+    ],
+    [
+     0.56,
+     288.0
+    ],
+    [
+     0.58,
+     291.0
+    ],
+    [
+     0.6,
+     294.0
+    ],
+    [
+     0.62,
+     295.0
+    ],
+    [
+     0.64,
+     301.0
+    ],
+    [
+     0.66,
+     304.0
+    ],
+    [
+     0.68,
+     309.0
+    ],
+    [
+     0.7,
+     311.0
+    ],
+    [
+     0.72,
+     315.0
+    ],
+    [
+     0.74,
+     319.0
+    ],
+    [
+     0.76,
+     326.0
+    ],
+    [
+     0.78,
+     331.0
+    ],
+    [
+     0.8,
+     335.0
+    ],
+    [
+     0.82,
+     340.0
+    ],
+    [
+     0.84,
+     347.0
+    ],
+    [
+     0.86,
+     351.0
+    ],
+    [
+     0.88,
+     353.0
+    ],
+    [
+     0.9,
+     363.0
+    ],
+    [
+     0.92,
+     376.0
+    ],
+    [
+     0.94,
+     390.0
+    ],
+    [
+     0.96,
+     404.0
+    ],
+    [
+     0.98,
+     422.0
+    ],
+    [
+     1.0,
+     506.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": true,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 144,
+   "n_eff": 119.3,
+   "players": 32,
+   "icc": 0.0618,
+   "median": 299.0,
+   "quantiles": [
+    [
+     0.0,
+     4.0
+    ],
+    [
+     0.02,
+     56.0
+    ],
+    [
+     0.04,
+     148.0
+    ],
+    [
+     0.06,
+     166.0
+    ],
+    [
+     0.08,
+     179.0
+    ],
+    [
+     0.1,
+     183.0
+    ],
+    [
+     0.12,
+     198.0
+    ],
+    [
+     0.14,
+     217.0
+    ],
+    [
+     0.16,
+     221.0
+    ],
+    [
+     0.18,
+     226.0
+    ],
+    [
+     0.2,
+     229.0
+    ],
+    [
+     0.22,
+     233.0
+    ],
+    [
+     0.24,
+     236.0
+    ],
+    [
+     0.26,
+     245.0
+    ],
+    [
+     0.28,
+     252.0
+    ],
+    [
+     0.3,
+     256.0
+    ],
+    [
+     0.32,
+     258.0
+    ],
+    [
+     0.34,
+     264.0
+    ],
+    [
+     0.36,
+     269.0
+    ],
+    [
+     0.38,
+     270.0
+    ],
+    [
+     0.4,
+     273.0
+    ],
+    [
+     0.42,
+     282.0
+    ],
+    [
+     0.44,
+     284.0
+    ],
+    [
+     0.46,
+     289.0
+    ],
+    [
+     0.48,
+     296.0
+    ],
+    [
+     0.5,
+     298.0
+    ],
+    [
+     0.52,
+     302.0
+    ],
+    [
+     0.54,
+     311.0
+    ],
+    [
+     0.56,
+     315.0
+    ],
+    [
+     0.58,
+     323.0
+    ],
+    [
+     0.6,
+     325.0
+    ],
+    [
+     0.62,
+     328.0
+    ],
+    [
+     0.64,
+     332.0
+    ],
+    [
+     0.66,
+     334.0
+    ],
+    [
+     0.68,
+     340.0
+    ],
+    [
+     0.7,
+     341.0
+    ],
+    [
+     0.72,
+     343.0
+    ],
+    [
+     0.74,
+     348.0
+    ],
+    [
+     0.76,
+     353.0
+    ],
+    [
+     0.78,
+     356.0
+    ],
+    [
+     0.8,
+     361.0
+    ],
+    [
+     0.82,
+     370.0
+    ],
+    [
+     0.84,
+     373.0
+    ],
+    [
+     0.86,
+     375.0
+    ],
+    [
+     0.88,
+     382.0
+    ],
+    [
+     0.9,
+     390.0
+    ],
+    [
+     0.92,
+     398.0
+    ],
+    [
+     0.94,
+     406.0
+    ],
+    [
+     0.96,
+     412.0
+    ],
+    [
+     0.98,
+     441.0
+    ],
+    [
+     1.0,
+     506.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": true,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 122,
+   "n_eff": 68.2,
+   "players": 29,
+   "icc": 0.2585,
+   "median": 307.5,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     122.0
+    ],
+    [
+     0.04,
+     156.0
+    ],
+    [
+     0.06,
+     190.0
+    ],
+    [
+     0.08,
+     205.0
+    ],
+    [
+     0.1,
+     207.0
+    ],
+    [
+     0.12,
+     209.0
+    ],
+    [
+     0.14,
+     210.0
+    ],
+    [
+     0.16,
+     216.0
+    ],
+    [
+     0.18,
+     223.0
+    ],
+    [
+     0.2,
+     228.0
+    ],
+    [
+     0.22,
+     231.0
+    ],
+    [
+     0.24,
+     237.0
+    ],
+    [
+     0.26,
+     241.0
+    ],
+    [
+     0.28,
+     244.0
+    ],
+    [
+     0.3,
+     254.0
+    ],
+    [
+     0.32,
+     259.0
+    ],
+    [
+     0.34,
+     261.0
+    ],
+    [
+     0.36,
+     262.0
+    ],
+    [
+     0.38,
+     266.0
+    ],
+    [
+     0.4,
+     275.0
+    ],
+    [
+     0.42,
+     281.0
+    ],
+    [
+     0.44,
+     287.0
+    ],
+    [
+     0.46,
+     296.0
+    ],
+    [
+     0.48,
+     303.0
+    ],
+    [
+     0.5,
+     307.0
+    ],
+    [
+     0.52,
+     309.0
+    ],
+    [
+     0.54,
+     312.0
+    ],
+    [
+     0.56,
+     317.0
+    ],
+    [
+     0.58,
+     320.0
+    ],
+    [
+     0.6,
+     322.0
+    ],
+    [
+     0.62,
+     325.0
+    ],
+    [
+     0.64,
+     329.0
+    ],
+    [
+     0.66,
+     330.0
+    ],
+    [
+     0.68,
+     340.0
+    ],
+    [
+     0.7,
+     341.0
+    ],
+    [
+     0.72,
+     347.0
+    ],
+    [
+     0.74,
+     350.0
+    ],
+    [
+     0.76,
+     352.0
+    ],
+    [
+     0.78,
+     357.0
+    ],
+    [
+     0.8,
+     362.0
+    ],
+    [
+     0.82,
+     370.0
+    ],
+    [
+     0.84,
+     371.0
+    ],
+    [
+     0.86,
+     389.0
+    ],
+    [
+     0.88,
+     391.0
+    ],
+    [
+     0.9,
+     400.0
+    ],
+    [
+     0.92,
+     416.0
+    ],
+    [
+     0.94,
+     441.0
+    ],
+    [
+     0.96,
+     446.0
+    ],
+    [
+     0.98,
+     465.0
+    ],
+    [
+     1.0,
+     505.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": true,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 111,
+   "n_eff": 61.1,
+   "players": 33,
+   "icc": 0.3543,
+   "median": 312.0,
+   "quantiles": [
+    [
+     0.0,
+     61.0
+    ],
+    [
+     0.02,
+     101.0
+    ],
+    [
+     0.04,
+     127.0
+    ],
+    [
+     0.06,
+     161.0
+    ],
+    [
+     0.08,
+     168.0
+    ],
+    [
+     0.1,
+     182.0
+    ],
+    [
+     0.12,
+     198.0
+    ],
+    [
+     0.14,
+     206.0
+    ],
+    [
+     0.16,
+     212.0
+    ],
+    [
+     0.18,
+     223.0
+    ],
+    [
+     0.2,
+     231.0
+    ],
+    [
+     0.22,
+     246.0
+    ],
+    [
+     0.24,
+     252.0
+    ],
+    [
+     0.26,
+     257.0
+    ],
+    [
+     0.28,
+     265.0
+    ],
+    [
+     0.3,
+     273.0
+    ],
+    [
+     0.32,
+     281.0
+    ],
+    [
+     0.34,
+     283.0
+    ],
+    [
+     0.36,
+     286.0
+    ],
+    [
+     0.38,
+     289.0
+    ],
+    [
+     0.4,
+     295.0
+    ],
+    [
+     0.42,
+     299.0
+    ],
+    [
+     0.44,
+     300.0
+    ],
+    [
+     0.46,
+     303.0
+    ],
+    [
+     0.48,
+     304.0
+    ],
+    [
+     0.5,
+     312.0
+    ],
+    [
+     0.52,
+     312.0
+    ],
+    [
+     0.54,
+     313.0
+    ],
+    [
+     0.56,
+     313.0
+    ],
+    [
+     0.58,
+     317.0
+    ],
+    [
+     0.6,
+     319.0
+    ],
+    [
+     0.62,
+     320.0
+    ],
+    [
+     0.64,
+     327.0
+    ],
+    [
+     0.66,
+     335.0
+    ],
+    [
+     0.68,
+     337.0
+    ],
+    [
+     0.7,
+     345.0
+    ],
+    [
+     0.72,
+     351.0
+    ],
+    [
+     0.74,
+     354.0
+    ],
+    [
+     0.76,
+     358.0
+    ],
+    [
+     0.78,
+     365.0
+    ],
+    [
+     0.8,
+     371.0
+    ],
+    [
+     0.82,
+     375.0
+    ],
+    [
+     0.84,
+     381.0
+    ],
+    [
+     0.86,
+     386.0
+    ],
+    [
+     0.88,
+     391.0
+    ],
+    [
+     0.9,
+     395.0
+    ],
+    [
+     0.92,
+     406.0
+    ],
+    [
+     0.94,
+     412.0
+    ],
+    [
+     0.96,
+     420.0
+    ],
+    [
+     0.98,
+     425.0
+    ],
+    [
+     1.0,
+     520.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": false,
+   "opportunity_min": 0,
+   "opportunity_max": 28,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 179,
+   "n_eff": 125.6,
+   "players": 73,
+   "icc": 0.2973,
+   "median": 175.0,
+   "quantiles": [
+    [
+     0.0,
+     -1.0
+    ],
+    [
+     0.02,
+     0.0
+    ],
+    [
+     0.04,
+     0.0
+    ],
+    [
+     0.06,
+     0.0
+    ],
+    [
+     0.08,
+     5.0
+    ],
+    [
+     0.1,
+     6.0
+    ],
+    [
+     0.12,
+     30.0
+    ],
+    [
+     0.14,
+     45.0
+    ],
+    [
+     0.16,
+     57.0
+    ],
+    [
+     0.18,
+     81.0
+    ],
+    [
+     0.2,
+     91.0
+    ],
+    [
+     0.22,
+     96.0
+    ],
+    [
+     0.24,
+     101.0
+    ],
+    [
+     0.26,
+     105.0
+    ],
+    [
+     0.28,
+     110.0
+    ],
+    [
+     0.3,
+     121.0
+    ],
+    [
+     0.32,
+     125.0
+    ],
+    [
+     0.34,
+     128.0
+    ],
+    [
+     0.36,
+     135.0
+    ],
+    [
+     0.38,
+     145.0
+    ],
+    [
+     0.4,
+     149.0
+    ],
+    [
+     0.42,
+     160.0
+    ],
+    [
+     0.44,
+     167.0
+    ],
+    [
+     0.46,
+     168.0
+    ],
+    [
+     0.48,
+     173.0
+    ],
+    [
+     0.5,
+     175.0
+    ],
+    [
+     0.52,
+     176.0
+    ],
+    [
+     0.54,
+     181.0
+    ],
+    [
+     0.56,
+     182.0
+    ],
+    [
+     0.58,
+     183.0
+    ],
+    [
+     0.6,
+     198.0
+    ],
+    [
+     0.62,
+     204.0
+    ],
+    [
+     0.64,
+     209.0
+    ],
+    [
+     0.66,
+     217.0
+    ],
+    [
+     0.68,
+     223.0
+    ],
+    [
+     0.7,
+     224.0
+    ],
+    [
+     0.72,
+     230.0
+    ],
+    [
+     0.74,
+     235.0
+    ],
+    [
+     0.76,
+     237.0
+    ],
+    [
+     0.78,
+     240.0
+    ],
+    [
+     0.8,
+     243.0
+    ],
+    [
+     0.82,
+     246.0
+    ],
+    [
+     0.84,
+     253.0
+    ],
+    [
+     0.86,
+     276.0
+    ],
+    [
+     0.88,
+     282.0
+    ],
+    [
+     0.9,
+     288.0
+    ],
+    [
+     0.92,
+     290.0
+    ],
+    [
+     0.94,
+     299.0
+    ],
+    [
+     0.96,
+     306.0
+    ],
+    [
+     0.98,
+     317.0
+    ],
+    [
+     1.0,
+     355.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": false,
+   "opportunity_min": 0,
+   "opportunity_max": 28,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 157,
+   "n_eff": 114.1,
+   "players": 65,
+   "icc": 0.2702,
+   "median": 193.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     0.0
+    ],
+    [
+     0.04,
+     31.0
+    ],
+    [
+     0.06,
+     54.0
+    ],
+    [
+     0.08,
+     76.0
+    ],
+    [
+     0.1,
+     85.0
+    ],
+    [
+     0.12,
+     100.0
+    ],
+    [
+     0.14,
+     108.0
+    ],
+    [
+     0.16,
+     116.0
+    ],
+    [
+     0.18,
+     119.0
+    ],
+    [
+     0.2,
+     129.0
+    ],
+    [
+     0.22,
+     135.0
+    ],
+    [
+     0.24,
+     143.0
+    ],
+    [
+     0.26,
+     152.0
+    ],
+    [
+     0.28,
+     152.0
+    ],
+    [
+     0.3,
+     154.0
+    ],
+    [
+     0.32,
+     160.0
+    ],
+    [
+     0.34,
+     164.0
+    ],
+    [
+     0.36,
+     170.0
+    ],
+    [
+     0.38,
+     175.0
+    ],
+    [
+     0.4,
+     177.0
+    ],
+    [
+     0.42,
+     178.0
+    ],
+    [
+     0.44,
+     180.0
+    ],
+    [
+     0.46,
+     184.0
+    ],
+    [
+     0.48,
+     191.0
+    ],
+    [
+     0.5,
+     193.0
+    ],
+    [
+     0.52,
+     195.0
+    ],
+    [
+     0.54,
+     201.0
+    ],
+    [
+     0.56,
+     204.0
+    ],
+    [
+     0.58,
+     207.0
+    ],
+    [
+     0.6,
+     210.0
+    ],
+    [
+     0.62,
+     214.0
+    ],
+    [
+     0.64,
+     227.0
+    ],
+    [
+     0.66,
+     232.0
+    ],
+    [
+     0.68,
+     236.0
+    ],
+    [
+     0.7,
+     238.0
+    ],
+    [
+     0.72,
+     241.0
+    ],
+    [
+     0.74,
+     243.0
+    ],
+    [
+     0.76,
+     248.0
+    ],
+    [
+     0.78,
+     250.0
+    ],
+    [
+     0.8,
+     255.0
+    ],
+    [
+     0.82,
+     264.0
+    ],
+    [
+     0.84,
+     271.0
+    ],
+    [
+     0.86,
+     273.0
+    ],
+    [
+     0.88,
+     281.0
+    ],
+    [
+     0.9,
+     288.0
+    ],
+    [
+     0.92,
+     293.0
+    ],
+    [
+     0.94,
+     297.0
+    ],
+    [
+     0.96,
+     314.0
+    ],
+    [
+     0.98,
+     331.0
+    ],
+    [
+     1.0,
+     368.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": false,
+   "opportunity_min": 0,
+   "opportunity_max": 28,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 328,
+   "n_eff": 269.2,
+   "players": 107,
+   "icc": 0.1065,
+   "median": 178.5,
+   "quantiles": [
+    [
+     0.0,
+     -2.0
+    ],
+    [
+     0.02,
+     0.0
+    ],
+    [
+     0.04,
+     13.0
+    ],
+    [
+     0.06,
+     33.0
+    ],
+    [
+     0.08,
+     51.0
+    ],
+    [
+     0.1,
+     61.0
+    ],
+    [
+     0.12,
+     76.0
+    ],
+    [
+     0.14,
+     83.0
+    ],
+    [
+     0.16,
+     90.0
+    ],
+    [
+     0.18,
+     95.0
+    ],
+    [
+     0.2,
+     107.0
+    ],
+    [
+     0.22,
+     111.0
+    ],
+    [
+     0.24,
+     126.0
+    ],
+    [
+     0.26,
+     133.0
+    ],
+    [
+     0.28,
+     136.0
+    ],
+    [
+     0.3,
+     141.0
+    ],
+    [
+     0.32,
+     145.0
+    ],
+    [
+     0.34,
+     152.0
+    ],
+    [
+     0.36,
+     156.0
+    ],
+    [
+     0.38,
+     161.0
+    ],
+    [
+     0.4,
+     162.0
+    ],
+    [
+     0.42,
+     167.0
+    ],
+    [
+     0.44,
+     169.0
+    ],
+    [
+     0.46,
+     172.0
+    ],
+    [
+     0.48,
+     174.0
+    ],
+    [
+     0.5,
+     178.0
+    ],
+    [
+     0.52,
+     183.0
+    ],
+    [
+     0.54,
+     186.0
+    ],
+    [
+     0.56,
+     191.0
+    ],
+    [
+     0.58,
+     195.0
+    ],
+    [
+     0.6,
+     198.0
+    ],
+    [
+     0.62,
+     202.0
+    ],
+    [
+     0.64,
+     210.0
+    ],
+    [
+     0.66,
+     213.0
+    ],
+    [
+     0.68,
+     219.0
+    ],
+    [
+     0.7,
+     220.0
+    ],
+    [
+     0.72,
+     226.0
+    ],
+    [
+     0.74,
+     235.0
+    ],
+    [
+     0.76,
+     240.0
+    ],
+    [
+     0.78,
+     243.0
+    ],
+    [
+     0.8,
+     250.0
+    ],
+    [
+     0.82,
+     257.0
+    ],
+    [
+     0.84,
+     264.0
+    ],
+    [
+     0.86,
+     274.0
+    ],
+    [
+     0.88,
+     279.0
+    ],
+    [
+     0.9,
+     289.0
+    ],
+    [
+     0.92,
+     296.0
+    ],
+    [
+     0.94,
+     306.0
+    ],
+    [
+     0.96,
+     326.0
+    ],
+    [
+     0.98,
+     348.0
+    ],
+    [
+     1.0,
+     396.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": false,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 432,
+   "n_eff": 286.8,
+   "players": 91,
+   "icc": 0.1363,
+   "median": 207.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     2.0
+    ],
+    [
+     0.04,
+     31.0
+    ],
+    [
+     0.06,
+     63.0
+    ],
+    [
+     0.08,
+     92.0
+    ],
+    [
+     0.1,
+     102.0
+    ],
+    [
+     0.12,
+     114.0
+    ],
+    [
+     0.14,
+     120.0
+    ],
+    [
+     0.16,
+     125.0
+    ],
+    [
+     0.18,
+     131.0
+    ],
+    [
+     0.2,
+     140.0
+    ],
+    [
+     0.22,
+     146.0
+    ],
+    [
+     0.24,
+     151.0
+    ],
+    [
+     0.26,
+     154.0
+    ],
+    [
+     0.28,
+     159.0
+    ],
+    [
+     0.3,
+     165.0
+    ],
+    [
+     0.32,
+     169.0
+    ],
+    [
+     0.34,
+     174.0
+    ],
+    [
+     0.36,
+     178.0
+    ],
+    [
+     0.38,
+     180.0
+    ],
+    [
+     0.4,
+     188.0
+    ],
+    [
+     0.42,
+     191.0
+    ],
+    [
+     0.44,
+     194.0
+    ],
+    [
+     0.46,
+     201.0
+    ],
+    [
+     0.48,
+     203.0
+    ],
+    [
+     0.5,
+     207.0
+    ],
+    [
+     0.52,
+     210.0
+    ],
+    [
+     0.54,
+     215.0
+    ],
+    [
+     0.56,
+     218.0
+    ],
+    [
+     0.58,
+     222.0
+    ],
+    [
+     0.6,
+     224.0
+    ],
+    [
+     0.62,
+     228.0
+    ],
+    [
+     0.64,
+     230.0
+    ],
+    [
+     0.66,
+     234.0
+    ],
+    [
+     0.68,
+     236.0
+    ],
+    [
+     0.7,
+     241.0
+    ],
+    [
+     0.72,
+     244.0
+    ],
+    [
+     0.74,
+     247.0
+    ],
+    [
+     0.76,
+     252.0
+    ],
+    [
+     0.78,
+     259.0
+    ],
+    [
+     0.8,
+     261.0
+    ],
+    [
+     0.82,
+     269.0
+    ],
+    [
+     0.84,
+     274.0
+    ],
+    [
+     0.86,
+     276.0
+    ],
+    [
+     0.88,
+     285.0
+    ],
+    [
+     0.9,
+     292.0
+    ],
+    [
+     0.92,
+     301.0
+    ],
+    [
+     0.94,
+     313.0
+    ],
+    [
+     0.96,
+     326.0
+    ],
+    [
+     0.98,
+     350.0
+    ],
+    [
+     1.0,
+     406.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": false,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 358,
+   "n_eff": 274.2,
+   "players": 94,
+   "icc": 0.11,
+   "median": 212.5,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     54.0
+    ],
+    [
+     0.04,
+     67.0
+    ],
+    [
+     0.06,
+     86.0
+    ],
+    [
+     0.08,
+     98.0
+    ],
+    [
+     0.1,
+     115.0
+    ],
+    [
+     0.12,
+     122.0
+    ],
+    [
+     0.14,
+     130.0
+    ],
+    [
+     0.16,
+     139.0
+    ],
+    [
+     0.18,
+     140.0
+    ],
+    [
+     0.2,
+     145.0
+    ],
+    [
+     0.22,
+     151.0
+    ],
+    [
+     0.24,
+     157.0
+    ],
+    [
+     0.26,
+     161.0
+    ],
+    [
+     0.28,
+     168.0
+    ],
+    [
+     0.3,
+     172.0
+    ],
+    [
+     0.32,
+     174.0
+    ],
+    [
+     0.34,
+     180.0
+    ],
+    [
+     0.36,
+     183.0
+    ],
+    [
+     0.38,
+     185.0
+    ],
+    [
+     0.4,
+     191.0
+    ],
+    [
+     0.42,
+     196.0
+    ],
+    [
+     0.44,
+     202.0
+    ],
+    [
+     0.46,
+     207.0
+    ],
+    [
+     0.48,
+     209.0
+    ],
+    [
+     0.5,
+     212.0
+    ],
+    [
+     0.52,
+     217.0
+    ],
+    [
+     0.54,
+     220.0
+    ],
+    [
+     0.56,
+     222.0
+    ],
+    [
+     0.58,
+     225.0
+    ],
+    [
+     0.6,
+     229.0
+    ],
+    [
+     0.62,
+     232.0
+    ],
+    [
+     0.64,
+     237.0
+    ],
+    [
+     0.66,
+     239.0
+    ],
+    [
+     0.68,
+     243.0
+    ],
+    [
+     0.7,
+     247.0
+    ],
+    [
+     0.72,
+     251.0
+    ],
+    [
+     0.74,
+     255.0
+    ],
+    [
+     0.76,
+     260.0
+    ],
+    [
+     0.78,
+     264.0
+    ],
+    [
+     0.8,
+     268.0
+    ],
+    [
+     0.82,
+     274.0
+    ],
+    [
+     0.84,
+     281.0
+    ],
+    [
+     0.86,
+     289.0
+    ],
+    [
+     0.88,
+     293.0
+    ],
+    [
+     0.9,
+     299.0
+    ],
+    [
+     0.92,
+     309.0
+    ],
+    [
+     0.94,
+     321.0
+    ],
+    [
+     0.96,
+     340.0
+    ],
+    [
+     0.98,
+     353.0
+    ],
+    [
+     1.0,
+     421.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": false,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 403,
+   "n_eff": 280.4,
+   "players": 105,
+   "icc": 0.1553,
+   "median": 209.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     38.0
+    ],
+    [
+     0.04,
+     62.0
+    ],
+    [
+     0.06,
+     87.0
+    ],
+    [
+     0.08,
+     95.0
+    ],
+    [
+     0.1,
+     113.0
+    ],
+    [
+     0.12,
+     123.0
+    ],
+    [
+     0.14,
+     128.0
+    ],
+    [
+     0.16,
+     136.0
+    ],
+    [
+     0.18,
+     145.0
+    ],
+    [
+     0.2,
+     148.0
+    ],
+    [
+     0.22,
+     154.0
+    ],
+    [
+     0.24,
+     158.0
+    ],
+    [
+     0.26,
+     165.0
+    ],
+    [
+     0.28,
+     167.0
+    ],
+    [
+     0.3,
+     170.0
+    ],
+    [
+     0.32,
+     176.0
+    ],
+    [
+     0.34,
+     181.0
+    ],
+    [
+     0.36,
+     185.0
+    ],
+    [
+     0.38,
+     186.0
+    ],
+    [
+     0.4,
+     191.0
+    ],
+    [
+     0.42,
+     194.0
+    ],
+    [
+     0.44,
+     198.0
+    ],
+    [
+     0.46,
+     201.0
+    ],
+    [
+     0.48,
+     205.0
+    ],
+    [
+     0.5,
+     209.0
+    ],
+    [
+     0.52,
+     215.0
+    ],
+    [
+     0.54,
+     220.0
+    ],
+    [
+     0.56,
+     222.0
+    ],
+    [
+     0.58,
+     224.0
+    ],
+    [
+     0.6,
+     229.0
+    ],
+    [
+     0.62,
+     232.0
+    ],
+    [
+     0.64,
+     235.0
+    ],
+    [
+     0.66,
+     238.0
+    ],
+    [
+     0.68,
+     241.0
+    ],
+    [
+     0.7,
+     244.0
+    ],
+    [
+     0.72,
+     246.0
+    ],
+    [
+     0.74,
+     255.0
+    ],
+    [
+     0.76,
+     258.0
+    ],
+    [
+     0.78,
+     261.0
+    ],
+    [
+     0.8,
+     268.0
+    ],
+    [
+     0.82,
+     275.0
+    ],
+    [
+     0.84,
+     281.0
+    ],
+    [
+     0.86,
+     288.0
+    ],
+    [
+     0.88,
+     295.0
+    ],
+    [
+     0.9,
+     299.0
+    ],
+    [
+     0.92,
+     308.0
+    ],
+    [
+     0.94,
+     319.0
+    ],
+    [
+     0.96,
+     330.0
+    ],
+    [
+     0.98,
+     344.0
+    ],
+    [
+     1.0,
+     390.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": false,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 482,
+   "n_eff": 412.3,
+   "players": 78,
+   "icc": 0.0331,
+   "median": 223.5,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     55.0
+    ],
+    [
+     0.04,
+     99.0
+    ],
+    [
+     0.06,
+     115.0
+    ],
+    [
+     0.08,
+     125.0
+    ],
+    [
+     0.1,
+     133.0
+    ],
+    [
+     0.12,
+     140.0
+    ],
+    [
+     0.14,
+     149.0
+    ],
+    [
+     0.16,
+     153.0
+    ],
+    [
+     0.18,
+     158.0
+    ],
+    [
+     0.2,
+     161.0
+    ],
+    [
+     0.22,
+     165.0
+    ],
+    [
+     0.24,
+     173.0
+    ],
+    [
+     0.26,
+     176.0
+    ],
+    [
+     0.28,
+     178.0
+    ],
+    [
+     0.3,
+     185.0
+    ],
+    [
+     0.32,
+     190.0
+    ],
+    [
+     0.34,
+     193.0
+    ],
+    [
+     0.36,
+     198.0
+    ],
+    [
+     0.38,
+     200.0
+    ],
+    [
+     0.4,
+     204.0
+    ],
+    [
+     0.42,
+     209.0
+    ],
+    [
+     0.44,
+     212.0
+    ],
+    [
+     0.46,
+     216.0
+    ],
+    [
+     0.48,
+     219.0
+    ],
+    [
+     0.5,
+     223.0
+    ],
+    [
+     0.52,
+     227.0
+    ],
+    [
+     0.54,
+     230.0
+    ],
+    [
+     0.56,
+     233.0
+    ],
+    [
+     0.58,
+     237.0
+    ],
+    [
+     0.6,
+     245.0
+    ],
+    [
+     0.62,
+     249.0
+    ],
+    [
+     0.64,
+     253.0
+    ],
+    [
+     0.66,
+     258.0
+    ],
+    [
+     0.68,
+     261.0
+    ],
+    [
+     0.7,
+     265.0
+    ],
+    [
+     0.72,
+     269.0
+    ],
+    [
+     0.74,
+     272.0
+    ],
+    [
+     0.76,
+     277.0
+    ],
+    [
+     0.78,
+     283.0
+    ],
+    [
+     0.8,
+     286.0
+    ],
+    [
+     0.82,
+     293.0
+    ],
+    [
+     0.84,
+     298.0
+    ],
+    [
+     0.86,
+     301.0
+    ],
+    [
+     0.88,
+     308.0
+    ],
+    [
+     0.9,
+     313.0
+    ],
+    [
+     0.92,
+     330.0
+    ],
+    [
+     0.94,
+     342.0
+    ],
+    [
+     0.96,
+     354.0
+    ],
+    [
+     0.98,
+     376.0
+    ],
+    [
+     1.0,
+     424.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": false,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 404,
+   "n_eff": 222.1,
+   "players": 81,
+   "icc": 0.2084,
+   "median": 224.5,
+   "quantiles": [
+    [
+     0.0,
+     17.0
+    ],
+    [
+     0.02,
+     71.0
+    ],
+    [
+     0.04,
+     99.0
+    ],
+    [
+     0.06,
+     113.0
+    ],
+    [
+     0.08,
+     123.0
+    ],
+    [
+     0.1,
+     132.0
+    ],
+    [
+     0.12,
+     139.0
+    ],
+    [
+     0.14,
+     146.0
+    ],
+    [
+     0.16,
+     151.0
+    ],
+    [
+     0.18,
+     154.0
+    ],
+    [
+     0.2,
+     161.0
+    ],
+    [
+     0.22,
+     168.0
+    ],
+    [
+     0.24,
+     175.0
+    ],
+    [
+     0.26,
+     181.0
+    ],
+    [
+     0.28,
+     186.0
+    ],
+    [
+     0.3,
+     189.0
+    ],
+    [
+     0.32,
+     192.0
+    ],
+    [
+     0.34,
+     196.0
+    ],
+    [
+     0.36,
+     201.0
+    ],
+    [
+     0.38,
+     202.0
+    ],
+    [
+     0.4,
+     206.0
+    ],
+    [
+     0.42,
+     210.0
+    ],
+    [
+     0.44,
+     215.0
+    ],
+    [
+     0.46,
+     218.0
+    ],
+    [
+     0.48,
+     221.0
+    ],
+    [
+     0.5,
+     224.0
+    ],
+    [
+     0.52,
+     227.0
+    ],
+    [
+     0.54,
+     230.0
+    ],
+    [
+     0.56,
+     235.0
+    ],
+    [
+     0.58,
+     239.0
+    ],
+    [
+     0.6,
+     242.0
+    ],
+    [
+     0.62,
+     246.0
+    ],
+    [
+     0.64,
+     250.0
+    ],
+    [
+     0.66,
+     254.0
+    ],
+    [
+     0.68,
+     258.0
+    ],
+    [
+     0.7,
+     264.0
+    ],
+    [
+     0.72,
+     266.0
+    ],
+    [
+     0.74,
+     269.0
+    ],
+    [
+     0.76,
+     277.0
+    ],
+    [
+     0.78,
+     281.0
+    ],
+    [
+     0.8,
+     286.0
+    ],
+    [
+     0.82,
+     294.0
+    ],
+    [
+     0.84,
+     301.0
+    ],
+    [
+     0.86,
+     306.0
+    ],
+    [
+     0.88,
+     310.0
+    ],
+    [
+     0.9,
+     315.0
+    ],
+    [
+     0.92,
+     324.0
+    ],
+    [
+     0.94,
+     333.0
+    ],
+    [
+     0.96,
+     344.0
+    ],
+    [
+     0.98,
+     365.0
+    ],
+    [
+     1.0,
+     446.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": false,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 446,
+   "n_eff": 276.3,
+   "players": 87,
+   "icc": 0.1501,
+   "median": 232.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     51.0
+    ],
+    [
+     0.04,
+     86.0
+    ],
+    [
+     0.06,
+     112.0
+    ],
+    [
+     0.08,
+     128.0
+    ],
+    [
+     0.1,
+     135.0
+    ],
+    [
+     0.12,
+     147.0
+    ],
+    [
+     0.14,
+     158.0
+    ],
+    [
+     0.16,
+     165.0
+    ],
+    [
+     0.18,
+     171.0
+    ],
+    [
+     0.2,
+     177.0
+    ],
+    [
+     0.22,
+     180.0
+    ],
+    [
+     0.24,
+     182.0
+    ],
+    [
+     0.26,
+     185.0
+    ],
+    [
+     0.28,
+     192.0
+    ],
+    [
+     0.3,
+     197.0
+    ],
+    [
+     0.32,
+     199.0
+    ],
+    [
+     0.34,
+     203.0
+    ],
+    [
+     0.36,
+     208.0
+    ],
+    [
+     0.38,
+     211.0
+    ],
+    [
+     0.4,
+     215.0
+    ],
+    [
+     0.42,
+     217.0
+    ],
+    [
+     0.44,
+     222.0
+    ],
+    [
+     0.46,
+     225.0
+    ],
+    [
+     0.48,
+     228.0
+    ],
+    [
+     0.5,
+     232.0
+    ],
+    [
+     0.52,
+     235.0
+    ],
+    [
+     0.54,
+     237.0
+    ],
+    [
+     0.56,
+     240.0
+    ],
+    [
+     0.58,
+     245.0
+    ],
+    [
+     0.6,
+     250.0
+    ],
+    [
+     0.62,
+     253.0
+    ],
+    [
+     0.64,
+     256.0
+    ],
+    [
+     0.66,
+     259.0
+    ],
+    [
+     0.68,
+     263.0
+    ],
+    [
+     0.7,
+     267.0
+    ],
+    [
+     0.72,
+     270.0
+    ],
+    [
+     0.74,
+     274.0
+    ],
+    [
+     0.76,
+     280.0
+    ],
+    [
+     0.78,
+     284.0
+    ],
+    [
+     0.8,
+     293.0
+    ],
+    [
+     0.82,
+     296.0
+    ],
+    [
+     0.84,
+     299.0
+    ],
+    [
+     0.86,
+     305.0
+    ],
+    [
+     0.88,
+     310.0
+    ],
+    [
+     0.9,
+     319.0
+    ],
+    [
+     0.92,
+     325.0
+    ],
+    [
+     0.94,
+     338.0
+    ],
+    [
+     0.96,
+     352.0
+    ],
+    [
+     0.98,
+     372.0
+    ],
+    [
+     1.0,
+     424.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": false,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 184,
+   "n_eff": 114.6,
+   "players": 39,
+   "icc": 0.1688,
+   "median": 244.5,
+   "quantiles": [
+    [
+     0.0,
+     9.0
+    ],
+    [
+     0.02,
+     114.0
+    ],
+    [
+     0.04,
+     134.0
+    ],
+    [
+     0.06,
+     149.0
+    ],
+    [
+     0.08,
+     163.0
+    ],
+    [
+     0.1,
+     173.0
+    ],
+    [
+     0.12,
+     178.0
+    ],
+    [
+     0.14,
+     183.0
+    ],
+    [
+     0.16,
+     192.0
+    ],
+    [
+     0.18,
+     196.0
+    ],
+    [
+     0.2,
+     199.0
+    ],
+    [
+     0.22,
+     203.0
+    ],
+    [
+     0.24,
+     205.0
+    ],
+    [
+     0.26,
+     209.0
+    ],
+    [
+     0.28,
+     212.0
+    ],
+    [
+     0.3,
+     213.0
+    ],
+    [
+     0.32,
+     217.0
+    ],
+    [
+     0.34,
+     219.0
+    ],
+    [
+     0.36,
+     220.0
+    ],
+    [
+     0.38,
+     222.0
+    ],
+    [
+     0.4,
+     226.0
+    ],
+    [
+     0.42,
+     229.0
+    ],
+    [
+     0.44,
+     234.0
+    ],
+    [
+     0.46,
+     235.0
+    ],
+    [
+     0.48,
+     238.0
+    ],
+    [
+     0.5,
+     243.0
+    ],
+    [
+     0.52,
+     248.0
+    ],
+    [
+     0.54,
+     253.0
+    ],
+    [
+     0.56,
+     257.0
+    ],
+    [
+     0.58,
+     260.0
+    ],
+    [
+     0.6,
+     262.0
+    ],
+    [
+     0.62,
+     266.0
+    ],
+    [
+     0.64,
+     268.0
+    ],
+    [
+     0.66,
+     270.0
+    ],
+    [
+     0.68,
+     279.0
+    ],
+    [
+     0.7,
+     285.0
+    ],
+    [
+     0.72,
+     292.0
+    ],
+    [
+     0.74,
+     296.0
+    ],
+    [
+     0.76,
+     297.0
+    ],
+    [
+     0.78,
+     301.0
+    ],
+    [
+     0.8,
+     307.0
+    ],
+    [
+     0.82,
+     312.0
+    ],
+    [
+     0.84,
+     314.0
+    ],
+    [
+     0.86,
+     320.0
+    ],
+    [
+     0.88,
+     334.0
+    ],
+    [
+     0.9,
+     338.0
+    ],
+    [
+     0.92,
+     343.0
+    ],
+    [
+     0.94,
+     367.0
+    ],
+    [
+     0.96,
+     372.0
+    ],
+    [
+     0.98,
+     382.0
+    ],
+    [
+     1.0,
+     462.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": false,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 164,
+   "n_eff": 164.0,
+   "players": 38,
+   "icc": 0.0,
+   "median": 246.0,
+   "quantiles": [
+    [
+     0.0,
+     76.0
+    ],
+    [
+     0.02,
+     92.0
+    ],
+    [
+     0.04,
+     123.0
+    ],
+    [
+     0.06,
+     131.0
+    ],
+    [
+     0.08,
+     146.0
+    ],
+    [
+     0.1,
+     159.0
+    ],
+    [
+     0.12,
+     165.0
+    ],
+    [
+     0.14,
+     174.0
+    ],
+    [
+     0.16,
+     180.0
+    ],
+    [
+     0.18,
+     184.0
+    ],
+    [
+     0.2,
+     187.0
+    ],
+    [
+     0.22,
+     191.0
+    ],
+    [
+     0.24,
+     194.0
+    ],
+    [
+     0.26,
+     199.0
+    ],
+    [
+     0.28,
+     201.0
+    ],
+    [
+     0.3,
+     209.0
+    ],
+    [
+     0.32,
+     215.0
+    ],
+    [
+     0.34,
+     217.0
+    ],
+    [
+     0.36,
+     220.0
+    ],
+    [
+     0.38,
+     222.0
+    ],
+    [
+     0.4,
+     224.0
+    ],
+    [
+     0.42,
+     227.0
+    ],
+    [
+     0.44,
+     232.0
+    ],
+    [
+     0.46,
+     237.0
+    ],
+    [
+     0.48,
+     241.0
+    ],
+    [
+     0.5,
+     246.0
+    ],
+    [
+     0.52,
+     248.0
+    ],
+    [
+     0.54,
+     249.0
+    ],
+    [
+     0.56,
+     252.0
+    ],
+    [
+     0.58,
+     255.0
+    ],
+    [
+     0.6,
+     262.0
+    ],
+    [
+     0.62,
+     268.0
+    ],
+    [
+     0.64,
+     270.0
+    ],
+    [
+     0.66,
+     273.0
+    ],
+    [
+     0.68,
+     275.0
+    ],
+    [
+     0.7,
+     278.0
+    ],
+    [
+     0.72,
+     280.0
+    ],
+    [
+     0.74,
+     283.0
+    ],
+    [
+     0.76,
+     287.0
+    ],
+    [
+     0.78,
+     298.0
+    ],
+    [
+     0.8,
+     303.0
+    ],
+    [
+     0.82,
+     310.0
+    ],
+    [
+     0.84,
+     312.0
+    ],
+    [
+     0.86,
+     316.0
+    ],
+    [
+     0.88,
+     321.0
+    ],
+    [
+     0.9,
+     326.0
+    ],
+    [
+     0.92,
+     335.0
+    ],
+    [
+     0.94,
+     352.0
+    ],
+    [
+     0.96,
+     368.0
+    ],
+    [
+     0.98,
+     383.0
+    ],
+    [
+     1.0,
+     461.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "shootout",
+   "occurred": false,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 231,
+   "n_eff": 155.5,
+   "players": 46,
+   "icc": 0.1256,
+   "median": 248.0,
+   "quantiles": [
+    [
+     0.0,
+     -2.0
+    ],
+    [
+     0.02,
+     78.0
+    ],
+    [
+     0.04,
+     109.0
+    ],
+    [
+     0.06,
+     128.0
+    ],
+    [
+     0.08,
+     149.0
+    ],
+    [
+     0.1,
+     156.0
+    ],
+    [
+     0.12,
+     166.0
+    ],
+    [
+     0.14,
+     170.0
+    ],
+    [
+     0.16,
+     172.0
+    ],
+    [
+     0.18,
+     183.0
+    ],
+    [
+     0.2,
+     186.0
+    ],
+    [
+     0.22,
+     188.0
+    ],
+    [
+     0.24,
+     194.0
+    ],
+    [
+     0.26,
+     196.0
+    ],
+    [
+     0.28,
+     204.0
+    ],
+    [
+     0.3,
+     209.0
+    ],
+    [
+     0.32,
+     213.0
+    ],
+    [
+     0.34,
+     217.0
+    ],
+    [
+     0.36,
+     219.0
+    ],
+    [
+     0.38,
+     226.0
+    ],
+    [
+     0.4,
+     230.0
+    ],
+    [
+     0.42,
+     234.0
+    ],
+    [
+     0.44,
+     236.0
+    ],
+    [
+     0.46,
+     240.0
+    ],
+    [
+     0.48,
+     243.0
+    ],
+    [
+     0.5,
+     248.0
+    ],
+    [
+     0.52,
+     251.0
+    ],
+    [
+     0.54,
+     253.0
+    ],
+    [
+     0.56,
+     255.0
+    ],
+    [
+     0.58,
+     259.0
+    ],
+    [
+     0.6,
+     262.0
+    ],
+    [
+     0.62,
+     264.0
+    ],
+    [
+     0.64,
+     266.0
+    ],
+    [
+     0.66,
+     268.0
+    ],
+    [
+     0.68,
+     274.0
+    ],
+    [
+     0.7,
+     280.0
+    ],
+    [
+     0.72,
+     281.0
+    ],
+    [
+     0.74,
+     284.0
+    ],
+    [
+     0.76,
+     291.0
+    ],
+    [
+     0.78,
+     301.0
+    ],
+    [
+     0.8,
+     305.0
+    ],
+    [
+     0.82,
+     311.0
+    ],
+    [
+     0.84,
+     317.0
+    ],
+    [
+     0.86,
+     322.0
+    ],
+    [
+     0.88,
+     329.0
+    ],
+    [
+     0.9,
+     340.0
+    ],
+    [
+     0.92,
+     349.0
+    ],
+    [
+     0.94,
+     361.0
+    ],
+    [
+     0.96,
+     364.0
+    ],
+    [
+     0.98,
+     397.0
+    ],
+    [
+     1.0,
+     443.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": true,
+   "opportunity_min": 0,
+   "opportunity_max": 28,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 151,
+   "n_eff": 137.9,
+   "players": 80,
+   "icc": 0.1077,
+   "median": 184.0,
+   "quantiles": [
+    [
+     0.0,
+     -2.0
+    ],
+    [
+     0.02,
+     0.0
+    ],
+    [
+     0.04,
+     9.0
+    ],
+    [
+     0.06,
+     13.0
+    ],
+    [
+     0.08,
+     29.0
+    ],
+    [
+     0.1,
+     49.0
+    ],
+    [
+     0.12,
+     56.0
+    ],
+    [
+     0.14,
+     67.0
+    ],
+    [
+     0.16,
+     76.0
+    ],
+    [
+     0.18,
+     88.0
+    ],
+    [
+     0.2,
+     93.0
+    ],
+    [
+     0.22,
+     100.0
+    ],
+    [
+     0.24,
+     114.0
+    ],
+    [
+     0.26,
+     133.0
+    ],
+    [
+     0.28,
+     136.0
+    ],
+    [
+     0.3,
+     139.0
+    ],
+    [
+     0.32,
+     141.0
+    ],
+    [
+     0.34,
+     147.0
+    ],
+    [
+     0.36,
+     156.0
+    ],
+    [
+     0.38,
+     161.0
+    ],
+    [
+     0.4,
+     165.0
+    ],
+    [
+     0.42,
+     169.0
+    ],
+    [
+     0.44,
+     172.0
+    ],
+    [
+     0.46,
+     175.0
+    ],
+    [
+     0.48,
+     177.0
+    ],
+    [
+     0.5,
+     184.0
+    ],
+    [
+     0.52,
+     186.0
+    ],
+    [
+     0.54,
+     193.0
+    ],
+    [
+     0.56,
+     194.0
+    ],
+    [
+     0.58,
+     196.0
+    ],
+    [
+     0.6,
+     202.0
+    ],
+    [
+     0.62,
+     212.0
+    ],
+    [
+     0.64,
+     214.0
+    ],
+    [
+     0.66,
+     217.0
+    ],
+    [
+     0.68,
+     221.0
+    ],
+    [
+     0.7,
+     229.0
+    ],
+    [
+     0.72,
+     235.0
+    ],
+    [
+     0.74,
+     239.0
+    ],
+    [
+     0.76,
+     243.0
+    ],
+    [
+     0.78,
+     247.0
+    ],
+    [
+     0.8,
+     272.0
+    ],
+    [
+     0.82,
+     275.0
+    ],
+    [
+     0.84,
+     289.0
+    ],
+    [
+     0.86,
+     295.0
+    ],
+    [
+     0.88,
+     322.0
+    ],
+    [
+     0.9,
+     326.0
+    ],
+    [
+     0.92,
+     335.0
+    ],
+    [
+     0.94,
+     343.0
+    ],
+    [
+     0.96,
+     372.0
+    ],
+    [
+     0.98,
+     428.0
+    ],
+    [
+     1.0,
+     497.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": true,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 173,
+   "n_eff": 165.8,
+   "players": 72,
+   "icc": 0.0313,
+   "median": 197.0,
+   "quantiles": [
+    [
+     0.0,
+     24.0
+    ],
+    [
+     0.02,
+     29.0
+    ],
+    [
+     0.04,
+     37.0
+    ],
+    [
+     0.06,
+     63.0
+    ],
+    [
+     0.08,
+     73.0
+    ],
+    [
+     0.1,
+     78.0
+    ],
+    [
+     0.12,
+     89.0
+    ],
+    [
+     0.14,
+     93.0
+    ],
+    [
+     0.16,
+     98.0
+    ],
+    [
+     0.18,
+     107.0
+    ],
+    [
+     0.2,
+     121.0
+    ],
+    [
+     0.22,
+     124.0
+    ],
+    [
+     0.24,
+     130.0
+    ],
+    [
+     0.26,
+     132.0
+    ],
+    [
+     0.28,
+     145.0
+    ],
+    [
+     0.3,
+     150.0
+    ],
+    [
+     0.32,
+     153.0
+    ],
+    [
+     0.34,
+     155.0
+    ],
+    [
+     0.36,
+     158.0
+    ],
+    [
+     0.38,
+     167.0
+    ],
+    [
+     0.4,
+     171.0
+    ],
+    [
+     0.42,
+     175.0
+    ],
+    [
+     0.44,
+     179.0
+    ],
+    [
+     0.46,
+     183.0
+    ],
+    [
+     0.48,
+     190.0
+    ],
+    [
+     0.5,
+     197.0
+    ],
+    [
+     0.52,
+     201.0
+    ],
+    [
+     0.54,
+     204.0
+    ],
+    [
+     0.56,
+     206.0
+    ],
+    [
+     0.58,
+     212.0
+    ],
+    [
+     0.6,
+     215.0
+    ],
+    [
+     0.62,
+     216.0
+    ],
+    [
+     0.64,
+     217.0
+    ],
+    [
+     0.66,
+     224.0
+    ],
+    [
+     0.68,
+     228.0
+    ],
+    [
+     0.7,
+     232.0
+    ],
+    [
+     0.72,
+     234.0
+    ],
+    [
+     0.74,
+     241.0
+    ],
+    [
+     0.76,
+     243.0
+    ],
+    [
+     0.78,
+     248.0
+    ],
+    [
+     0.8,
+     252.0
+    ],
+    [
+     0.82,
+     261.0
+    ],
+    [
+     0.84,
+     277.0
+    ],
+    [
+     0.86,
+     288.0
+    ],
+    [
+     0.88,
+     296.0
+    ],
+    [
+     0.9,
+     300.0
+    ],
+    [
+     0.92,
+     307.0
+    ],
+    [
+     0.94,
+     319.0
+    ],
+    [
+     0.96,
+     330.0
+    ],
+    [
+     0.98,
+     359.0
+    ],
+    [
+     1.0,
+     406.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": true,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 120,
+   "n_eff": 115.8,
+   "players": 70,
+   "icc": 0.0506,
+   "median": 201.5,
+   "quantiles": [
+    [
+     0.0,
+     16.0
+    ],
+    [
+     0.02,
+     60.0
+    ],
+    [
+     0.04,
+     67.0
+    ],
+    [
+     0.06,
+     76.0
+    ],
+    [
+     0.08,
+     84.0
+    ],
+    [
+     0.1,
+     92.0
+    ],
+    [
+     0.12,
+     115.0
+    ],
+    [
+     0.14,
+     119.0
+    ],
+    [
+     0.16,
+     127.0
+    ],
+    [
+     0.18,
+     129.0
+    ],
+    [
+     0.2,
+     133.0
+    ],
+    [
+     0.22,
+     140.0
+    ],
+    [
+     0.24,
+     142.0
+    ],
+    [
+     0.26,
+     146.0
+    ],
+    [
+     0.28,
+     158.0
+    ],
+    [
+     0.3,
+     158.0
+    ],
+    [
+     0.32,
+     163.0
+    ],
+    [
+     0.34,
+     168.0
+    ],
+    [
+     0.36,
+     174.0
+    ],
+    [
+     0.38,
+     181.0
+    ],
+    [
+     0.4,
+     182.0
+    ],
+    [
+     0.42,
+     184.0
+    ],
+    [
+     0.44,
+     195.0
+    ],
+    [
+     0.46,
+     196.0
+    ],
+    [
+     0.48,
+     198.0
+    ],
+    [
+     0.5,
+     201.0
+    ],
+    [
+     0.52,
+     202.0
+    ],
+    [
+     0.54,
+     212.0
+    ],
+    [
+     0.56,
+     215.0
+    ],
+    [
+     0.58,
+     221.0
+    ],
+    [
+     0.6,
+     223.0
+    ],
+    [
+     0.62,
+     224.0
+    ],
+    [
+     0.64,
+     229.0
+    ],
+    [
+     0.66,
+     230.0
+    ],
+    [
+     0.68,
+     243.0
+    ],
+    [
+     0.7,
+     248.0
+    ],
+    [
+     0.72,
+     249.0
+    ],
+    [
+     0.74,
+     257.0
+    ],
+    [
+     0.76,
+     263.0
+    ],
+    [
+     0.78,
+     263.0
+    ],
+    [
+     0.8,
+     273.0
+    ],
+    [
+     0.82,
+     283.0
+    ],
+    [
+     0.84,
+     295.0
+    ],
+    [
+     0.86,
+     303.0
+    ],
+    [
+     0.88,
+     307.0
+    ],
+    [
+     0.9,
+     313.0
+    ],
+    [
+     0.92,
+     326.0
+    ],
+    [
+     0.94,
+     348.0
+    ],
+    [
+     0.96,
+     370.0
+    ],
+    [
+     0.98,
+     418.0
+    ],
+    [
+     1.0,
+     463.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": true,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 151,
+   "n_eff": 136.6,
+   "players": 74,
+   "icc": 0.1026,
+   "median": 209.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     39.0
+    ],
+    [
+     0.04,
+     49.0
+    ],
+    [
+     0.06,
+     83.0
+    ],
+    [
+     0.08,
+     93.0
+    ],
+    [
+     0.1,
+     97.0
+    ],
+    [
+     0.12,
+     111.0
+    ],
+    [
+     0.14,
+     119.0
+    ],
+    [
+     0.16,
+     124.0
+    ],
+    [
+     0.18,
+     126.0
+    ],
+    [
+     0.2,
+     130.0
+    ],
+    [
+     0.22,
+     135.0
+    ],
+    [
+     0.24,
+     146.0
+    ],
+    [
+     0.26,
+     153.0
+    ],
+    [
+     0.28,
+     158.0
+    ],
+    [
+     0.3,
+     165.0
+    ],
+    [
+     0.32,
+     166.0
+    ],
+    [
+     0.34,
+     169.0
+    ],
+    [
+     0.36,
+     172.0
+    ],
+    [
+     0.38,
+     182.0
+    ],
+    [
+     0.4,
+     186.0
+    ],
+    [
+     0.42,
+     194.0
+    ],
+    [
+     0.44,
+     201.0
+    ],
+    [
+     0.46,
+     203.0
+    ],
+    [
+     0.48,
+     208.0
+    ],
+    [
+     0.5,
+     209.0
+    ],
+    [
+     0.52,
+     211.0
+    ],
+    [
+     0.54,
+     219.0
+    ],
+    [
+     0.56,
+     219.0
+    ],
+    [
+     0.58,
+     222.0
+    ],
+    [
+     0.6,
+     225.0
+    ],
+    [
+     0.62,
+     228.0
+    ],
+    [
+     0.64,
+     230.0
+    ],
+    [
+     0.66,
+     234.0
+    ],
+    [
+     0.68,
+     238.0
+    ],
+    [
+     0.7,
+     240.0
+    ],
+    [
+     0.72,
+     243.0
+    ],
+    [
+     0.74,
+     250.0
+    ],
+    [
+     0.76,
+     255.0
+    ],
+    [
+     0.78,
+     257.0
+    ],
+    [
+     0.8,
+     261.0
+    ],
+    [
+     0.82,
+     266.0
+    ],
+    [
+     0.84,
+     275.0
+    ],
+    [
+     0.86,
+     282.0
+    ],
+    [
+     0.88,
+     286.0
+    ],
+    [
+     0.9,
+     295.0
+    ],
+    [
+     0.92,
+     306.0
+    ],
+    [
+     0.94,
+     307.0
+    ],
+    [
+     0.96,
+     316.0
+    ],
+    [
+     0.98,
+     325.0
+    ],
+    [
+     1.0,
+     431.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": true,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 171,
+   "n_eff": 171.0,
+   "players": 65,
+   "icc": 0.0,
+   "median": 215.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     24.0
+    ],
+    [
+     0.04,
+     70.0
+    ],
+    [
+     0.06,
+     82.0
+    ],
+    [
+     0.08,
+     95.0
+    ],
+    [
+     0.1,
+     104.0
+    ],
+    [
+     0.12,
+     112.0
+    ],
+    [
+     0.14,
+     120.0
+    ],
+    [
+     0.16,
+     136.0
+    ],
+    [
+     0.18,
+     143.0
+    ],
+    [
+     0.2,
+     149.0
+    ],
+    [
+     0.22,
+     153.0
+    ],
+    [
+     0.24,
+     153.0
+    ],
+    [
+     0.26,
+     159.0
+    ],
+    [
+     0.28,
+     162.0
+    ],
+    [
+     0.3,
+     172.0
+    ],
+    [
+     0.32,
+     176.0
+    ],
+    [
+     0.34,
+     178.0
+    ],
+    [
+     0.36,
+     182.0
+    ],
+    [
+     0.38,
+     190.0
+    ],
+    [
+     0.4,
+     192.0
+    ],
+    [
+     0.42,
+     195.0
+    ],
+    [
+     0.44,
+     199.0
+    ],
+    [
+     0.46,
+     205.0
+    ],
+    [
+     0.48,
+     212.0
+    ],
+    [
+     0.5,
+     215.0
+    ],
+    [
+     0.52,
+     217.0
+    ],
+    [
+     0.54,
+     219.0
+    ],
+    [
+     0.56,
+     226.0
+    ],
+    [
+     0.58,
+     228.0
+    ],
+    [
+     0.6,
+     230.0
+    ],
+    [
+     0.62,
+     236.0
+    ],
+    [
+     0.64,
+     246.0
+    ],
+    [
+     0.66,
+     247.0
+    ],
+    [
+     0.68,
+     251.0
+    ],
+    [
+     0.7,
+     258.0
+    ],
+    [
+     0.72,
+     259.0
+    ],
+    [
+     0.74,
+     262.0
+    ],
+    [
+     0.76,
+     269.0
+    ],
+    [
+     0.78,
+     273.0
+    ],
+    [
+     0.8,
+     276.0
+    ],
+    [
+     0.82,
+     292.0
+    ],
+    [
+     0.84,
+     295.0
+    ],
+    [
+     0.86,
+     300.0
+    ],
+    [
+     0.88,
+     304.0
+    ],
+    [
+     0.9,
+     310.0
+    ],
+    [
+     0.92,
+     330.0
+    ],
+    [
+     0.94,
+     334.0
+    ],
+    [
+     0.96,
+     354.0
+    ],
+    [
+     0.98,
+     397.0
+    ],
+    [
+     1.0,
+     438.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": true,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 145,
+   "n_eff": 107.8,
+   "players": 62,
+   "icc": 0.2636,
+   "median": 221.0,
+   "quantiles": [
+    [
+     0.0,
+     31.0
+    ],
+    [
+     0.02,
+     41.0
+    ],
+    [
+     0.04,
+     71.0
+    ],
+    [
+     0.06,
+     98.0
+    ],
+    [
+     0.08,
+     104.0
+    ],
+    [
+     0.1,
+     112.0
+    ],
+    [
+     0.12,
+     120.0
+    ],
+    [
+     0.14,
+     132.0
+    ],
+    [
+     0.16,
+     146.0
+    ],
+    [
+     0.18,
+     151.0
+    ],
+    [
+     0.2,
+     151.0
+    ],
+    [
+     0.22,
+     157.0
+    ],
+    [
+     0.24,
+     161.0
+    ],
+    [
+     0.26,
+     169.0
+    ],
+    [
+     0.28,
+     173.0
+    ],
+    [
+     0.3,
+     181.0
+    ],
+    [
+     0.32,
+     187.0
+    ],
+    [
+     0.34,
+     188.0
+    ],
+    [
+     0.36,
+     192.0
+    ],
+    [
+     0.38,
+     195.0
+    ],
+    [
+     0.4,
+     201.0
+    ],
+    [
+     0.42,
+     205.0
+    ],
+    [
+     0.44,
+     210.0
+    ],
+    [
+     0.46,
+     212.0
+    ],
+    [
+     0.48,
+     217.0
+    ],
+    [
+     0.5,
+     221.0
+    ],
+    [
+     0.52,
+     227.0
+    ],
+    [
+     0.54,
+     228.0
+    ],
+    [
+     0.56,
+     233.0
+    ],
+    [
+     0.58,
+     238.0
+    ],
+    [
+     0.6,
+     243.0
+    ],
+    [
+     0.62,
+     250.0
+    ],
+    [
+     0.64,
+     254.0
+    ],
+    [
+     0.66,
+     256.0
+    ],
+    [
+     0.68,
+     263.0
+    ],
+    [
+     0.7,
+     267.0
+    ],
+    [
+     0.72,
+     273.0
+    ],
+    [
+     0.74,
+     280.0
+    ],
+    [
+     0.76,
+     282.0
+    ],
+    [
+     0.78,
+     285.0
+    ],
+    [
+     0.8,
+     294.0
+    ],
+    [
+     0.82,
+     308.0
+    ],
+    [
+     0.84,
+     309.0
+    ],
+    [
+     0.86,
+     326.0
+    ],
+    [
+     0.88,
+     336.0
+    ],
+    [
+     0.9,
+     341.0
+    ],
+    [
+     0.92,
+     352.0
+    ],
+    [
+     0.94,
+     366.0
+    ],
+    [
+     0.96,
+     376.0
+    ],
+    [
+     0.98,
+     388.0
+    ],
+    [
+     1.0,
+     430.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": true,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 156,
+   "n_eff": 139.4,
+   "players": 70,
+   "icc": 0.0984,
+   "median": 226.0,
+   "quantiles": [
+    [
+     0.0,
+     -7.0
+    ],
+    [
+     0.02,
+     27.0
+    ],
+    [
+     0.04,
+     67.0
+    ],
+    [
+     0.06,
+     87.0
+    ],
+    [
+     0.08,
+     123.0
+    ],
+    [
+     0.1,
+     131.0
+    ],
+    [
+     0.12,
+     135.0
+    ],
+    [
+     0.14,
+     141.0
+    ],
+    [
+     0.16,
+     147.0
+    ],
+    [
+     0.18,
+     157.0
+    ],
+    [
+     0.2,
+     162.0
+    ],
+    [
+     0.22,
+     166.0
+    ],
+    [
+     0.24,
+     176.0
+    ],
+    [
+     0.26,
+     179.0
+    ],
+    [
+     0.28,
+     180.0
+    ],
+    [
+     0.3,
+     183.0
+    ],
+    [
+     0.32,
+     192.0
+    ],
+    [
+     0.34,
+     193.0
+    ],
+    [
+     0.36,
+     196.0
+    ],
+    [
+     0.38,
+     197.0
+    ],
+    [
+     0.4,
+     203.0
+    ],
+    [
+     0.42,
+     207.0
+    ],
+    [
+     0.44,
+     211.0
+    ],
+    [
+     0.46,
+     217.0
+    ],
+    [
+     0.48,
+     221.0
+    ],
+    [
+     0.5,
+     225.0
+    ],
+    [
+     0.52,
+     228.0
+    ],
+    [
+     0.54,
+     232.0
+    ],
+    [
+     0.56,
+     233.0
+    ],
+    [
+     0.58,
+     240.0
+    ],
+    [
+     0.6,
+     246.0
+    ],
+    [
+     0.62,
+     252.0
+    ],
+    [
+     0.64,
+     255.0
+    ],
+    [
+     0.66,
+     258.0
+    ],
+    [
+     0.68,
+     259.0
+    ],
+    [
+     0.7,
+     264.0
+    ],
+    [
+     0.72,
+     271.0
+    ],
+    [
+     0.74,
+     276.0
+    ],
+    [
+     0.76,
+     281.0
+    ],
+    [
+     0.78,
+     283.0
+    ],
+    [
+     0.8,
+     284.0
+    ],
+    [
+     0.82,
+     293.0
+    ],
+    [
+     0.84,
+     294.0
+    ],
+    [
+     0.86,
+     296.0
+    ],
+    [
+     0.88,
+     301.0
+    ],
+    [
+     0.9,
+     307.0
+    ],
+    [
+     0.92,
+     315.0
+    ],
+    [
+     0.94,
+     331.0
+    ],
+    [
+     0.96,
+     355.0
+    ],
+    [
+     0.98,
+     380.0
+    ],
+    [
+     1.0,
+     456.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": false,
+   "opportunity_min": 0,
+   "opportunity_max": 28,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 185,
+   "n_eff": 116.5,
+   "players": 67,
+   "icc": 0.3406,
+   "median": 195.0,
+   "quantiles": [
+    [
+     0.0,
+     -1.0
+    ],
+    [
+     0.02,
+     0.0
+    ],
+    [
+     0.04,
+     0.0
+    ],
+    [
+     0.06,
+     0.0
+    ],
+    [
+     0.08,
+     0.0
+    ],
+    [
+     0.1,
+     6.0
+    ],
+    [
+     0.12,
+     11.0
+    ],
+    [
+     0.14,
+     24.0
+    ],
+    [
+     0.16,
+     65.0
+    ],
+    [
+     0.18,
+     91.0
+    ],
+    [
+     0.2,
+     104.0
+    ],
+    [
+     0.22,
+     107.0
+    ],
+    [
+     0.24,
+     117.0
+    ],
+    [
+     0.26,
+     122.0
+    ],
+    [
+     0.28,
+     129.0
+    ],
+    [
+     0.3,
+     143.0
+    ],
+    [
+     0.32,
+     147.0
+    ],
+    [
+     0.34,
+     158.0
+    ],
+    [
+     0.36,
+     163.0
+    ],
+    [
+     0.38,
+     169.0
+    ],
+    [
+     0.4,
+     173.0
+    ],
+    [
+     0.42,
+     176.0
+    ],
+    [
+     0.44,
+     179.0
+    ],
+    [
+     0.46,
+     182.0
+    ],
+    [
+     0.48,
+     183.0
+    ],
+    [
+     0.5,
+     195.0
+    ],
+    [
+     0.52,
+     202.0
+    ],
+    [
+     0.54,
+     209.0
+    ],
+    [
+     0.56,
+     217.0
+    ],
+    [
+     0.58,
+     217.0
+    ],
+    [
+     0.6,
+     220.0
+    ],
+    [
+     0.62,
+     224.0
+    ],
+    [
+     0.64,
+     227.0
+    ],
+    [
+     0.66,
+     233.0
+    ],
+    [
+     0.68,
+     237.0
+    ],
+    [
+     0.7,
+     240.0
+    ],
+    [
+     0.72,
+     243.0
+    ],
+    [
+     0.74,
+     246.0
+    ],
+    [
+     0.76,
+     250.0
+    ],
+    [
+     0.78,
+     254.0
+    ],
+    [
+     0.8,
+     261.0
+    ],
+    [
+     0.82,
+     264.0
+    ],
+    [
+     0.84,
+     276.0
+    ],
+    [
+     0.86,
+     282.0
+    ],
+    [
+     0.88,
+     290.0
+    ],
+    [
+     0.9,
+     297.0
+    ],
+    [
+     0.92,
+     304.0
+    ],
+    [
+     0.94,
+     310.0
+    ],
+    [
+     0.96,
+     319.0
+    ],
+    [
+     0.98,
+     341.0
+    ],
+    [
+     1.0,
+     355.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": false,
+   "opportunity_min": 0,
+   "opportunity_max": 28,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 167,
+   "n_eff": 124.0,
+   "players": 61,
+   "icc": 0.2052,
+   "median": 212.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     30.0
+    ],
+    [
+     0.04,
+     63.0
+    ],
+    [
+     0.06,
+     84.0
+    ],
+    [
+     0.08,
+     108.0
+    ],
+    [
+     0.1,
+     118.0
+    ],
+    [
+     0.12,
+     122.0
+    ],
+    [
+     0.14,
+     130.0
+    ],
+    [
+     0.16,
+     140.0
+    ],
+    [
+     0.18,
+     152.0
+    ],
+    [
+     0.2,
+     152.0
+    ],
+    [
+     0.22,
+     160.0
+    ],
+    [
+     0.24,
+     162.0
+    ],
+    [
+     0.26,
+     166.0
+    ],
+    [
+     0.28,
+     171.0
+    ],
+    [
+     0.3,
+     172.0
+    ],
+    [
+     0.32,
+     176.0
+    ],
+    [
+     0.34,
+     178.0
+    ],
+    [
+     0.36,
+     179.0
+    ],
+    [
+     0.38,
+     184.0
+    ],
+    [
+     0.4,
+     191.0
+    ],
+    [
+     0.42,
+     195.0
+    ],
+    [
+     0.44,
+     202.0
+    ],
+    [
+     0.46,
+     204.0
+    ],
+    [
+     0.48,
+     207.0
+    ],
+    [
+     0.5,
+     212.0
+    ],
+    [
+     0.52,
+     217.0
+    ],
+    [
+     0.54,
+     221.0
+    ],
+    [
+     0.56,
+     230.0
+    ],
+    [
+     0.58,
+     232.0
+    ],
+    [
+     0.6,
+     235.0
+    ],
+    [
+     0.62,
+     236.0
+    ],
+    [
+     0.64,
+     240.0
+    ],
+    [
+     0.66,
+     242.0
+    ],
+    [
+     0.68,
+     248.0
+    ],
+    [
+     0.7,
+     249.0
+    ],
+    [
+     0.72,
+     255.0
+    ],
+    [
+     0.74,
+     261.0
+    ],
+    [
+     0.76,
+     265.0
+    ],
+    [
+     0.78,
+     268.0
+    ],
+    [
+     0.8,
+     271.0
+    ],
+    [
+     0.82,
+     273.0
+    ],
+    [
+     0.84,
+     279.0
+    ],
+    [
+     0.86,
+     288.0
+    ],
+    [
+     0.88,
+     297.0
+    ],
+    [
+     0.9,
+     308.0
+    ],
+    [
+     0.92,
+     314.0
+    ],
+    [
+     0.94,
+     330.0
+    ],
+    [
+     0.96,
+     339.0
+    ],
+    [
+     0.98,
+     365.0
+    ],
+    [
+     1.0,
+     412.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": false,
+   "opportunity_min": 0,
+   "opportunity_max": 28,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 310,
+   "n_eff": 251.6,
+   "players": 97,
+   "icc": 0.1067,
+   "median": 195.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     8.0
+    ],
+    [
+     0.04,
+     39.0
+    ],
+    [
+     0.06,
+     57.0
+    ],
+    [
+     0.08,
+     69.0
+    ],
+    [
+     0.1,
+     82.0
+    ],
+    [
+     0.12,
+     90.0
+    ],
+    [
+     0.14,
+     102.0
+    ],
+    [
+     0.16,
+     109.0
+    ],
+    [
+     0.18,
+     118.0
+    ],
+    [
+     0.2,
+     128.0
+    ],
+    [
+     0.22,
+     132.0
+    ],
+    [
+     0.24,
+     138.0
+    ],
+    [
+     0.26,
+     145.0
+    ],
+    [
+     0.28,
+     152.0
+    ],
+    [
+     0.3,
+     157.0
+    ],
+    [
+     0.32,
+     160.0
+    ],
+    [
+     0.34,
+     162.0
+    ],
+    [
+     0.36,
+     168.0
+    ],
+    [
+     0.38,
+     171.0
+    ],
+    [
+     0.4,
+     174.0
+    ],
+    [
+     0.42,
+     179.0
+    ],
+    [
+     0.44,
+     180.0
+    ],
+    [
+     0.46,
+     186.0
+    ],
+    [
+     0.48,
+     190.0
+    ],
+    [
+     0.5,
+     195.0
+    ],
+    [
+     0.52,
+     197.0
+    ],
+    [
+     0.54,
+     202.0
+    ],
+    [
+     0.56,
+     206.0
+    ],
+    [
+     0.58,
+     209.0
+    ],
+    [
+     0.6,
+     212.0
+    ],
+    [
+     0.62,
+     215.0
+    ],
+    [
+     0.64,
+     220.0
+    ],
+    [
+     0.66,
+     223.0
+    ],
+    [
+     0.68,
+     230.0
+    ],
+    [
+     0.7,
+     235.0
+    ],
+    [
+     0.72,
+     240.0
+    ],
+    [
+     0.74,
+     244.0
+    ],
+    [
+     0.76,
+     248.0
+    ],
+    [
+     0.78,
+     256.0
+    ],
+    [
+     0.8,
+     261.0
+    ],
+    [
+     0.82,
+     268.0
+    ],
+    [
+     0.84,
+     272.0
+    ],
+    [
+     0.86,
+     276.0
+    ],
+    [
+     0.88,
+     283.0
+    ],
+    [
+     0.9,
+     294.0
+    ],
+    [
+     0.92,
+     298.0
+    ],
+    [
+     0.94,
+     307.0
+    ],
+    [
+     0.96,
+     324.0
+    ],
+    [
+     0.98,
+     340.0
+    ],
+    [
+     1.0,
+     406.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": false,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 460,
+   "n_eff": 278.6,
+   "players": 95,
+   "icc": 0.1712,
+   "median": 228.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     2.0
+    ],
+    [
+     0.04,
+     85.0
+    ],
+    [
+     0.06,
+     104.0
+    ],
+    [
+     0.08,
+     114.0
+    ],
+    [
+     0.1,
+     122.0
+    ],
+    [
+     0.12,
+     133.0
+    ],
+    [
+     0.14,
+     143.0
+    ],
+    [
+     0.16,
+     148.0
+    ],
+    [
+     0.18,
+     154.0
+    ],
+    [
+     0.2,
+     158.0
+    ],
+    [
+     0.22,
+     163.0
+    ],
+    [
+     0.24,
+     168.0
+    ],
+    [
+     0.26,
+     174.0
+    ],
+    [
+     0.28,
+     179.0
+    ],
+    [
+     0.3,
+     186.0
+    ],
+    [
+     0.32,
+     190.0
+    ],
+    [
+     0.34,
+     194.0
+    ],
+    [
+     0.36,
+     201.0
+    ],
+    [
+     0.38,
+     203.0
+    ],
+    [
+     0.4,
+     209.0
+    ],
+    [
+     0.42,
+     212.0
+    ],
+    [
+     0.44,
+     215.0
+    ],
+    [
+     0.46,
+     221.0
+    ],
+    [
+     0.48,
+     224.0
+    ],
+    [
+     0.5,
+     228.0
+    ],
+    [
+     0.52,
+     230.0
+    ],
+    [
+     0.54,
+     233.0
+    ],
+    [
+     0.56,
+     234.0
+    ],
+    [
+     0.58,
+     240.0
+    ],
+    [
+     0.6,
+     242.0
+    ],
+    [
+     0.62,
+     246.0
+    ],
+    [
+     0.64,
+     249.0
+    ],
+    [
+     0.66,
+     255.0
+    ],
+    [
+     0.68,
+     261.0
+    ],
+    [
+     0.7,
+     264.0
+    ],
+    [
+     0.72,
+     272.0
+    ],
+    [
+     0.74,
+     275.0
+    ],
+    [
+     0.76,
+     277.0
+    ],
+    [
+     0.78,
+     282.0
+    ],
+    [
+     0.8,
+     287.0
+    ],
+    [
+     0.82,
+     293.0
+    ],
+    [
+     0.84,
+     299.0
+    ],
+    [
+     0.86,
+     306.0
+    ],
+    [
+     0.88,
+     311.0
+    ],
+    [
+     0.9,
+     321.0
+    ],
+    [
+     0.92,
+     330.0
+    ],
+    [
+     0.94,
+     349.0
+    ],
+    [
+     0.96,
+     369.0
+    ],
+    [
+     0.98,
+     383.0
+    ],
+    [
+     1.0,
+     527.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": false,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 423,
+   "n_eff": 292.6,
+   "players": 93,
+   "icc": 0.1271,
+   "median": 238.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     57.0
+    ],
+    [
+     0.04,
+     90.0
+    ],
+    [
+     0.06,
+     109.0
+    ],
+    [
+     0.08,
+     123.0
+    ],
+    [
+     0.1,
+     139.0
+    ],
+    [
+     0.12,
+     141.0
+    ],
+    [
+     0.14,
+     151.0
+    ],
+    [
+     0.16,
+     159.0
+    ],
+    [
+     0.18,
+     163.0
+    ],
+    [
+     0.2,
+     170.0
+    ],
+    [
+     0.22,
+     174.0
+    ],
+    [
+     0.24,
+     181.0
+    ],
+    [
+     0.26,
+     185.0
+    ],
+    [
+     0.28,
+     191.0
+    ],
+    [
+     0.3,
+     198.0
+    ],
+    [
+     0.32,
+     205.0
+    ],
+    [
+     0.34,
+     209.0
+    ],
+    [
+     0.36,
+     212.0
+    ],
+    [
+     0.38,
+     218.0
+    ],
+    [
+     0.4,
+     222.0
+    ],
+    [
+     0.42,
+     224.0
+    ],
+    [
+     0.44,
+     229.0
+    ],
+    [
+     0.46,
+     232.0
+    ],
+    [
+     0.48,
+     236.0
+    ],
+    [
+     0.5,
+     238.0
+    ],
+    [
+     0.52,
+     242.0
+    ],
+    [
+     0.54,
+     245.0
+    ],
+    [
+     0.56,
+     249.0
+    ],
+    [
+     0.58,
+     252.0
+    ],
+    [
+     0.6,
+     255.0
+    ],
+    [
+     0.62,
+     257.0
+    ],
+    [
+     0.64,
+     264.0
+    ],
+    [
+     0.66,
+     266.0
+    ],
+    [
+     0.68,
+     270.0
+    ],
+    [
+     0.7,
+     274.0
+    ],
+    [
+     0.72,
+     280.0
+    ],
+    [
+     0.74,
+     285.0
+    ],
+    [
+     0.76,
+     290.0
+    ],
+    [
+     0.78,
+     295.0
+    ],
+    [
+     0.8,
+     299.0
+    ],
+    [
+     0.82,
+     307.0
+    ],
+    [
+     0.84,
+     315.0
+    ],
+    [
+     0.86,
+     321.0
+    ],
+    [
+     0.88,
+     327.0
+    ],
+    [
+     0.9,
+     336.0
+    ],
+    [
+     0.92,
+     343.0
+    ],
+    [
+     0.94,
+     355.0
+    ],
+    [
+     0.96,
+     369.0
+    ],
+    [
+     0.98,
+     381.0
+    ],
+    [
+     1.0,
+     455.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": false,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 461,
+   "n_eff": 303.4,
+   "players": 103,
+   "icc": 0.1507,
+   "median": 238.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     24.0
+    ],
+    [
+     0.04,
+     69.0
+    ],
+    [
+     0.06,
+     95.0
+    ],
+    [
+     0.08,
+     119.0
+    ],
+    [
+     0.1,
+     136.0
+    ],
+    [
+     0.12,
+     147.0
+    ],
+    [
+     0.14,
+     154.0
+    ],
+    [
+     0.16,
+     158.0
+    ],
+    [
+     0.18,
+     166.0
+    ],
+    [
+     0.2,
+     171.0
+    ],
+    [
+     0.22,
+     177.0
+    ],
+    [
+     0.24,
+     180.0
+    ],
+    [
+     0.26,
+     185.0
+    ],
+    [
+     0.28,
+     189.0
+    ],
+    [
+     0.3,
+     194.0
+    ],
+    [
+     0.32,
+     197.0
+    ],
+    [
+     0.34,
+     200.0
+    ],
+    [
+     0.36,
+     205.0
+    ],
+    [
+     0.38,
+     210.0
+    ],
+    [
+     0.4,
+     217.0
+    ],
+    [
+     0.42,
+     221.0
+    ],
+    [
+     0.44,
+     224.0
+    ],
+    [
+     0.46,
+     230.0
+    ],
+    [
+     0.48,
+     233.0
+    ],
+    [
+     0.5,
+     238.0
+    ],
+    [
+     0.52,
+     242.0
+    ],
+    [
+     0.54,
+     244.0
+    ],
+    [
+     0.56,
+     246.0
+    ],
+    [
+     0.58,
+     250.0
+    ],
+    [
+     0.6,
+     255.0
+    ],
+    [
+     0.62,
+     259.0
+    ],
+    [
+     0.64,
+     260.0
+    ],
+    [
+     0.66,
+     264.0
+    ],
+    [
+     0.68,
+     270.0
+    ],
+    [
+     0.7,
+     275.0
+    ],
+    [
+     0.72,
+     281.0
+    ],
+    [
+     0.74,
+     285.0
+    ],
+    [
+     0.76,
+     292.0
+    ],
+    [
+     0.78,
+     297.0
+    ],
+    [
+     0.8,
+     303.0
+    ],
+    [
+     0.82,
+     308.0
+    ],
+    [
+     0.84,
+     315.0
+    ],
+    [
+     0.86,
+     320.0
+    ],
+    [
+     0.88,
+     329.0
+    ],
+    [
+     0.9,
+     336.0
+    ],
+    [
+     0.92,
+     344.0
+    ],
+    [
+     0.94,
+     354.0
+    ],
+    [
+     0.96,
+     368.0
+    ],
+    [
+     0.98,
+     391.0
+    ],
+    [
+     1.0,
+     509.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": false,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 550,
+   "n_eff": 373.8,
+   "players": 81,
+   "icc": 0.0826,
+   "median": 251.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     69.0
+    ],
+    [
+     0.04,
+     120.0
+    ],
+    [
+     0.06,
+     133.0
+    ],
+    [
+     0.08,
+     144.0
+    ],
+    [
+     0.1,
+     153.0
+    ],
+    [
+     0.12,
+     161.0
+    ],
+    [
+     0.14,
+     167.0
+    ],
+    [
+     0.16,
+     173.0
+    ],
+    [
+     0.18,
+     179.0
+    ],
+    [
+     0.2,
+     186.0
+    ],
+    [
+     0.22,
+     192.0
+    ],
+    [
+     0.24,
+     198.0
+    ],
+    [
+     0.26,
+     200.0
+    ],
+    [
+     0.28,
+     205.0
+    ],
+    [
+     0.3,
+     210.0
+    ],
+    [
+     0.32,
+     214.0
+    ],
+    [
+     0.34,
+     220.0
+    ],
+    [
+     0.36,
+     225.0
+    ],
+    [
+     0.38,
+     227.0
+    ],
+    [
+     0.4,
+     231.0
+    ],
+    [
+     0.42,
+     235.0
+    ],
+    [
+     0.44,
+     239.0
+    ],
+    [
+     0.46,
+     243.0
+    ],
+    [
+     0.48,
+     247.0
+    ],
+    [
+     0.5,
+     251.0
+    ],
+    [
+     0.52,
+     256.0
+    ],
+    [
+     0.54,
+     260.0
+    ],
+    [
+     0.56,
+     265.0
+    ],
+    [
+     0.58,
+     268.0
+    ],
+    [
+     0.6,
+     270.0
+    ],
+    [
+     0.62,
+     274.0
+    ],
+    [
+     0.64,
+     277.0
+    ],
+    [
+     0.66,
+     280.0
+    ],
+    [
+     0.68,
+     284.0
+    ],
+    [
+     0.7,
+     287.0
+    ],
+    [
+     0.72,
+     291.0
+    ],
+    [
+     0.74,
+     295.0
+    ],
+    [
+     0.76,
+     299.0
+    ],
+    [
+     0.78,
+     304.0
+    ],
+    [
+     0.8,
+     309.0
+    ],
+    [
+     0.82,
+     314.0
+    ],
+    [
+     0.84,
+     320.0
+    ],
+    [
+     0.86,
+     331.0
+    ],
+    [
+     0.88,
+     339.0
+    ],
+    [
+     0.9,
+     346.0
+    ],
+    [
+     0.92,
+     355.0
+    ],
+    [
+     0.94,
+     364.0
+    ],
+    [
+     0.96,
+     380.0
+    ],
+    [
+     0.98,
+     412.0
+    ],
+    [
+     1.0,
+     503.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": false,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 496,
+   "n_eff": 323.6,
+   "players": 79,
+   "icc": 0.1028,
+   "median": 249.0,
+   "quantiles": [
+    [
+     0.0,
+     17.0
+    ],
+    [
+     0.02,
+     86.0
+    ],
+    [
+     0.04,
+     121.0
+    ],
+    [
+     0.06,
+     133.0
+    ],
+    [
+     0.08,
+     140.0
+    ],
+    [
+     0.1,
+     152.0
+    ],
+    [
+     0.12,
+     158.0
+    ],
+    [
+     0.14,
+     170.0
+    ],
+    [
+     0.16,
+     176.0
+    ],
+    [
+     0.18,
+     183.0
+    ],
+    [
+     0.2,
+     190.0
+    ],
+    [
+     0.22,
+     194.0
+    ],
+    [
+     0.24,
+     197.0
+    ],
+    [
+     0.26,
+     202.0
+    ],
+    [
+     0.28,
+     206.0
+    ],
+    [
+     0.3,
+     209.0
+    ],
+    [
+     0.32,
+     216.0
+    ],
+    [
+     0.34,
+     220.0
+    ],
+    [
+     0.36,
+     223.0
+    ],
+    [
+     0.38,
+     226.0
+    ],
+    [
+     0.4,
+     229.0
+    ],
+    [
+     0.42,
+     233.0
+    ],
+    [
+     0.44,
+     236.0
+    ],
+    [
+     0.46,
+     240.0
+    ],
+    [
+     0.48,
+     244.0
+    ],
+    [
+     0.5,
+     249.0
+    ],
+    [
+     0.52,
+     252.0
+    ],
+    [
+     0.54,
+     257.0
+    ],
+    [
+     0.56,
+     260.0
+    ],
+    [
+     0.58,
+     264.0
+    ],
+    [
+     0.6,
+     267.0
+    ],
+    [
+     0.62,
+     271.0
+    ],
+    [
+     0.64,
+     278.0
+    ],
+    [
+     0.66,
+     280.0
+    ],
+    [
+     0.68,
+     283.0
+    ],
+    [
+     0.7,
+     289.0
+    ],
+    [
+     0.72,
+     295.0
+    ],
+    [
+     0.74,
+     299.0
+    ],
+    [
+     0.76,
+     305.0
+    ],
+    [
+     0.78,
+     308.0
+    ],
+    [
+     0.8,
+     314.0
+    ],
+    [
+     0.82,
+     318.0
+    ],
+    [
+     0.84,
+     323.0
+    ],
+    [
+     0.86,
+     331.0
+    ],
+    [
+     0.88,
+     335.0
+    ],
+    [
+     0.9,
+     341.0
+    ],
+    [
+     0.92,
+     354.0
+    ],
+    [
+     0.94,
+     367.0
+    ],
+    [
+     0.96,
+     388.0
+    ],
+    [
+     0.98,
+     429.0
+    ],
+    [
+     1.0,
+     522.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": false,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 519,
+   "n_eff": 283.0,
+   "players": 86,
+   "icc": 0.1675,
+   "median": 255.0,
+   "quantiles": [
+    [
+     0.0,
+     6.0
+    ],
+    [
+     0.02,
+     86.0
+    ],
+    [
+     0.04,
+     116.0
+    ],
+    [
+     0.06,
+     137.0
+    ],
+    [
+     0.08,
+     154.0
+    ],
+    [
+     0.1,
+     163.0
+    ],
+    [
+     0.12,
+     171.0
+    ],
+    [
+     0.14,
+     178.0
+    ],
+    [
+     0.16,
+     181.0
+    ],
+    [
+     0.18,
+     186.0
+    ],
+    [
+     0.2,
+     193.0
+    ],
+    [
+     0.22,
+     199.0
+    ],
+    [
+     0.24,
+     203.0
+    ],
+    [
+     0.26,
+     208.0
+    ],
+    [
+     0.28,
+     212.0
+    ],
+    [
+     0.3,
+     217.0
+    ],
+    [
+     0.32,
+     220.0
+    ],
+    [
+     0.34,
+     224.0
+    ],
+    [
+     0.36,
+     227.0
+    ],
+    [
+     0.38,
+     231.0
+    ],
+    [
+     0.4,
+     235.0
+    ],
+    [
+     0.42,
+     238.0
+    ],
+    [
+     0.44,
+     243.0
+    ],
+    [
+     0.46,
+     247.0
+    ],
+    [
+     0.48,
+     251.0
+    ],
+    [
+     0.5,
+     255.0
+    ],
+    [
+     0.52,
+     258.0
+    ],
+    [
+     0.54,
+     262.0
+    ],
+    [
+     0.56,
+     265.0
+    ],
+    [
+     0.58,
+     268.0
+    ],
+    [
+     0.6,
+     270.0
+    ],
+    [
+     0.62,
+     273.0
+    ],
+    [
+     0.64,
+     278.0
+    ],
+    [
+     0.66,
+     280.0
+    ],
+    [
+     0.68,
+     286.0
+    ],
+    [
+     0.7,
+     292.0
+    ],
+    [
+     0.72,
+     296.0
+    ],
+    [
+     0.74,
+     300.0
+    ],
+    [
+     0.76,
+     304.0
+    ],
+    [
+     0.78,
+     309.0
+    ],
+    [
+     0.8,
+     313.0
+    ],
+    [
+     0.82,
+     318.0
+    ],
+    [
+     0.84,
+     325.0
+    ],
+    [
+     0.86,
+     331.0
+    ],
+    [
+     0.88,
+     338.0
+    ],
+    [
+     0.9,
+     345.0
+    ],
+    [
+     0.92,
+     350.0
+    ],
+    [
+     0.94,
+     359.0
+    ],
+    [
+     0.96,
+     377.0
+    ],
+    [
+     0.98,
+     403.0
+    ],
+    [
+     1.0,
+     506.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": false,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 264,
+   "n_eff": 235.8,
+   "players": 42,
+   "icc": 0.0235,
+   "median": 273.5,
+   "quantiles": [
+    [
+     0.0,
+     4.0
+    ],
+    [
+     0.02,
+     129.0
+    ],
+    [
+     0.04,
+     160.0
+    ],
+    [
+     0.06,
+     175.0
+    ],
+    [
+     0.08,
+     183.0
+    ],
+    [
+     0.1,
+     192.0
+    ],
+    [
+     0.12,
+     199.0
+    ],
+    [
+     0.14,
+     204.0
+    ],
+    [
+     0.16,
+     212.0
+    ],
+    [
+     0.18,
+     215.0
+    ],
+    [
+     0.2,
+     218.0
+    ],
+    [
+     0.22,
+     220.0
+    ],
+    [
+     0.24,
+     223.0
+    ],
+    [
+     0.26,
+     227.0
+    ],
+    [
+     0.28,
+     231.0
+    ],
+    [
+     0.3,
+     235.0
+    ],
+    [
+     0.32,
+     238.0
+    ],
+    [
+     0.34,
+     240.0
+    ],
+    [
+     0.36,
+     246.0
+    ],
+    [
+     0.38,
+     252.0
+    ],
+    [
+     0.4,
+     257.0
+    ],
+    [
+     0.42,
+     261.0
+    ],
+    [
+     0.44,
+     264.0
+    ],
+    [
+     0.46,
+     266.0
+    ],
+    [
+     0.48,
+     270.0
+    ],
+    [
+     0.5,
+     273.0
+    ],
+    [
+     0.52,
+     282.0
+    ],
+    [
+     0.54,
+     285.0
+    ],
+    [
+     0.56,
+     289.0
+    ],
+    [
+     0.58,
+     294.0
+    ],
+    [
+     0.6,
+     296.0
+    ],
+    [
+     0.62,
+     298.0
+    ],
+    [
+     0.64,
+     302.0
+    ],
+    [
+     0.66,
+     308.0
+    ],
+    [
+     0.68,
+     312.0
+    ],
+    [
+     0.7,
+     315.0
+    ],
+    [
+     0.72,
+     323.0
+    ],
+    [
+     0.74,
+     328.0
+    ],
+    [
+     0.76,
+     332.0
+    ],
+    [
+     0.78,
+     338.0
+    ],
+    [
+     0.8,
+     342.0
+    ],
+    [
+     0.82,
+     347.0
+    ],
+    [
+     0.84,
+     356.0
+    ],
+    [
+     0.86,
+     363.0
+    ],
+    [
+     0.88,
+     371.0
+    ],
+    [
+     0.9,
+     380.0
+    ],
+    [
+     0.92,
+     382.0
+    ],
+    [
+     0.94,
+     397.0
+    ],
+    [
+     0.96,
+     410.0
+    ],
+    [
+     0.98,
+     432.0
+    ],
+    [
+     1.0,
+     506.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": false,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 220,
+   "n_eff": 130.0,
+   "players": 33,
+   "icc": 0.1273,
+   "median": 274.5,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     117.0
+    ],
+    [
+     0.04,
+     128.0
+    ],
+    [
+     0.06,
+     161.0
+    ],
+    [
+     0.08,
+     169.0
+    ],
+    [
+     0.1,
+     180.0
+    ],
+    [
+     0.12,
+     186.0
+    ],
+    [
+     0.14,
+     193.0
+    ],
+    [
+     0.16,
+     201.0
+    ],
+    [
+     0.18,
+     207.0
+    ],
+    [
+     0.2,
+     210.0
+    ],
+    [
+     0.22,
+     216.0
+    ],
+    [
+     0.24,
+     221.0
+    ],
+    [
+     0.26,
+     224.0
+    ],
+    [
+     0.28,
+     227.0
+    ],
+    [
+     0.3,
+     231.0
+    ],
+    [
+     0.32,
+     237.0
+    ],
+    [
+     0.34,
+     241.0
+    ],
+    [
+     0.36,
+     246.0
+    ],
+    [
+     0.38,
+     249.0
+    ],
+    [
+     0.4,
+     251.0
+    ],
+    [
+     0.42,
+     255.0
+    ],
+    [
+     0.44,
+     261.0
+    ],
+    [
+     0.46,
+     268.0
+    ],
+    [
+     0.48,
+     272.0
+    ],
+    [
+     0.5,
+     274.0
+    ],
+    [
+     0.52,
+     277.0
+    ],
+    [
+     0.54,
+     280.0
+    ],
+    [
+     0.56,
+     281.0
+    ],
+    [
+     0.58,
+     288.0
+    ],
+    [
+     0.6,
+     297.0
+    ],
+    [
+     0.62,
+     300.0
+    ],
+    [
+     0.64,
+     308.0
+    ],
+    [
+     0.66,
+     310.0
+    ],
+    [
+     0.68,
+     312.0
+    ],
+    [
+     0.7,
+     317.0
+    ],
+    [
+     0.72,
+     320.0
+    ],
+    [
+     0.74,
+     323.0
+    ],
+    [
+     0.76,
+     328.0
+    ],
+    [
+     0.78,
+     335.0
+    ],
+    [
+     0.8,
+     342.0
+    ],
+    [
+     0.82,
+     347.0
+    ],
+    [
+     0.84,
+     352.0
+    ],
+    [
+     0.86,
+     359.0
+    ],
+    [
+     0.88,
+     363.0
+    ],
+    [
+     0.9,
+     378.0
+    ],
+    [
+     0.92,
+     389.0
+    ],
+    [
+     0.94,
+     399.0
+    ],
+    [
+     0.96,
+     432.0
+    ],
+    [
+     0.98,
+     446.0
+    ],
+    [
+     1.0,
+     505.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "blowout_loss",
+   "occurred": false,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 266,
+   "n_eff": 126.2,
+   "players": 43,
+   "icc": 0.2211,
+   "median": 266.5,
+   "quantiles": [
+    [
+     0.0,
+     -2.0
+    ],
+    [
+     0.02,
+     106.0
+    ],
+    [
+     0.04,
+     128.0
+    ],
+    [
+     0.06,
+     152.0
+    ],
+    [
+     0.08,
+     166.0
+    ],
+    [
+     0.1,
+     170.0
+    ],
+    [
+     0.12,
+     179.0
+    ],
+    [
+     0.14,
+     185.0
+    ],
+    [
+     0.16,
+     190.0
+    ],
+    [
+     0.18,
+     196.0
+    ],
+    [
+     0.2,
+     204.0
+    ],
+    [
+     0.22,
+     210.0
+    ],
+    [
+     0.24,
+     215.0
+    ],
+    [
+     0.26,
+     220.0
+    ],
+    [
+     0.28,
+     226.0
+    ],
+    [
+     0.3,
+     230.0
+    ],
+    [
+     0.32,
+     234.0
+    ],
+    [
+     0.34,
+     237.0
+    ],
+    [
+     0.36,
+     243.0
+    ],
+    [
+     0.38,
+     248.0
+    ],
+    [
+     0.4,
+     252.0
+    ],
+    [
+     0.42,
+     253.0
+    ],
+    [
+     0.44,
+     257.0
+    ],
+    [
+     0.46,
+     262.0
+    ],
+    [
+     0.48,
+     264.0
+    ],
+    [
+     0.5,
+     266.0
+    ],
+    [
+     0.52,
+     270.0
+    ],
+    [
+     0.54,
+     280.0
+    ],
+    [
+     0.56,
+     281.0
+    ],
+    [
+     0.58,
+     284.0
+    ],
+    [
+     0.6,
+     295.0
+    ],
+    [
+     0.62,
+     299.0
+    ],
+    [
+     0.64,
+     303.0
+    ],
+    [
+     0.66,
+     305.0
+    ],
+    [
+     0.68,
+     311.0
+    ],
+    [
+     0.7,
+     313.0
+    ],
+    [
+     0.72,
+     317.0
+    ],
+    [
+     0.74,
+     320.0
+    ],
+    [
+     0.76,
+     323.0
+    ],
+    [
+     0.78,
+     329.0
+    ],
+    [
+     0.8,
+     335.0
+    ],
+    [
+     0.82,
+     340.0
+    ],
+    [
+     0.84,
+     350.0
+    ],
+    [
+     0.86,
+     356.0
+    ],
+    [
+     0.88,
+     364.0
+    ],
+    [
+     0.9,
+     371.0
+    ],
+    [
+     0.92,
+     381.0
+    ],
+    [
+     0.94,
+     393.0
+    ],
+    [
+     0.96,
+     399.0
+    ],
+    [
+     0.98,
+     418.0
+    ],
+    [
+     1.0,
+     520.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": true,
+   "opportunity_min": 0,
+   "opportunity_max": 28,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 103,
+   "n_eff": 102.9,
+   "players": 60,
+   "icc": 0.0016,
+   "median": 243.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     1.0
+    ],
+    [
+     0.04,
+     11.0
+    ],
+    [
+     0.06,
+     19.0
+    ],
+    [
+     0.08,
+     56.0
+    ],
+    [
+     0.1,
+     64.0
+    ],
+    [
+     0.12,
+     85.0
+    ],
+    [
+     0.14,
+     114.0
+    ],
+    [
+     0.16,
+     136.0
+    ],
+    [
+     0.18,
+     161.0
+    ],
+    [
+     0.2,
+     162.0
+    ],
+    [
+     0.22,
+     169.0
+    ],
+    [
+     0.24,
+     177.0
+    ],
+    [
+     0.26,
+     187.0
+    ],
+    [
+     0.28,
+     190.0
+    ],
+    [
+     0.3,
+     202.0
+    ],
+    [
+     0.32,
+     206.0
+    ],
+    [
+     0.34,
+     210.0
+    ],
+    [
+     0.36,
+     214.0
+    ],
+    [
+     0.38,
+     215.0
+    ],
+    [
+     0.4,
+     219.0
+    ],
+    [
+     0.42,
+     223.0
+    ],
+    [
+     0.44,
+     231.0
+    ],
+    [
+     0.46,
+     235.0
+    ],
+    [
+     0.48,
+     240.0
+    ],
+    [
+     0.5,
+     243.0
+    ],
+    [
+     0.52,
+     247.0
+    ],
+    [
+     0.54,
+     258.0
+    ],
+    [
+     0.56,
+     259.0
+    ],
+    [
+     0.58,
+     261.0
+    ],
+    [
+     0.6,
+     264.0
+    ],
+    [
+     0.62,
+     275.0
+    ],
+    [
+     0.64,
+     279.0
+    ],
+    [
+     0.66,
+     283.0
+    ],
+    [
+     0.68,
+     288.0
+    ],
+    [
+     0.7,
+     292.0
+    ],
+    [
+     0.72,
+     294.0
+    ],
+    [
+     0.74,
+     297.0
+    ],
+    [
+     0.76,
+     298.0
+    ],
+    [
+     0.78,
+     316.0
+    ],
+    [
+     0.8,
+     323.0
+    ],
+    [
+     0.82,
+     325.0
+    ],
+    [
+     0.84,
+     329.0
+    ],
+    [
+     0.86,
+     335.0
+    ],
+    [
+     0.88,
+     341.0
+    ],
+    [
+     0.9,
+     343.0
+    ],
+    [
+     0.92,
+     349.0
+    ],
+    [
+     0.94,
+     365.0
+    ],
+    [
+     0.96,
+     382.0
+    ],
+    [
+     0.98,
+     428.0
+    ],
+    [
+     1.0,
+     497.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": true,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 166,
+   "n_eff": 140.3,
+   "players": 78,
+   "icc": 0.1645,
+   "median": 258.5,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     26.0
+    ],
+    [
+     0.04,
+     73.0
+    ],
+    [
+     0.06,
+     117.0
+    ],
+    [
+     0.08,
+     146.0
+    ],
+    [
+     0.1,
+     156.0
+    ],
+    [
+     0.12,
+     162.0
+    ],
+    [
+     0.14,
+     168.0
+    ],
+    [
+     0.16,
+     178.0
+    ],
+    [
+     0.18,
+     190.0
+    ],
+    [
+     0.2,
+     199.0
+    ],
+    [
+     0.22,
+     202.0
+    ],
+    [
+     0.24,
+     207.0
+    ],
+    [
+     0.26,
+     213.0
+    ],
+    [
+     0.28,
+     216.0
+    ],
+    [
+     0.3,
+     220.0
+    ],
+    [
+     0.32,
+     224.0
+    ],
+    [
+     0.34,
+     229.0
+    ],
+    [
+     0.36,
+     232.0
+    ],
+    [
+     0.38,
+     234.0
+    ],
+    [
+     0.4,
+     235.0
+    ],
+    [
+     0.42,
+     241.0
+    ],
+    [
+     0.44,
+     244.0
+    ],
+    [
+     0.46,
+     247.0
+    ],
+    [
+     0.48,
+     253.0
+    ],
+    [
+     0.5,
+     258.0
+    ],
+    [
+     0.52,
+     262.0
+    ],
+    [
+     0.54,
+     274.0
+    ],
+    [
+     0.56,
+     276.0
+    ],
+    [
+     0.58,
+     280.0
+    ],
+    [
+     0.6,
+     282.0
+    ],
+    [
+     0.62,
+     284.0
+    ],
+    [
+     0.64,
+     287.0
+    ],
+    [
+     0.66,
+     289.0
+    ],
+    [
+     0.68,
+     292.0
+    ],
+    [
+     0.7,
+     295.0
+    ],
+    [
+     0.72,
+     296.0
+    ],
+    [
+     0.74,
+     301.0
+    ],
+    [
+     0.76,
+     306.0
+    ],
+    [
+     0.78,
+     312.0
+    ],
+    [
+     0.8,
+     326.0
+    ],
+    [
+     0.82,
+     330.0
+    ],
+    [
+     0.84,
+     333.0
+    ],
+    [
+     0.86,
+     336.0
+    ],
+    [
+     0.88,
+     355.0
+    ],
+    [
+     0.9,
+     359.0
+    ],
+    [
+     0.92,
+     362.0
+    ],
+    [
+     0.94,
+     380.0
+    ],
+    [
+     0.96,
+     391.0
+    ],
+    [
+     0.98,
+     401.0
+    ],
+    [
+     1.0,
+     525.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": true,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 136,
+   "n_eff": 136.0,
+   "players": 69,
+   "icc": 0.0,
+   "median": 271.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     127.0
+    ],
+    [
+     0.04,
+     146.0
+    ],
+    [
+     0.06,
+     159.0
+    ],
+    [
+     0.08,
+     177.0
+    ],
+    [
+     0.1,
+     184.0
+    ],
+    [
+     0.12,
+     195.0
+    ],
+    [
+     0.14,
+     202.0
+    ],
+    [
+     0.16,
+     212.0
+    ],
+    [
+     0.18,
+     219.0
+    ],
+    [
+     0.2,
+     225.0
+    ],
+    [
+     0.22,
+     228.0
+    ],
+    [
+     0.24,
+     230.0
+    ],
+    [
+     0.26,
+     234.0
+    ],
+    [
+     0.28,
+     237.0
+    ],
+    [
+     0.3,
+     239.0
+    ],
+    [
+     0.32,
+     241.0
+    ],
+    [
+     0.34,
+     244.0
+    ],
+    [
+     0.36,
+     251.0
+    ],
+    [
+     0.38,
+     255.0
+    ],
+    [
+     0.4,
+     256.0
+    ],
+    [
+     0.42,
+     256.0
+    ],
+    [
+     0.44,
+     260.0
+    ],
+    [
+     0.46,
+     263.0
+    ],
+    [
+     0.48,
+     266.0
+    ],
+    [
+     0.5,
+     270.0
+    ],
+    [
+     0.52,
+     273.0
+    ],
+    [
+     0.54,
+     274.0
+    ],
+    [
+     0.56,
+     278.0
+    ],
+    [
+     0.58,
+     283.0
+    ],
+    [
+     0.6,
+     291.0
+    ],
+    [
+     0.62,
+     293.0
+    ],
+    [
+     0.64,
+     295.0
+    ],
+    [
+     0.66,
+     300.0
+    ],
+    [
+     0.68,
+     303.0
+    ],
+    [
+     0.7,
+     309.0
+    ],
+    [
+     0.72,
+     316.0
+    ],
+    [
+     0.74,
+     317.0
+    ],
+    [
+     0.76,
+     322.0
+    ],
+    [
+     0.78,
+     326.0
+    ],
+    [
+     0.8,
+     334.0
+    ],
+    [
+     0.82,
+     340.0
+    ],
+    [
+     0.84,
+     342.0
+    ],
+    [
+     0.86,
+     353.0
+    ],
+    [
+     0.88,
+     355.0
+    ],
+    [
+     0.9,
+     360.0
+    ],
+    [
+     0.92,
+     369.0
+    ],
+    [
+     0.94,
+     374.0
+    ],
+    [
+     0.96,
+     381.0
+    ],
+    [
+     0.98,
+     418.0
+    ],
+    [
+     1.0,
+     446.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": true,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 168,
+   "n_eff": 145.9,
+   "players": 64,
+   "icc": 0.095,
+   "median": 267.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     83.0
+    ],
+    [
+     0.04,
+     116.0
+    ],
+    [
+     0.06,
+     126.0
+    ],
+    [
+     0.08,
+     152.0
+    ],
+    [
+     0.1,
+     169.0
+    ],
+    [
+     0.12,
+     185.0
+    ],
+    [
+     0.14,
+     189.0
+    ],
+    [
+     0.16,
+     195.0
+    ],
+    [
+     0.18,
+     209.0
+    ],
+    [
+     0.2,
+     213.0
+    ],
+    [
+     0.22,
+     218.0
+    ],
+    [
+     0.24,
+     221.0
+    ],
+    [
+     0.26,
+     227.0
+    ],
+    [
+     0.28,
+     229.0
+    ],
+    [
+     0.3,
+     235.0
+    ],
+    [
+     0.32,
+     238.0
+    ],
+    [
+     0.34,
+     240.0
+    ],
+    [
+     0.36,
+     242.0
+    ],
+    [
+     0.38,
+     244.0
+    ],
+    [
+     0.4,
+     244.0
+    ],
+    [
+     0.42,
+     246.0
+    ],
+    [
+     0.44,
+     248.0
+    ],
+    [
+     0.46,
+     252.0
+    ],
+    [
+     0.48,
+     258.0
+    ],
+    [
+     0.5,
+     264.0
+    ],
+    [
+     0.52,
+     275.0
+    ],
+    [
+     0.54,
+     276.0
+    ],
+    [
+     0.56,
+     280.0
+    ],
+    [
+     0.58,
+     285.0
+    ],
+    [
+     0.6,
+     291.0
+    ],
+    [
+     0.62,
+     294.0
+    ],
+    [
+     0.64,
+     296.0
+    ],
+    [
+     0.66,
+     300.0
+    ],
+    [
+     0.68,
+     302.0
+    ],
+    [
+     0.7,
+     306.0
+    ],
+    [
+     0.72,
+     308.0
+    ],
+    [
+     0.74,
+     309.0
+    ],
+    [
+     0.76,
+     312.0
+    ],
+    [
+     0.78,
+     317.0
+    ],
+    [
+     0.8,
+     319.0
+    ],
+    [
+     0.82,
+     329.0
+    ],
+    [
+     0.84,
+     333.0
+    ],
+    [
+     0.86,
+     339.0
+    ],
+    [
+     0.88,
+     347.0
+    ],
+    [
+     0.9,
+     357.0
+    ],
+    [
+     0.92,
+     367.0
+    ],
+    [
+     0.94,
+     377.0
+    ],
+    [
+     0.96,
+     414.0
+    ],
+    [
+     0.98,
+     424.0
+    ],
+    [
+     1.0,
+     509.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": true,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 278,
+   "n_eff": 218.5,
+   "players": 65,
+   "icc": 0.0844,
+   "median": 270.5,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     81.0
+    ],
+    [
+     0.04,
+     123.0
+    ],
+    [
+     0.06,
+     137.0
+    ],
+    [
+     0.08,
+     148.0
+    ],
+    [
+     0.1,
+     163.0
+    ],
+    [
+     0.12,
+     179.0
+    ],
+    [
+     0.14,
+     185.0
+    ],
+    [
+     0.16,
+     194.0
+    ],
+    [
+     0.18,
+     198.0
+    ],
+    [
+     0.2,
+     204.0
+    ],
+    [
+     0.22,
+     209.0
+    ],
+    [
+     0.24,
+     212.0
+    ],
+    [
+     0.26,
+     222.0
+    ],
+    [
+     0.28,
+     227.0
+    ],
+    [
+     0.3,
+     233.0
+    ],
+    [
+     0.32,
+     236.0
+    ],
+    [
+     0.34,
+     241.0
+    ],
+    [
+     0.36,
+     245.0
+    ],
+    [
+     0.38,
+     249.0
+    ],
+    [
+     0.4,
+     254.0
+    ],
+    [
+     0.42,
+     258.0
+    ],
+    [
+     0.44,
+     260.0
+    ],
+    [
+     0.46,
+     265.0
+    ],
+    [
+     0.48,
+     268.0
+    ],
+    [
+     0.5,
+     270.0
+    ],
+    [
+     0.52,
+     274.0
+    ],
+    [
+     0.54,
+     276.0
+    ],
+    [
+     0.56,
+     278.0
+    ],
+    [
+     0.58,
+     284.0
+    ],
+    [
+     0.6,
+     286.0
+    ],
+    [
+     0.62,
+     291.0
+    ],
+    [
+     0.64,
+     295.0
+    ],
+    [
+     0.66,
+     300.0
+    ],
+    [
+     0.68,
+     304.0
+    ],
+    [
+     0.7,
+     308.0
+    ],
+    [
+     0.72,
+     313.0
+    ],
+    [
+     0.74,
+     316.0
+    ],
+    [
+     0.76,
+     324.0
+    ],
+    [
+     0.78,
+     333.0
+    ],
+    [
+     0.8,
+     338.0
+    ],
+    [
+     0.82,
+     342.0
+    ],
+    [
+     0.84,
+     347.0
+    ],
+    [
+     0.86,
+     354.0
+    ],
+    [
+     0.88,
+     360.0
+    ],
+    [
+     0.9,
+     367.0
+    ],
+    [
+     0.92,
+     380.0
+    ],
+    [
+     0.94,
+     397.0
+    ],
+    [
+     0.96,
+     416.0
+    ],
+    [
+     0.98,
+     438.0
+    ],
+    [
+     1.0,
+     503.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": true,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 254,
+   "n_eff": 206.3,
+   "players": 57,
+   "icc": 0.069,
+   "median": 278.0,
+   "quantiles": [
+    [
+     0.0,
+     28.0
+    ],
+    [
+     0.02,
+     112.0
+    ],
+    [
+     0.04,
+     131.0
+    ],
+    [
+     0.06,
+     166.0
+    ],
+    [
+     0.08,
+     182.0
+    ],
+    [
+     0.1,
+     186.0
+    ],
+    [
+     0.12,
+     192.0
+    ],
+    [
+     0.14,
+     204.0
+    ],
+    [
+     0.16,
+     211.0
+    ],
+    [
+     0.18,
+     218.0
+    ],
+    [
+     0.2,
+     224.0
+    ],
+    [
+     0.22,
+     226.0
+    ],
+    [
+     0.24,
+     227.0
+    ],
+    [
+     0.26,
+     229.0
+    ],
+    [
+     0.28,
+     235.0
+    ],
+    [
+     0.3,
+     238.0
+    ],
+    [
+     0.32,
+     242.0
+    ],
+    [
+     0.34,
+     247.0
+    ],
+    [
+     0.36,
+     250.0
+    ],
+    [
+     0.38,
+     254.0
+    ],
+    [
+     0.4,
+     258.0
+    ],
+    [
+     0.42,
+     260.0
+    ],
+    [
+     0.44,
+     265.0
+    ],
+    [
+     0.46,
+     268.0
+    ],
+    [
+     0.48,
+     271.0
+    ],
+    [
+     0.5,
+     277.0
+    ],
+    [
+     0.52,
+     280.0
+    ],
+    [
+     0.54,
+     283.0
+    ],
+    [
+     0.56,
+     286.0
+    ],
+    [
+     0.58,
+     289.0
+    ],
+    [
+     0.6,
+     295.0
+    ],
+    [
+     0.62,
+     298.0
+    ],
+    [
+     0.64,
+     301.0
+    ],
+    [
+     0.66,
+     305.0
+    ],
+    [
+     0.68,
+     310.0
+    ],
+    [
+     0.7,
+     314.0
+    ],
+    [
+     0.72,
+     317.0
+    ],
+    [
+     0.74,
+     320.0
+    ],
+    [
+     0.76,
+     325.0
+    ],
+    [
+     0.78,
+     331.0
+    ],
+    [
+     0.8,
+     334.0
+    ],
+    [
+     0.82,
+     337.0
+    ],
+    [
+     0.84,
+     340.0
+    ],
+    [
+     0.86,
+     341.0
+    ],
+    [
+     0.88,
+     355.0
+    ],
+    [
+     0.9,
+     367.0
+    ],
+    [
+     0.92,
+     375.0
+    ],
+    [
+     0.94,
+     388.0
+    ],
+    [
+     0.96,
+     398.0
+    ],
+    [
+     0.98,
+     429.0
+    ],
+    [
+     1.0,
+     522.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": true,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 259,
+   "n_eff": 204.3,
+   "players": 66,
+   "icc": 0.093,
+   "median": 281.0,
+   "quantiles": [
+    [
+     0.0,
+     71.0
+    ],
+    [
+     0.02,
+     136.0
+    ],
+    [
+     0.04,
+     163.0
+    ],
+    [
+     0.06,
+     179.0
+    ],
+    [
+     0.08,
+     181.0
+    ],
+    [
+     0.1,
+     184.0
+    ],
+    [
+     0.12,
+     192.0
+    ],
+    [
+     0.14,
+     198.0
+    ],
+    [
+     0.16,
+     210.0
+    ],
+    [
+     0.18,
+     212.0
+    ],
+    [
+     0.2,
+     219.0
+    ],
+    [
+     0.22,
+     228.0
+    ],
+    [
+     0.24,
+     233.0
+    ],
+    [
+     0.26,
+     235.0
+    ],
+    [
+     0.28,
+     238.0
+    ],
+    [
+     0.3,
+     243.0
+    ],
+    [
+     0.32,
+     250.0
+    ],
+    [
+     0.34,
+     254.0
+    ],
+    [
+     0.36,
+     256.0
+    ],
+    [
+     0.38,
+     259.0
+    ],
+    [
+     0.4,
+     263.0
+    ],
+    [
+     0.42,
+     266.0
+    ],
+    [
+     0.44,
+     269.0
+    ],
+    [
+     0.46,
+     271.0
+    ],
+    [
+     0.48,
+     278.0
+    ],
+    [
+     0.5,
+     281.0
+    ],
+    [
+     0.52,
+     284.0
+    ],
+    [
+     0.54,
+     288.0
+    ],
+    [
+     0.56,
+     291.0
+    ],
+    [
+     0.58,
+     294.0
+    ],
+    [
+     0.6,
+     296.0
+    ],
+    [
+     0.62,
+     299.0
+    ],
+    [
+     0.64,
+     302.0
+    ],
+    [
+     0.66,
+     307.0
+    ],
+    [
+     0.68,
+     309.0
+    ],
+    [
+     0.7,
+     312.0
+    ],
+    [
+     0.72,
+     316.0
+    ],
+    [
+     0.74,
+     320.0
+    ],
+    [
+     0.76,
+     329.0
+    ],
+    [
+     0.78,
+     331.0
+    ],
+    [
+     0.8,
+     341.0
+    ],
+    [
+     0.82,
+     347.0
+    ],
+    [
+     0.84,
+     349.0
+    ],
+    [
+     0.86,
+     352.0
+    ],
+    [
+     0.88,
+     361.0
+    ],
+    [
+     0.9,
+     366.0
+    ],
+    [
+     0.92,
+     376.0
+    ],
+    [
+     0.94,
+     389.0
+    ],
+    [
+     0.96,
+     404.0
+    ],
+    [
+     0.98,
+     423.0
+    ],
+    [
+     1.0,
+     506.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": true,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 162,
+   "n_eff": 113.6,
+   "players": 29,
+   "icc": 0.0972,
+   "median": 297.0,
+   "quantiles": [
+    [
+     0.0,
+     4.0
+    ],
+    [
+     0.02,
+     149.0
+    ],
+    [
+     0.04,
+     178.0
+    ],
+    [
+     0.06,
+     192.0
+    ],
+    [
+     0.08,
+     198.0
+    ],
+    [
+     0.1,
+     205.0
+    ],
+    [
+     0.12,
+     211.0
+    ],
+    [
+     0.14,
+     219.0
+    ],
+    [
+     0.16,
+     220.0
+    ],
+    [
+     0.18,
+     226.0
+    ],
+    [
+     0.2,
+     232.0
+    ],
+    [
+     0.22,
+     235.0
+    ],
+    [
+     0.24,
+     238.0
+    ],
+    [
+     0.26,
+     239.0
+    ],
+    [
+     0.28,
+     248.0
+    ],
+    [
+     0.3,
+     255.0
+    ],
+    [
+     0.32,
+     258.0
+    ],
+    [
+     0.34,
+     262.0
+    ],
+    [
+     0.36,
+     266.0
+    ],
+    [
+     0.38,
+     267.0
+    ],
+    [
+     0.4,
+     270.0
+    ],
+    [
+     0.42,
+     282.0
+    ],
+    [
+     0.44,
+     286.0
+    ],
+    [
+     0.46,
+     292.0
+    ],
+    [
+     0.48,
+     296.0
+    ],
+    [
+     0.5,
+     297.0
+    ],
+    [
+     0.52,
+     300.0
+    ],
+    [
+     0.54,
+     308.0
+    ],
+    [
+     0.56,
+     312.0
+    ],
+    [
+     0.58,
+     314.0
+    ],
+    [
+     0.6,
+     317.0
+    ],
+    [
+     0.62,
+     323.0
+    ],
+    [
+     0.64,
+     328.0
+    ],
+    [
+     0.66,
+     331.0
+    ],
+    [
+     0.68,
+     332.0
+    ],
+    [
+     0.7,
+     335.0
+    ],
+    [
+     0.72,
+     340.0
+    ],
+    [
+     0.74,
+     342.0
+    ],
+    [
+     0.76,
+     347.0
+    ],
+    [
+     0.78,
+     352.0
+    ],
+    [
+     0.8,
+     356.0
+    ],
+    [
+     0.82,
+     363.0
+    ],
+    [
+     0.84,
+     370.0
+    ],
+    [
+     0.86,
+     375.0
+    ],
+    [
+     0.88,
+     380.0
+    ],
+    [
+     0.9,
+     381.0
+    ],
+    [
+     0.92,
+     389.0
+    ],
+    [
+     0.94,
+     398.0
+    ],
+    [
+     0.96,
+     410.0
+    ],
+    [
+     0.98,
+     433.0
+    ],
+    [
+     1.0,
+     506.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": true,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 151,
+   "n_eff": 87.5,
+   "players": 29,
+   "icc": 0.1806,
+   "median": 285.0,
+   "quantiles": [
+    [
+     0.0,
+     70.0
+    ],
+    [
+     0.02,
+     131.0
+    ],
+    [
+     0.04,
+     147.0
+    ],
+    [
+     0.06,
+     166.0
+    ],
+    [
+     0.08,
+     183.0
+    ],
+    [
+     0.1,
+     188.0
+    ],
+    [
+     0.12,
+     196.0
+    ],
+    [
+     0.14,
+     209.0
+    ],
+    [
+     0.16,
+     210.0
+    ],
+    [
+     0.18,
+     216.0
+    ],
+    [
+     0.2,
+     220.0
+    ],
+    [
+     0.22,
+     224.0
+    ],
+    [
+     0.24,
+     231.0
+    ],
+    [
+     0.26,
+     237.0
+    ],
+    [
+     0.28,
+     240.0
+    ],
+    [
+     0.3,
+     248.0
+    ],
+    [
+     0.32,
+     252.0
+    ],
+    [
+     0.34,
+     257.0
+    ],
+    [
+     0.36,
+     261.0
+    ],
+    [
+     0.38,
+     268.0
+    ],
+    [
+     0.4,
+     271.0
+    ],
+    [
+     0.42,
+     275.0
+    ],
+    [
+     0.44,
+     278.0
+    ],
+    [
+     0.46,
+     279.0
+    ],
+    [
+     0.48,
+     281.0
+    ],
+    [
+     0.5,
+     285.0
+    ],
+    [
+     0.52,
+     288.0
+    ],
+    [
+     0.54,
+     298.0
+    ],
+    [
+     0.56,
+     303.0
+    ],
+    [
+     0.58,
+     307.0
+    ],
+    [
+     0.6,
+     310.0
+    ],
+    [
+     0.62,
+     312.0
+    ],
+    [
+     0.64,
+     318.0
+    ],
+    [
+     0.66,
+     321.0
+    ],
+    [
+     0.68,
+     322.0
+    ],
+    [
+     0.7,
+     329.0
+    ],
+    [
+     0.72,
+     338.0
+    ],
+    [
+     0.74,
+     342.0
+    ],
+    [
+     0.76,
+     347.0
+    ],
+    [
+     0.78,
+     352.0
+    ],
+    [
+     0.8,
+     357.0
+    ],
+    [
+     0.82,
+     359.0
+    ],
+    [
+     0.84,
+     370.0
+    ],
+    [
+     0.86,
+     373.0
+    ],
+    [
+     0.88,
+     382.0
+    ],
+    [
+     0.9,
+     389.0
+    ],
+    [
+     0.92,
+     401.0
+    ],
+    [
+     0.94,
+     432.0
+    ],
+    [
+     0.96,
+     443.0
+    ],
+    [
+     0.98,
+     465.0
+    ],
+    [
+     1.0,
+     505.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": true,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 152,
+   "n_eff": 133.7,
+   "players": 32,
+   "icc": 0.038,
+   "median": 303.5,
+   "quantiles": [
+    [
+     0.0,
+     -2.0
+    ],
+    [
+     0.02,
+     109.0
+    ],
+    [
+     0.04,
+     172.0
+    ],
+    [
+     0.06,
+     185.0
+    ],
+    [
+     0.08,
+     196.0
+    ],
+    [
+     0.1,
+     209.0
+    ],
+    [
+     0.12,
+     220.0
+    ],
+    [
+     0.14,
+     228.0
+    ],
+    [
+     0.16,
+     243.0
+    ],
+    [
+     0.18,
+     248.0
+    ],
+    [
+     0.2,
+     253.0
+    ],
+    [
+     0.22,
+     255.0
+    ],
+    [
+     0.24,
+     260.0
+    ],
+    [
+     0.26,
+     263.0
+    ],
+    [
+     0.28,
+     266.0
+    ],
+    [
+     0.3,
+     267.0
+    ],
+    [
+     0.32,
+     274.0
+    ],
+    [
+     0.34,
+     280.0
+    ],
+    [
+     0.36,
+     281.0
+    ],
+    [
+     0.38,
+     282.0
+    ],
+    [
+     0.4,
+     289.0
+    ],
+    [
+     0.42,
+     291.0
+    ],
+    [
+     0.44,
+     297.0
+    ],
+    [
+     0.46,
+     299.0
+    ],
+    [
+     0.48,
+     301.0
+    ],
+    [
+     0.5,
+     303.0
+    ],
+    [
+     0.52,
+     305.0
+    ],
+    [
+     0.54,
+     307.0
+    ],
+    [
+     0.56,
+     312.0
+    ],
+    [
+     0.58,
+     313.0
+    ],
+    [
+     0.6,
+     317.0
+    ],
+    [
+     0.62,
+     319.0
+    ],
+    [
+     0.64,
+     321.0
+    ],
+    [
+     0.66,
+     323.0
+    ],
+    [
+     0.68,
+     325.0
+    ],
+    [
+     0.7,
+     335.0
+    ],
+    [
+     0.72,
+     337.0
+    ],
+    [
+     0.74,
+     342.0
+    ],
+    [
+     0.76,
+     349.0
+    ],
+    [
+     0.78,
+     353.0
+    ],
+    [
+     0.8,
+     360.0
+    ],
+    [
+     0.82,
+     363.0
+    ],
+    [
+     0.84,
+     365.0
+    ],
+    [
+     0.86,
+     371.0
+    ],
+    [
+     0.88,
+     381.0
+    ],
+    [
+     0.9,
+     389.0
+    ],
+    [
+     0.92,
+     393.0
+    ],
+    [
+     0.94,
+     399.0
+    ],
+    [
+     0.96,
+     411.0
+    ],
+    [
+     0.98,
+     423.0
+    ],
+    [
+     1.0,
+     520.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": false,
+   "opportunity_min": 0,
+   "opportunity_max": 28,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 222,
+   "n_eff": 148.7,
+   "players": 75,
+   "icc": 0.2555,
+   "median": 182.0,
+   "quantiles": [
+    [
+     0.0,
+     -1.0
+    ],
+    [
+     0.02,
+     0.0
+    ],
+    [
+     0.04,
+     0.0
+    ],
+    [
+     0.06,
+     0.0
+    ],
+    [
+     0.08,
+     5.0
+    ],
+    [
+     0.1,
+     24.0
+    ],
+    [
+     0.12,
+     45.0
+    ],
+    [
+     0.14,
+     57.0
+    ],
+    [
+     0.16,
+     89.0
+    ],
+    [
+     0.18,
+     95.0
+    ],
+    [
+     0.2,
+     104.0
+    ],
+    [
+     0.22,
+     107.0
+    ],
+    [
+     0.24,
+     114.0
+    ],
+    [
+     0.26,
+     121.0
+    ],
+    [
+     0.28,
+     126.0
+    ],
+    [
+     0.3,
+     132.0
+    ],
+    [
+     0.32,
+     143.0
+    ],
+    [
+     0.34,
+     147.0
+    ],
+    [
+     0.36,
+     158.0
+    ],
+    [
+     0.38,
+     163.0
+    ],
+    [
+     0.4,
+     168.0
+    ],
+    [
+     0.42,
+     169.0
+    ],
+    [
+     0.44,
+     175.0
+    ],
+    [
+     0.46,
+     176.0
+    ],
+    [
+     0.48,
+     179.0
+    ],
+    [
+     0.5,
+     182.0
+    ],
+    [
+     0.52,
+     183.0
+    ],
+    [
+     0.54,
+     198.0
+    ],
+    [
+     0.56,
+     204.0
+    ],
+    [
+     0.58,
+     209.0
+    ],
+    [
+     0.6,
+     217.0
+    ],
+    [
+     0.62,
+     220.0
+    ],
+    [
+     0.64,
+     224.0
+    ],
+    [
+     0.66,
+     226.0
+    ],
+    [
+     0.68,
+     230.0
+    ],
+    [
+     0.7,
+     235.0
+    ],
+    [
+     0.72,
+     238.0
+    ],
+    [
+     0.74,
+     241.0
+    ],
+    [
+     0.76,
+     243.0
+    ],
+    [
+     0.78,
+     252.0
+    ],
+    [
+     0.8,
+     258.0
+    ],
+    [
+     0.82,
+     262.0
+    ],
+    [
+     0.84,
+     267.0
+    ],
+    [
+     0.86,
+     281.0
+    ],
+    [
+     0.88,
+     288.0
+    ],
+    [
+     0.9,
+     292.0
+    ],
+    [
+     0.92,
+     299.0
+    ],
+    [
+     0.94,
+     306.0
+    ],
+    [
+     0.96,
+     317.0
+    ],
+    [
+     0.98,
+     341.0
+    ],
+    [
+     1.0,
+     355.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": false,
+   "opportunity_min": 0,
+   "opportunity_max": 28,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 190,
+   "n_eff": 108.7,
+   "players": 64,
+   "icc": 0.3889,
+   "median": 201.5,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     0.0
+    ],
+    [
+     0.04,
+     31.0
+    ],
+    [
+     0.06,
+     64.0
+    ],
+    [
+     0.08,
+     84.0
+    ],
+    [
+     0.1,
+     95.0
+    ],
+    [
+     0.12,
+     104.0
+    ],
+    [
+     0.14,
+     116.0
+    ],
+    [
+     0.16,
+     119.0
+    ],
+    [
+     0.18,
+     129.0
+    ],
+    [
+     0.2,
+     135.0
+    ],
+    [
+     0.22,
+     147.0
+    ],
+    [
+     0.24,
+     152.0
+    ],
+    [
+     0.26,
+     153.0
+    ],
+    [
+     0.28,
+     160.0
+    ],
+    [
+     0.3,
+     164.0
+    ],
+    [
+     0.32,
+     170.0
+    ],
+    [
+     0.34,
+     172.0
+    ],
+    [
+     0.36,
+     176.0
+    ],
+    [
+     0.38,
+     177.0
+    ],
+    [
+     0.4,
+     180.0
+    ],
+    [
+     0.42,
+     183.0
+    ],
+    [
+     0.44,
+     186.0
+    ],
+    [
+     0.46,
+     191.0
+    ],
+    [
+     0.48,
+     195.0
+    ],
+    [
+     0.5,
+     201.0
+    ],
+    [
+     0.52,
+     203.0
+    ],
+    [
+     0.54,
+     207.0
+    ],
+    [
+     0.56,
+     210.0
+    ],
+    [
+     0.58,
+     214.0
+    ],
+    [
+     0.6,
+     220.0
+    ],
+    [
+     0.62,
+     230.0
+    ],
+    [
+     0.64,
+     232.0
+    ],
+    [
+     0.66,
+     235.0
+    ],
+    [
+     0.68,
+     238.0
+    ],
+    [
+     0.7,
+     241.0
+    ],
+    [
+     0.72,
+     245.0
+    ],
+    [
+     0.74,
+     249.0
+    ],
+    [
+     0.76,
+     251.0
+    ],
+    [
+     0.78,
+     255.0
+    ],
+    [
+     0.8,
+     264.0
+    ],
+    [
+     0.82,
+     265.0
+    ],
+    [
+     0.84,
+     271.0
+    ],
+    [
+     0.86,
+     277.0
+    ],
+    [
+     0.88,
+     285.0
+    ],
+    [
+     0.9,
+     293.0
+    ],
+    [
+     0.92,
+     299.0
+    ],
+    [
+     0.94,
+     314.0
+    ],
+    [
+     0.96,
+     331.0
+    ],
+    [
+     0.98,
+     358.0
+    ],
+    [
+     1.0,
+     391.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": false,
+   "opportunity_min": 0,
+   "opportunity_max": 28,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 358,
+   "n_eff": 261.1,
+   "players": 104,
+   "icc": 0.1533,
+   "median": 179.0,
+   "quantiles": [
+    [
+     0.0,
+     -2.0
+    ],
+    [
+     0.02,
+     6.0
+    ],
+    [
+     0.04,
+     17.0
+    ],
+    [
+     0.06,
+     45.0
+    ],
+    [
+     0.08,
+     57.0
+    ],
+    [
+     0.1,
+     69.0
+    ],
+    [
+     0.12,
+     79.0
+    ],
+    [
+     0.14,
+     86.0
+    ],
+    [
+     0.16,
+     94.0
+    ],
+    [
+     0.18,
+     105.0
+    ],
+    [
+     0.2,
+     109.0
+    ],
+    [
+     0.22,
+     118.0
+    ],
+    [
+     0.24,
+     130.0
+    ],
+    [
+     0.26,
+     132.0
+    ],
+    [
+     0.28,
+     136.0
+    ],
+    [
+     0.3,
+     141.0
+    ],
+    [
+     0.32,
+     146.0
+    ],
+    [
+     0.34,
+     151.0
+    ],
+    [
+     0.36,
+     156.0
+    ],
+    [
+     0.38,
+     158.0
+    ],
+    [
+     0.4,
+     162.0
+    ],
+    [
+     0.42,
+     167.0
+    ],
+    [
+     0.44,
+     170.0
+    ],
+    [
+     0.46,
+     172.0
+    ],
+    [
+     0.48,
+     175.0
+    ],
+    [
+     0.5,
+     179.0
+    ],
+    [
+     0.52,
+     181.0
+    ],
+    [
+     0.54,
+     185.0
+    ],
+    [
+     0.56,
+     190.0
+    ],
+    [
+     0.58,
+     193.0
+    ],
+    [
+     0.6,
+     195.0
+    ],
+    [
+     0.62,
+     198.0
+    ],
+    [
+     0.64,
+     203.0
+    ],
+    [
+     0.66,
+     208.0
+    ],
+    [
+     0.68,
+     212.0
+    ],
+    [
+     0.7,
+     214.0
+    ],
+    [
+     0.72,
+     219.0
+    ],
+    [
+     0.74,
+     222.0
+    ],
+    [
+     0.76,
+     229.0
+    ],
+    [
+     0.78,
+     235.0
+    ],
+    [
+     0.8,
+     239.0
+    ],
+    [
+     0.82,
+     244.0
+    ],
+    [
+     0.84,
+     250.0
+    ],
+    [
+     0.86,
+     259.0
+    ],
+    [
+     0.88,
+     270.0
+    ],
+    [
+     0.9,
+     275.0
+    ],
+    [
+     0.92,
+     284.0
+    ],
+    [
+     0.94,
+     295.0
+    ],
+    [
+     0.96,
+     307.0
+    ],
+    [
+     0.98,
+     333.0
+    ],
+    [
+     1.0,
+     396.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": false,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 467,
+   "n_eff": 334.4,
+   "players": 88,
+   "icc": 0.0929,
+   "median": 205.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     19.0
+    ],
+    [
+     0.04,
+     40.0
+    ],
+    [
+     0.06,
+     78.0
+    ],
+    [
+     0.08,
+     93.0
+    ],
+    [
+     0.1,
+     102.0
+    ],
+    [
+     0.12,
+     114.0
+    ],
+    [
+     0.14,
+     120.0
+    ],
+    [
+     0.16,
+     125.0
+    ],
+    [
+     0.18,
+     131.0
+    ],
+    [
+     0.2,
+     137.0
+    ],
+    [
+     0.22,
+     145.0
+    ],
+    [
+     0.24,
+     148.0
+    ],
+    [
+     0.26,
+     153.0
+    ],
+    [
+     0.28,
+     156.0
+    ],
+    [
+     0.3,
+     162.0
+    ],
+    [
+     0.32,
+     168.0
+    ],
+    [
+     0.34,
+     172.0
+    ],
+    [
+     0.36,
+     175.0
+    ],
+    [
+     0.38,
+     179.0
+    ],
+    [
+     0.4,
+     183.0
+    ],
+    [
+     0.42,
+     189.0
+    ],
+    [
+     0.44,
+     193.0
+    ],
+    [
+     0.46,
+     198.0
+    ],
+    [
+     0.48,
+     202.0
+    ],
+    [
+     0.5,
+     205.0
+    ],
+    [
+     0.52,
+     210.0
+    ],
+    [
+     0.54,
+     213.0
+    ],
+    [
+     0.56,
+     215.0
+    ],
+    [
+     0.58,
+     221.0
+    ],
+    [
+     0.6,
+     224.0
+    ],
+    [
+     0.62,
+     227.0
+    ],
+    [
+     0.64,
+     230.0
+    ],
+    [
+     0.66,
+     233.0
+    ],
+    [
+     0.68,
+     235.0
+    ],
+    [
+     0.7,
+     240.0
+    ],
+    [
+     0.72,
+     243.0
+    ],
+    [
+     0.74,
+     246.0
+    ],
+    [
+     0.76,
+     249.0
+    ],
+    [
+     0.78,
+     258.0
+    ],
+    [
+     0.8,
+     262.0
+    ],
+    [
+     0.82,
+     271.0
+    ],
+    [
+     0.84,
+     274.0
+    ],
+    [
+     0.86,
+     278.0
+    ],
+    [
+     0.88,
+     288.0
+    ],
+    [
+     0.9,
+     299.0
+    ],
+    [
+     0.92,
+     307.0
+    ],
+    [
+     0.94,
+     317.0
+    ],
+    [
+     0.96,
+     324.0
+    ],
+    [
+     0.98,
+     334.0
+    ],
+    [
+     1.0,
+     527.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": false,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 407,
+   "n_eff": 289.9,
+   "players": 97,
+   "icc": 0.128,
+   "median": 218.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     57.0
+    ],
+    [
+     0.04,
+     70.0
+    ],
+    [
+     0.06,
+     89.0
+    ],
+    [
+     0.08,
+     105.0
+    ],
+    [
+     0.1,
+     115.0
+    ],
+    [
+     0.12,
+     122.0
+    ],
+    [
+     0.14,
+     130.0
+    ],
+    [
+     0.16,
+     139.0
+    ],
+    [
+     0.18,
+     141.0
+    ],
+    [
+     0.2,
+     149.0
+    ],
+    [
+     0.22,
+     157.0
+    ],
+    [
+     0.24,
+     159.0
+    ],
+    [
+     0.26,
+     163.0
+    ],
+    [
+     0.28,
+     169.0
+    ],
+    [
+     0.3,
+     174.0
+    ],
+    [
+     0.32,
+     176.0
+    ],
+    [
+     0.34,
+     181.0
+    ],
+    [
+     0.36,
+     185.0
+    ],
+    [
+     0.38,
+     191.0
+    ],
+    [
+     0.4,
+     196.0
+    ],
+    [
+     0.42,
+     201.0
+    ],
+    [
+     0.44,
+     207.0
+    ],
+    [
+     0.46,
+     209.0
+    ],
+    [
+     0.48,
+     212.0
+    ],
+    [
+     0.5,
+     218.0
+    ],
+    [
+     0.52,
+     222.0
+    ],
+    [
+     0.54,
+     223.0
+    ],
+    [
+     0.56,
+     225.0
+    ],
+    [
+     0.58,
+     230.0
+    ],
+    [
+     0.6,
+     236.0
+    ],
+    [
+     0.62,
+     239.0
+    ],
+    [
+     0.64,
+     244.0
+    ],
+    [
+     0.66,
+     247.0
+    ],
+    [
+     0.68,
+     250.0
+    ],
+    [
+     0.7,
+     253.0
+    ],
+    [
+     0.72,
+     258.0
+    ],
+    [
+     0.74,
+     264.0
+    ],
+    [
+     0.76,
+     266.0
+    ],
+    [
+     0.78,
+     273.0
+    ],
+    [
+     0.8,
+     280.0
+    ],
+    [
+     0.82,
+     285.0
+    ],
+    [
+     0.84,
+     292.0
+    ],
+    [
+     0.86,
+     298.0
+    ],
+    [
+     0.88,
+     307.0
+    ],
+    [
+     0.9,
+     315.0
+    ],
+    [
+     0.92,
+     326.0
+    ],
+    [
+     0.94,
+     338.0
+    ],
+    [
+     0.96,
+     352.0
+    ],
+    [
+     0.98,
+     371.0
+    ],
+    [
+     1.0,
+     463.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": false,
+   "opportunity_min": 28,
+   "opportunity_max": 33,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 444,
+   "n_eff": 303.2,
+   "players": 105,
+   "icc": 0.145,
+   "median": 210.5,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     6.0
+    ],
+    [
+     0.04,
+     46.0
+    ],
+    [
+     0.06,
+     77.0
+    ],
+    [
+     0.08,
+     93.0
+    ],
+    [
+     0.1,
+     112.0
+    ],
+    [
+     0.12,
+     124.0
+    ],
+    [
+     0.14,
+     130.0
+    ],
+    [
+     0.16,
+     139.0
+    ],
+    [
+     0.18,
+     147.0
+    ],
+    [
+     0.2,
+     153.0
+    ],
+    [
+     0.22,
+     155.0
+    ],
+    [
+     0.24,
+     161.0
+    ],
+    [
+     0.26,
+     166.0
+    ],
+    [
+     0.28,
+     170.0
+    ],
+    [
+     0.3,
+     172.0
+    ],
+    [
+     0.32,
+     177.0
+    ],
+    [
+     0.34,
+     182.0
+    ],
+    [
+     0.36,
+     185.0
+    ],
+    [
+     0.38,
+     190.0
+    ],
+    [
+     0.4,
+     194.0
+    ],
+    [
+     0.42,
+     198.0
+    ],
+    [
+     0.44,
+     201.0
+    ],
+    [
+     0.46,
+     203.0
+    ],
+    [
+     0.48,
+     208.0
+    ],
+    [
+     0.5,
+     210.0
+    ],
+    [
+     0.52,
+     217.0
+    ],
+    [
+     0.54,
+     220.0
+    ],
+    [
+     0.56,
+     223.0
+    ],
+    [
+     0.58,
+     228.0
+    ],
+    [
+     0.6,
+     232.0
+    ],
+    [
+     0.62,
+     235.0
+    ],
+    [
+     0.64,
+     240.0
+    ],
+    [
+     0.66,
+     244.0
+    ],
+    [
+     0.68,
+     248.0
+    ],
+    [
+     0.7,
+     254.0
+    ],
+    [
+     0.72,
+     257.0
+    ],
+    [
+     0.74,
+     259.0
+    ],
+    [
+     0.76,
+     262.0
+    ],
+    [
+     0.78,
+     266.0
+    ],
+    [
+     0.8,
+     271.0
+    ],
+    [
+     0.82,
+     279.0
+    ],
+    [
+     0.84,
+     284.0
+    ],
+    [
+     0.86,
+     290.0
+    ],
+    [
+     0.88,
+     299.0
+    ],
+    [
+     0.9,
+     310.0
+    ],
+    [
+     0.92,
+     320.0
+    ],
+    [
+     0.94,
+     329.0
+    ],
+    [
+     0.96,
+     342.0
+    ],
+    [
+     0.98,
+     358.0
+    ],
+    [
+     1.0,
+     426.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": false,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 443,
+   "n_eff": 443.0,
+   "players": 76,
+   "icc": 0.0,
+   "median": 225.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     46.0
+    ],
+    [
+     0.04,
+     93.0
+    ],
+    [
+     0.06,
+     112.0
+    ],
+    [
+     0.08,
+     122.0
+    ],
+    [
+     0.1,
+     133.0
+    ],
+    [
+     0.12,
+     143.0
+    ],
+    [
+     0.14,
+     150.0
+    ],
+    [
+     0.16,
+     154.0
+    ],
+    [
+     0.18,
+     159.0
+    ],
+    [
+     0.2,
+     163.0
+    ],
+    [
+     0.22,
+     168.0
+    ],
+    [
+     0.24,
+     173.0
+    ],
+    [
+     0.26,
+     176.0
+    ],
+    [
+     0.28,
+     178.0
+    ],
+    [
+     0.3,
+     186.0
+    ],
+    [
+     0.32,
+     190.0
+    ],
+    [
+     0.34,
+     196.0
+    ],
+    [
+     0.36,
+     199.0
+    ],
+    [
+     0.38,
+     200.0
+    ],
+    [
+     0.4,
+     205.0
+    ],
+    [
+     0.42,
+     210.0
+    ],
+    [
+     0.44,
+     215.0
+    ],
+    [
+     0.46,
+     218.0
+    ],
+    [
+     0.48,
+     221.0
+    ],
+    [
+     0.5,
+     225.0
+    ],
+    [
+     0.52,
+     228.0
+    ],
+    [
+     0.54,
+     230.0
+    ],
+    [
+     0.56,
+     234.0
+    ],
+    [
+     0.58,
+     237.0
+    ],
+    [
+     0.6,
+     243.0
+    ],
+    [
+     0.62,
+     248.0
+    ],
+    [
+     0.64,
+     251.0
+    ],
+    [
+     0.66,
+     256.0
+    ],
+    [
+     0.68,
+     261.0
+    ],
+    [
+     0.7,
+     264.0
+    ],
+    [
+     0.72,
+     270.0
+    ],
+    [
+     0.74,
+     273.0
+    ],
+    [
+     0.76,
+     278.0
+    ],
+    [
+     0.78,
+     283.0
+    ],
+    [
+     0.8,
+     286.0
+    ],
+    [
+     0.82,
+     290.0
+    ],
+    [
+     0.84,
+     295.0
+    ],
+    [
+     0.86,
+     299.0
+    ],
+    [
+     0.88,
+     304.0
+    ],
+    [
+     0.9,
+     309.0
+    ],
+    [
+     0.92,
+     317.0
+    ],
+    [
+     0.94,
+     330.0
+    ],
+    [
+     0.96,
+     342.0
+    ],
+    [
+     0.98,
+     363.0
+    ],
+    [
+     1.0,
+     407.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": false,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 387,
+   "n_eff": 249.8,
+   "players": 82,
+   "icc": 0.1495,
+   "median": 220.0,
+   "quantiles": [
+    [
+     0.0,
+     17.0
+    ],
+    [
+     0.02,
+     59.0
+    ],
+    [
+     0.04,
+     98.0
+    ],
+    [
+     0.06,
+     110.0
+    ],
+    [
+     0.08,
+     120.0
+    ],
+    [
+     0.1,
+     132.0
+    ],
+    [
+     0.12,
+     138.0
+    ],
+    [
+     0.14,
+     146.0
+    ],
+    [
+     0.16,
+     151.0
+    ],
+    [
+     0.18,
+     154.0
+    ],
+    [
+     0.2,
+     158.0
+    ],
+    [
+     0.22,
+     164.0
+    ],
+    [
+     0.24,
+     170.0
+    ],
+    [
+     0.26,
+     175.0
+    ],
+    [
+     0.28,
+     181.0
+    ],
+    [
+     0.3,
+     187.0
+    ],
+    [
+     0.32,
+     190.0
+    ],
+    [
+     0.34,
+     194.0
+    ],
+    [
+     0.36,
+     196.0
+    ],
+    [
+     0.38,
+     199.0
+    ],
+    [
+     0.4,
+     202.0
+    ],
+    [
+     0.42,
+     206.0
+    ],
+    [
+     0.44,
+     208.0
+    ],
+    [
+     0.46,
+     212.0
+    ],
+    [
+     0.48,
+     216.0
+    ],
+    [
+     0.5,
+     220.0
+    ],
+    [
+     0.52,
+     222.0
+    ],
+    [
+     0.54,
+     227.0
+    ],
+    [
+     0.56,
+     231.0
+    ],
+    [
+     0.58,
+     234.0
+    ],
+    [
+     0.6,
+     238.0
+    ],
+    [
+     0.62,
+     243.0
+    ],
+    [
+     0.64,
+     249.0
+    ],
+    [
+     0.66,
+     252.0
+    ],
+    [
+     0.68,
+     256.0
+    ],
+    [
+     0.7,
+     261.0
+    ],
+    [
+     0.72,
+     264.0
+    ],
+    [
+     0.74,
+     269.0
+    ],
+    [
+     0.76,
+     277.0
+    ],
+    [
+     0.78,
+     280.0
+    ],
+    [
+     0.8,
+     282.0
+    ],
+    [
+     0.82,
+     290.0
+    ],
+    [
+     0.84,
+     297.0
+    ],
+    [
+     0.86,
+     307.0
+    ],
+    [
+     0.88,
+     311.0
+    ],
+    [
+     0.9,
+     321.0
+    ],
+    [
+     0.92,
+     331.0
+    ],
+    [
+     0.94,
+     349.0
+    ],
+    [
+     0.96,
+     358.0
+    ],
+    [
+     0.98,
+     382.0
+    ],
+    [
+     1.0,
+     460.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": false,
+   "opportunity_min": 33,
+   "opportunity_max": 38,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 416,
+   "n_eff": 252.6,
+   "players": 86,
+   "icc": 0.1703,
+   "median": 226.5,
+   "quantiles": [
+    [
+     0.0,
+     -7.0
+    ],
+    [
+     0.02,
+     49.0
+    ],
+    [
+     0.04,
+     79.0
+    ],
+    [
+     0.06,
+     102.0
+    ],
+    [
+     0.08,
+     123.0
+    ],
+    [
+     0.1,
+     134.0
+    ],
+    [
+     0.12,
+     141.0
+    ],
+    [
+     0.14,
+     153.0
+    ],
+    [
+     0.16,
+     158.0
+    ],
+    [
+     0.18,
+     163.0
+    ],
+    [
+     0.2,
+     169.0
+    ],
+    [
+     0.22,
+     174.0
+    ],
+    [
+     0.24,
+     180.0
+    ],
+    [
+     0.26,
+     181.0
+    ],
+    [
+     0.28,
+     186.0
+    ],
+    [
+     0.3,
+     193.0
+    ],
+    [
+     0.32,
+     198.0
+    ],
+    [
+     0.34,
+     201.0
+    ],
+    [
+     0.36,
+     204.0
+    ],
+    [
+     0.38,
+     207.0
+    ],
+    [
+     0.4,
+     211.0
+    ],
+    [
+     0.42,
+     215.0
+    ],
+    [
+     0.44,
+     218.0
+    ],
+    [
+     0.46,
+     221.0
+    ],
+    [
+     0.48,
+     224.0
+    ],
+    [
+     0.5,
+     226.0
+    ],
+    [
+     0.52,
+     229.0
+    ],
+    [
+     0.54,
+     232.0
+    ],
+    [
+     0.56,
+     237.0
+    ],
+    [
+     0.58,
+     242.0
+    ],
+    [
+     0.6,
+     246.0
+    ],
+    [
+     0.62,
+     250.0
+    ],
+    [
+     0.64,
+     253.0
+    ],
+    [
+     0.66,
+     257.0
+    ],
+    [
+     0.68,
+     261.0
+    ],
+    [
+     0.7,
+     265.0
+    ],
+    [
+     0.72,
+     269.0
+    ],
+    [
+     0.74,
+     270.0
+    ],
+    [
+     0.76,
+     273.0
+    ],
+    [
+     0.78,
+     278.0
+    ],
+    [
+     0.8,
+     280.0
+    ],
+    [
+     0.82,
+     288.0
+    ],
+    [
+     0.84,
+     295.0
+    ],
+    [
+     0.86,
+     300.0
+    ],
+    [
+     0.88,
+     304.0
+    ],
+    [
+     0.9,
+     311.0
+    ],
+    [
+     0.92,
+     320.0
+    ],
+    [
+     0.94,
+     330.0
+    ],
+    [
+     0.96,
+     338.0
+    ],
+    [
+     0.98,
+     353.0
+    ],
+    [
+     1.0,
+     406.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": false,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": -99.0,
+   "trend_max": -2.0,
+   "n": 166,
+   "n_eff": 132.3,
+   "players": 39,
+   "icc": 0.0804,
+   "median": 237.5,
+   "quantiles": [
+    [
+     0.0,
+     39.0
+    ],
+    [
+     0.02,
+     104.0
+    ],
+    [
+     0.04,
+     129.0
+    ],
+    [
+     0.06,
+     134.0
+    ],
+    [
+     0.08,
+     149.0
+    ],
+    [
+     0.1,
+     155.0
+    ],
+    [
+     0.12,
+     166.0
+    ],
+    [
+     0.14,
+     175.0
+    ],
+    [
+     0.16,
+     180.0
+    ],
+    [
+     0.18,
+     182.0
+    ],
+    [
+     0.2,
+     185.0
+    ],
+    [
+     0.22,
+     192.0
+    ],
+    [
+     0.24,
+     197.0
+    ],
+    [
+     0.26,
+     202.0
+    ],
+    [
+     0.28,
+     206.0
+    ],
+    [
+     0.3,
+     209.0
+    ],
+    [
+     0.32,
+     213.0
+    ],
+    [
+     0.34,
+     216.0
+    ],
+    [
+     0.36,
+     217.0
+    ],
+    [
+     0.38,
+     220.0
+    ],
+    [
+     0.4,
+     222.0
+    ],
+    [
+     0.42,
+     225.0
+    ],
+    [
+     0.44,
+     227.0
+    ],
+    [
+     0.46,
+     231.0
+    ],
+    [
+     0.48,
+     234.0
+    ],
+    [
+     0.5,
+     236.0
+    ],
+    [
+     0.52,
+     243.0
+    ],
+    [
+     0.54,
+     250.0
+    ],
+    [
+     0.56,
+     253.0
+    ],
+    [
+     0.58,
+     256.0
+    ],
+    [
+     0.6,
+     260.0
+    ],
+    [
+     0.62,
+     263.0
+    ],
+    [
+     0.64,
+     266.0
+    ],
+    [
+     0.66,
+     269.0
+    ],
+    [
+     0.68,
+     271.0
+    ],
+    [
+     0.7,
+     279.0
+    ],
+    [
+     0.72,
+     282.0
+    ],
+    [
+     0.74,
+     285.0
+    ],
+    [
+     0.76,
+     292.0
+    ],
+    [
+     0.78,
+     297.0
+    ],
+    [
+     0.8,
+     301.0
+    ],
+    [
+     0.82,
+     306.0
+    ],
+    [
+     0.84,
+     312.0
+    ],
+    [
+     0.86,
+     321.0
+    ],
+    [
+     0.88,
+     336.0
+    ],
+    [
+     0.9,
+     343.0
+    ],
+    [
+     0.92,
+     356.0
+    ],
+    [
+     0.94,
+     367.0
+    ],
+    [
+     0.96,
+     373.0
+    ],
+    [
+     0.98,
+     405.0
+    ],
+    [
+     1.0,
+     449.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": false,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": -2.0,
+   "trend_max": 2.0,
+   "n": 135,
+   "n_eff": 135.0,
+   "players": 35,
+   "icc": 0.0,
+   "median": 241.0,
+   "quantiles": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     0.02,
+     84.0
+    ],
+    [
+     0.04,
+     117.0
+    ],
+    [
+     0.06,
+     128.0
+    ],
+    [
+     0.08,
+     146.0
+    ],
+    [
+     0.1,
+     159.0
+    ],
+    [
+     0.12,
+     169.0
+    ],
+    [
+     0.14,
+     176.0
+    ],
+    [
+     0.16,
+     184.0
+    ],
+    [
+     0.18,
+     189.0
+    ],
+    [
+     0.2,
+     190.0
+    ],
+    [
+     0.22,
+     192.0
+    ],
+    [
+     0.24,
+     199.0
+    ],
+    [
+     0.26,
+     205.0
+    ],
+    [
+     0.28,
+     207.0
+    ],
+    [
+     0.3,
+     209.0
+    ],
+    [
+     0.32,
+     213.0
+    ],
+    [
+     0.34,
+     215.0
+    ],
+    [
+     0.36,
+     221.0
+    ],
+    [
+     0.38,
+     222.0
+    ],
+    [
+     0.4,
+     224.0
+    ],
+    [
+     0.42,
+     227.0
+    ],
+    [
+     0.44,
+     228.0
+    ],
+    [
+     0.46,
+     233.0
+    ],
+    [
+     0.48,
+     237.0
+    ],
+    [
+     0.5,
+     241.0
+    ],
+    [
+     0.52,
+     244.0
+    ],
+    [
+     0.54,
+     246.0
+    ],
+    [
+     0.56,
+     249.0
+    ],
+    [
+     0.58,
+     250.0
+    ],
+    [
+     0.6,
+     255.0
+    ],
+    [
+     0.62,
+     262.0
+    ],
+    [
+     0.64,
+     262.0
+    ],
+    [
+     0.66,
+     268.0
+    ],
+    [
+     0.68,
+     272.0
+    ],
+    [
+     0.7,
+     273.0
+    ],
+    [
+     0.72,
+     280.0
+    ],
+    [
+     0.74,
+     287.0
+    ],
+    [
+     0.76,
+     297.0
+    ],
+    [
+     0.78,
+     302.0
+    ],
+    [
+     0.8,
+     312.0
+    ],
+    [
+     0.82,
+     313.0
+    ],
+    [
+     0.84,
+     316.0
+    ],
+    [
+     0.86,
+     323.0
+    ],
+    [
+     0.88,
+     325.0
+    ],
+    [
+     0.9,
+     329.0
+    ],
+    [
+     0.92,
+     341.0
+    ],
+    [
+     0.94,
+     342.0
+    ],
+    [
+     0.96,
+     359.0
+    ],
+    [
+     0.98,
+     396.0
+    ],
+    [
+     1.0,
+     461.0
+    ]
+   ]
+  },
+  {
+   "outcome": "passing_yards",
+   "scenario": "pass_heavy",
+   "occurred": false,
+   "opportunity_min": 38,
+   "opportunity_max": 999,
+   "trend_min": 2.0,
+   "trend_max": 99.0,
+   "n": 190,
+   "n_eff": 125.8,
+   "players": 47,
+   "icc": 0.1731,
+   "median": 231.0,
+   "quantiles": [
+    [
+     0.0,
+     34.0
+    ],
+    [
+     0.02,
+     78.0
+    ],
+    [
+     0.04,
+     105.0
+    ],
+    [
+     0.06,
+     120.0
+    ],
+    [
+     0.08,
+     128.0
+    ],
+    [
+     0.1,
+     145.0
+    ],
+    [
+     0.12,
+     156.0
+    ],
+    [
+     0.14,
+     161.0
+    ],
+    [
+     0.16,
+     166.0
+    ],
+    [
+     0.18,
+     170.0
+    ],
+    [
+     0.2,
+     170.0
+    ],
+    [
+     0.22,
+     177.0
+    ],
+    [
+     0.24,
+     182.0
+    ],
+    [
+     0.26,
+     187.0
+    ],
+    [
+     0.28,
+     188.0
+    ],
+    [
+     0.3,
+     194.0
+    ],
+    [
+     0.32,
+     198.0
+    ],
+    [
+     0.34,
+     202.0
+    ],
+    [
+     0.36,
+     206.0
+    ],
+    [
+     0.38,
+     209.0
+    ],
+    [
+     0.4,
+     213.0
+    ],
+    [
+     0.42,
+     217.0
+    ],
+    [
+     0.44,
+     222.0
+    ],
+    [
+     0.46,
+     225.0
+    ],
+    [
+     0.48,
+     227.0
+    ],
+    [
+     0.5,
+     231.0
+    ],
+    [
+     0.52,
+     234.0
+    ],
+    [
+     0.54,
+     236.0
+    ],
+    [
+     0.56,
+     238.0
+    ],
+    [
+     0.58,
+     243.0
+    ],
+    [
+     0.6,
+     248.0
+    ],
+    [
+     0.62,
+     252.0
+    ],
+    [
+     0.64,
+     253.0
+    ],
+    [
+     0.66,
+     257.0
+    ],
+    [
+     0.68,
+     261.0
+    ],
+    [
+     0.7,
+     264.0
+    ],
+    [
+     0.72,
+     266.0
+    ],
+    [
+     0.74,
+     270.0
+    ],
+    [
+     0.76,
+     279.0
+    ],
+    [
+     0.78,
+     281.0
+    ],
+    [
+     0.8,
+     285.0
+    ],
+    [
+     0.82,
+     295.0
+    ],
+    [
+     0.84,
+     303.0
+    ],
+    [
+     0.86,
+     313.0
+    ],
+    [
+     0.88,
+     319.0
+    ],
+    [
+     0.9,
+     329.0
+    ],
+    [
+     0.92,
+     337.0
+    ],
+    [
+     0.94,
+     356.0
+    ],
+    [
+     0.96,
+     375.0
+    ],
+    [
+     0.98,
+     396.0
+    ],
+    [
+     1.0,
+     488.0
     ]
    ]
   }

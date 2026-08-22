@@ -30,7 +30,11 @@ func scenarioCmd(args []string) error {
 	name := fs.String("name", "scenario", "name of the scenario")
 	logPath := fs.String("log", "", "append this wager to a bet log at this path")
 	rungs := fs.String("rungs", "", "ladder as line:price:q:r,... (replaces -price/-q/-r)")
-	projTargets := fs.Float64("targets", 0, "projected targets, to look up q and r from the fitted grid")
+	outcome := fs.String("outcome", "receiving_yards",
+		"what the prop measures: receiving_yards or passing_yards")
+	projTargets := fs.Float64("targets", 0,
+		"projected opportunity for the grid lookup: targets for a pass-catcher, "+
+			"attempts for a quarterback")
 	trend := fs.Float64("trend", 0, "two-game target-share trend, e.g. 0.06 for +6 points")
 	line := fs.Float64("line", 0, "the prop line in yards, required when looking up q and r")
 	confidence := fs.Float64("confidence", 0.95, "confidence level for looked-up intervals")
@@ -80,7 +84,7 @@ func scenarioCmd(args []string) error {
 		if err != nil {
 			return err
 		}
-		if err := c.CheckDefinition(*name, basisVal.String(), *threshold); err != nil {
+		if err := c.CheckDefinition(*outcome, *name, basisVal.String(), *threshold); err != nil {
 			return err
 		}
 	}
@@ -115,7 +119,7 @@ func scenarioCmd(args []string) error {
 	}
 
 	qv, rv, condSource, err := resolveConditionals(
-		*name, *q, *r, *projTargets, *trend, *line, *confidence,
+		*outcome, *name, *q, *r, *projTargets, *trend, *line, *confidence,
 		basisVal.String(), *threshold)
 	if err != nil {
 		return err
@@ -187,7 +191,7 @@ func scenarioCmd(args []string) error {
 // The two sources are reported separately into the bet log so they can be
 // scored separately later.
 func resolveConditionals(
-	name string, q, r, projTargets, trend, line, confidence float64,
+	outcome, name string, q, r, projTargets, trend, line, confidence float64,
 	basis string, threshold float64,
 ) (float64, float64, string, error) {
 	if q >= 0 && r >= 0 {
@@ -210,25 +214,36 @@ func resolveConditionals(
 	// Before anything is looked up: the grid's q and r answer a fixed question,
 	// and s answers whatever -threshold was passed. If those differ, no amount
 	// of correct arithmetic downstream produces a meaningful number.
-	if err := c.CheckDefinition(name, basis, threshold); err != nil {
+	if err := c.CheckDefinition(outcome, name, basis, threshold); err != nil {
 		return 0, 0, "", err
 	}
-	qc, rc, err := c.QR(name, projTargets, trend, line, confidence)
+	qc, rc, err := c.QR(outcome, name, projTargets, trend, line, confidence)
 	if err != nil {
 		// Only list the alternatives when the SCENARIO is what failed. A line
 		// outside the observed range is a different problem, and answering it
 		// with the list points at the part that was already right.
 		if errors.Is(err, scenario.ErrScenarioNotPriceable) {
-			return 0, 0, "", fmt.Errorf("%w\n  scenarios you can price: %s",
-				err, strings.Join(c.ValidatedScenarioNames(), ", "))
+			return 0, 0, "", fmt.Errorf("%w\n  scenarios you can price for %s: %s",
+				err, outcome, strings.Join(c.ValidatedScenarioNames(outcome), ", "))
 		}
 		return 0, 0, "", err
 	}
 
+	axis := "opportunity"
+	trendScale := 1.0
+	trendUnit := ""
+	if def, ok := c.Outcomes[outcome]; ok {
+		axis = def.Opportunity
+		// A share trend is reported in percentage points; a volume trend is
+		// already in the units of the axis and must not be multiplied by 100.
+		if def.ShareBased {
+			trendScale, trendUnit = 100.0, " pt"
+		}
+	}
 	fmt.Printf("  CONDITIONALS from the fitted grid (%s, %d-%d)\n",
-		c.Outcome, c.Seasons[0], c.Seasons[1])
-	fmt.Printf("    %.1f projected targets, %+.1f pt trend, line %.1f\n",
-		projTargets, trend*100, line)
+		outcome, c.Seasons[0], c.Seasons[1])
+	fmt.Printf("    %.1f projected %s, %+.1f%s trend, line %.1f\n",
+		projTargets, axis, trend*trendScale, trendUnit, line)
 	// n_eff is shown beside n, not instead of it. The interval is built on the
 	// smaller number, and printing only the raw count would overstate the
 	// evidence behind the interval printed next to it.

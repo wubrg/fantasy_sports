@@ -135,10 +135,27 @@ $ ./edgectl scenario -name shootout -total 49 -threshold 50 -belief 0.62 \
       MEASURED — ~227 effective observations past the line
 ```
 
-Three axes: **projected targets** (volume over efficiency — every measurement here has agreed that
-opportunity drives yards more than per-target skill), **role trend** (with the boundary at the
+Three axes: **projected opportunity** (volume over efficiency — every measurement here has agreed
+that opportunity drives yards more than per-target skill), **role trend** (with the boundary at the
 measured +6-share-point actionability threshold), and **game script** (the axis that separates `q`
 from `r` at all).
+
+The grid fits two outcomes, and the opportunity axis is not shared between them. A pass-catcher
+competes for a fixed pool of team targets, so his opportunity is a *share* of it and the trend
+axis measures a change in that share. A quarterback takes essentially all his team's attempts —
+there is no share to hold — so his opportunity is his own prior attempt volume and his trend is a
+change in that volume. Passing uses a coarser 4×3 grid because there are about 32 starting
+quarterbacks in a week against 237 pass-catchers, a ceiling no amount of data collection moves.
+
+```
+$ edgectl scenario -outcome passing_yards -name shootout -total 49 -threshold 50 \
+    -belief 0.62 -targets 34 -trend 3 -line 249.5 -price 110
+
+  CONDITIONALS from the fitted grid (passing_yards, 2009-2025)
+    34.0 projected attempts, +3.0 trend, line 249.5
+    q = 68.6%  [60.7-75.1]  n=229 (eff 158)  median 277 yds  (scenario occurred)
+    r = 40.2%  [34.6-46.1]  n=446 (eff 276)  median 232 yds  (it did not)
+```
 
 Every lookup says how much evidence sits past the line, because the interval cannot. At a deep
 line the probability is small, and a Wilson interval on a small probability is narrow however

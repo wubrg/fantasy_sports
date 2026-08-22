@@ -137,7 +137,7 @@ everything, and prefer recency only where dispersion drifts.
 
 ## 3. Pooled conditionals: shootout confirmed, "trash time" reversed
 
-`fit_conditionals.py` · 37,078 player-games, 2009–2025 · 102 cells published, 18 dropped for n < 100
+`fit_conditionals.py` · 37,078 receiving + 5,726 passing player-games, 2009–2025 · 165 cells published, 27 dropped for n < 100
 
 `q` and `r` were operator guesses. They are now looked up from a grid pooled across player-games
 sharing an opportunity band, a role-trend band, and a game script — cells of hundreds to thousands of
@@ -329,6 +329,42 @@ Two corrections from the audit, both now in effect:
   untouched.
 
 ---
+
+## 5. Passing yards fits, and its gate is weaker than the receiving one
+
+`fit_conditionals.py` · 5,726 usable QB game-weeks, 2009–2025 · 63 cells
+
+The grid now fits two outcomes. The opportunity axis is not shared: a pass-catcher competes for a
+fixed pool of team targets so his opportunity is a *share* of it, while a quarterback takes
+essentially all his team's attempts and has no share to hold. Passing therefore conditions on the
+QB's own prior attempt volume, with a trend measured in attempts rather than share points.
+
+Passing uses a coarser **4×3** grid against receiving's 5×4. That is forced: about **32 starting
+quarterbacks a week against 237 pass-catchers**, a structural ceiling no amount of fetching moves.
+The sub-28-attempt band drops entirely, which is correct — those are relief appearances.
+
+**All three scenarios validate for passing yards, and one of them is gated for receiving.**
+
+| | receiving | passing |
+|---|---|---|
+| `shootout` | validated · 16 cell pairs | validated · 10 |
+| `pass_heavy` | **gated** · 15/16 out of sample | validated · 10 |
+| `blowout_loss` | **gated** · 14/16 consistent | validated · 7 |
+
+**Read that with the caveat, not as three new green lights.** The separations are real and
+comparable once scaled to each outcome's own baseline — `shootout` +23.0% of a 234-yard baseline
+against +28.8% of a 26-yard one, `pass_heavy` +23.7% against +30.8%, `blowout_loss` −12.4% against
+−16.3%. These are the same effects at the same rough strength.
+
+What differs is the evidence available to *falsify* them. `qualifies()` demands consistency in
+every cell and agreement in every out-of-sample cell, and does not scale with cell count — so a
+10-pair grid whose out-of-sample test sees 5 cells is a much easier bar than a 16-pair grid seeing
+15. `blowout_loss` is negative in 14 of 16 receiving cells and 7 of 7 passing cells: the effect is
+identical and only the larger grid is big enough to show it wobbling.
+
+That is a limitation of the rule, recorded rather than tuned away — the same decision taken over
+the magnitude-aware out-of-sample test in §4. Scaling the bar to cell count is a real open
+question and should be settled on its own, not while it would change a verdict.
 
 ## Data note
 

@@ -24,8 +24,15 @@ func TestConditionalsLoad(t *testing.T) {
 	if len(c.Cells) < 20 {
 		t.Errorf("only %d cells published", len(c.Cells))
 	}
-	if c.Outcome != "receiving_yards" {
-		t.Errorf("outcome = %q", c.Outcome)
+	// The grid fits more than one outcome now; receiving yards must remain
+	// among them, and every outcome must declare its opportunity axis.
+	if _, ok := c.Outcomes["receiving_yards"]; !ok {
+		t.Errorf("receiving_yards missing from outcomes %v", c.OutcomeNames())
+	}
+	for name, def := range c.Outcomes {
+		if def.Opportunity == "" {
+			t.Errorf("outcome %q declares no opportunity axis", name)
+		}
 	}
 	names := c.ScenarioNames()
 	if len(names) < 2 {
@@ -71,7 +78,7 @@ func TestOpportunityDominates(t *testing.T) {
 	const line, conf = 40.0, 0.95
 	var prev float64
 	for i, targets := range []float64{3, 5, 7, 9} {
-		got, err := c.Lookup("shootout", true, targets, 0.0, line, conf)
+		got, err := c.Lookup("receiving_yards", "shootout", true, targets, 0.0, line, conf)
 		if err != nil {
 			t.Fatalf("%.0f targets: %v", targets, err)
 		}
@@ -87,7 +94,7 @@ func TestOpportunityDominates(t *testing.T) {
 // with: more scoring means more receiving production.
 func TestShootoutHelps(t *testing.T) {
 	c := mustConditionals(t)
-	q, r, err := c.QR("shootout", 7, 0.0, 45, 0.95)
+	q, r, err := c.QR("receiving_yards", "shootout", 7, 0.0, 45, 0.95)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,10 +133,10 @@ func TestBlowoutLossIsMostlyNegative(t *testing.T) {
 	occurred := map[key]Cell{}
 	absent := map[key]Cell{}
 	for _, cell := range c.Cells {
-		if cell.Scenario != "blowout_loss" {
+		if cell.Outcome != "receiving_yards" || cell.Scenario != "blowout_loss" {
 			continue
 		}
-		k := key{cell.TargetsMin, cell.TrendMin}
+		k := key{cell.OpportunityMin, cell.TrendMin}
 		if cell.Occurred {
 			occurred[k] = cell
 		} else {
@@ -182,10 +189,10 @@ func TestShootoutIsNegativeInNoCell(t *testing.T) {
 	type key struct{ t, r float64 }
 	occurred, absent := map[key]Cell{}, map[key]Cell{}
 	for _, cell := range c.Cells {
-		if cell.Scenario != "shootout" {
+		if cell.Outcome != "receiving_yards" || cell.Scenario != "shootout" {
 			continue
 		}
-		k := key{cell.TargetsMin, cell.TrendMin}
+		k := key{cell.OpportunityMin, cell.TrendMin}
 		if cell.Occurred {
 			occurred[k] = cell
 		} else {
@@ -217,10 +224,10 @@ func TestShootoutIsNegativeInNoCell(t *testing.T) {
 func TestNoCertaintyFromFiniteSample(t *testing.T) {
 	c := mustConditionals(t)
 	for _, cell := range c.Cells {
-		mid := (cell.TargetsMin + cell.TargetsMax) / 2
+		mid := (cell.OpportunityMin + cell.OpportunityMax) / 2
 		tr := (cell.TrendMin + cell.TrendMax) / 2
 		for _, line := range []float64{0, 0.5, 4.5, 9.5, 19.5, 124.5, 149.5, 400} {
-			got, err := c.Lookup(cell.Scenario, cell.Occurred, mid, tr, line, 0.95)
+			got, err := c.Lookup(cell.Outcome, cell.Scenario, cell.Occurred, mid, tr, line, 0.95)
 			if err != nil {
 				continue
 			}
@@ -250,29 +257,29 @@ func TestNoCertaintyFromFiniteSample(t *testing.T) {
 func TestUnvalidatedScenariosCannotBePriced(t *testing.T) {
 	c := mustConditionals(t)
 
-	if _, _, err := c.QR("blowout_loss", 7, 0.0, 45, 0.95); err == nil {
+	if _, _, err := c.QR("receiving_yards", "blowout_loss", 7, 0.0, 45, 0.95); err == nil {
 		t.Error("blowout_loss failed validation and must not be priceable")
 	}
-	if _, err := c.Lookup("blowout_loss", true, 7, 0.0, 45, 0.95); err == nil {
+	if _, err := c.Lookup("receiving_yards", "blowout_loss", true, 7, 0.0, 45, 0.95); err == nil {
 		t.Error("Lookup must refuse an unvalidated scenario too, not just QR")
 	}
 	// The refusal has to explain itself; a bare error would leave the operator
 	// guessing whether it is a typo or a finding.
-	_, err := c.Lookup("blowout_loss", true, 7, 0.0, 45, 0.95)
+	_, err := c.Lookup("receiving_yards", "blowout_loss", true, 7, 0.0, 45, 0.95)
 	if err != nil && !strings.Contains(err.Error(), "NOT validated") {
 		t.Errorf("refusal should say why: %v", err)
 	}
 
 	// An unknown scenario is refused rather than assumed good.
-	if _, err := c.Lookup("shootoot", true, 7, 0.0, 45, 0.95); err == nil {
+	if _, err := c.Lookup("receiving_yards", "shootoot", true, 7, 0.0, 45, 0.95); err == nil {
 		t.Error("a misspelled scenario must not be assumed valid")
 	}
 
 	// The validated one still works, or the gate has eaten everything.
-	if _, _, err := c.QR("shootout", 7, 0.0, 45, 0.95); err != nil {
+	if _, _, err := c.QR("receiving_yards", "shootout", 7, 0.0, 45, 0.95); err != nil {
 		t.Errorf("shootout passed validation and must remain priceable: %v", err)
 	}
-	if got := c.ValidatedScenarioNames(); len(got) != 1 || got[0] != "shootout" {
+	if got := c.ValidatedScenarioNames("receiving_yards"); len(got) != 1 || got[0] != "shootout" {
 		t.Errorf("validated scenarios = %v, want [shootout]", got)
 	}
 	// Cells are still present -- gating is about pricing, not deletion.
@@ -312,13 +319,13 @@ func TestClampSurvivesRounding(t *testing.T) {
 	// certainty at either end.
 	c := mustConditionals(t)
 	for _, cell := range c.Cells {
-		if st, ok := c.ScenarioStatus[cell.Scenario]; !ok || !st.Validated {
+		if st, ok := c.ScenarioStatus[cell.Outcome][cell.Scenario]; !ok || !st.Validated {
 			continue
 		}
-		mid := (cell.TargetsMin + cell.TargetsMax) / 2
+		mid := (cell.OpportunityMin + cell.OpportunityMax) / 2
 		tr := (cell.TrendMin + cell.TrendMax) / 2
 		for _, line := range []float64{0, 0.5, 4.5, 200, 400} {
-			got, err := c.Lookup(cell.Scenario, cell.Occurred, mid, tr, line, 0.95)
+			got, err := c.Lookup(cell.Outcome, cell.Scenario, cell.Occurred, mid, tr, line, 0.95)
 			if err != nil {
 				continue
 			}
@@ -345,18 +352,23 @@ func TestEffectiveNActuallyNarrows(t *testing.T) {
 	c := mustConditionals(t)
 	widened := 0
 	for _, cell := range c.Cells {
-		st, ok := c.ScenarioStatus[cell.Scenario]
-		if !ok || !st.Validated || cell.NEff >= float64(cell.N) {
+		st, ok := c.ScenarioStatus[cell.Outcome][cell.Scenario]
+		// effectiveN rounds to the nearest observation, so a discount smaller
+		// than half a game correctly vanishes -- n_eff 102.9 against n 103 is
+		// not a bug. Mirror that rounding here rather than assuming any
+		// discount at all survives to the output.
+		if !ok || !st.Validated || cell.effectiveN() >= cell.N {
 			continue
 		}
-		mid := (cell.TargetsMin + cell.TargetsMax) / 2
+		mid := (cell.OpportunityMin + cell.OpportunityMax) / 2
 		tr := (cell.TrendMin + cell.TrendMax) / 2
-		got, err := c.Lookup(cell.Scenario, cell.Occurred, mid, tr, cell.Median, 0.95)
+		got, err := c.Lookup(cell.Outcome, cell.Scenario, cell.Occurred, mid, tr, cell.Median, 0.95)
 		if err != nil {
 			continue
 		}
 		if got.NEff >= cell.N {
-			t.Errorf("%s: Lookup used n=%d despite n_eff=%.1f", cell.Scenario, got.NEff, cell.NEff)
+			t.Errorf("%s/%s: Lookup used n=%d despite n_eff=%.1f",
+				cell.Outcome, cell.Scenario, got.NEff, cell.NEff)
 			continue
 		}
 		// The same estimate on raw N must give a strictly tighter interval.
@@ -397,8 +409,8 @@ func TestIntervalsUseEffectiveN(t *testing.T) {
 			discounted++
 		}
 
-		got, err := c.Lookup(cell.Scenario, cell.Occurred,
-			(cell.TargetsMin+cell.TargetsMax)/2, (cell.TrendMin+cell.TrendMax)/2,
+		got, err := c.Lookup(cell.Outcome, cell.Scenario, cell.Occurred,
+			(cell.OpportunityMin+cell.OpportunityMax)/2, (cell.TrendMin+cell.TrendMax)/2,
 			cell.Median, 0.95)
 		if err != nil {
 			continue
@@ -418,7 +430,7 @@ func TestIntervalsUseEffectiveN(t *testing.T) {
 func TestQAndRDiffer(t *testing.T) {
 	c := mustConditionals(t)
 	for _, name := range c.ScenarioNames() {
-		q, r, err := c.QR(name, 7, 0.0, 45, 0.95)
+		q, r, err := c.QR("receiving_yards", name, 7, 0.0, 45, 0.95)
 		if err != nil {
 			continue // that combination may be unpublished; covered elsewhere
 		}
@@ -434,7 +446,7 @@ func TestIntervalsWidenOnThinCells(t *testing.T) {
 	// Only validated scenarios can be priced, so only they can be compared.
 	var thin, thick Cell
 	for _, cell := range c.Cells {
-		if st, ok := c.ScenarioStatus[cell.Scenario]; !ok || !st.Validated {
+		if st, ok := c.ScenarioStatus[cell.Outcome][cell.Scenario]; !ok || !st.Validated {
 			continue
 		}
 		if thin.N == 0 || cell.N < thin.N {
@@ -448,8 +460,8 @@ func TestIntervalsWidenOnThinCells(t *testing.T) {
 		t.Fatal("no validated cells to compare")
 	}
 	widthOf := func(cell Cell) float64 {
-		got, err := c.Lookup(cell.Scenario, cell.Occurred,
-			(cell.TargetsMin+cell.TargetsMax)/2, (cell.TrendMin+cell.TrendMax)/2,
+		got, err := c.Lookup(cell.Outcome, cell.Scenario, cell.Occurred,
+			(cell.OpportunityMin+cell.OpportunityMax)/2, (cell.TrendMin+cell.TrendMax)/2,
 			cell.Median, 0.95)
 		if err != nil {
 			t.Fatal(err)
@@ -465,13 +477,13 @@ func TestIntervalsWidenOnThinCells(t *testing.T) {
 // error, never a quietly substituted neighbour or a zero.
 func TestMissingCellFailsLoudly(t *testing.T) {
 	c := mustConditionals(t)
-	if _, err := c.Lookup("shootout", true, 500, 0, 45, 0.95); err == nil {
+	if _, err := c.Lookup("receiving_yards", "shootout", true, 500, 0, 45, 0.95); err == nil {
 		t.Error("500 projected targets should have no cell")
 	}
-	if _, err := c.Lookup("no-such-scenario", true, 7, 0, 45, 0.95); err == nil {
+	if _, err := c.Lookup("receiving_yards", "no-such-scenario", true, 7, 0, 45, 0.95); err == nil {
 		t.Error("an unknown scenario must be rejected")
 	}
-	if _, _, err := c.QR("shootout", -5, 0, 45, 0.95); err == nil {
+	if _, _, err := c.QR("receiving_yards", "shootout", -5, 0, 45, 0.95); err == nil {
 		t.Error("negative targets should have no cell")
 	}
 }
@@ -521,20 +533,20 @@ func TestExtrapolatedLineIsRefused(t *testing.T) {
 	// 300 is past both sides. 250 is deliberately NOT used here: it sits
 	// inside the scenario cell (which reached 266 yards once) and outside the
 	// baseline cell (196), so it exercises QR but not Lookup.
-	if _, err := c.Lookup("shootout", true, 7, 0.0, 300, 0.95); err == nil {
+	if _, err := c.Lookup("receiving_yards", "shootout", true, 7, 0.0, 300, 0.95); err == nil {
 		t.Fatal("priced a line beyond anything the cell ever observed")
 	}
 	// QR must refuse when EITHER side is out of range -- which is the real
 	// shape of the bug, since s* needs both.
-	if _, _, err := c.QR("shootout", 7, 0.0, 250, 0.95); err == nil {
+	if _, _, err := c.QR("receiving_yards", "shootout", 7, 0.0, 250, 0.95); err == nil {
 		t.Error("QR priced a line the baseline cell never reached")
 	}
 	// A line below everything observed is the same failure, mirrored.
-	if _, err := c.Lookup("shootout", true, 7, 0.0, -500, 0.95); err == nil {
+	if _, err := c.Lookup("receiving_yards", "shootout", true, 7, 0.0, -500, 0.95); err == nil {
 		t.Error("priced a line below anything the cell ever observed")
 	}
 	// This is NOT a scenario problem, and must not be reported as one.
-	_, err = c.Lookup("shootout", true, 7, 0.0, 300, 0.95)
+	_, err = c.Lookup("receiving_yards", "shootout", true, 7, 0.0, 300, 0.95)
 	if errors.Is(err, ErrScenarioNotPriceable) {
 		t.Error("an out-of-range line was classified as an unpriceable scenario")
 	}
@@ -565,11 +577,11 @@ func TestTailNMeasuresTheSparserSide(t *testing.T) {
 	var prevLow float64 = -1
 	var thinFound, solidFound bool
 	for _, line := range lines {
-		lo, err := c.Lookup("shootout", true, lowVolume, 0.07, line, 0.95)
+		lo, err := c.Lookup("receiving_yards", "shootout", true, lowVolume, 0.07, line, 0.95)
 		if err != nil {
 			continue // past this cell's range; refusal is tested elsewhere
 		}
-		hi, err := c.Lookup("shootout", true, highVolume, 0.07, line, 0.95)
+		hi, err := c.Lookup("receiving_yards", "shootout", true, highVolume, 0.07, line, 0.95)
 		if err != nil {
 			continue
 		}
@@ -632,7 +644,7 @@ func TestTailNIsSymmetric(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tc := range []struct{ line float64 }{{2.5}, {150.5}} {
-		got, err := c.Lookup("shootout", true, 9, 0.0, tc.line, 0.95)
+		got, err := c.Lookup("receiving_yards", "shootout", true, 9, 0.0, tc.line, 0.95)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -670,11 +682,11 @@ func TestDefinitionMismatchIsRefused(t *testing.T) {
 		t.Fatalf("shootout is fitted as %s; the tests below assume total > 50", def)
 	}
 
-	if err := c.CheckDefinition("shootout", "total", 50); err != nil {
+	if err := c.CheckDefinition("receiving_yards", "shootout", "total", 50); err != nil {
 		t.Errorf("the definition the grid was fitted on was rejected: %v", err)
 	}
 	for _, bad := range []float64{65, 49.5, 0, -7} {
-		err := c.CheckDefinition("shootout", "total", bad)
+		err := c.CheckDefinition("receiving_yards", "shootout", "total", bad)
 		if err == nil {
 			t.Errorf("threshold %.1f was accepted against a grid fitted at %.1f",
 				bad, def.Threshold)
@@ -692,7 +704,7 @@ func TestDefinitionMismatchIsRefused(t *testing.T) {
 	// only runs for scenarios that could otherwise be priced -- validation is
 	// tested first, deliberately, and an unvalidated scenario short-circuits
 	// before its basis is ever compared.
-	if err := c.CheckDefinition("shootout", "margin", 50); !errors.Is(err, ErrDefinitionMismatch) {
+	if err := c.CheckDefinition("receiving_yards", "shootout", "margin", 50); !errors.Is(err, ErrDefinitionMismatch) {
 		t.Errorf("shootout accepted on the margin; it is fitted on the total: %v", err)
 	}
 }
@@ -702,10 +714,10 @@ func TestDefinitionMismatchIsRefused(t *testing.T) {
 // otherwise permit is silent -- so it must refuse rather than wave the query
 // through on the grounds that nothing contradicted it.
 func TestMissingDefinitionsFailClosed(t *testing.T) {
-	old := &Conditionals{ScenarioStatus: map[string]ScenarioStatus{
-		"shootout": {Validated: true},
+	old := &Conditionals{ScenarioStatus: map[string]map[string]ScenarioStatus{
+		"receiving_yards": {"shootout": {Validated: true}},
 	}}
-	err := old.CheckDefinition("shootout", "total", 50)
+	err := old.CheckDefinition("receiving_yards", "shootout", "total", 50)
 	if err == nil {
 		t.Fatal("an artifact with no recorded definitions accepted a query")
 	}
@@ -753,7 +765,7 @@ func TestGatedScenarioReportsTheGate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	st, ok := c.ScenarioStatus["pass_heavy"]
+	st, ok := c.ScenarioStatus["receiving_yards"]["pass_heavy"]
 	if !ok {
 		t.Skip("pass_heavy is not in this artifact")
 	}
@@ -761,7 +773,7 @@ func TestGatedScenarioReportsTheGate(t *testing.T) {
 		t.Skip("pass_heavy has since been validated; this test guards the gated case")
 	}
 
-	err = c.CheckDefinition("pass_heavy", "total", 50)
+	err = c.CheckDefinition("receiving_yards", "pass_heavy", "total", 50)
 	if err == nil {
 		t.Fatal("a gated scenario was accepted")
 	}
@@ -772,7 +784,7 @@ func TestGatedScenarioReportsTheGate(t *testing.T) {
 		t.Error("reported a threshold mismatch for a scenario that cannot be priced at all")
 	}
 	// Even asking on its OWN basis must still refuse, for the same reason.
-	if err := c.CheckDefinition("pass_heavy", "offense_proe", 3.0); !errors.Is(err, ErrScenarioNotPriceable) {
+	if err := c.CheckDefinition("receiving_yards", "pass_heavy", "offense_proe", 3.0); !errors.Is(err, ErrScenarioNotPriceable) {
 		t.Errorf("on its own basis: got %v, want not-priceable", err)
 	}
 }
@@ -786,21 +798,102 @@ func TestUnvalidatedScenariosStillCarryCells(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for name, st := range c.ScenarioStatus {
-		if st.Validated {
-			continue
-		}
-		cells := 0
-		for _, cell := range c.Cells {
-			if cell.Scenario == name {
-				cells++
+	for outcome, byScenario := range c.ScenarioStatus {
+		for name, st := range byScenario {
+			if st.Validated {
+				continue
+			}
+			cells := 0
+			for _, cell := range c.Cells {
+				if cell.Outcome == outcome && cell.Scenario == name {
+					cells++
+				}
+			}
+			if cells == 0 {
+				t.Errorf("%s/%s is gated off AND has no cells; the measurement is "+
+					"unreproducible", outcome, name)
+			}
+			if st.Note == "" {
+				t.Errorf("%s/%s is gated off with no recorded reason", outcome, name)
 			}
 		}
-		if cells == 0 {
-			t.Errorf("%q is gated off AND has no cells; the measurement is unreproducible", name)
+	}
+}
+
+// TestOutcomesHaveDistinctAxes guards the reason Outcome exists at all.
+//
+// A pass-catcher competes for a share of a fixed pool of team targets; a
+// quarterback takes essentially all of his team's attempts. Running QB volume
+// through a share-shaped model produces bands that mean nothing, so the two
+// must not quietly converge on one axis.
+func TestOutcomesHaveDistinctAxes(t *testing.T) {
+	c := mustConditionals(t)
+	rec, ok := c.Outcomes["receiving_yards"]
+	if !ok {
+		t.Fatal("receiving_yards not fitted")
+	}
+	pas, ok := c.Outcomes["passing_yards"]
+	if !ok {
+		t.Skip("passing_yards not fitted in this artifact")
+	}
+	if !rec.ShareBased {
+		t.Error("receiving yards should be share-based: a catcher competes for a pool")
+	}
+	if pas.ShareBased {
+		t.Error("passing yards should NOT be share-based: a QB has no share to hold")
+	}
+	if rec.Opportunity == pas.Opportunity {
+		t.Errorf("both outcomes claim the same opportunity axis %q", rec.Opportunity)
+	}
+
+	// Their band ranges must not overlap either, or a caller who forgets
+	// -outcome would silently land in the wrong grid instead of erroring.
+	var recMax, pasMin float64
+	for _, cell := range c.Cells {
+		if cell.Outcome == "receiving_yards" && cell.OpportunityMax < 900 {
+			recMax = max(recMax, cell.OpportunityMax)
 		}
-		if st.Note == "" {
-			t.Errorf("%q is gated off with no recorded reason", name)
+		if cell.Outcome == "passing_yards" {
+			if pasMin == 0 || cell.OpportunityMin < pasMin {
+				pasMin = cell.OpportunityMin
+			}
 		}
+	}
+	t.Logf("receiving bands top out at %.0f targets; passing starts at %.0f attempts",
+		recMax, pasMin)
+}
+
+// TestValidationIsPerOutcome pins that a scenario's verdict is scoped to the
+// outcome it was measured against. blowout_loss currently validates for
+// passing yards and is gated for receiving -- the same effect, with only the
+// larger grid big enough to catch it wobbling.
+func TestValidationIsPerOutcome(t *testing.T) {
+	c := mustConditionals(t)
+	if len(c.ScenarioStatus) < 2 {
+		t.Skip("only one outcome fitted")
+	}
+	seen := map[string]map[string]bool{}
+	for outcome, byScenario := range c.ScenarioStatus {
+		for name, st := range byScenario {
+			if seen[name] == nil {
+				seen[name] = map[string]bool{}
+			}
+			seen[name][outcome] = st.Validated
+		}
+	}
+	differs := 0
+	for name, byOutcome := range seen {
+		vals := map[bool]bool{}
+		for _, v := range byOutcome {
+			vals[v] = true
+		}
+		if len(vals) > 1 {
+			differs++
+			t.Logf("%q validates differently by outcome: %v", name, byOutcome)
+		}
+	}
+	if differs == 0 {
+		t.Log("no scenario currently differs by outcome; the per-outcome split is still " +
+			"correct, it just is not being exercised")
 	}
 }
