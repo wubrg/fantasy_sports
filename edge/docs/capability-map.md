@@ -142,6 +142,13 @@ on a push, so a pushable market can cost 100% against a hedge that merely refund
 call it; the rule survives as prose in `card bonus`. Fanatics was added with the correct house
 rule (returns the stake) and is equally unreachable.
 
+### ~~The grid does not say which regime an estimate is in~~ — closed
+
+Every lookup now reports the effective observations past the line and labels the estimate
+`MEASURED` or `THIN`, and a line beyond anything the cell ever produced is refused rather than
+clamped into a small probability. Previously a `q` of 2.3% on seven observations and one of
+25.2% on ninety-four printed identically — the thin one with the *narrower* interval.
+
 ### Filter 2 and 3 inputs are hand-typed over a cache that already holds them
 
 `hitrate -values` is pasted by hand while `model/data/raw/stats_player_week_*.csv` holds those

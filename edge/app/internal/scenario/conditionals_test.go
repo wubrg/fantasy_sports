@@ -2,6 +2,8 @@ package scenario
 
 import (
 	"encoding/json"
+	"errors"
+	"math"
 	"strings"
 	"testing"
 
@@ -499,6 +501,107 @@ func TestMalformedConditionalsRejected(t *testing.T) {
 		}
 		if !bad {
 			t.Errorf("%s: should have been rejected", name)
+		}
+	}
+}
+
+// TestExtrapolatedLineIsRefused pins the case that produced a confident verdict
+// from nothing.
+//
+// A 250-yard line is past anything any cell ever produced, so probAbove
+// returned 0 and clampToSupport turned it into a small positive probability.
+// The wager layer then divided by (q - r) -- two clamped endpoints -- and
+// printed BEYOND-YOUR-READ "short by 690.4 pts" with a sensitivity of -2899
+// points per point of q. Every figure was arithmetic on the absence of data.
+func TestExtrapolatedLineIsRefused(t *testing.T) {
+	c, err := LoadConditionals()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// 300 is past both sides. 250 is deliberately NOT used here: it sits
+	// inside the scenario cell (which reached 266 yards once) and outside the
+	// baseline cell (196), so it exercises QR but not Lookup.
+	if _, err := c.Lookup("shootout", true, 7, 0.0, 300, 0.95); err == nil {
+		t.Fatal("priced a line beyond anything the cell ever observed")
+	}
+	// QR must refuse when EITHER side is out of range -- which is the real
+	// shape of the bug, since s* needs both.
+	if _, _, err := c.QR("shootout", 7, 0.0, 250, 0.95); err == nil {
+		t.Error("QR priced a line the baseline cell never reached")
+	}
+	// A line below everything observed is the same failure, mirrored.
+	if _, err := c.Lookup("shootout", true, 7, 0.0, -500, 0.95); err == nil {
+		t.Error("priced a line below anything the cell ever observed")
+	}
+	// This is NOT a scenario problem, and must not be reported as one.
+	_, err = c.Lookup("shootout", true, 7, 0.0, 300, 0.95)
+	if errors.Is(err, ErrScenarioNotPriceable) {
+		t.Error("an out-of-range line was classified as an unpriceable scenario")
+	}
+}
+
+// TestTailNMeasuresTheSparserSide pins what the interval cannot say.
+//
+// At a deep line the probability is small, so Wilson is narrow in absolute
+// terms no matter how little evidence there is. Two estimates that print
+// almost identically can rest on an order of magnitude different support, and
+// the thin one has the TIGHTER interval.
+func TestTailNMeasuresTheSparserSide(t *testing.T) {
+	c, err := LoadConditionals()
+	if err != nil {
+		t.Fatal(err)
+	}
+	const line = 100.5
+
+	thin, err := c.Lookup("shootout", true, 3, 0.07, line, 0.95) // 0-4 targets
+	if err != nil {
+		t.Fatal(err)
+	}
+	solid, err := c.Lookup("shootout", true, 9, 0.0, line, 0.95) // 8-11 targets
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !thin.Thin() {
+		t.Errorf("0-4 targets at %.1f: TailN %.1f, expected below the %d threshold",
+			line, thin.TailN, MinTailN)
+	}
+	if solid.Thin() {
+		t.Errorf("8-11 targets at %.1f: TailN %.1f, expected at or above %d",
+			line, solid.TailN, MinTailN)
+	}
+
+	// The trap, stated as an assertion: the thin estimate's interval is the
+	// narrower of the two. Anything keying off width alone gets this backwards.
+	thinWidth, solidWidth := thin.Upper-thin.Lower, solid.Upper-solid.Lower
+	if thinWidth >= solidWidth {
+		t.Fatalf("expected the thin estimate to print the tighter interval "+
+			"(thin %.4f vs solid %.4f); if this ever stops holding, the THIN "+
+			"label may be redundant", thinWidth, solidWidth)
+	}
+}
+
+// TestTailNIsSymmetric checks that an estimate near 1 is treated as thinly
+// evidenced as one near 0. The sparse side is what the wager rests on, and
+// which side that is depends only on which way the line falls.
+func TestTailNIsSymmetric(t *testing.T) {
+	c, err := LoadConditionals()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct{ line float64 }{{2.5}, {150.5}} {
+		got, err := c.Lookup("shootout", true, 9, 0.0, tc.line, 0.95)
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := math.Min(got.Prob, 1-got.Prob) * float64(got.NEff)
+		if math.Abs(got.TailN-want) > 1e-9 {
+			t.Errorf("line %.1f: TailN = %.4f, want min(p,1-p)*nEff = %.4f",
+				tc.line, got.TailN, want)
+		}
+		if got.TailN > float64(got.NEff)/2 {
+			t.Errorf("line %.1f: TailN %.1f exceeds half of nEff %d, so it is not "+
+				"reporting the sparser side", tc.line, got.TailN, got.NEff)
 		}
 	}
 }

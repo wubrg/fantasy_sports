@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"strconv"
@@ -187,8 +188,14 @@ func resolveConditionals(name string, q, r, projTargets, trend, line, confidence
 	}
 	qc, rc, err := c.QR(name, projTargets, trend, line, confidence)
 	if err != nil {
-		return 0, 0, "", fmt.Errorf("%w\n  scenarios you can price: %s",
-			err, strings.Join(c.ValidatedScenarioNames(), ", "))
+		// Only list the alternatives when the SCENARIO is what failed. A line
+		// outside the observed range is a different problem, and answering it
+		// with the list points at the part that was already right.
+		if errors.Is(err, scenario.ErrScenarioNotPriceable) {
+			return 0, 0, "", fmt.Errorf("%w\n  scenarios you can price: %s",
+				err, strings.Join(c.ValidatedScenarioNames(), ", "))
+		}
+		return 0, 0, "", err
 	}
 
 	fmt.Printf("  CONDITIONALS from the fitted grid (%s, %d-%d)\n",
@@ -200,8 +207,10 @@ func resolveConditionals(name string, q, r, projTargets, trend, line, confidence
 	// evidence behind the interval printed next to it.
 	fmt.Printf("    q = %.1f%%  [%.1f-%.1f]  n=%d (eff %d)  median %.0f yds  (scenario occurred)\n",
 		qc.Prob*100, qc.Lower*100, qc.Upper*100, qc.N, qc.NEff, qc.CellMedian)
+	fmt.Printf("      %s\n", support(qc))
 	fmt.Printf("    r = %.1f%%  [%.1f-%.1f]  n=%d (eff %d)  median %.0f yds  (it did not)\n",
 		rc.Prob*100, rc.Lower*100, rc.Upper*100, rc.N, rc.NEff, rc.CellMedian)
+	fmt.Printf("      %s\n", support(rc))
 	if qc.NEff < qc.N || rc.NEff < rc.N {
 		fmt.Printf("    intervals use the effective count: cells pool repeat players,\n")
 		fmt.Printf("    so the raw n overstates how much independent evidence there is\n")
@@ -212,8 +221,46 @@ func resolveConditionals(name string, q, r, projTargets, trend, line, confidence
 	if qc.Upper-qc.Lower > 0.15 || rc.Upper-rc.Lower > 0.15 {
 		fmt.Printf("    note: these cells are thin; treat s* as indicative\n")
 	}
+
+	// Interval width alone never catches the deep-line case: at a small p,
+	// Wilson is narrow in absolute terms however little evidence there is. A
+	// q of 2.3% on seven observations prints a tighter interval than a q of
+	// 25.2% on ninety-four, and the two used to be indistinguishable here.
+	if qc.Thin() || rc.Thin() {
+		fmt.Printf("    THIN: fewer than %d effective observations sit past this line on\n",
+			scenario.MinTailN)
+		fmt.Printf("    %s. The interval above is narrow because the probability is\n", thinSide(qc, rc))
+		fmt.Printf("    small, not because the estimate is settled. s* is a direction here,\n")
+		fmt.Printf("    not a threshold — move the line in, or supply -q and -r yourself.\n")
+	}
 	fmt.Println()
 	return qc.Prob, rc.Prob, "pooled", nil
+}
+
+// support says how much evidence sits on the side of the line being bet.
+//
+// It goes on its own line rather than at the end of the estimate because it is
+// the number that decides whether the estimate means anything, and appending it
+// to an already-long row buries it exactly where it would be skimmed past.
+func support(c scenario.Conditional) string {
+	if c.Thin() {
+		return fmt.Sprintf("THIN — only ~%.0f effective observations past the line", c.TailN)
+	}
+	return fmt.Sprintf("MEASURED — ~%.0f effective observations past the line", c.TailN)
+}
+
+// thinSide names which of q and r is short, since the remedy differs: a thin q
+// means the scenario rarely produces the line, a thin r means the baseline
+// almost never does.
+func thinSide(qc, rc scenario.Conditional) string {
+	switch {
+	case qc.Thin() && rc.Thin():
+		return "either side"
+	case qc.Thin():
+		return "the scenario side (q)"
+	default:
+		return "the baseline side (r)"
+	}
 }
 
 func printRequirement(req wager.BeliefRequirement) {
