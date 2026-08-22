@@ -182,14 +182,21 @@ stays reproducible and the data remains available for the work that would valida
 
 Three independent failures, any one disqualifying:
 
-1. **The direction inverts at ordinary lines.** At 7 projected targets — the 6–8 band, *not* the
-   low-volume band the first correction confined it to — `q > r` at **6.5, 20.5 and 24.5** receiving
-   yards. Those are mainstream props. A wager priced there carries the opposite belief requirement
-   from the one the finding implies.
+1. **The direction is not consistent across cells** — the dominant sign (negative) holds in
+   **14 of 15**, against shootout's 15/15. One band disagrees with the rest.
 2. **The sign is unresolved almost everywhere.** A player-level cluster bootstrap of the median delta
    clears zero in only **3 of 15** cells. The lone positive cell's CI is [0.0, 4.0]. Twelve of
    fifteen signs are noise.
 3. **It does not survive out of sample** — 10/13 against shootout's 14/14.
+
+> **Correction, 2026-08-22.** This section previously led with a fourth claim: that the direction
+> *inverts at ordinary lines*, with `q > r` at 6.5, 20.5 and 24.5 receiving yards. Those crossings
+> are real as raw counts — `validate.py` finds 15 of them for blowout_loss — but **not one clears
+> two standard errors**, and neither does shootout's single crossing at 6.5 yards. Measured against
+> sampling error the test does not separate the two scenarios at all, so it cannot be what
+> disqualifies one of them. It is now reported as evidence and explicitly not gated on; had it been,
+> it would have rejected shootout on a 1.3-point wobble at a line ~88% of player-games clear either
+> way. The disqualification rests on 1 and 3 above, each sufficient alone.
 
 The first correction to this section rewrote the *test* into median space, where all of this is
 invisible, and called the defect fixed. It was not: median-space and probability-space disagree, and
@@ -199,7 +206,14 @@ the failure then looks resolved.
 **What would un-gate it:** defining the scenario on play-by-play — time remaining crossed with score
 differential — rather than final margin. Which is precisely what this whole result argues for.
 
-Shootout passes all three: positive in 15/15, resolved in 10/15, 14/14 out of sample.
+Shootout passes: positive in 15/15 cells and 14/14 out of sample, resolved in 11/15.
+
+These numbers are no longer typed here by hand. `fit_conditionals.py` runs `validate.py` on every
+fit, writes the measured note into the artifact, and **fails if the evidence and the recorded
+verdict disagree** — so a scenario cannot quietly stop qualifying and keep its flag. The bootstrap
+records its seed and resample count in the artifact, which is why resolution reads 11/15 here
+against the 10/15 originally reported: one cell sits near the boundary and the earlier figure came
+from an unrecorded seed. Reproducible now, rather than merely repeatable.
 
 The reason is the end-state proxy. Final margin conflates "trailed and threw a lot" with "was simply
 bad," and the second dominates: losing by more than a touchdown mostly identifies offenses that did

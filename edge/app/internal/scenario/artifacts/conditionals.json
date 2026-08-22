@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-22T15:51:35Z",
+ "generated_at": "2026-08-22T15:58:56Z",
  "generated_by": "edge/model/analysis/fit_conditionals.py",
  "outcome": "receiving_yards",
  "seasons": [
@@ -96,11 +96,137 @@
  "scenario_status": {
   "shootout": {
    "validated": true,
-   "note": "positive in 15/15 cells, 10/15 bootstrap-resolved, 14/14 out of sample"
+   "note": "positive in 15/15 cells; 11/15 bootstrap-resolved; 14/14 out of sample; 1 sub-noise crossing",
+   "evidence": {
+    "cells": 15,
+    "consistent": 15,
+    "sign": "positive",
+    "inversions": 1,
+    "inversion_detail": [
+     {
+      "targets": [
+       4,
+       6
+      ],
+      "trend": [
+       0.06,
+       99.0
+      ],
+      "line": 6.5,
+      "q": 0.8755,
+      "r": 0.8882,
+      "median_delta": 4.0
+     }
+    ],
+    "resolved": 11,
+    "oos_cells": 14,
+    "oos_agree": 14,
+    "bootstrap_resamples": 1000,
+    "bootstrap_seed": 20260822,
+    "oos_split": 2021
+   }
   },
   "blowout_loss": {
    "validated": false,
-   "note": "direction inverts at common lines (q>r at 6.5/20.5/24.5 yards, 6-8 target band); only 3/15 cells bootstrap-resolved; 10/13 out of sample vs shootout's 14/14. Needs a play-by-play definition rather than final margin."
+   "note": "negative in 14/15 cells; 3/15 bootstrap-resolved; 10/13 out of sample; 15 sub-noise crossings. Needs a play-by-play definition (time remaining crossed with score differential) rather than final margin, which is the measurement this result argues for.",
+   "evidence": {
+    "cells": 15,
+    "consistent": 14,
+    "sign": "negative",
+    "inversions": 15,
+    "inversion_detail": [
+     {
+      "targets": [
+       0,
+       4
+      ],
+      "trend": [
+       -99.0,
+       -0.03
+      ],
+      "line": 24.5,
+      "q": 0.2468,
+      "r": 0.2676,
+      "median_delta": 2.0
+     },
+     {
+      "targets": [
+       0,
+       4
+      ],
+      "trend": [
+       -99.0,
+       -0.03
+      ],
+      "line": 30.5,
+      "q": 0.1919,
+      "r": 0.202,
+      "median_delta": 2.0
+     },
+     {
+      "targets": [
+       0,
+       4
+      ],
+      "trend": [
+       -99.0,
+       -0.03
+      ],
+      "line": 40.5,
+      "q": 0.1081,
+      "r": 0.1308,
+      "median_delta": 2.0
+     },
+     {
+      "targets": [
+       0,
+       4
+      ],
+      "trend": [
+       -99.0,
+       -0.03
+      ],
+      "line": 50.5,
+      "q": 0.079,
+      "r": 0.0831,
+      "median_delta": 2.0
+     },
+     {
+      "targets": [
+       0,
+       4
+      ],
+      "trend": [
+       -0.03,
+       0.03
+      ],
+      "line": 6.5,
+      "q": 0.6798,
+      "r": 0.6737,
+      "median_delta": -1.0
+     },
+     {
+      "targets": [
+       4,
+       6
+      ],
+      "trend": [
+       -0.03,
+       0.03
+      ],
+      "line": 10.5,
+      "q": 0.7962,
+      "r": 0.7926,
+      "median_delta": -4.0
+     }
+    ],
+    "resolved": 3,
+    "oos_cells": 13,
+    "oos_agree": 10,
+    "bootstrap_resamples": 1000,
+    "bootstrap_seed": 20260822,
+    "oos_split": 2021
+   }
   }
  },
  "note": "quantiles are [[probability, yards], ...]; P(yards > L) is 1 minus the interpolated CDF. n supports a Wilson interval computed at query time.",
