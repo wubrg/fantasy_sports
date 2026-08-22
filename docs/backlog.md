@@ -155,6 +155,51 @@ per day spent; `D11` is the one most likely to miss the date.
   the most elaborated idea in the notes and the least likely to be finishable in 22 days —
   worth starting only if Tier 0 and Tier 1 are done.
 
+### Tier 3 — the guest boards
+
+Two people outside the tailnet need a board before the 3rd. Both boards are built, run, and
+are served on their own ports; what is left in each case is admin-console work that has no
+CLI and cannot be scripted or checked in.
+
+One step gates both and is worth stating once. A personal tailnet's default policy is
+`{"action": "accept", "src": ["*"], "dst": ["*:*"]}`, and `*` **includes shared users** — so
+sharing the machine without first narrowing that rule to `autogroup:member` hands a guest
+every service on `:443`, including `/draftroom` with the real leans on it. Nothing warns
+when this is skipped; the guest's own board works either way. Verify by what is **refused**,
+never by what loads: `/draftroom` and `/edge` on `:443` must fail for them.
+
+- **`D12` — Sam's board reachable by Sam.** **S**, and none of the remainder is code. Shipped
+  2026-08-21: his board (`:8084`) is served at the root of its own port `:8443`, because
+  Tailscale ACLs filter by port and never by HTTP path — a grant aimed at `/draftroom/sam`
+  would have reached `/draftroom` just as well, since all six services share one hostname's
+  `:443` (PR #52, `Makefile` `draftroom-sam-share-mount`). A second leak closed with it: the
+  saved shortlist was `configDir/saved-teams.json` with no owner in the name, and both boards
+  share a config directory, so his board served *this* board's bid plan — drawn on load, since
+  `static/app.js:1203` calls `refreshSaved()` at top level. Now keyed on the owner id
+  (PR #53, `cmd/draftroom/teams.go` `savedTeamsPath`). **Outstanding:** narrow the blanket ACL
+  rule as above, share the `wubrg` node to `sweibs@gmail.com`, and grant him `wubrg:8443`. He
+  must accept the invite with **Google**, not GitHub — Tailscale identifies a GitHub login as
+  `<username>@github`, which matches no rule and fails closed, looking like a broken share.
+
+- **`D13` — Jeff's board reachable by Jeff.** **S**, blocked on one unknown. Shipped 2026-08-22
+  (PR #54): his board is `:8086` served on `:8444`, one port per guest because the port is the
+  only thing an ACL can bind to. Unlike Sam he is not in this league at all — he is not in
+  `data/owners.csv` and drafts elsewhere — so the board is a generic valuation tool he records
+  by hand as players go, which is the manual-entry path the board already had. Two things make
+  it his: `DRAFTROOM_OWNER_ID=jeff` is a name rather than a Sleeper id, matching no roster and
+  so leaving the math generic while still keying his shortlist to its own file; and `-keepers
+  none` opens the board on a full pool, because the draft-night default deducts *this* league's
+  keeper money and would show him $2018 where his draft has $2400 — a board that looks right
+  and understates every price (`cmd/draftroom/serve.go` `validKeeperScenario`,
+  `com.draftroom-jeff.serve.plist.template`). **Outstanding:** the same share and grant as
+  `D12`, against `wubrg:8444` — but **his email is not known yet**, and it is the only thing
+  standing between the board and him.
+
+  Deferred deliberately: the prices still come from this league's scoring, roster shape, team
+  count and budget, so they are indicative for his draft rather than exact. If his league turns
+  out to be on Sleeper, pointing his board's `LEAGUE_ID` at it is the fix, and it is a config
+  change rather than a code one.
+
 ---
 
 ## Below the cutline — after the draft
