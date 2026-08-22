@@ -86,6 +86,44 @@ ARTIFACT = ROOT.parent / "app" / "internal" / "scenario" / "artifacts" / "condit
 FIRST, LAST = 2009, 2025
 POSITIONS = {"WR", "TE", "RB"}
 
+
+class Outcome:
+    """What is being predicted, and the opportunity axis it is conditioned on.
+
+    The axis is not interchangeable between outcomes, which is why this exists
+    rather than a `stat` argument. A pass-catcher's opportunity is a SHARE: he
+    competes for a fixed pool of team targets, so his baseline is a share of it
+    and a change in that share is the role change the trend axis measures. A
+    quarterback has no share -- he takes essentially all of his team's attempts
+    -- so his opportunity is his own prior attempt volume and his trend is a
+    change in that volume.
+
+    Treating the two the same would put a QB's raw attempts through a
+    share-shaped model and produce bands that mean nothing.
+    """
+
+    def __init__(self, name, yards_field, opp_field, positions, share_based,
+                 bands, trend_bands, min_baseline):
+        self.name = name
+        self.yards_field = yards_field
+        self.opp_field = opp_field
+        self.positions = positions
+        self.share_based = share_based
+        self.bands = bands
+        self.trend_bands = trend_bands
+        self.min_baseline = min_baseline
+
+    def as_json(self) -> dict:
+        return {
+            "yards_field": self.yards_field,
+            "opportunity": self.opp_field,
+            "share_based": self.share_based,
+            "positions": sorted(self.positions),
+            "bands": [list(b) for b in self.bands],
+            "trend_bands": [list(b) for b in self.trend_bands],
+            "min_baseline": self.min_baseline,
+        }
+
 MIN_PRIOR_GAMES = 4
 TREND_WINDOW = 2
 MIN_BASELINE_SHARE = 0.05
@@ -95,9 +133,40 @@ MIN_CELL = 100  # below this a cell is dropped rather than published thin
 # rotational, complementary, starter, focal, alpha.
 TARGET_BANDS = [(0, 4), (4, 6), (6, 8), (8, 11), (11, 999)]
 
+# Attempt bands for passing. Coarser than the target bands on purpose: there
+# are ~32 starting quarterbacks in a week against ~237 pass-catchers, a
+# structural ceiling no amount of fetching moves, so the same five-band grid
+# would drop most cells. Measured at 4x3, 18 of 24 cells publish.
+#
+# The sub-28 band is expected to drop and that is the right outcome: those are
+# backup quarterbacks and injury exits, not a band anyone prices a prop in.
+ATTEMPT_BANDS = [(0, 28), (28, 33), (33, 38), (38, 999)]
+
+# Attempt trend, in attempts rather than share points. The +/-2 boundary is not
+# the +6-share-point actionability threshold borrowed from utilization_lag --
+# that measurement is about target share and says nothing about QB volume. It
+# is a starting split from the distribution, and it needs its own measurement
+# before anything leans on it.
+ATTEMPT_TREND_BANDS = [(-99.0, -2.0), (-2.0, 2.0), (2.0, 99.0)]
+
 # Role trend. The +0.06 boundary is the measured actionability threshold from
 # utilization_lag.py: below it the effect cannot clear the vig.
 TREND_BANDS = [(-99.0, -0.03), (-0.03, 0.03), (0.03, 0.06), (0.06, 99.0)]
+
+OUTCOMES = {
+    "receiving_yards": Outcome(
+        "receiving_yards", "receiving_yards", "targets", {"WR", "TE", "RB"},
+        share_based=True, bands=TARGET_BANDS, trend_bands=TREND_BANDS,
+        min_baseline=MIN_BASELINE_SHARE,
+    ),
+    "passing_yards": Outcome(
+        "passing_yards", "passing_yards", "attempts", {"QB"},
+        share_based=False, bands=ATTEMPT_BANDS, trend_bands=ATTEMPT_TREND_BANDS,
+        # Attempts, not a share: below ten a game is a relief appearance and its
+        # prior mean describes a different job.
+        min_baseline=10.0,
+    ),
+}
 
 # Scenarios, defined on the FINAL game state. That is an end-state proxy for
 # what are really path properties, and the naming here reflects what is actually
@@ -210,23 +279,65 @@ SCENARIOS = {
 # calibrate one on, and a bar reverse-engineered to reproduce the answer already
 # written down would look derived while being fitted to its conclusion.
 SCENARIO_STATUS = {
-    "shootout": {"validated": True},
-    "pass_heavy": {
-        "validated": False,
-        "why": "Fails out of sample in one cell of sixteen (6-8 targets, +3 to +6 pt "
-        "trend): +14.5 yards of separation in 2009-2021, -0.5 in 2022-2025 on 65 "
-        "observations. It clears every other criterion, and by wider margins than "
-        "shootout -- consistent in 17/17 cells against 16/16, resolved in 13/17 against "
-        "12/16. The single failure is a half-yard median gap straddling zero, which is "
-        "noise rather than a reversal. It is gated off regardless, because the rule "
-        "requires every out-of-sample cell and was written before this scenario existed. "
-        "Loosening it here would be fitting the bar to the answer.",
+    # Per OUTCOME. A scenario that separates receiving yards need not separate
+    # passing yards -- different players, different opportunity axis, different
+    # mechanism -- so each pairing carries its own verdict and its own evidence.
+    "receiving_yards": {
+        "shootout": {"validated": True},
+        "pass_heavy": {
+            "validated": False,
+            "why": "Fails out of sample in one cell of sixteen (6-8 targets, +3 to +6 pt "
+            "trend): +14.5 yards of separation in 2009-2021, -0.5 in 2022-2025 on 65 "
+            "observations. It clears every other criterion, and by wider margins than "
+            "shootout -- consistent in 17/17 cells against 16/16, resolved in 13/17 against "
+            "12/16. The single failure is a half-yard median gap straddling zero, which is "
+            "noise rather than a reversal. It is gated off regardless, because the rule "
+            "requires every out-of-sample cell and was written before this scenario existed. "
+            "Loosening it here would be fitting the bar to the answer -- and the loosening "
+            "was tried and rejected: it makes every scenario pass. See FINDINGS.md 4.",
+        },
+        "blowout_loss": {
+            "validated": False,
+            "why": "Needs a play-by-play definition (time remaining crossed with score "
+            "differential) rather than final margin, which is the measurement this result "
+            "argues for.",
+        },
     },
-    "blowout_loss": {
-        "validated": False,
-        "why": "Needs a play-by-play definition (time remaining crossed with score "
-        "differential) rather than final margin, which is the measurement this result "
-        "argues for.",
+    "passing_yards": {
+        # All three qualify here, and one of them -- blowout_loss -- is gated
+        # for receiving yards. Read that with the caveat below before trusting
+        # it more than it deserves.
+        #
+        # THE PASSING GATE IS WEAKER THAN THE RECEIVING ONE, structurally. The
+        # grid is 4x3 rather than 5x4 because there are ~32 starting
+        # quarterbacks in a week against ~237 pass-catchers, so it publishes 10
+        # cell pairs against 16 and its out-of-sample test sees 5-6 cells
+        # against 15. "Consistent in every cell" and "holds in every
+        # out-of-sample cell" are both much easier bars on a smaller grid, and
+        # qualifies() does not scale with cell count.
+        #
+        # The separation is real, not an artifact: measured as a share of each
+        # outcome's own baseline it is comparable across the two grids --
+        # shootout +23.0% of a 234-yard baseline against +28.8% of a 26-yard
+        # one, pass_heavy +23.7% against +30.8%, blowout_loss -12.4% against
+        # -16.3%. So these are the same effects at the same rough strength.
+        #
+        # What differs is the evidence available to falsify them. blowout_loss
+        # is negative in 14 of 16 receiving cells and 7 of 7 passing cells: the
+        # effect is the same, and only the receiving grid is large enough to
+        # show it wobbling. That is a limitation of the rule, recorded rather
+        # than tuned away -- the same decision taken over the magnitude-aware
+        # out-of-sample test in FINDINGS.md 4.
+        "shootout": {"validated": True},
+        "pass_heavy": {"validated": True},
+        "blowout_loss": {
+            "validated": True,
+            "why": "Validated HERE and gated for receiving yards. The effect is the same "
+            "direction and comparable relative magnitude in both; the receiving grid is "
+            "simply large enough to catch it disagreeing in 2 of 16 cells, while the "
+            "passing grid has 7 and sees none of it. Treat with more suspicion than the "
+            "flag implies.",
+        },
     },
 }
 
@@ -284,8 +395,8 @@ def load_games() -> dict:
     return out
 
 
-def load_player_weeks() -> tuple[list[dict], list[int]]:
-    """Every regular-season WR/TE/RB game-week in the fit window.
+def load_player_weeks(outcome: Outcome) -> tuple[list[dict], list[int]]:
+    """Every regular-season game-week in the fit window, for one outcome.
 
     A missing season is an error, not a skip. It used to `continue`, which
     made a partial cache produce a quietly smaller grid -- and since the
@@ -309,7 +420,7 @@ def load_player_weeks() -> tuple[list[dict], list[int]]:
             )
         seasons.append(season)
         for r in csv.DictReader(path.open()):
-            if r.get("season_type") != "REG" or r.get("position") not in POSITIONS:
+            if r.get("season_type") != "REG" or r.get("position") not in outcome.positions:
                 continue
             rows.append(
                 {
@@ -317,14 +428,14 @@ def load_player_weeks() -> tuple[list[dict], list[int]]:
                     "week": int(num(r["week"])),
                     "player": r.get("player_id", ""),
                     "team": r.get("team") or r.get("recent_team", ""),
-                    "targets": num(r.get("targets")),
-                    "yards": num(r.get("receiving_yards")),
+                    "opportunity": num(r.get(outcome.opp_field)),
+                    "yards": num(r.get(outcome.yards_field)),
                 }
             )
     return rows, seasons
 
 
-def build(rows, games, proe_tw: dict | None = None) -> list[dict]:
+def build(rows, games, outcome: Outcome, proe_tw: dict | None = None) -> list[dict]:
     """One observation per player-game, using only prior information as inputs.
 
     proe_tw is the team-week PROE series from analysis/proe.py, keyed
@@ -332,13 +443,22 @@ def build(rows, games, proe_tw: dict | None = None) -> list[dict]:
     PROE scenario reports "cannot say" for every game, and its cells drop out
     rather than being fitted against a silently absent quantity.
     """
-    team_targets = defaultdict(float)
-    for r in rows:
-        team_targets[(r["season"], r["week"], r["team"])] += r["targets"]
-    for r in rows:
-        d = team_targets[(r["season"], r["week"], r["team"])]
-        r["share"] = r["targets"] / d if d > 0 else 0.0
-        r["team_targets"] = d
+    if outcome.share_based:
+        # A pass-catcher competes for a fixed pool, so his opportunity is a
+        # share of it and his baseline must be measured that way.
+        team_pool = defaultdict(float)
+        for r in rows:
+            team_pool[(r["season"], r["week"], r["team"])] += r["opportunity"]
+        for r in rows:
+            d = team_pool[(r["season"], r["week"], r["team"])]
+            r["basis"] = r["opportunity"] / d if d > 0 else 0.0
+            r["team_pool"] = d
+    else:
+        # A quarterback takes essentially all of his team's attempts. There is
+        # no share to hold, so the opportunity IS the volume.
+        for r in rows:
+            r["basis"] = r["opportunity"]
+            r["team_pool"] = 0.0
 
     by_player = defaultdict(list)
     for r in rows:
@@ -351,13 +471,18 @@ def build(rows, games, proe_tw: dict | None = None) -> list[dict]:
             if i < MIN_PRIOR_GAMES:
                 continue
             prior = g[:i]
-            baseline = st.mean(p["share"] for p in prior)
-            if baseline < MIN_BASELINE_SHARE:
+            baseline = st.mean(p["basis"] for p in prior)
+            if baseline < outcome.min_baseline:
                 continue
-            recent = st.mean(p["share"] for p in prior[-TREND_WINDOW:])
-            # Projected targets uses only prior information: the player's
-            # baseline share against his team's recent pass volume.
-            team_vol = st.mean(p["team_targets"] for p in prior[-3:])
+            recent = st.mean(p["basis"] for p in prior[-TREND_WINDOW:])
+            # Projected opportunity uses only prior information. For a share
+            # outcome that is the baseline share against the team's recent
+            # volume; for a volume outcome the baseline already IS the
+            # projection.
+            if outcome.share_based:
+                projected = baseline * st.mean(p["team_pool"] for p in prior[-3:])
+            else:
+                projected = baseline
             ctx = games.get((x["season"], x["week"], x["team"]))
             if ctx is None:
                 continue
@@ -379,7 +504,7 @@ def build(rows, games, proe_tw: dict | None = None) -> list[dict]:
                     "proe": (proe_tw or {}).get(
                         (x["season"], x["week"], x["team"]), {}
                     ).get("offense"),
-                    "proj_targets": baseline * team_vol,
+                    "opportunity": projected,
                     "trend": recent - baseline,
                     "yards": x["yards"],
                     "game_total": game_total,
@@ -459,7 +584,6 @@ def main(argv):
     args = ap.parse_args(argv)
 
     games = load_games()
-    rows, seasons_read = load_player_weeks()
 
     # PROE comes from play-by-play, which is a separate and much larger table.
     # A scenario whose quantity is missing everywhere still fits -- every cell
@@ -467,95 +591,112 @@ def main(argv):
     # and is visible in the dropped count rather than silently wrong.
     import proe as proe_mod
 
-    proe_tw = proe_mod.load(seasons_read[0], seasons_read[-1])
-    print(f"team-weeks with PROE: {len(proe_tw)}")
-
-    obs = build(rows, games, proe_tw)
-    print(f"player-weeks {FIRST}-{LAST}: {len(rows)}   usable observations: {len(obs)}\n")
-
-    # Measure the evidence before building cells, so a fit can never emit an
-    # artifact whose validation note disagrees with the data in the same file.
-    print("VALIDATION")
-    status = {}
-    for scenario, definition in SCENARIOS.items():
-        ev = validate.evidence(obs, definition, TARGET_BANDS, TREND_BANDS, MIN_CELL)
-        recorded = SCENARIO_STATUS[scenario]["validated"]
-        measured = qualifies(ev)
-        note = validate.note(ev)
-        if why := SCENARIO_STATUS[scenario].get("why"):
-            note = f"{note}. {why}"
-        print(f"  {scenario:14} {note}")
-        print(f"  {'':14} rule says {measured}, recorded {recorded}")
-        if measured != recorded:
-            raise SystemExit(
-                f"\n{scenario}: the evidence and the recorded verdict disagree.\n"
-                f"  measured: {note}\n"
-                f"  the stated rule gives validated={measured}, but SCENARIO_STATUS "
-                f"says {recorded}.\n"
-                f"  Change the verdict, or change the rule and say why -- do not ship "
-                f"a flag the data no longer supports."
-            )
-        status[scenario] = {"validated": recorded, "note": note, "evidence": ev}
-    print()
-
     cells, dropped = [], 0
-    for scenario, definition in SCENARIOS.items():
-        for occurred in (True, False):
-            for ti, (ta, tb) in enumerate(TARGET_BANDS):
-                for ri, (ra, rb) in enumerate(TREND_BANDS):
-                    sel = [
-                        o
-                        for o in obs
-                        if ta <= o["proj_targets"] < tb
-                        and ra <= o["trend"] < rb
-                        and definition.occurred(o) == occurred
-                    ]
-                    if len(sel) < MIN_CELL:
-                        dropped += 1
-                        continue
-                    ys = [o["yards"] for o in sel]
-                    n_eff, icc = effective_n(ys, [o["player"] for o in sel])
-                    cells.append(
-                        {
-                            "scenario": scenario,
-                            "occurred": occurred,
-                            "targets_min": ta,
-                            "targets_max": tb,
-                            "trend_min": ra,
-                            "trend_max": rb,
-                            "n": len(sel),
-                            "n_eff": round(n_eff, 1),
-                            "players": len({o["player"] for o in sel}),
-                            "icc": round(icc, 4),
-                            "median": round(st.median(ys), 1),
-                            "quantiles": quantiles(ys),
-                        }
-                    )
+    status: dict[str, dict] = {}
+    seasons_read = None
+    proe_tw = None
 
-    print(f"cells: {len(cells)} published, {dropped} dropped for n < {MIN_CELL}\n")
+    for oname, outcome in OUTCOMES.items():
+        rows, seasons = load_player_weeks(outcome)
+        if seasons_read is None:
+            seasons_read = seasons
+            proe_tw = proe_mod.load(seasons[0], seasons[-1])
+            print(f"team-weeks with PROE: {len(proe_tw)}")
+        obs = build(rows, games, outcome, proe_tw)
+        print(f"\n=== {oname} ===")
+        print(f"player-weeks {FIRST}-{LAST}: {len(rows)}   usable observations: {len(obs)}")
+
+        # Measure the evidence before building cells, so a fit can never emit an
+        # artifact whose validation note disagrees with the data in the same file.
+        #
+        # Per OUTCOME, not once globally: a scenario that separates receiving
+        # yards need not separate passing yards, and carrying one verdict across
+        # both would be exactly the unvalidated leap this pipeline exists to
+        # stop.
+        print("VALIDATION")
+        status[oname] = {}
+        for scenario, definition in SCENARIOS.items():
+            ev = validate.evidence(obs, definition, outcome.bands,
+                                   outcome.trend_bands, MIN_CELL)
+            recorded = SCENARIO_STATUS[oname][scenario]["validated"]
+            measured = qualifies(ev)
+            note = validate.note(ev)
+            if why := SCENARIO_STATUS[oname][scenario].get("why"):
+                note = f"{note}. {why}"
+            print(f"  {scenario:14} {note}")
+            print(f"  {'':14} rule says {measured}, recorded {recorded}")
+            if measured != recorded:
+                raise SystemExit(
+                    f"\n{oname}/{scenario}: the evidence and the recorded verdict disagree.\n"
+                    f"  measured: {note}\n"
+                    f"  the stated rule gives validated={measured}, but SCENARIO_STATUS "
+                    f"says {recorded}.\n"
+                    f"  Change the verdict, or change the rule and say why -- do not ship "
+                    f"a flag the data no longer supports."
+                )
+            status[oname][scenario] = {"validated": recorded, "note": note, "evidence": ev}
+
+        for scenario, definition in SCENARIOS.items():
+            for occurred in (True, False):
+                for ta, tb in outcome.bands:
+                    for ra, rb in outcome.trend_bands:
+                        sel = [
+                            o
+                            for o in obs
+                            if ta <= o["opportunity"] < tb
+                            and ra <= o["trend"] < rb
+                            and definition.occurred(o) == occurred
+                        ]
+                        if len(sel) < MIN_CELL:
+                            dropped += 1
+                            continue
+                        ys = [o["yards"] for o in sel]
+                        n_eff, icc = effective_n(ys, [o["player"] for o in sel])
+                        cells.append(
+                            {
+                                "outcome": oname,
+                                "scenario": scenario,
+                                "occurred": occurred,
+                                "opportunity_min": ta,
+                                "opportunity_max": tb,
+                                "trend_min": ra,
+                                "trend_max": rb,
+                                "n": len(sel),
+                                "n_eff": round(n_eff, 1),
+                                "players": len({o["player"] for o in sel}),
+                                "icc": round(icc, 4),
+                                "median": round(st.median(ys), 1),
+                                "quantiles": quantiles(ys),
+                            }
+                        )
+
+    print(f"\ncells: {len(cells)} published, {dropped} dropped for n < {MIN_CELL}\n")
 
     # Show the thing the decomposition is built on: does the scenario move the
     # distribution at all? If q and r are equal the scenario carries no
     # information, which RequiredScenarioProb rejects outright.
     print("SCENARIO SEPARATION (median yards, occurred vs not)")
-    print(f"  {'scenario':>9} {'targets':>9} {'trend':>14} {'occurred':>9} {'not':>7} {'delta':>7}")
-    for scenario in SCENARIOS:
-        for ta, tb in TARGET_BANDS:
-            for ra, rb in TREND_BANDS:
-                got = {
-                    c["occurred"]: c
-                    for c in cells
-                    if c["scenario"] == scenario
-                    and c["targets_min"] == ta
-                    and c["trend_min"] == ra
-                }
-                if len(got) != 2:
-                    continue
-                a, b = got[True]["median"], got[False]["median"]
-                print(
-                    f"  {scenario:>9} {f'{ta}-{tb}':>9} {f'{ra:+.2f}..{rb:+.2f}':>14} "
-                    f"{a:>9.1f} {b:>7.1f} {a - b:>+7.1f}"
-                )
+    hdr = f"  {'outcome':>15} {'scenario':>13} {'opp':>9} {'trend':>14} {'occ':>7} {'not':>7} {'delta':>7}"
+    print(hdr)
+    for oname, outcome in OUTCOMES.items():
+        for scenario in SCENARIOS:
+            for ta, tb in outcome.bands:
+                for ra, rb in outcome.trend_bands:
+                    got = {
+                        c["occurred"]: c
+                        for c in cells
+                        if c["outcome"] == oname
+                        and c["scenario"] == scenario
+                        and c["opportunity_min"] == ta
+                        and c["trend_min"] == ra
+                    }
+                    if len(got) != 2:
+                        continue
+                    a, b = got[True]["median"], got[False]["median"]
+                    print(
+                        f"  {oname:>15} {scenario:>13} {f'{ta}-{tb}':>9} "
+                        f"{f'{ra:+.2f}..{rb:+.2f}':>14} {a:>7.1f} {b:>7.1f} {a - b:>+7.1f}"
+                    )
 
     if args.report:
         print("\n--report: artifact not written")
@@ -582,7 +723,10 @@ def main(argv):
             {
                 "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "generated_by": "edge/model/analysis/fit_conditionals.py",
-                "outcome": "receiving_yards",
+                # The outcomes fitted, and the opportunity axis each is
+                # conditioned on. Was a single top-level string, which could
+                # only ever describe one grid.
+                "outcomes": {k: v.as_json() for k, v in OUTCOMES.items()},
                 # The seasons READ, not the seasons requested. Identical while
                 # load_player_weeks refuses a partial cache, which is the point:
                 # the stamp is now derived rather than asserted.

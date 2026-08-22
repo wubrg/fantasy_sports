@@ -81,10 +81,12 @@ func usage() {
         threshold your uncertainty can actually support alongside the one your
         point estimate claims.
 
-  edgectl scenario -total <n> -threshold <n> -belief <p> -q <p> -r <p> -price <american>
+  edgectl scenario [-outcome receiving_yards|passing_yards] -total <n> -threshold <n>
+                   -belief <p> -q <p> -r <p> -price <american>
         What you would have to believe for a wager to be +EV, against what the
         game line already implies. Add -rungs line:price:q:r,... for a ladder,
-        or -log <path> to record the prediction.
+        or -log <path> to record the prediction. -targets is the projected
+        opportunity: targets for a pass-catcher, attempts for a quarterback.
 
   edgectl hedge -face <amount> -back <american> -against <american>
         Convert a bonus bet to guaranteed cash by backing the other side at a

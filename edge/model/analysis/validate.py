@@ -61,7 +61,7 @@ def cell_pairs(obs, definition, target_bands, trend_bands, min_cell):
             in_band = [
                 o
                 for o in obs
-                if ta <= o["proj_targets"] < tb and ra <= o["trend"] < rb
+                if ta <= o["opportunity"] < tb and ra <= o["trend"] < rb
             ]
             # `is True` / `is False`, not truthiness: occurred() returns None
             # when the quantity is missing for that game, and those must fall
@@ -159,7 +159,7 @@ def out_of_sample(obs, definition, target_bands, trend_bands, min_cell) -> dict:
             return [
                 o["yards"]
                 for o in rows
-                if ta <= o["proj_targets"] < tb
+                if ta <= o["opportunity"] < tb
                 and ra <= o["trend"] < rb
                 and definition.occurred(o) is occurred
             ]
@@ -205,7 +205,7 @@ def out_of_sample_threeway(obs, definition, target_bands, trend_bands, min_cell,
         def half(rows, occurred):
             return [
                 o for o in rows
-                if ta <= o["proj_targets"] < tb and ra <= o["trend"] < rb
+                if ta <= o["opportunity"] < tb and ra <= o["trend"] < rb
                 and definition.occurred(o) is occurred
             ]
 

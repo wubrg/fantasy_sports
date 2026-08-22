@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 	"sync"
 
@@ -24,15 +25,20 @@ var conditionalsJSON []byte
 // Quantiles are stored rather than a single probability so P(yards > L) can be
 // answered at any line, instead of only the one the fit happened to pick.
 type Cell struct {
-	Scenario   string      `json:"scenario"`
-	Occurred   bool        `json:"occurred"`
-	TargetsMin float64     `json:"targets_min"`
-	TargetsMax float64     `json:"targets_max"`
-	TrendMin   float64     `json:"trend_min"`
-	TrendMax   float64     `json:"trend_max"`
-	N          int         `json:"n"`
-	Median     float64     `json:"median"`
-	Quantiles  [][]float64 `json:"quantiles"` // [[probability, yards], ...]
+	Outcome  string `json:"outcome"`
+	Scenario string `json:"scenario"`
+	Occurred bool   `json:"occurred"`
+	// The opportunity axis, whose meaning depends on the outcome: projected
+	// targets for a pass-catcher, projected attempts for a quarterback. Was
+	// targets_min/max, which named one outcome's axis as though it were the
+	// only one.
+	OpportunityMin float64     `json:"opportunity_min"`
+	OpportunityMax float64     `json:"opportunity_max"`
+	TrendMin       float64     `json:"trend_min"`
+	TrendMax       float64     `json:"trend_max"`
+	N              int         `json:"n"`
+	Median         float64     `json:"median"`
+	Quantiles      [][]float64 `json:"quantiles"` // [[probability, yards], ...]
 
 	// NEff is N discounted for repeat players. A cell pools many games from the
 	// same player and those rows are not independent, so the raw count claims
@@ -90,16 +96,31 @@ func (d Definition) String() string {
 	return fmt.Sprintf("%s %s %.1f", d.Basis, d.Op, d.Threshold)
 }
 
+// OutcomeDef is what an outcome predicts and the opportunity axis it is
+// conditioned on. The axis is not interchangeable: a pass-catcher's
+// opportunity is a share of a fixed team pool, a quarterback's is his own
+// attempt volume, and reading one through the other's bands is meaningless.
+type OutcomeDef struct {
+	YardsField  string   `json:"yards_field"`
+	Opportunity string   `json:"opportunity"`
+	ShareBased  bool     `json:"share_based"`
+	Positions   []string `json:"positions"`
+	MinBaseline float64  `json:"min_baseline"`
+}
+
 // Conditionals is the whole fitted grid.
 type Conditionals struct {
-	GeneratedAt    string                    `json:"generated_at"`
-	GeneratedBy    string                    `json:"generated_by"`
-	Outcome        string                    `json:"outcome"`
-	Seasons        []int                     `json:"seasons"`
-	MinCell        int                       `json:"min_cell"`
-	Definitions    map[string]Definition     `json:"scenario_definitions"`
-	ScenarioStatus map[string]ScenarioStatus `json:"scenario_status"`
-	Cells          []Cell                    `json:"cells"`
+	GeneratedAt string                `json:"generated_at"`
+	GeneratedBy string                `json:"generated_by"`
+	Outcomes    map[string]OutcomeDef `json:"outcomes"`
+	Seasons     []int                 `json:"seasons"`
+	MinCell     int                   `json:"min_cell"`
+	Definitions map[string]Definition `json:"scenario_definitions"`
+	// Keyed by outcome, then scenario. A scenario that separates receiving
+	// yards need not separate passing yards, so each pairing carries its own
+	// verdict.
+	ScenarioStatus map[string]map[string]ScenarioStatus `json:"scenario_status"`
+	Cells          []Cell                               `json:"cells"`
 }
 
 // ErrDefinitionMismatch marks a query whose scenario threshold disagrees with
@@ -111,11 +132,11 @@ var ErrDefinitionMismatch = errors.New("scenario definition mismatch")
 //
 // An artifact with no recorded definitions fails closed. It predates this check
 // and cannot be verified, and the failure mode it guards against is silent.
-func (c *Conditionals) CheckDefinition(scenario, basis string, threshold float64) error {
+func (c *Conditionals) CheckDefinition(outcome, scenario, basis string, threshold float64) error {
 	// Validation first. An unvalidated scenario cannot be priced on any basis,
 	// so reporting a threshold mismatch would name the wrong problem and send
 	// the caller off to fix a flag that was never the obstacle.
-	if err := c.checkValidated(scenario); err != nil {
+	if err := c.checkValidated(outcome, scenario); err != nil {
 		return err
 	}
 	def, ok := c.Definitions[scenario]
@@ -158,27 +179,43 @@ var ErrScenarioNotPriceable = errors.New("scenario cannot be priced")
 //
 // An unknown scenario is also refused rather than assumed good: a typo must not
 // silently inherit the benefit of the doubt.
-func (c *Conditionals) checkValidated(scenario string) error {
-	st, ok := c.ScenarioStatus[scenario]
+func (c *Conditionals) checkValidated(outcome, scenario string) error {
+	byScenario, ok := c.ScenarioStatus[outcome]
 	if !ok {
 		return fmt.Errorf(
-			"scenario: %q has no recorded validation status, so it cannot be priced "+
-				"(fitted scenarios: %s): %w",
-			scenario, strings.Join(c.ScenarioNames(), ", "), ErrScenarioNotPriceable)
+			"scenario: this grid does not fit %q (fitted outcomes: %s): %w",
+			outcome, strings.Join(c.OutcomeNames(), ", "), ErrScenarioNotPriceable)
+	}
+	st, ok := byScenario[scenario]
+	if !ok {
+		return fmt.Errorf(
+			"scenario: %q has no recorded validation status for %s, so it cannot be "+
+				"priced (fitted scenarios: %s): %w",
+			scenario, outcome, strings.Join(c.ScenarioNames(), ", "), ErrScenarioNotPriceable)
 	}
 	if !st.Validated {
 		return fmt.Errorf(
-			"scenario: %q is fitted but NOT validated, so it cannot be priced.\n  %s: %w",
-			scenario, st.Note, ErrScenarioNotPriceable)
+			"scenario: %q is fitted but NOT validated for %s, so it cannot be priced.\n  %s: %w",
+			scenario, outcome, st.Note, ErrScenarioNotPriceable)
 	}
 	return nil
 }
 
+// OutcomeNames lists the outcomes this grid fits.
+func (c *Conditionals) OutcomeNames() []string {
+	out := make([]string, 0, len(c.Outcomes))
+	for k := range c.Outcomes {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
 // ValidatedScenarioNames lists only the scenarios that may be priced.
-func (c *Conditionals) ValidatedScenarioNames() []string {
+func (c *Conditionals) ValidatedScenarioNames(outcome string) []string {
 	var out []string
 	for _, name := range c.ScenarioNames() {
-		if st, ok := c.ScenarioStatus[name]; ok && st.Validated {
+		if st, ok := c.ScenarioStatus[outcome][name]; ok && st.Validated {
 			out = append(out, name)
 		}
 	}
@@ -322,12 +359,12 @@ func outsideSupport(quantiles [][]float64, line float64) bool {
 }
 
 // findCell locates the grid cell matching an opportunity level and role trend.
-func (c *Conditionals) findCell(scenario string, occurred bool, projTargets, trend float64) (Cell, error) {
+func (c *Conditionals) findCell(outcome, scenario string, occurred bool, opportunity, trend float64) (Cell, error) {
 	for _, cell := range c.Cells {
-		if cell.Scenario != scenario || cell.Occurred != occurred {
+		if cell.Outcome != outcome || cell.Scenario != scenario || cell.Occurred != occurred {
 			continue
 		}
-		if projTargets < cell.TargetsMin || projTargets >= cell.TargetsMax {
+		if opportunity < cell.OpportunityMin || opportunity >= cell.OpportunityMax {
 			continue
 		}
 		if trend < cell.TrendMin || trend >= cell.TrendMax {
@@ -335,23 +372,27 @@ func (c *Conditionals) findCell(scenario string, occurred bool, projTargets, tre
 		}
 		return cell, nil
 	}
+	axis := "projected opportunity"
+	if def, ok := c.Outcomes[outcome]; ok {
+		axis = "projected " + def.Opportunity
+	}
 	return Cell{}, fmt.Errorf(
-		"scenario: no fitted cell for %s occurred=%v at %.1f projected targets and %+.3f trend "+
+		"scenario: no fitted cell for %s/%s occurred=%v at %.1f %s and %+.3f trend "+
 			"(cells thinner than %d observations are not published)",
-		scenario, occurred, projTargets, trend, c.MinCell)
+		outcome, scenario, occurred, opportunity, axis, trend, c.MinCell)
 }
 
 // Lookup returns P(yards > line) for one side of a scenario.
-func (c *Conditionals) Lookup(scenario string, occurred bool, projTargets, trend, line, confidence float64) (Conditional, error) {
-	if err := c.checkValidated(scenario); err != nil {
+func (c *Conditionals) Lookup(outcome, scenario string, occurred bool, opportunity, trend, line, confidence float64) (Conditional, error) {
+	if err := c.checkValidated(outcome, scenario); err != nil {
 		return Conditional{}, err
 	}
-	for name, v := range map[string]float64{"projTargets": projTargets, "trend": trend, "line": line, "confidence": confidence} {
+	for name, v := range map[string]float64{"opportunity": opportunity, "trend": trend, "line": line, "confidence": confidence} {
 		if math.IsNaN(v) || math.IsInf(v, 0) {
 			return Conditional{}, fmt.Errorf("scenario: %s = %v is not a real number", name, v)
 		}
 	}
-	cell, err := c.findCell(scenario, occurred, projTargets, trend)
+	cell, err := c.findCell(outcome, scenario, occurred, opportunity, trend)
 	if err != nil {
 		return Conditional{}, err
 	}
@@ -364,10 +405,10 @@ func (c *Conditionals) Lookup(scenario string, occurred bool, projTargets, trend
 	if outsideSupport(cell.Quantiles, line) {
 		lo, hi := cell.Quantiles[0][1], cell.Quantiles[len(cell.Quantiles)-1][1]
 		return Conditional{}, fmt.Errorf(
-			"scenario: a line of %.1f is outside what %s occurred=%v at %.1f targets ever "+
-				"produced (%.0f to %.0f yards over %d games); the grid cannot price it.\n"+
+			"scenario: a line of %.1f is outside what %s/%s occurred=%v at %.1f opportunity "+
+				"ever produced (%.0f to %.0f over %d games); the grid cannot price it.\n"+
 				"  Supply -q and -r yourself if you have a read on a line this far out",
-			line, scenario, occurred, projTargets, lo, hi, cell.N)
+			line, outcome, scenario, occurred, opportunity, lo, hi, cell.N)
 	}
 
 	p := clampToSupport(probAbove(cell.Quantiles, line), n)
@@ -445,12 +486,12 @@ func clampToSupport(p float64, n int) float64 {
 // Both come from the same grid at the same opportunity and trend, so the only
 // thing that differs between them is the game script -- which is precisely what
 // the decomposition assumes.
-func (c *Conditionals) QR(scenario string, projTargets, trend, line, confidence float64) (q, r Conditional, err error) {
-	q, err = c.Lookup(scenario, true, projTargets, trend, line, confidence)
+func (c *Conditionals) QR(outcome, scenario string, opportunity, trend, line, confidence float64) (q, r Conditional, err error) {
+	q, err = c.Lookup(outcome, scenario, true, opportunity, trend, line, confidence)
 	if err != nil {
 		return Conditional{}, Conditional{}, err
 	}
-	r, err = c.Lookup(scenario, false, projTargets, trend, line, confidence)
+	r, err = c.Lookup(outcome, scenario, false, opportunity, trend, line, confidence)
 	if err != nil {
 		return Conditional{}, Conditional{}, err
 	}

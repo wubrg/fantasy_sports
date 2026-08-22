@@ -207,7 +207,7 @@ def gate1(first: int, last: int) -> int:
 
     y = [o["yards"] for o in J]
     g = [o["player"] for o in J]
-    _, _, r2b = ols_clustered([[1.0, o["proj_targets"]] for o in J], y, g)
+    _, _, r2b = ols_clustered([[1.0, o["opportunity"]] for o in J], y, g)
     print(f"\nSIGNAL  ({len(J)} player-games; baseline = projected targets, R2 {r2b:.5f})")
     print(f"  {'term':<32} {'beta':>9} {'t':>7} {'dR2':>10}   verdict")
     for label, key in (("realized offense PROE", "proe"),
@@ -215,7 +215,7 @@ def gate1(first: int, last: int) -> int:
                        ("realized defense PROE", "dproe"),
                        ("PRIOR defense PROE (usable)", "dproe_prior"),
                        ("role trend, for comparison", "trend")):
-        b, se, r2 = ols_clustered([[1.0, o["proj_targets"], o[key]] for o in J], y, g)
+        b, se, r2 = ols_clustered([[1.0, o["opportunity"], o[key]] for o in J], y, g)
         t = b[2] / se[2] if se[2] > 0 else 0.0
         print(f"  {label:<32} {b[2]:>9.3f} {t:>7.2f} {r2 - r2b:>+10.5f}   "
               f"{'SIGNIFICANT' if abs(t) > 1.96 else 'null'}")
