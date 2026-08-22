@@ -54,6 +54,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / "data" / "raw"
+MANIFEST = CACHE / "manifest.json"
 ARTIFACT = ROOT.parent / "app" / "internal" / "scenario" / "artifacts" / "conditionals.json"
 
 # stats_player_week carries target_share only from 2009 and air yards from 2006,
@@ -163,12 +164,30 @@ def load_games() -> dict:
     return out
 
 
-def load_player_weeks() -> list[dict]:
+def load_player_weeks() -> tuple[list[dict], list[int]]:
+    """Every regular-season WR/TE/RB game-week in the fit window.
+
+    A missing season is an error, not a skip. It used to `continue`, which
+    made a partial cache produce a quietly smaller grid -- and since the
+    artifact stamped the seasons it *asked* for rather than the ones it read,
+    the result claimed 2014-2025 either way. A four-season grid labelled as
+    twelve is worse than no grid: every q and r it serves is defensible-looking
+    and wrong, and nothing downstream can tell.
+
+    Returns the rows and the seasons they actually came from, so the caller can
+    stamp what was read instead of what was requested.
+    """
     rows = []
+    seasons = []
     for season in range(FIRST, LAST + 1):
         path = CACHE / f"stats_player_week_{season}.csv"
         if not path.exists():
-            continue
+            raise SystemExit(
+                f"{path} not found -- run ingest/nflverse.py --seasons {FIRST}-{LAST}.\n"
+                f"  Refusing to fit {FIRST}-{LAST} from a partial cache: the result would "
+                f"be a thinner grid carrying the full window's provenance."
+            )
+        seasons.append(season)
         for r in csv.DictReader(path.open()):
             if r.get("season_type") != "REG" or r.get("position") not in POSITIONS:
                 continue
@@ -182,7 +201,7 @@ def load_player_weeks() -> list[dict]:
                     "yards": num(r.get("receiving_yards")),
                 }
             )
-    return rows
+    return rows, seasons
 
 
 def build(rows, games) -> list[dict]:
@@ -299,7 +318,7 @@ def main(argv):
     args = ap.parse_args(argv)
 
     games = load_games()
-    rows = load_player_weeks()
+    rows, seasons_read = load_player_weeks()
     obs = build(rows, games)
     print(f"player-weeks {FIRST}-{LAST}: {len(rows)}   usable observations: {len(obs)}\n")
 
@@ -366,6 +385,21 @@ def main(argv):
         print("\n--report: artifact not written")
         return 0
 
+    # Which files this fit actually read, hashed. fit_residuals.py has recorded
+    # this since it shipped; conditionals never did, and the asymmetry cost a
+    # full refit-and-diff to answer "does the committed grid still reproduce?"
+    # -- a question the manifest could have answered in a second. Upstream
+    # revises historical seasons (a 2014-2021 correction moved five cell
+    # medians after this artifact was generated), so "same seasons" is not the
+    # same claim as "same data".
+    source = {}
+    if MANIFEST.exists():
+        m = json.loads(MANIFEST.read_text())
+        for season in seasons_read:
+            name = f"stats_player_week_{season}.csv"
+            if name in m:
+                source[name] = m[name]
+
     ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
     ARTIFACT.write_text(
         json.dumps(
@@ -373,7 +407,11 @@ def main(argv):
                 "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "generated_by": "edge/model/analysis/fit_conditionals.py",
                 "outcome": "receiving_yards",
-                "seasons": [FIRST, LAST],
+                # The seasons READ, not the seasons requested. Identical while
+                # load_player_weeks refuses a partial cache, which is the point:
+                # the stamp is now derived rather than asserted.
+                "seasons": [seasons_read[0], seasons_read[-1]],
+                "source": source,
                 "min_cell": MIN_CELL,
                 "scenario_status": SCENARIO_STATUS,
                 "note": (
