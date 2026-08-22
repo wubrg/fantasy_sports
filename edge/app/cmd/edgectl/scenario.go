@@ -68,6 +68,23 @@ func scenarioCmd(args []string) error {
 	if basisVal == scenario.Total && !supplied["total"] && *sMarket < 0 {
 		return fmt.Errorf("-basis total needs an explicit -total (or -smarket)")
 	}
+	// Check the grid's definition before printing anything. The failure this
+	// guards against is a header reading "shootout (total > 65.0)" sitting
+	// directly above q and r that mean total > 50 -- so emitting the header
+	// first and erroring after would print the contradiction on the way past.
+	//
+	// Only when the grid will actually be consulted: stated -q/-r and -rungs
+	// carry the operator's own conditionals, and they own what those mean.
+	if *rungs == "" && *q < 0 && *r < 0 {
+		c, err := scenario.LoadConditionals()
+		if err != nil {
+			return err
+		}
+		if err := c.CheckDefinition(*name, basisVal.String(), *threshold); err != nil {
+			return err
+		}
+	}
+
 	sc, err := marketScenario(*name, basisVal, *total, *spread, *threshold, *sigma, *sMarket)
 	if err != nil {
 		return err
@@ -98,7 +115,8 @@ func scenarioCmd(args []string) error {
 	}
 
 	qv, rv, condSource, err := resolveConditionals(
-		*name, *q, *r, *projTargets, *trend, *line, *confidence)
+		*name, *q, *r, *projTargets, *trend, *line, *confidence,
+		basisVal.String(), *threshold)
 	if err != nil {
 		return err
 	}
@@ -168,7 +186,10 @@ func scenarioCmd(args []string) error {
 //
 // The two sources are reported separately into the bet log so they can be
 // scored separately later.
-func resolveConditionals(name string, q, r, projTargets, trend, line, confidence float64) (float64, float64, string, error) {
+func resolveConditionals(
+	name string, q, r, projTargets, trend, line, confidence float64,
+	basis string, threshold float64,
+) (float64, float64, string, error) {
 	if q >= 0 && r >= 0 {
 		return q, r, "stated", nil
 	}
@@ -184,6 +205,12 @@ func resolveConditionals(name string, q, r, projTargets, trend, line, confidence
 
 	c, err := scenario.LoadConditionals()
 	if err != nil {
+		return 0, 0, "", err
+	}
+	// Before anything is looked up: the grid's q and r answer a fixed question,
+	// and s answers whatever -threshold was passed. If those differ, no amount
+	// of correct arithmetic downstream produces a meaningful number.
+	if err := c.CheckDefinition(name, basis, threshold); err != nil {
 		return 0, 0, "", err
 	}
 	qc, rc, err := c.QR(name, projTargets, trend, line, confidence)

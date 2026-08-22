@@ -605,3 +605,89 @@ func TestTailNIsSymmetric(t *testing.T) {
 		}
 	}
 }
+
+// TestDefinitionMismatchIsRefused pins the case where s and the grid's q/r
+// described different events.
+//
+// q and r are fitted once against a fixed condition; s is derived per query
+// from whatever -threshold the caller passed. Nothing connected them, so
+// `-name shootout -threshold 65` blended s = P(total > 65) against a q measured
+// on total > 50. The result was well-formed, confident, and a probability of
+// nothing -- printed under a header that stated the contradiction outright.
+func TestDefinitionMismatchIsRefused(t *testing.T) {
+	c, err := LoadConditionals()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	def, ok := c.Definitions["shootout"]
+	if !ok {
+		t.Fatal("the grid records no definition for shootout")
+	}
+	if def.Basis != "total" || def.Threshold != 50 {
+		t.Fatalf("shootout is fitted as %s; the tests below assume total > 50", def)
+	}
+
+	if err := c.CheckDefinition("shootout", "total", 50); err != nil {
+		t.Errorf("the definition the grid was fitted on was rejected: %v", err)
+	}
+	for _, bad := range []float64{65, 49.5, 0, -7} {
+		err := c.CheckDefinition("shootout", "total", bad)
+		if err == nil {
+			t.Errorf("threshold %.1f was accepted against a grid fitted at %.1f",
+				bad, def.Threshold)
+			continue
+		}
+		if !errors.Is(err, ErrDefinitionMismatch) {
+			t.Errorf("threshold %.1f: got %v, want ErrDefinitionMismatch", bad, err)
+		}
+	}
+
+	// Right threshold, wrong quantity: -7 margin is blowout_loss's definition,
+	// not a shootout, and the number alone does not make it one.
+	if err := c.CheckDefinition("blowout_loss", "total", -7); !errors.Is(err, ErrDefinitionMismatch) {
+		t.Errorf("blowout_loss accepted on the total; it is fitted on the margin: %v", err)
+	}
+	if err := c.CheckDefinition("blowout_loss", "margin", -7); err != nil {
+		t.Errorf("blowout_loss rejected on its own definition: %v", err)
+	}
+}
+
+// TestMissingDefinitionsFailClosed guards the upgrade path. An artifact fitted
+// before definitions were recorded cannot be checked, and the failure it would
+// otherwise permit is silent -- so it must refuse rather than wave the query
+// through on the grounds that nothing contradicted it.
+func TestMissingDefinitionsFailClosed(t *testing.T) {
+	old := &Conditionals{ScenarioStatus: map[string]ScenarioStatus{
+		"shootout": {Validated: true},
+	}}
+	err := old.CheckDefinition("shootout", "total", 50)
+	if err == nil {
+		t.Fatal("an artifact with no recorded definitions accepted a query")
+	}
+	if !errors.Is(err, ErrDefinitionMismatch) {
+		t.Errorf("got %v, want ErrDefinitionMismatch", err)
+	}
+}
+
+// TestEveryFittedScenarioHasADefinition stops a scenario being added to the fit
+// without saying what it means -- which is how the gap arose in the first place.
+func TestEveryFittedScenarioHasADefinition(t *testing.T) {
+	c, err := LoadConditionals()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range c.ScenarioNames() {
+		def, ok := c.Definitions[name]
+		if !ok {
+			t.Errorf("%q has cells but no recorded definition", name)
+			continue
+		}
+		if def.Basis != "total" && def.Basis != "margin" {
+			t.Errorf("%q: basis %q is neither total nor margin", name, def.Basis)
+		}
+		if def.Op != ">" && def.Op != "<" {
+			t.Errorf("%q: op %q is neither > nor <", name, def.Op)
+		}
+	}
+}

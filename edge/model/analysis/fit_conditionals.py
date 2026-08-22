@@ -88,9 +88,34 @@ TREND_BANDS = [(-99.0, -0.03), (-0.03, 0.03), (0.03, 0.06), (0.06, 99.0)]
 #
 # The measurement does not refute the garbage-time mechanism. It refutes final
 # margin as a proxy for it.
+class ScenarioDef:
+    """What a named scenario MEANS, and the test for whether it happened.
+
+    The predicate is derived from the recorded fields rather than written
+    alongside them. That is the whole point: the definition used to be a bare
+    lambda, so the artifact could record a scenario's NAME but never what the
+    name stood for -- and the CLI takes its own -threshold at query time.
+    Asking for `-name shootout -threshold 65` produced s = P(total > 65) blended
+    against a q measured on total > 50, which is not a probability of anything.
+    Both halves now read the same three fields.
+    """
+
+    def __init__(self, basis: str, op: str, threshold: float):
+        assert basis in ("total", "margin"), basis
+        assert op in (">", "<"), op
+        self.basis, self.op, self.threshold = basis, op, threshold
+
+    def occurred(self, game_total: float, team_margin: float) -> bool:
+        v = game_total if self.basis == "total" else team_margin
+        return v > self.threshold if self.op == ">" else v < self.threshold
+
+    def as_json(self) -> dict:
+        return {"basis": self.basis, "op": self.op, "threshold": self.threshold}
+
+
 SCENARIOS = {
-    "shootout": lambda game_total, team_margin: game_total > 50,
-    "blowout_loss": lambda game_total, team_margin: team_margin < -7,
+    "shootout": ScenarioDef("total", ">", 50),
+    "blowout_loss": ScenarioDef("margin", "<", -7),
 }
 
 # Whether a scenario is fit to bet on. Cells are still emitted for unvalidated
@@ -323,7 +348,7 @@ def main(argv):
     print(f"player-weeks {FIRST}-{LAST}: {len(rows)}   usable observations: {len(obs)}\n")
 
     cells, dropped = [], 0
-    for scenario, occurred_fn in SCENARIOS.items():
+    for scenario, definition in SCENARIOS.items():
         for occurred in (True, False):
             for ti, (ta, tb) in enumerate(TARGET_BANDS):
                 for ri, (ra, rb) in enumerate(TREND_BANDS):
@@ -332,7 +357,7 @@ def main(argv):
                         for o in obs
                         if ta <= o["proj_targets"] < tb
                         and ra <= o["trend"] < rb
-                        and occurred_fn(o["game_total"], o["margin"]) == occurred
+                        and definition.occurred(o["game_total"], o["margin"]) == occurred
                     ]
                     if len(sel) < MIN_CELL:
                         dropped += 1
@@ -413,6 +438,10 @@ def main(argv):
                 "seasons": [seasons_read[0], seasons_read[-1]],
                 "source": source,
                 "min_cell": MIN_CELL,
+                # What each name means. Without this the artifact recorded that
+                # a cell belonged to "shootout" but not what "shootout" was, so
+                # nothing could check the caller's threshold against it.
+                "scenario_definitions": {k: v.as_json() for k, v in SCENARIOS.items()},
                 "scenario_status": SCENARIO_STATUS,
                 "note": (
                     "quantiles are [[probability, yards], ...]; P(yards > L) is "

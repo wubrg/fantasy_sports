@@ -69,6 +69,27 @@ type ScenarioStatus struct {
 	Note      string `json:"note"`
 }
 
+// Definition is what a scenario name MEANS: the quantity it tests, the
+// direction, and the threshold.
+//
+// It is recorded because the two halves of the decomposition get their
+// definition from different places. q and r are fitted once, against a fixed
+// condition; s is derived per query from whatever -threshold the caller passed.
+// Nothing tied them together, so `-name shootout -threshold 65` produced
+// s = P(total > 65) blended against a q measured on total > 50 -- a
+// well-formed, confident number that is not a probability of anything, printed
+// under a header reading "shootout (total > 65.0)" directly above cells meaning
+// something else.
+type Definition struct {
+	Basis     string  `json:"basis"` // "total" or "margin"
+	Op        string  `json:"op"`    // ">" or "<"
+	Threshold float64 `json:"threshold"`
+}
+
+func (d Definition) String() string {
+	return fmt.Sprintf("%s %s %.1f", d.Basis, d.Op, d.Threshold)
+}
+
 // Conditionals is the whole fitted grid.
 type Conditionals struct {
 	GeneratedAt    string                    `json:"generated_at"`
@@ -76,8 +97,44 @@ type Conditionals struct {
 	Outcome        string                    `json:"outcome"`
 	Seasons        []int                     `json:"seasons"`
 	MinCell        int                       `json:"min_cell"`
+	Definitions    map[string]Definition     `json:"scenario_definitions"`
 	ScenarioStatus map[string]ScenarioStatus `json:"scenario_status"`
 	Cells          []Cell                    `json:"cells"`
+}
+
+// ErrDefinitionMismatch marks a query whose scenario threshold disagrees with
+// the one the grid was fitted against.
+var ErrDefinitionMismatch = errors.New("scenario definition mismatch")
+
+// CheckDefinition refuses a query that would blend q and r against a different
+// event than the one they measure.
+//
+// An artifact with no recorded definitions fails closed. It predates this check
+// and cannot be verified, and the failure mode it guards against is silent.
+func (c *Conditionals) CheckDefinition(scenario, basis string, threshold float64) error {
+	def, ok := c.Definitions[scenario]
+	if !ok {
+		return fmt.Errorf(
+			"scenario: this grid records no definition for %q, so the threshold you asked "+
+				"for cannot be checked against the one q and r were fitted on. Refit with a "+
+				"current fit_conditionals.py: %w", scenario, ErrDefinitionMismatch)
+	}
+	if def.Basis != basis {
+		return fmt.Errorf(
+			"scenario: %q is fitted on the game %s, but you asked for it on the %s. "+
+				"q and r would describe a different event from s: %w",
+			scenario, def.Basis, basis, ErrDefinitionMismatch)
+	}
+	if def.Threshold != threshold {
+		return fmt.Errorf(
+			"scenario: %q is fitted as %s, but you asked for a threshold of %.1f.\n"+
+				"  s would be P(%s %s %.1f) while q and r measure %s -- blending them is not "+
+				"a probability of anything.\n"+
+				"  Use -threshold %.1f, or supply -q and -r for the line you actually mean: %w",
+			scenario, def, threshold, basis, def.Op, threshold, def,
+			def.Threshold, ErrDefinitionMismatch)
+	}
+	return nil
 }
 
 // ErrScenarioNotPriceable marks the errors that mean "this SCENARIO cannot be
