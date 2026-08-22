@@ -9,7 +9,7 @@ import (
 
 func scratchServer(t *testing.T) *server {
 	t.Helper()
-	srv, err := newServer(testStatic(), t.TempDir())
+	srv, err := newServer(testStatic(), t.TempDir(), "")
 	if err != nil {
 		t.Fatal(err)
 	}

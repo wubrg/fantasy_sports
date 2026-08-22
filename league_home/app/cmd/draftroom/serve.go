@@ -74,11 +74,12 @@ type server struct {
 	savedPath string
 }
 
-func newServer(s *staticData, configDir string) (*server, error) {
+func newServer(s *staticData, configDir, keeperScenario string) (*server, error) {
 	srv := &server{
 		static: s, taken: map[string]gone{}, manual: map[string]gone{},
 		scratch: newScratchpad(), leans: newLeanEdits(), configDir: configDir,
-		savedPath: savedTeamsPath(configDir, s.ownerID),
+		savedPath:      savedTeamsPath(configDir, s.ownerID),
+		keeperScenario: keeperScenario,
 	}
 	saved, err := loadSavedTeams(srv.savedPath)
 	if err != nil {
@@ -245,6 +246,12 @@ func (s *server) handleUndo(w http.ResponseWriter, r *http.Request) {
 // live draft-night board; the rest take a projected keeper set off the pool.
 var keeperScenarios = map[string]bool{"": true, "none": true, "locks": true, "expected": true}
 
+// validKeeperScenario reports whether name is one the board can open on. An
+// unrecognised name reaching Build is silently draft night, so a typo would
+// look like a working board with the wrong pool; this is what lets the caller
+// refuse it where it was typed.
+func validKeeperScenario(name string) bool { return keeperScenarios[name] }
+
 // handleKeepers switches the board between the live view and a research keeper
 // scenario. It is the whole of "research mode" on the server: the same rebuild
 // path as recording a sale, just changing which keepers are assumed off.
@@ -285,7 +292,10 @@ func writeJSON(w http.ResponseWriter, v interface{}) {
 }
 
 // runServe serves the draft board over HTTP.
-func runServe(addr, leagueID, draftID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) error {
+func runServe(addr, leagueID, draftID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string, keeperScenario string) error {
+	if !validKeeperScenario(keeperScenario) {
+		return fmt.Errorf("unknown keeper scenario %q: use none, locks, expected, or leave it empty for draft night", keeperScenario)
+	}
 	log.Printf("loading draft history and sources...")
 	static, err := loadStatic(leagueID, draftID, configDir, dataDir, ownerID, baseline, leanSets)
 	if err != nil {
@@ -295,7 +305,7 @@ func runServe(addr, leagueID, draftID, configDir, dataDir, ownerID string, basel
 	if err != nil {
 		return err
 	}
-	srv, err := newServer(static, cfg)
+	srv, err := newServer(static, cfg, keeperScenario)
 	if err != nil {
 		return err
 	}

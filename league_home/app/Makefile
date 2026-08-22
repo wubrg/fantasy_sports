@@ -8,7 +8,9 @@ BINS := leaguectl leaguebot leagueweb draftroom
 	draftroom-serve-mount draftroom-serve-unmount draftroom-serve-status \
 	draftroom-sam-install draftroom-sam-load draftroom-sam-unload draftroom-sam-restart draftroom-sam-status \
 	draftroom-sam-serve-mount draftroom-sam-serve-unmount \
-	draftroom-sam-share-mount draftroom-sam-share-unmount
+	draftroom-sam-share-mount draftroom-sam-share-unmount \
+	draftroom-jeff-install draftroom-jeff-load draftroom-jeff-unload draftroom-jeff-restart draftroom-jeff-status \
+	draftroom-jeff-share-mount draftroom-jeff-share-unmount
 
 build: ## Build leaguectl, leaguebot, leagueweb, and draftroom binaries
 	go build -o leaguectl ./cmd/leaguectl
@@ -182,7 +184,14 @@ draftroom-serve-status: ## (macOS) Show current tailscale serve mappings
 SAM_PLIST := com.draftroom-sam.serve.plist
 SAM_PLIST_DEST := $(HOME)/Library/LaunchAgents/$(SAM_PLIST)
 
-draftroom-sam-install: ## (macOS) Copy Sam's board plist into ~/Library/LaunchAgents
+## Guest lean sets are gitignored -- they collect someone else's reads, which
+## are his and not this repo's to publish -- so a fresh checkout has only the
+## tracked `blank.yaml` template. A board whose set is missing does not start,
+## so install seeds it. Never clobber: an existing set holds real reads.
+LEANS := internal/draft/data/leans
+
+draftroom-sam-install: ## (macOS) Seed Sam's lean set and copy his board plist into ~/Library/LaunchAgents
+	@test -f $(LEANS)/sam.yaml || cp $(LEANS)/blank.yaml $(LEANS)/sam.yaml
 	cp com.draftroom-sam.serve.plist.template $(SAM_PLIST_DEST)
 	@echo "$(SAM_PLIST_DEST) copied. Paths and Sam's owner ID are pre-filled for this checkout; edit if either differs, then: make draftroom-sam-load"
 
@@ -215,6 +224,38 @@ draftroom-sam-share-mount: ## (macOS) Serve Sam's board on :8443, the port his A
 
 draftroom-sam-share-unmount: ## (macOS) Stop serving Sam's board on :8443
 	tailscale serve --https=8443 off
+
+## --- macOS-only: Jeff's board (:8086, served on :8444) ---
+## Jeff drafts in his own league somewhere else, so this board is a valuation
+## tool rather than a view of anyone's team here: no owner id, which leaves the
+## math generic, and `-keepers none` so it opens on a full pool instead of this
+## league's draft-night one. He has no Sleeper feed to follow, so he records
+## each sale by hand on the board as it happens.
+
+JEFF_PLIST := com.draftroom-jeff.serve.plist
+JEFF_PLIST_DEST := $(HOME)/Library/LaunchAgents/$(JEFF_PLIST)
+
+draftroom-jeff-install: ## (macOS) Seed Jeff's lean set and copy his board plist into ~/Library/LaunchAgents
+	@test -f $(LEANS)/jeff.yaml || cp $(LEANS)/blank.yaml $(LEANS)/jeff.yaml
+	cp com.draftroom-jeff.serve.plist.template $(JEFF_PLIST_DEST)
+	@echo "$(JEFF_PLIST_DEST) copied. Paths are pre-filled for this checkout; edit if yours differs, then: make draftroom-jeff-load"
+
+draftroom-jeff-load: ## (macOS) launchctl load Jeff's board launch agent
+	launchctl load $(JEFF_PLIST_DEST)
+
+draftroom-jeff-unload: ## (macOS) launchctl unload Jeff's board launch agent
+	launchctl unload $(JEFF_PLIST_DEST)
+
+draftroom-jeff-restart: draftroom-jeff-unload draftroom-jeff-load ## (macOS) unload then load Jeff's board launch agent
+
+draftroom-jeff-status: ## (macOS) Show whether Jeff's board launch agent is loaded
+	launchctl list | grep com.draftroom-jeff.serve || echo "not loaded"
+
+draftroom-jeff-share-mount: ## (macOS) Serve Jeff's board on :8444, the port his ACL grant is scoped to
+	tailscale serve --bg --https=8444 localhost:8086
+
+draftroom-jeff-share-unmount: ## (macOS) Stop serving Jeff's board on :8444
+	tailscale serve --https=8444 off
 
 ## --- macOS-only: leagueweb persistence via launchd + tailscale serve ---
 ## Not exercised by `check`. See ../../league_home/README.md ("Running it
