@@ -121,18 +121,18 @@ do not.
 
 ## Where q and r come from
 
-`-q` and `-r` can be stated, or looked up from a grid fitted on 27,287 player-games:
+`-q` and `-r` can be stated, or looked up from a grid fitted on 37,078 player-games:
 
 ```
-$ ./edgectl scenario -name shootout -total 49 -threshold 50 -belief 0.55 \
+$ ./edgectl scenario -name shootout -total 49 -threshold 50 -belief 0.62 \
     -targets 7.5 -trend 0.07 -line 52.5 -price 250
 
-  CONDITIONALS from the fitted grid (receiving_yards, 2014-2025)
+  CONDITIONALS from the fitted grid (receiving_yards, 2009-2025)
     7.5 projected targets, +7.0 pt trend, line 52.5
-    q = 56.5%  [49.1-64.1]  n=169 (eff 164)  median 59 yds  (scenario occurred)
-      MEASURED — ~71 effective observations past the line
-    r = 43.5%  [38.5-48.7]  n=377 (eff 363)  median 49 yds  (it did not)
-      MEASURED — ~158 effective observations past the line
+    q = 55.0%  [48.6-61.5]  n=244 (eff 223)  median 59 yds  (scenario occurred)
+      MEASURED — ~100 effective observations past the line
+    r = 43.5%  [39.3-47.8]  n=522 (eff 522)  median 49 yds  (it did not)
+      MEASURED — ~227 effective observations past the line
 ```
 
 Three axes: **projected targets** (volume over efficiency — every measurement here has agreed that
@@ -224,17 +224,17 @@ to believe?"
 
 ```
 $ edgectl scenario -name shootout -total 49 -threshold 50 \
-    -belief 0.55 -targets 7.5 -trend 0.07 -line 52.5 -price +100
+    -belief 0.62 -targets 7.5 -trend 0.07 -line 52.5 -price +100
 
-  market says 45.6%   you say 55.0%   (you are +9.4 points apart)
-  q = 56.5%  [49.1-64.1]  n=169 (eff 164)   (scenario occurred)
-    MEASURED — ~71 effective observations past the line
-  r = 43.5%  [38.5-48.7]  n=377 (eff 363)   (it did not)
-    MEASURED — ~158 effective observations past the line
+  market says 45.6%   you say 62.0%   (you are +16.4 points apart)
+  q = 55.0%  [48.6-61.5]  n=244 (eff 223)   (scenario occurred)
+    MEASURED — ~100 effective observations past the line
+  r = 43.5%  [39.3-47.8]  n=522 (eff 522)   (it did not)
+    MEASURED — ~227 effective observations past the line
 
-  REQUIRES  believing the scenario is at least 50.0% likely
+  REQUIRES  believing the scenario is at least 56.5% likely
   VERDICT   DISAGREEMENT-REQUIRED
-  your read is what carries this. Margin over the requirement: +5.0 pts
+  your read is what carries this. Margin over the requirement: +5.5 pts
 ```
 
 Three verdicts are possible and they mean different things. `disagreement-required` is the normal
