@@ -685,13 +685,15 @@ func TestDefinitionMismatchIsRefused(t *testing.T) {
 		}
 	}
 
-	// Right threshold, wrong quantity: -7 margin is blowout_loss's definition,
-	// not a shootout, and the number alone does not make it one.
-	if err := c.CheckDefinition("blowout_loss", "total", -7); !errors.Is(err, ErrDefinitionMismatch) {
-		t.Errorf("blowout_loss accepted on the total; it is fitted on the margin: %v", err)
-	}
-	if err := c.CheckDefinition("blowout_loss", "margin", -7); err != nil {
-		t.Errorf("blowout_loss rejected on its own definition: %v", err)
+	// Right threshold, wrong quantity: shootout's 50 is a TOTAL, and asking for
+	// the same number as a margin is a different event, not a rounding detail.
+	//
+	// This uses shootout rather than blowout_loss because the mismatch check
+	// only runs for scenarios that could otherwise be priced -- validation is
+	// tested first, deliberately, and an unvalidated scenario short-circuits
+	// before its basis is ever compared.
+	if err := c.CheckDefinition("shootout", "margin", 50); !errors.Is(err, ErrDefinitionMismatch) {
+		t.Errorf("shootout accepted on the margin; it is fitted on the total: %v", err)
 	}
 }
 
@@ -725,11 +727,80 @@ func TestEveryFittedScenarioHasADefinition(t *testing.T) {
 			t.Errorf("%q has cells but no recorded definition", name)
 			continue
 		}
-		if def.Basis != "total" && def.Basis != "margin" {
-			t.Errorf("%q: basis %q is neither total nor margin", name, def.Basis)
+		// The bases the Python side can express, per ScenarioDef.FIELD. Kept as
+		// an explicit list rather than a free string so that adding a basis is a
+		// deliberate act on both sides of the artifact.
+		switch def.Basis {
+		case "total", "margin", "offense_proe":
+		default:
+			t.Errorf("%q: basis %q is not one this build knows how to interpret", name, def.Basis)
 		}
 		if def.Op != ">" && def.Op != "<" {
 			t.Errorf("%q: op %q is neither > nor <", name, def.Op)
+		}
+	}
+}
+
+// TestGatedScenarioReportsTheGate pins the precedence between the two refusals.
+//
+// pass_heavy is fitted on offense PROE and is gated off. Asking for it with the
+// default -basis total used to report a definition mismatch, which is true and
+// useless: the caller would go and change a flag that was never the obstacle.
+// An unvalidated scenario cannot be priced on any basis, so that is what it has
+// to say.
+func TestGatedScenarioReportsTheGate(t *testing.T) {
+	c, err := LoadConditionals()
+	if err != nil {
+		t.Fatal(err)
+	}
+	st, ok := c.ScenarioStatus["pass_heavy"]
+	if !ok {
+		t.Skip("pass_heavy is not in this artifact")
+	}
+	if st.Validated {
+		t.Skip("pass_heavy has since been validated; this test guards the gated case")
+	}
+
+	err = c.CheckDefinition("pass_heavy", "total", 50)
+	if err == nil {
+		t.Fatal("a gated scenario was accepted")
+	}
+	if !errors.Is(err, ErrScenarioNotPriceable) {
+		t.Errorf("got %v, want the not-priceable error rather than a definition mismatch", err)
+	}
+	if errors.Is(err, ErrDefinitionMismatch) {
+		t.Error("reported a threshold mismatch for a scenario that cannot be priced at all")
+	}
+	// Even asking on its OWN basis must still refuse, for the same reason.
+	if err := c.CheckDefinition("pass_heavy", "offense_proe", 3.0); !errors.Is(err, ErrScenarioNotPriceable) {
+		t.Errorf("on its own basis: got %v, want not-priceable", err)
+	}
+}
+
+// TestUnvalidatedScenariosStillCarryCells checks the half of the design that is
+// easy to lose: a gated scenario is still FITTED. The cells stay in the
+// artifact so the measurement is reproducible and so the work that would
+// un-gate it has something to build on -- only pricing is refused.
+func TestUnvalidatedScenariosStillCarryCells(t *testing.T) {
+	c, err := LoadConditionals()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, st := range c.ScenarioStatus {
+		if st.Validated {
+			continue
+		}
+		cells := 0
+		for _, cell := range c.Cells {
+			if cell.Scenario == name {
+				cells++
+			}
+		}
+		if cells == 0 {
+			t.Errorf("%q is gated off AND has no cells; the measurement is unreproducible", name)
+		}
+		if st.Note == "" {
+			t.Errorf("%q is gated off with no recorded reason", name)
 		}
 	}
 }

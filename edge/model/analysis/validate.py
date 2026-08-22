@@ -63,8 +63,11 @@ def cell_pairs(obs, definition, target_bands, trend_bands, min_cell):
                 for o in obs
                 if ta <= o["proj_targets"] < tb and ra <= o["trend"] < rb
             ]
-            yes = [o for o in in_band if definition.occurred(o["game_total"], o["margin"])]
-            no = [o for o in in_band if not definition.occurred(o["game_total"], o["margin"])]
+            # `is True` / `is False`, not truthiness: occurred() returns None
+            # when the quantity is missing for that game, and those must fall
+            # out of both sides rather than into the baseline.
+            yes = [o for o in in_band if definition.occurred(o) is True]
+            no = [o for o in in_band if definition.occurred(o) is False]
             if len(yes) < min_cell or len(no) < min_cell:
                 continue
             yield (ta, tb), (ra, rb), yes, no
@@ -158,7 +161,7 @@ def out_of_sample(obs, definition, target_bands, trend_bands, min_cell) -> dict:
                 for o in rows
                 if ta <= o["proj_targets"] < tb
                 and ra <= o["trend"] < rb
-                and definition.occurred(o["game_total"], o["margin"]) == occurred
+                and definition.occurred(o) is occurred
             ]
 
         tr_y, tr_n = half(train, True), half(train, False)

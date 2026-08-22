@@ -137,7 +137,7 @@ everything, and prefer recency only where dispersion drifts.
 
 ## 3. Pooled conditionals: shootout confirmed, "trash time" reversed
 
-`fit_conditionals.py` · 37,078 player-games, 2009–2025 · 68 cells published, 12 dropped for n < 100
+`fit_conditionals.py` · 37,078 player-games, 2009–2025 · 102 cells published, 18 dropped for n < 100
 
 `q` and `r` were operator guesses. They are now looked up from a grid pooled across player-games
 sharing an opportunity band, a role-trend band, and a game script — cells of hundreds to thousands of
@@ -202,7 +202,53 @@ invisible, and called the defect fixed. It was not: median-space and probability
 `edgectl` consumes the latter. Moving a test away from the failure is worse than leaving it, because
 the failure then looks resolved.
 
-**What would un-gate it:** defining the scenario on play-by-play — time remaining crossed with score
+## 4. Pass rate over expected separates better than shootout, and is gated anyway
+
+`analysis/proe.py --gate1` · play-by-play 2009–2025, 8,862 team-weeks
+
+PROE is nflverse's `pass_oe`: actual pass minus `xpass`, the modelled probability the play is a
+pass given down, distance, score differential and time. Its team-week mean is pass tendency with
+game script already divided out — which is the only reason it is worth a 300 MB table, since raw
+pass rate is derivable from the weekly file and is mostly game script.
+
+**It is not a re-measurement of what the grid has.** Against the `shootout` indicator, r = +0.098;
+against team margin, +0.020. `xpass` did divide out the script.
+
+**It persists**, prior-to-realized r = +0.429, so there is something to forecast.
+
+**It separates better than the scenario we ship.** `q − r` at a 52.5-yard line is +0.140 across
+all games, against shootout's +0.09 to +0.12 — and it holds *within* projected-target bands,
+growing with volume: +0.052 at 0–4 targets, +0.096 at 4–6, +0.181 at 6–8, +0.217 at 8–11. That
+rules out the obvious objection, that it is the targets axis under another name; a duplicate would
+collapse inside the bands rather than widen.
+
+The mechanism is visible in the coefficients. Prior PROE regressed on receiving yards is null on
+its own (t = 0.15) and stays null with projected targets controlled. The tendency reaches yards
+**through volume**, not around it, which is the volume-over-efficiency thesis rather than a
+contradiction of it — and it is why a direct regression is the wrong test for a scenario. The
+decomposition's path is prior PROE → realized PROE → separation in `q` and `r`, and collapsing
+those two steps into one regression destroys the middle one.
+
+**Gated off regardless.** It fails out of sample in one cell of sixteen — 6–8 targets, +3 to +6 pt
+trend: +14.5 yards of separation in 2009–2021, −0.5 in 2022–2025 on 65 observations. Every other
+criterion clears, by wider margins than shootout: consistent in 17/17 cells against 16/16,
+resolved in 13/17 against 12/16. The failure is a half-yard median gap straddling zero, which is
+noise rather than a reversal.
+
+It is gated because the rule requires every out-of-sample cell and was written before this
+scenario existed. Loosening it here would be fitting the bar to the answer, which is the failure
+this whole section of the pipeline was built to prevent.
+
+**The defensive half — the "funnel defense" — failed the cheap gate and was never fitted.**
+Opponent-induced PROE persists at only r = +0.124 and its prior form is null on yards (t = 1.49).
+A funnel is measurable after the fact and not forecastable, so there is nothing to condition on.
+
+**What would un-gate `pass_heavy`:** more evidence in that one cell, or an out-of-sample test that
+accounts for magnitude rather than sign alone. The second is a real methodological question and is
+deliberately not being decided here, because it was noticed at the exact moment it would have
+admitted a scenario.
+
+**What would un-gate `blowout_loss`:** defining the scenario on play-by-play — time remaining crossed with score
 differential — rather than final margin. Which is precisely what this whole result argues for.
 
 Shootout passes: positive in 16/16 cells and 15/15 out of sample, resolved in 12/16.

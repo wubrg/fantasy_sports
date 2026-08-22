@@ -123,13 +123,27 @@ class ScenarioDef:
     Both halves now read the same three fields.
     """
 
+    # Which observation field each basis measures. Adding a basis means adding
+    # a row here and populating that field in build(); nothing else changes.
+    FIELD = {"total": "game_total", "margin": "margin", "offense_proe": "proe"}
+
     def __init__(self, basis: str, op: str, threshold: float):
-        assert basis in ("total", "margin"), basis
+        assert basis in self.FIELD, basis
         assert op in (">", "<"), op
         self.basis, self.op, self.threshold = basis, op, threshold
 
-    def occurred(self, game_total: float, team_margin: float) -> bool:
-        v = game_total if self.basis == "total" else team_margin
+    def occurred(self, o: dict) -> bool | None:
+        """Did this scenario happen in this observation?
+
+        None means "cannot say" -- the quantity is missing for this game, which
+        for PROE means no play-by-play. Callers must exclude those observations
+        from this scenario's cells rather than guessing a side; a missing value
+        assigned to `not occurred` would quietly inflate the baseline with games
+        that might well have been scenario games.
+        """
+        v = o.get(self.FIELD[self.basis])
+        if v is None:
+            return None
         return v > self.threshold if self.op == ">" else v < self.threshold
 
     def as_json(self) -> dict:
@@ -139,6 +153,20 @@ class ScenarioDef:
 SCENARIOS = {
     "shootout": ScenarioDef("total", ">", 50),
     "blowout_loss": ScenarioDef("margin", "<", -7),
+    # Pass rate over expected: the team threw more than down, distance, score
+    # and time called for. Coach and scheme tendency with game script divided
+    # out -- which is why it needs play-by-play rather than the weekly table,
+    # and why it is near-independent of `shootout` (r = +0.098) instead of a
+    # second measurement of it.
+    #
+    # +3.0 rather than a percentile: PROE is in percentage points of pass rate,
+    # so the threshold reads as "threw three points more than the situation
+    # called for". It puts the base rate at 0.321 against shootout's 0.335,
+    # which keeps cell density comparable. Separation barely moves with the
+    # threshold anyway -- q-r at a 52.5 line runs +0.090 to +0.095 across
+    # everything from 0.0 to +6.0 -- so this is chosen for interpretability and
+    # balance, not to maximise an effect.
+    "pass_heavy": ScenarioDef("offense_proe", ">", 3.0),
 }
 
 # Whether a scenario is fit to bet on. Cells are still emitted for unvalidated
@@ -183,6 +211,17 @@ SCENARIOS = {
 # written down would look derived while being fitted to its conclusion.
 SCENARIO_STATUS = {
     "shootout": {"validated": True},
+    "pass_heavy": {
+        "validated": False,
+        "why": "Fails out of sample in one cell of sixteen (6-8 targets, +3 to +6 pt "
+        "trend): +14.5 yards of separation in 2009-2021, -0.5 in 2022-2025 on 65 "
+        "observations. It clears every other criterion, and by wider margins than "
+        "shootout -- consistent in 17/17 cells against 16/16, resolved in 13/17 against "
+        "12/16. The single failure is a half-yard median gap straddling zero, which is "
+        "noise rather than a reversal. It is gated off regardless, because the rule "
+        "requires every out-of-sample cell and was written before this scenario existed. "
+        "Loosening it here would be fitting the bar to the answer.",
+    },
     "blowout_loss": {
         "validated": False,
         "why": "Needs a play-by-play definition (time remaining crossed with score "
@@ -285,7 +324,14 @@ def load_player_weeks() -> tuple[list[dict], list[int]]:
     return rows, seasons
 
 
-def build(rows, games) -> list[dict]:
+def build(rows, games, proe_tw: dict | None = None) -> list[dict]:
+    """One observation per player-game, using only prior information as inputs.
+
+    proe_tw is the team-week PROE series from analysis/proe.py, keyed
+    (season, week, team). Optional: without it the `proe` field is None, every
+    PROE scenario reports "cannot say" for every game, and its cells drop out
+    rather than being fitted against a silently absent quantity.
+    """
     team_targets = defaultdict(float)
     for r in rows:
         team_targets[(r["season"], r["week"], r["team"])] += r["targets"]
@@ -322,6 +368,17 @@ def build(rows, games) -> list[dict]:
                     # Carried for the out-of-sample split in validate.py. The
                     # fit itself pools across seasons and does not use it.
                     "season": x["season"],
+                    # Carried so team-week series (PROE, and anything else keyed
+                    # that way) can be joined on. build() used to drop both,
+                    # which made such a join impossible without reimplementing
+                    # this function.
+                    "week": x["week"],
+                    "team": x["team"],
+                    # None when play-by-play is not cached for this season, or
+                    # the game had too few plays with a defined xpass.
+                    "proe": (proe_tw or {}).get(
+                        (x["season"], x["week"], x["team"]), {}
+                    ).get("offense"),
                     "proj_targets": baseline * team_vol,
                     "trend": recent - baseline,
                     "yards": x["yards"],
@@ -403,7 +460,17 @@ def main(argv):
 
     games = load_games()
     rows, seasons_read = load_player_weeks()
-    obs = build(rows, games)
+
+    # PROE comes from play-by-play, which is a separate and much larger table.
+    # A scenario whose quantity is missing everywhere still fits -- every cell
+    # simply falls below MIN_CELL and is dropped, which is the honest outcome
+    # and is visible in the dropped count rather than silently wrong.
+    import proe as proe_mod
+
+    proe_tw = proe_mod.load(seasons_read[0], seasons_read[-1])
+    print(f"team-weeks with PROE: {len(proe_tw)}")
+
+    obs = build(rows, games, proe_tw)
     print(f"player-weeks {FIRST}-{LAST}: {len(rows)}   usable observations: {len(obs)}\n")
 
     # Measure the evidence before building cells, so a fit can never emit an
@@ -441,7 +508,7 @@ def main(argv):
                         for o in obs
                         if ta <= o["proj_targets"] < tb
                         and ra <= o["trend"] < rb
-                        and definition.occurred(o["game_total"], o["margin"]) == occurred
+                        and definition.occurred(o) == occurred
                     ]
                     if len(sel) < MIN_CELL:
                         dropped += 1
