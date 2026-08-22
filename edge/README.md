@@ -130,13 +130,27 @@ $ ./edgectl scenario -name shootout -total 49 -threshold 50 -belief 0.55 \
   CONDITIONALS from the fitted grid (receiving_yards, 2014-2025)
     7.5 projected targets, +7.0 pt trend, line 52.5
     q = 56.5%  [49.1-64.1]  n=169 (eff 164)  median 59 yds  (scenario occurred)
+      MEASURED — ~71 effective observations past the line
     r = 43.5%  [38.5-48.7]  n=377 (eff 363)  median 49 yds  (it did not)
+      MEASURED — ~158 effective observations past the line
 ```
 
 Three axes: **projected targets** (volume over efficiency — every measurement here has agreed that
 opportunity drives yards more than per-target skill), **role trend** (with the boundary at the
 measured +6-share-point actionability threshold), and **game script** (the axis that separates `q`
 from `r` at all).
+
+Every lookup says how much evidence sits past the line, because the interval cannot. At a deep
+line the probability is small, and a Wilson interval on a small probability is narrow however
+little is behind it — so a `q` of 2.3% resting on seven observations prints a *tighter* interval
+than a `q` of 25.2% resting on ninety-four, and reads as the more precise of the two. Below ten
+effective observations the estimate is marked `THIN` and `s*` is a direction rather than a
+threshold.
+
+A line past anything the cell ever produced is refused outright. That is not a small probability,
+it is an absence of evidence, and the clamp that keeps the arithmetic sane would otherwise make
+the two indistinguishable — `s*` divides by `q − r`, and two clamped endpoints yield a confident
+verdict with a sensitivity in the thousands of points per point.
 
 Stated values always win. The grid cannot see a cast on the left tackle. But both sources are
 recorded and scored separately, so a season tells you which of you is better at what.
@@ -206,7 +220,9 @@ $ edgectl scenario -name shootout -total 49 -threshold 50 \
 
   market says 45.6%   you say 55.0%   (you are +9.4 points apart)
   q = 56.5%  [49.1-64.1]  n=169 (eff 164)   (scenario occurred)
+    MEASURED — ~71 effective observations past the line
   r = 43.5%  [38.5-48.7]  n=377 (eff 363)   (it did not)
+    MEASURED — ~158 effective observations past the line
 
   REQUIRES  believing the scenario is at least 50.0% likely
   VERDICT   DISAGREEMENT-REQUIRED

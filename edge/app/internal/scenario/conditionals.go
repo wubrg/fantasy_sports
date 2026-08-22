@@ -3,6 +3,7 @@ package scenario
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -79,6 +80,16 @@ type Conditionals struct {
 	Cells          []Cell                    `json:"cells"`
 }
 
+// ErrScenarioNotPriceable marks the errors that mean "this SCENARIO cannot be
+// priced" -- unknown, or fitted but not validated.
+//
+// It exists so callers can tell that case apart from the others Lookup
+// returns. Listing the priceable scenarios is helpful when the scenario is the
+// problem and actively misleading when it is not: a line outside the observed
+// range fails on a scenario that IS priceable, and answering it with "scenarios
+// you can price: shootout" points at the one thing that was already correct.
+var ErrScenarioNotPriceable = errors.New("scenario cannot be priced")
+
 // checkValidated refuses to price a wager from a scenario that failed
 // validation.
 //
@@ -89,12 +100,13 @@ func (c *Conditionals) checkValidated(scenario string) error {
 	if !ok {
 		return fmt.Errorf(
 			"scenario: %q has no recorded validation status, so it cannot be priced "+
-				"(fitted scenarios: %s)", scenario, strings.Join(c.ScenarioNames(), ", "))
+				"(fitted scenarios: %s): %w",
+			scenario, strings.Join(c.ScenarioNames(), ", "), ErrScenarioNotPriceable)
 	}
 	if !st.Validated {
 		return fmt.Errorf(
-			"scenario: %q is fitted but NOT validated, so it cannot be priced.\n  %s",
-			scenario, st.Note)
+			"scenario: %q is fitted but NOT validated, so it cannot be priced.\n  %s: %w",
+			scenario, st.Note, ErrScenarioNotPriceable)
 	}
 	return nil
 }
@@ -170,7 +182,31 @@ type Conditional struct {
 	NEff       int
 	CellMedian float64
 	Cell       Cell
+
+	// TailN is the effective observations behind the SPARSER side of the
+	// estimate: min(p, 1-p) x NEff.
+	//
+	// It exists because the interval cannot carry this. At a deep line p is
+	// small, and Wilson on a small p is ABSOLUTELY narrow while being
+	// relatively enormous -- so a q of 2.3% resting on seven observations
+	// prints a TIGHTER interval than a q of 25.2% resting on ninety-four, and
+	// reads as the more precise of the two. It is the opposite.
+	//
+	// The sparser side is the one that matters regardless of direction: an
+	// estimate near 1 is as thinly evidenced as one near 0, just mirrored.
+	TailN float64
 }
+
+// MinTailN is the effective observations below which an estimate is reported
+// as thin.
+//
+// Ten rather than the conventional five: five is the floor for a distributional
+// test to be valid at all, and this number is being used to price a wager.
+const MinTailN = 10
+
+// Thin reports whether too little of the sample sits on the side of the line
+// being bet for the estimate to carry its printed precision.
+func (c Conditional) Thin() bool { return c.TailN < MinTailN }
 
 // probAbove returns P(yards > line) from a cell's quantile table.
 //
@@ -205,6 +241,21 @@ func probAbove(quantiles [][]float64, line float64) float64 {
 		cdf = p0 + (p1-p0)*(line-y0)/(y1-y0)
 	}
 	return 1 - cdf
+}
+
+// outsideSupport reports whether a line falls beyond anything the cell ever
+// observed -- the case where probAbove returns exactly 0 or 1 because the
+// quantile table has run out, rather than because the sample says so.
+//
+// This is not a thin estimate. It is not an estimate: the answer is "no
+// player-game in this cell ever reached that line", which clampToSupport then
+// converts into a small non-zero probability so the interval stays sane. That
+// clamp is right for arithmetic and wrong to report, because everything
+// downstream treats the result as measured -- s* divides by (q - r), and two
+// clamped endpoints produce a confident verdict with a sensitivity in the
+// thousands of points per point.
+func outsideSupport(quantiles [][]float64, line float64) bool {
+	return line < quantiles[0][1] || line >= quantiles[len(quantiles)-1][1]
 }
 
 // findCell locates the grid cell matching an opportunity level and role trend.
@@ -243,6 +294,19 @@ func (c *Conditionals) Lookup(scenario string, occurred bool, projTargets, trend
 	}
 
 	n := cell.effectiveN()
+
+	// Refuse before clamping. A line past the observed range is not a small
+	// probability, it is an absence of evidence, and clampToSupport is about to
+	// make the two indistinguishable.
+	if outsideSupport(cell.Quantiles, line) {
+		lo, hi := cell.Quantiles[0][1], cell.Quantiles[len(cell.Quantiles)-1][1]
+		return Conditional{}, fmt.Errorf(
+			"scenario: a line of %.1f is outside what %s occurred=%v at %.1f targets ever "+
+				"produced (%.0f to %.0f yards over %d games); the grid cannot price it.\n"+
+				"  Supply -q and -r yourself if you have a read on a line this far out",
+			line, scenario, occurred, projTargets, lo, hi, cell.N)
+	}
+
 	p := clampToSupport(probAbove(cell.Quantiles, line), n)
 
 	// Reuse the interval the hit-rate layer already uses, so a pooled estimate
@@ -256,6 +320,7 @@ func (c *Conditionals) Lookup(scenario string, occurred bool, projTargets, trend
 	return Conditional{
 		Prob: p, Lower: lower, Upper: upper,
 		N: cell.N, NEff: n, CellMedian: cell.Median, Cell: cell,
+		TailN: math.Min(p, 1-p) * float64(n),
 	}, nil
 }
 
