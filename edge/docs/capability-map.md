@@ -174,6 +174,13 @@ remains a human judgement, but the fit **fails** when the stated rule and the re
 disagree. Doing this surfaced a correction to `FINDINGS.md`: the "direction inverts at ordinary
 lines" disqualifier does not clear sampling error for either scenario.
 
+### The out-of-sample gate has limited power, and no better version was found
+
+`shootout` clears it 15/15 and `blowout_loss` 12/15 — roughly p = 0.1 on a binomial, so the test
+discriminates partly by counting noise as evidence. A magnitude-aware replacement was tested and
+rejected: it makes all three scenarios pass, including the two that are gated. See `FINDINGS.md`
+§4. Strengthening it needs more held-out seasons, not a different threshold.
+
 ### Filter 2 and 3 inputs are hand-typed over a cache that already holds them
 
 `hitrate -values` is pasted by hand while `model/data/raw/stats_player_week_*.csv` holds those

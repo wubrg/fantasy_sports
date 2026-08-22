@@ -174,6 +174,77 @@ def out_of_sample(obs, definition, target_bands, trend_bands, min_cell) -> dict:
     return {"cells": total, "agree": agree}
 
 
+def out_of_sample_threeway(obs, definition, target_bands, trend_bands, min_cell,
+                           resamples=600, seed=BOOTSTRAP_SEED) -> dict:
+    """The magnitude-aware out-of-sample test that was tried and REJECTED.
+
+    Classifies each held-out cell as agree / disagree / uninformative, where
+    uninformative means the test-half delta's player-clustered bootstrap
+    interval covers zero -- a sign flip too small to be evidence of anything.
+    Requiring zero DISAGREEMENTS is then weaker than requiring universal
+    agreement, which is the point: pass_heavy fails the strict rule on a single
+    cell whose test delta is -0.5 yards on 65 observations.
+
+    It is kept, unused, because the result is the finding. Run on the two
+    scenarios whose verdicts were already settled, it makes ALL THREE pass --
+    including blowout_loss, whose three disagreements are every one within
+    noise. A criterion that cannot fail is not a gate, so the sign-only rule in
+    out_of_sample() stands. See FINDINGS.md section 4.
+
+    Reproduce with:  python3 validate.py --compare-oos
+    """
+    rng = random.Random(seed)
+    train = [o for o in obs if o["season"] <= OOS_SPLIT]
+    test = [o for o in obs if o["season"] > OOS_SPLIT]
+    agree = disagree = uninformative = 0
+
+    for tband, rband, _, _ in cell_pairs(train, definition, target_bands, trend_bands, min_cell):
+        ta, tb = tband
+        ra, rb = rband
+
+        def half(rows, occurred):
+            return [
+                o for o in rows
+                if ta <= o["proj_targets"] < tb and ra <= o["trend"] < rb
+                and definition.occurred(o) is occurred
+            ]
+
+        tr_y, tr_n = half(train, True), half(train, False)
+        te_y, te_n = half(test, True), half(test, False)
+        if min(len(te_y), len(te_n)) < MIN_OOS_CELL:
+            continue
+        a = st.median([o["yards"] for o in tr_y]) - st.median([o["yards"] for o in tr_n])
+        b = st.median([o["yards"] for o in te_y]) - st.median([o["yards"] for o in te_n])
+        if a * b > 0:
+            agree += 1
+            continue
+
+        by_player: dict[str, tuple[list, list]] = {}
+        for o in te_y:
+            by_player.setdefault(o["player"], ([], []))[0].append(o["yards"])
+        for o in te_n:
+            by_player.setdefault(o["player"], ([], []))[1].append(o["yards"])
+        players = list(by_player)
+        deltas = []
+        for _ in range(resamples):
+            ys, ns = [], []
+            for _ in players:
+                x, y = by_player[players[rng.randrange(len(players))]]
+                ys.extend(x)
+                ns.extend(y)
+            if ys and ns:
+                deltas.append(st.median(ys) - st.median(ns))
+        deltas.sort()
+        lo = deltas[int(0.025 * len(deltas))]
+        hi = deltas[min(int(0.975 * len(deltas)), len(deltas) - 1)]
+        if lo > 0 or hi < 0:
+            disagree += 1
+        else:
+            uninformative += 1
+
+    return {"agree": agree, "disagree": disagree, "uninformative": uninformative}
+
+
 def evidence(obs, definition, target_bands, trend_bands, min_cell) -> dict:
     """All three tests for one scenario."""
     pairs = list(cell_pairs(obs, definition, target_bands, trend_bands, min_cell))
@@ -209,3 +280,34 @@ def note(ev: dict) -> str:
         n = ev["inversions"]
         parts.append(f"{n} sub-noise crossing{'' if n == 1 else 's'}")
     return "; ".join(parts)
+
+
+def _compare_oos() -> int:
+    """Reproduce the rejected-criterion table in FINDINGS.md section 4."""
+    import fit_conditionals as fc
+    import proe
+
+    games = fc.load_games()
+    rows, seasons = fc.load_player_weeks()
+    obs = fc.build(rows, games, proe.load(seasons[0], seasons[-1]))
+
+    print("out-of-sample: sign-only (in use) vs magnitude-aware (rejected)\n")
+    print(f"  {'scenario':<14} {'sign-only':>10}   {'agree':>6} {'disagree':>9} {'uninform':>9}   new verdict")
+    for name, definition in fc.SCENARIOS.items():
+        strict = out_of_sample(obs, definition, fc.TARGET_BANDS, fc.TREND_BANDS, fc.MIN_CELL)
+        three = out_of_sample_threeway(obs, definition, fc.TARGET_BANDS, fc.TREND_BANDS, fc.MIN_CELL)
+        sign = f"{strict['agree']}/{strict['cells']}"
+        verdict = "PASS" if three["disagree"] == 0 else "FAIL"
+        print(f"  {name:<14} {sign:>10}   {three['agree']:>6} {three['disagree']:>9} "
+              f"{three['uninformative']:>9}   {verdict}")
+    print("\n  Every scenario passes the magnitude-aware version, including the two that are")
+    print("  gated. A criterion that cannot fail is not a gate. The sign-only rule stands.")
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    if "--compare-oos" in sys.argv:
+        sys.exit(_compare_oos())
+    raise SystemExit("validate.py is a library; --compare-oos reproduces the FINDINGS.md table")
