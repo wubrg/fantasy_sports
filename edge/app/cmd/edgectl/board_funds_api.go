@@ -1,0 +1,542 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"math"
+	"net/http"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"time"
+
+	"edge/internal/ledger"
+	"edge/internal/wager"
+)
+
+// The bankroll, over HTTP.
+//
+// The ledger has existed and been unused: balances, expiry tracking and an
+// impossible-state replay, imported by nothing but its own CLI. It was unused
+// because entering a bankroll meant hand-writing JSONL, which nobody does from
+// a phone, and because nothing read it back.
+//
+// These handlers close both ends. Funds are declared from the same screen the
+// board is entered on, and a recorded wager draws its stake from them, so the
+// balance the report plans against is the balance the log says you hold rather
+// than a number retyped on the command line.
+
+func defaultLedger() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "bankroll.jsonl"
+	}
+	return filepath.Join(home, "bankroll.jsonl")
+}
+
+type balanceJSON struct {
+	Book   string  `json:"book"`
+	Asset  string  `json:"asset"`
+	Amount float64 `json:"amount"`
+	Units  int     `json:"units"`
+}
+
+type expiryJSON struct {
+	Book    string `json:"book"`
+	Asset   string `json:"asset"`
+	Label   string `json:"label"`
+	At      string `json:"at"`
+	InHours int    `json:"in_hours"`
+	Expired bool   `json:"expired"`
+}
+
+func (s *boardServer) handleFunds(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		s.addFunds(w, r)
+		return
+	}
+	events, err := ledger.Load(s.ledgerPath)
+	if err != nil && !os.IsNotExist(err) {
+		httpError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	now := time.Now()
+	pos, err := ledger.Balances(events, now)
+	if err != nil {
+		// A replay that will not fold is a real problem and must not be
+		// smoothed into an empty bankroll: the balances would look merely
+		// absent rather than wrong.
+		httpError(w, http.StatusConflict, "the bankroll log does not replay: "+err.Error())
+		return
+	}
+
+	out := struct {
+		Path     string        `json:"path"`
+		Balances []balanceJSON `json:"balances"`
+		Expiring []expiryJSON  `json:"expiring"`
+	}{Path: s.ledgerPath}
+
+	for _, b := range pos.Balances() {
+		out.Balances = append(out.Balances, balanceJSON{
+			Book: b.Book, Asset: b.Asset, Amount: b.Amount, Units: b.Units,
+		})
+	}
+	// Thirty days is generous for a promo but not for cash; anything further
+	// out is not a deadline anyone is acting on this week.
+	exp, err := ledger.Expiring(events, 30*24*time.Hour, now)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	for _, e := range exp {
+		label := e.Lot.Asset
+		if e.Lot.Boost != nil {
+			label = fmt.Sprintf("%.0f%% boost", e.Lot.Boost.Percent*100)
+		}
+		out.Expiring = append(out.Expiring, expiryJSON{
+			Book: e.Lot.Book, Asset: e.Lot.Asset, Label: label,
+			At: e.At.Format("2006-01-02"), InHours: int(e.In.Hours()), Expired: e.Expired(),
+		})
+	}
+	writeJSON(w, out)
+}
+
+type addFundsReq struct {
+	Book    string  `json:"book"`
+	Asset   string  `json:"asset"`
+	Amount  float64 `json:"amount"`
+	Expires string  `json:"expires"`
+	Note    string  `json:"note"`
+}
+
+// addFunds records money arriving.
+//
+// It appends a grant rather than setting a balance. A ledger that could be set
+// would lose the distinction between "I was given $50" and "I have $50 left",
+// and the second is derived from the first plus everything since -- which is
+// the property that lets balances be reconstructed at a past date at all.
+func (s *boardServer) addFunds(w http.ResponseWriter, r *http.Request) {
+	var req addFundsReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httpError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if strings.TrimSpace(req.Book) == "" {
+		httpError(w, http.StatusBadRequest, "which book holds it?")
+		return
+	}
+	if req.Asset == "" {
+		req.Asset = "bonus"
+	}
+	if req.Amount <= 0 {
+		httpError(w, http.StatusBadRequest, "amount must be positive")
+		return
+	}
+
+	lot := ledger.Lot{Book: req.Book, Asset: req.Asset, Amount: req.Amount}
+	if strings.TrimSpace(req.Expires) != "" {
+		// Local time: a promo deadline is read off a book's page in the
+		// operator's own timezone, and shifting it to UTC moves a Tuesday
+		// deadline into Monday for anyone west of Greenwich.
+		t, err := time.ParseInLocation("2006-01-02", strings.TrimSpace(req.Expires), time.Local)
+		if err != nil {
+			httpError(w, http.StatusBadRequest, "expires: want a date like 2026-08-26")
+			return
+		}
+		lot.Expires = &t
+	}
+
+	now := time.Now()
+	e := ledger.Event{
+		Kind: "grant", ID: ledger.NewID(now, req.Book+"-"+req.Asset), Time: now,
+		Creates: &lot, Note: req.Note,
+	}
+	if err := ledger.AppendFile(s.ledgerPath, e); err != nil {
+		httpError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, map[string]any{"ok": true, "id": e.ID})
+}
+
+// fundsFor reads deployable balances for the named books.
+//
+// Only amount-shaped assets count. A profit boost is a unit lot and is not a
+// bankroll -- it multiplies a stake rather than being one -- so summing it into
+// funds would put money on the board that cannot be wagered.
+func (s *boardServer) fundsFor(books []string) (map[string]float64, error) {
+	events, err := ledger.Load(s.ledgerPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	pos, err := ledger.Balances(events, time.Now())
+	if err != nil {
+		return nil, err
+	}
+	want := map[string]bool{}
+	for _, b := range books {
+		want[b] = true
+	}
+	out := map[string]float64{}
+	for _, b := range pos.Balances() {
+		if want[b.Book] && b.Amount > 0 {
+			out[b.Book] += b.Amount
+		}
+	}
+	return out, nil
+}
+
+// drawFrom picks the lots a stake should come out of, oldest deadline first.
+//
+// Soonest-expiring first is the only ordering that does not quietly waste
+// money: spending a balance that lasts a year while one expiring on Tuesday
+// sits untouched is how a bankroll leaks without any single decision looking
+// wrong.
+func (s *boardServer) drawFrom(book string, stake float64) ([]ledger.Event, error) {
+	events, err := ledger.Load(s.ledgerPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("no bankroll recorded at %s", s.ledgerPath)
+		}
+		return nil, err
+	}
+	now := time.Now()
+	pos, err := ledger.Balances(events, now)
+	if err != nil {
+		return nil, err
+	}
+
+	var open []ledger.Lot
+	for _, l := range pos.Lots {
+		if l.Book == book && !l.Unit() && l.Amount > 0 {
+			open = append(open, l)
+		}
+	}
+	sort.SliceStable(open, func(i, j int) bool {
+		ei, ej := open[i].Expires, open[j].Expires
+		switch {
+		case ei != nil && ej != nil:
+			return ei.Before(*ej)
+		case ei != nil:
+			return true // a deadline outranks no deadline
+		case ej != nil:
+			return false
+		}
+		return open[i].ID < open[j].ID
+	})
+
+	var total float64
+	for _, l := range open {
+		total += l.Amount
+	}
+	if total+1e-9 < stake {
+		return nil, fmt.Errorf(
+			"%s holds %.2f, which will not cover a %.2f stake", book, total, stake)
+	}
+
+	var out []ledger.Event
+	left := stake
+	for _, l := range open {
+		if left <= 1e-9 {
+			break
+		}
+		take := l.Amount
+		if take > left {
+			take = left
+		}
+		out = append(out, ledger.Event{Kind: "place", Lot: l.ID, Amount: take})
+		left -= take
+	}
+	return out, nil
+}
+
+type adjustReq struct {
+	Book   string  `json:"book"`
+	Asset  string  `json:"asset"`
+	Target float64 `json:"target"`
+	Note   string  `json:"note"`
+}
+
+// handleAdjust corrects a balance to what it should be.
+//
+// It appends a compensating entry rather than editing anything. An append-only
+// log with no way to fix a fat-fingered entry is a log that gets abandoned the
+// first time one happens -- but a log that can be edited cannot answer "what
+// did I hold on the 20th", which is the whole reason for keeping it. A
+// correction is itself a fact worth recording: "I believed I had $80 and
+// actually had $50" is history, not noise.
+//
+// The caller states the CORRECT balance and the difference is derived. Asking
+// for a delta instead would make the operator do arithmetic against a number
+// they have just discovered they got wrong.
+func (s *boardServer) handleAdjust(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		httpError(w, http.StatusMethodNotAllowed, "POST required")
+		return
+	}
+	var req adjustReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httpError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if strings.TrimSpace(req.Book) == "" {
+		httpError(w, http.StatusBadRequest, "which book?")
+		return
+	}
+	if req.Asset == "" {
+		req.Asset = "bonus"
+	}
+	if req.Target < 0 {
+		httpError(w, http.StatusBadRequest, "a balance cannot be negative")
+		return
+	}
+
+	events, err := ledger.Load(s.ledgerPath)
+	if err != nil && !os.IsNotExist(err) {
+		httpError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	now := time.Now()
+	pos, err := ledger.Balances(events, now)
+	if err != nil {
+		httpError(w, http.StatusConflict, "the bankroll log does not replay: "+err.Error())
+		return
+	}
+	current := pos.Total(req.Book, req.Asset)
+	delta := req.Target - current
+	if math.Abs(delta) < 0.005 {
+		writeJSON(w, map[string]any{"ok": true, "unchanged": true, "balance": current})
+		return
+	}
+
+	note := req.Note
+	if note == "" {
+		note = fmt.Sprintf("correction: recorded %.2f, actually %.2f", current, req.Target)
+	}
+
+	if delta > 0 {
+		// Under-declared. A grant is the honest shape: money that turned out to
+		// be there arrived at some point, and this is the first the log hears
+		// of it.
+		e := ledger.Event{
+			Kind: "grant", ID: ledger.NewID(now, req.Book+"-correction"), Time: now,
+			Creates: &ledger.Lot{Book: req.Book, Asset: req.Asset, Amount: delta},
+			Note:    note,
+		}
+		if err := ledger.AppendFile(s.ledgerPath, e); err != nil {
+			httpError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		writeJSON(w, map[string]any{"ok": true, "delta": delta, "balance": req.Target})
+		return
+	}
+
+	// Over-declared. Withdraw the excess, newest lot first -- the opposite of
+	// spending order. A correction almost always undoes what was just typed,
+	// and taking it out of the oldest lot would eat a balance that has been
+	// sitting there correctly while leaving the mistake in place.
+	draws, err := s.withdrawFrom(req.Book, req.Asset, -delta, pos)
+	if err != nil {
+		httpError(w, http.StatusConflict, err.Error())
+		return
+	}
+	for _, e := range draws {
+		e.ID = ledger.NewID(now, req.Book+"-correction")
+		e.Time = now
+		e.Note = note
+		if err := ledger.AppendFile(s.ledgerPath, e); err != nil {
+			httpError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	writeJSON(w, map[string]any{"ok": true, "delta": delta, "balance": req.Target})
+}
+
+// withdrawFrom builds the events removing an over-declared amount, newest lot
+// first. See handleAdjust for why the order is the reverse of spending.
+func (s *boardServer) withdrawFrom(book, asset string, amount float64, pos ledger.Position) ([]ledger.Event, error) {
+	var open []ledger.Lot
+	for _, l := range pos.Lots {
+		if l.Book == book && l.Asset == asset && !l.Unit() && l.Amount > 0 {
+			open = append(open, l)
+		}
+	}
+	sort.SliceStable(open, func(i, j int) bool { return open[i].ID > open[j].ID })
+
+	var total float64
+	for _, l := range open {
+		total += l.Amount
+	}
+	if total+1e-9 < amount {
+		return nil, fmt.Errorf(
+			"%s holds %.2f of %s, so %.2f cannot be removed. Some of it is already "+
+				"staked on an open wager, which has to settle before the balance can drop",
+			book, total, asset, amount)
+	}
+
+	var out []ledger.Event
+	left := amount
+	for _, l := range open {
+		if left <= 1e-9 {
+			break
+		}
+		take := l.Amount
+		if take > left {
+			take = left
+		}
+		out = append(out, ledger.Event{Kind: "withdraw", Lot: l.ID, Amount: take})
+		left -= take
+	}
+	return out, nil
+}
+
+type boostJSON struct {
+	ID        string  `json:"id"`
+	Book      string  `json:"book"`
+	Label     string  `json:"label"`
+	Percent   float64 `json:"percent"`
+	MaxStake  float64 `json:"max_stake"`
+	MinOdds   int     `json:"min_odds"`
+	Market    string  `json:"market"`
+	NeedsCash bool    `json:"needs_cash"`
+	Expires   string  `json:"expires"`
+	InHours   int     `json:"in_hours"`
+	// Ceiling is the most this token could ever add; At500 is what it is worth
+	// on a realistic long price. Both are reported because the first decides
+	// whether to bother and the second is what you actually get.
+	Ceiling    float64 `json:"ceiling"`
+	At500      float64 `json:"at_500"`
+	Chase      bool    `json:"chase"`
+	Restricted bool    `json:"restricted"`
+}
+
+// handleBoosts lists the profit-boost inventory, best first.
+//
+// Ranked by ceiling rather than by percentage. A 100% boost capped at a $5
+// stake is worth less than a 25% boost capped at $50, and sorting by the
+// headline number would put the useless one on top -- which is how a promo
+// page is designed to be read.
+func (s *boardServer) handleBoosts(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		s.addBoost(w, r)
+		return
+	}
+	events, err := ledger.Load(s.ledgerPath)
+	if err != nil && !os.IsNotExist(err) {
+		httpError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	now := time.Now()
+	pos, err := ledger.Balances(events, now)
+	if err != nil {
+		httpError(w, http.StatusConflict, "the bankroll log does not replay: "+err.Error())
+		return
+	}
+
+	var out []boostJSON
+	for _, l := range pos.Lots {
+		if l.Boost == nil {
+			continue
+		}
+		b := *l.Boost
+		v500, _ := b.Value(500, ledger.TypicalHold)
+		row := boostJSON{
+			ID: l.ID, Book: l.Book, Label: b.Label, Percent: b.Percent,
+			MaxStake: b.MaxStake, MinOdds: int(b.MinOdds), Market: b.Market,
+			NeedsCash: b.RequiresCashStake,
+			Ceiling:   b.Ceiling(ledger.TypicalHold), At500: v500,
+			Chase:      b.WorthChasing(),
+			Restricted: b.Restricted(),
+		}
+		if l.Expires != nil {
+			row.Expires = l.Expires.Format("2006-01-02")
+			row.InHours = int(l.Expires.Sub(now).Hours())
+		}
+		out = append(out, row)
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Ceiling > out[j].Ceiling })
+
+	writeJSON(w, map[string]any{
+		"boosts": out,
+		"floor":  ledger.ChaseFloor,
+		"note": "Ranked by ceiling, not headline percentage: a 100% boost capped at a " +
+			"$5 stake is worth less than a 25% boost capped at $50.",
+	})
+}
+
+type addBoostReq struct {
+	Book      string  `json:"book"`
+	Label     string  `json:"label"`
+	Percent   float64 `json:"percent"`
+	MaxStake  float64 `json:"max_stake"`
+	MinOdds   int     `json:"min_odds"`
+	Market    string  `json:"market"`
+	NeedsCash bool    `json:"needs_cash"`
+	Expires   string  `json:"expires"`
+}
+
+func (s *boardServer) addBoost(w http.ResponseWriter, r *http.Request) {
+	var req addBoostReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httpError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if strings.TrimSpace(req.Book) == "" {
+		httpError(w, http.StatusBadRequest, "which book granted it?")
+		return
+	}
+	if req.Percent <= 0 {
+		httpError(w, http.StatusBadRequest, "percent must be positive (0.5 for a 50% boost)")
+		return
+	}
+	// Percent is a fraction. Accepting 50 as well as 0.5 would make a
+	// hundredfold error indistinguishable from a legitimate entry.
+	if req.Percent > 5 {
+		httpError(w, http.StatusBadRequest,
+			"percent is a fraction: 0.5 for a 50% boost, not 50")
+		return
+	}
+	if req.MaxStake <= 0 {
+		httpError(w, http.StatusBadRequest,
+			"a boost with no stake cap cannot be valued; enter the promo's maximum wager")
+		return
+	}
+	if req.Market == "" {
+		req.Market = "any"
+	}
+
+	spec := ledger.BoostSpec{
+		Percent: req.Percent, MaxStake: req.MaxStake,
+		MinOdds: wager.American(req.MinOdds), Market: req.Market,
+		RequiresCashStake: req.NeedsCash, Label: req.Label,
+	}
+	// A boost is a unit lot: spent whole, never drawn down. That is what keeps
+	// it out of the deployable balance, where it would put money on the board
+	// that cannot be wagered.
+	lot := ledger.Lot{Book: req.Book, Asset: "boost", Boost: &spec}
+	if strings.TrimSpace(req.Expires) != "" {
+		t, err := time.ParseInLocation("2006-01-02", strings.TrimSpace(req.Expires), time.Local)
+		if err != nil {
+			httpError(w, http.StatusBadRequest, "expires: want a date like 2026-08-26")
+			return
+		}
+		lot.Expires = &t
+	}
+
+	now := time.Now()
+	e := ledger.Event{
+		Kind: "grant", ID: ledger.NewID(now, req.Book+"-boost"), Time: now, Creates: &lot,
+	}
+	if err := ledger.AppendFile(s.ledgerPath, e); err != nil {
+		httpError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, map[string]any{
+		"ok": true, "id": e.ID,
+		"ceiling": spec.Ceiling(ledger.TypicalHold),
+		"chase":   spec.WorthChasing(),
+	})
+}

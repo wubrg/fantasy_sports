@@ -68,6 +68,17 @@ const (
 	DraftKings Book = "draftkings"
 	BetMGM     Book = "betmgm"
 	Bet365     Book = "bet365"
+	// Fanatics returns the stake on a push. Recorded 2026-08-21 from the
+	// Fanatics Sportsbook House Rules: a two-way market with no winner settles
+	// both selections as a void, and the FanCash or converted token behind the
+	// wager is returned to the account balance.
+	//
+	// This was unrecorded for a long time, and the whole of a $350 promo was
+	// worked under the assumption that it might behave like FanDuel -- which
+	// meant moneylines only, since a forfeit-on-push is a total loss of the
+	// asset rather than a reduced conversion. It does not, so that constraint
+	// is lifted.
+	Fanatics Book = "fanatics"
 )
 
 // Known reports whether this is a book whose bonus-bet rules are recorded here.
@@ -78,7 +89,7 @@ const (
 // guards against forfeiting a bonus bet outright, into a silent no-op.
 func (b Book) Known() bool {
 	switch b.normalized() {
-	case FanDuel, DraftKings, BetMGM, Bet365:
+	case FanDuel, DraftKings, BetMGM, Bet365, Fanatics:
 		return true
 	}
 	return false
@@ -87,23 +98,30 @@ func (b Book) Known() bool {
 func (b Book) normalized() Book { return Book(strings.ToLower(strings.TrimSpace(string(b)))) }
 
 // KnownBooks lists the books whose rules are recorded.
-func KnownBooks() []Book { return []Book{FanDuel, DraftKings, BetMGM, Bet365} }
+func KnownBooks() []Book { return []Book{FanDuel, DraftKings, BetMGM, Bet365, Fanatics} }
 
 // BonusLostOnPush reports whether a bonus bet is forfeited when the wager
 // pushes (ties).
 //
-// FanDuel keeps the bonus bet on a push; DraftKings returns it. For a cash
-// wager a push is a neutral non-event, so this rule is easy to overlook -- but
-// for a FanDuel bonus bet a push is a total loss of the asset.
+// FanDuel keeps the bonus bet on a push; DraftKings and Fanatics return it.
+// For a cash wager a push is a neutral non-event, so this rule is easy to
+// overlook -- but for a FanDuel bonus bet a push is a total loss of the asset.
 func (b Book) BonusLostOnPush() bool {
 	return b.normalized() == FanDuel
 }
 
 // BonusSplittable reports whether a bonus bet may be wagered in parts.
-// FanDuel allows it; DraftKings requires the token be used whole, which
-// creates a liquidity problem when hedging a large denomination.
+//
+// FanDuel and Fanatics allow it; DraftKings requires the token be used whole,
+// which creates a liquidity problem when hedging a large denomination. At
+// Fanatics this is what makes splitting a $50 FanCash balance into four
+// separate wagers possible, which is the whole variance argument.
 func (b Book) BonusSplittable() bool {
-	return b.normalized() == FanDuel
+	switch b.normalized() {
+	case FanDuel, Fanatics:
+		return true
+	}
+	return false
 }
 
 // CheckBonusMarket rejects bonus bets on markets that can push at books which

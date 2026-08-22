@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>
+// MUST be first: it has to run before the stylesheet or app.js are resolved.
+//
+// This page is served at "/" locally and under `tailscale serve
+// --set-path=/edge` remotely. Tailscale strips the mount before forwarding, so
+// the server sees "/" either way and cannot tell the difference -- it has no
+// way to issue this redirect itself.
+//
+// Every relative URL in this document resolves against the CURRENT path. At
+// "/edge/" that is the mount and everything works. At "/edge" it is the tailnet
+// ROOT, so style.css and app.js resolve outside the mount and 404: the page
+// renders unstyled with no script at all. A fix inside app.js cannot help,
+// because app.js is precisely what failed to load. Only inline HTML runs early
+// enough.
+if (!location.pathname.endsWith("/")) {
+  location.replace(location.pathname + "/" + location.search + location.hash);
+}
+</script>
+<!-- maximum-scale is deliberately NOT pinned: forbidding zoom to stop iOS
+     focus-zoom would also stop a squint. The inputs are 16px+ instead, which
+     is the size at which Safari leaves the page alone. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>line board</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="bar">
+  <select id="week" aria-label="week"></select>
+  <select id="book" aria-label="book"></select>
+  <div id="views" class="seg" role="group" aria-label="view">
+    <button type="button" data-view="enter" class="on">enter</button>
+    <button type="button" data-view="bets">bets</button>
+    <button type="button" data-view="log">log</button>
+    <button type="button" data-view="funds">funds</button>
+  </div>
+</header>
+
+<p id="hint"></p>
+<p id="banner" hidden></p>
+
+<main id="rows"></main>
+<main id="report" hidden></main>
+<main id="betlog" hidden></main>
+<main id="funds" hidden></main>
+
+<!-- Desktop-only. A blob is copied from a book's odds page, which is not
+     something you do on the phone the rest of this page is built for; the
+     media query in style.css hides it rather than offering a paste target
+     that would need app-switching to fill. -->
+<section id="paste">
+  <button type="button" id="pasteToggle">paste a blob from a book</button>
+  <div id="pasteBody" hidden>
+    <p class="note">Moneylines only, consecutive away/home pairs, as copied:
+      <code>SF +150, LAR -150, GB +105, MN -125</code>. Nothing is written until
+      you have read the diff.</p>
+    <textarea id="blob" rows="4" spellcheck="false"
+      placeholder="SF +150, LAR -150, GB +105, MN -125"></textarea>
+    <div class="pasteActions">
+      <button type="button" id="preview">preview</button>
+      <button type="button" id="apply" disabled>apply</button>
+    </div>
+    <div id="diff"></div>
+  </div>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>

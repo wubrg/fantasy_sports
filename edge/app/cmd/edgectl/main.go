@@ -37,6 +37,12 @@ func main() {
 		err = scenarioCmd(os.Args[2:])
 	case "log":
 		err = logCmd(os.Args[2:])
+	case "hedge":
+		err = hedgeCmd(os.Args[2:])
+	case "board":
+		err = boardCmd(os.Args[2:])
+	case "ledger":
+		err = ledgerCmd(os.Args[2:])
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -79,6 +85,40 @@ func usage() {
         What you would have to believe for a wager to be +EV, against what the
         game line already implies. Add -rungs line:price:q:r,... for a ladder,
         or -log <path> to record the prediction.
+
+  edgectl hedge -face <amount> -back <american> -against <american>
+        Convert a bonus bet to guaranteed cash by backing the other side at a
+        DIFFERENT book. Reports the hedge stake, locked-in profit and the
+        conversion rate. Phase 1 of the analytical-hobbyist framework: bank the
+        asset first, then deploy cash into high-variance betting.
+
+  edgectl board scaffold|validate [-dir <path>] [-season <year>] [-week <n>]
+        The per-week line board: every game on the schedule, with a slot for
+        each sportsbook. scaffold generates the week files from games.csv and
+        never overwrites a price you have already entered; validate parses
+        every cell and reports the malformed ones.
+
+  edgectl board report -week <n> [-book <name>] [-stake <amount>] [-shots <n>]
+        Read one week's board: de-vig every moneyline and flag implausible
+        overrounds, rank the dogs by what a bonus bet actually converts, build
+        disjoint two-leg parlays that share no team, and show where the best
+        bettable price sits against consensus.
+
+  edgectl board serve [-addr :8085] [-dir <path>]
+        A phone-shaped form for typing prices into the board, scoped to one
+        week, book and market at a time. Every field saves as it loses focus;
+        there is no submit button and nothing to lose to a reload.
+
+  edgectl board import -week <n> -book <name> [-file <path>] [-n]
+        Backfill one week's moneylines from a blob copied off a book
+        ("SF +150, LAR -150, ..."), read from stdin unless -file is given.
+        Prints the diff; -n stops before writing.
+
+  edgectl ledger add|balances|expiring [-file ~/bankroll.jsonl]
+        The bankroll: what you hold, per book, and when each piece of it dies.
+        Balances are replayed from the log rather than stored, so -as-of answers
+        what you held on a past date. expiring is the one that earns its keep —
+        every meaningful loss last campaign was a deadline, not a bad price.
 
   edgectl log list|settle|score -file <path>
         The calibration log. Predictions are recorded before the outcome and

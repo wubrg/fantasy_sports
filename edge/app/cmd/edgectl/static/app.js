@@ -1,0 +1,1104 @@
+"use strict";
+
+// The board, scoped to one week, one book and one market at a time.
+//
+// A full week is 16 games x 7 books x 3 markets, and no phone screen makes
+// 336 fields usable. Scoping to a book and a market turns it into 32 inputs in
+// kickoff order, which is also the order the book's own page lists them, so
+// entering a week is a straight run down two columns with no hunting.
+
+// Every request is resolved against BASE rather than written as a root-
+// relative path, because this page is served two ways.
+//
+// Locally it sits at "/". Over Tailscale it is mounted with
+// `tailscale serve --set-path=/edge`, which strips the mount before
+// forwarding -- so the backend still sees /api/board and needs no prefix
+// awareness. The catch is on this side: a relative "api/board" resolves
+// against the CURRENT path, so it is correct at /edge/ and wrong at /edge,
+// where it escapes the mount and hits the tailnet root. Deriving the base and
+// forcing the trailing slash is correct at "/", "/edge" and "/edge/" alike.
+const BASE = location.pathname.endsWith("/") ? location.pathname : location.pathname + "/";
+
+const MARKETS = ["ml", "spread", "total"];
+const STORE = "edgectl.board";
+
+// There is deliberately no automatic advance between fields.
+//
+// A pause-based one lived here and was removed: it could not distinguish "I
+// have finished this number" from "I am reading the next one off the app", and
+// it silently split 3.5 across two fields, putting ".5" into a price. A
+// length-based rule is no better -- a price is three digits (+150) or four
+// (+1000) and there is no way to tell which you are halfway through. Enter and
+// Tab advance. Nothing else moves the cursor.
+
+const el = {
+  week: document.getElementById("week"),
+  views: document.getElementById("views"),
+  report: document.getElementById("report"),
+  betlog: document.getElementById("betlog"),
+  funds: document.getElementById("funds"),
+  book: document.getElementById("book"),
+  rows: document.getElementById("rows"),
+  hint: document.getElementById("hint"),
+  banner: document.getElementById("banner"),
+  pasteToggle: document.getElementById("pasteToggle"),
+  pasteBody: document.getElementById("pasteBody"),
+  blob: document.getElementById("blob"),
+  preview: document.getElementById("preview"),
+  apply: document.getElementById("apply"),
+  diff: document.getElementById("diff"),
+};
+
+const state = load();
+if (!["bets", "log", "funds"].includes(state.view)) state.view = "enter";
+let data = null;      // last /api/board payload
+let inputs = [];      // every input in tab order, for auto-advance
+
+// ---- selection, remembered ---------------------------------------------
+
+// The selection is persisted because a week is entered over several sittings
+// and a reload that dropped you back on week 1 / the first book would cost a
+// scroll and a wrong-column entry every time.
+function load() {
+  let s = {};
+  try { s = JSON.parse(localStorage.getItem(STORE) || "{}"); } catch (e) { s = {}; }
+  return {
+    week: Number(s.week) || 1,
+    book: s.book || "fanatics",
+  };
+}
+
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) { /* private mode */ }
+}
+
+// ---- value shapes -------------------------------------------------------
+
+// A stored cell is "away/home" for the moneyline and "line away/home" for a
+// lined market. The page never asks anyone to type the slash or the space: it
+// splits on read and joins on write.
+
+function splitStored(market, s) {
+  s = (s || "").trim();
+  if (market === "ml") {
+    if (!s) return ["", ""];
+    const i = s.indexOf("/");
+    if (i < 0) return [s, ""];
+    return [s.slice(0, i).trim(), s.slice(i + 1).trim()];
+  }
+  // On disk a lined market is one signed line plus both prices ("3.5 -110/-110"),
+  // because the two sides are never independent and storing both invites them
+  // to disagree. On screen it is four boxes, one line and one price per side,
+  // because that is how a book prints it and how it is read back.
+  if (!s) return ["", "", "", ""];
+  const sp = s.indexOf(" ");
+  if (sp < 0) return [s, "", "", ""];
+  const line = s.slice(0, sp).trim();
+  const rest = s.slice(sp + 1);
+  const i = rest.indexOf("/");
+  const oddsA = i < 0 ? rest.trim() : rest.slice(0, i).trim();
+  const oddsB = i < 0 ? "" : rest.slice(i + 1).trim();
+  return [signed(line), oddsA, market === "total" ? signed(line) : mirror(line), oddsB];
+}
+
+// mirror flips a spread for the other side: +3.5 becomes -3.5. A total is the
+// same number on both sides, so only a spread is mirrored.
+function mirror(line) {
+  const n = Number(line);
+  if (!line || Number.isNaN(n)) return "";
+  return signed(String(-n));
+}
+
+// signed writes an explicit + on a positive number. The sign is the whole
+// point of these boxes now, so it is never left implicit.
+function signed(v) {
+  const n = Number(v);
+  if (v === "" || Number.isNaN(n)) return v || "";
+  return n > 0 ? "+" + n : String(n);
+}
+
+function joinValue(market, vals) {
+  if (market === "ml") {
+    const [a, b] = vals;
+    if (!a && !b) return { value: "" };
+    if (!a || !b) return { partial: true };
+    return { value: a + "/" + b };
+  }
+
+  let [lineA, oddsA, lineB, oddsB] = vals;
+  if (!lineA && !oddsA && !lineB && !oddsB) return { value: "" };
+
+  // Either side alone is enough: the other line is implied, so typing one and
+  // moving on is a complete edit rather than a half-finished one.
+  if (!lineA && lineB) lineA = market === "total" ? lineB : mirror(lineB);
+  if (!lineA) return { partial: true };
+  const wantB = market === "total" ? signed(lineA) : mirror(lineA);
+  if (!lineB) lineB = wantB;
+
+  // Two sides that disagree is a transcription error, and a silent pick of one
+  // would bury it. -3.5 against +3.5 is a real market; -3.5 against +4.5 is a
+  // misread, and the whole point of showing both boxes is to catch it here.
+  if (signed(lineB) !== wantB) {
+    return { conflict: market === "total"
+      ? `over ${signed(lineA)} but under ${signed(lineB)} — a total is one number`
+      : `${signed(lineA)} against ${signed(lineB)} — the two sides must mirror` };
+  }
+
+  // Standard juice fills itself in. A lined market is -110/-110 unless the
+  // book says otherwise, and typing that thirty-two times a week is exactly
+  // the friction this page exists to remove. The filled values are written
+  // back into the boxes so nothing is saved that you cannot see.
+  const filled = [signed(lineA), oddsA || "-110", wantB, oddsB || "-110"];
+  return { value: filled[0] + " " + filled[1] + "/" + filled[3], filled: filled };
+}
+
+// fmtCons renders the consensus cell shown greyed beside a row. Consensus is
+// stored in the same string form as anything else, so there is nothing to
+// reformat -- but keeping the seam means a future change to how it is
+// displayed has one place to happen.
+function fmtCons(market, s) {
+  return s ? s : "";
+}
+
+// ---- rendering ----------------------------------------------------------
+
+function fieldHTML(value, label, placeholder) {
+  // No sign chip. It was split out so the keypad could stay numeric -- neither
+  // iOS nor Gboard puts a minus on a `numeric` layout -- but a chip you must
+  // remember to flip is worse than a keypad you must reach for: the first real
+  // board entered here came back with two markets at a NEGATIVE overround,
+  // which is an arbitrage no book posts. inputmode=tel keeps a keypad while
+  // giving + and - directly, so the sign is typed where it is read.
+  //
+  // The label is permanent rather than a placeholder, because a placeholder
+  // vanishes exactly when you still need to know which side you are on.
+  return `<div class="field">
+    <span class="lbl">${label}</span>
+    <div class="entry">
+      <input inputmode="tel" enterkeyhint="next" autocomplete="off"
+             spellcheck="false" value="${value || ""}" placeholder="${placeholder}"
+             aria-label="${label}">
+    </div>
+  </div>`;
+}
+
+function kickoffLabel(k) {
+  // Kickoffs are stored as local wall-clock strings, not instants; showing the
+  // day and time verbatim avoids inventing a timezone conversion.
+  if (!k) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(k);
+  if (!m) return k;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()];
+  return `${day} ${m[4]}:${m[5]}`;
+}
+
+function render() {
+  el.rows.innerHTML = "";
+  inputs = [];
+  if (!data) return;
+
+  el.hint.textContent =
+    "All three markets per game. Digits only — tap −/+ to flip a side. " +
+    "Lines take a decimal (3.5). Leave the two prices blank for −110/−110. " +
+    "Enter or Tab moves on; each row saves when you leave it.";
+
+  for (const g of data.games) {
+    const lines = g.books[state.book] || {};
+    const consBook = g.books.consensus || {};
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="head">
+        <span class="teams">${g.away} @ ${g.home}</span>
+        <span class="kick">${kickoffLabel(g.kickoff)}</span>
+      </div>`;
+
+    // One .row per market, each its own save unit. Splitting by market rather
+    // than by game keeps a bad spread from blocking a good moneyline: the two
+    // are separate cells on disk and separate POSTs, so one can be rejected
+    // while the other is already saved.
+    for (const market of MARKETS) {
+      const stored = lines[market] || "";
+      const vals = splitStored(market, stored);
+
+      const row = document.createElement("div");
+      row.className = "row";
+      row.dataset.game = g.id;
+      row.dataset.market = market;
+
+      const cons = state.book === "consensus" ? "" : fmtCons(market, consBook[market]);
+      // One labelled pair per side, laid out the way the book prints it:
+      // "ATL +3.5 -110" beside "PIT -3.5 -110", rather than one line and two
+      // detached prices.
+      const sideA = market === "total" ? "over" : g.away + " (away)";
+      const sideB = market === "total" ? "under" : g.home + " (home)";
+      const fields = market === "ml"
+        ? fieldHTML(vals[0], sideA, "-110") + fieldHTML(vals[1], sideB, "+100")
+        : fieldHTML(vals[0], sideA, market === "total" ? "44.5" : "+3.5")
+        + fieldHTML(vals[1], "&nbsp;", "-110")
+        + fieldHTML(vals[2], sideB, market === "total" ? "44.5" : "-3.5")
+        + fieldHTML(vals[3], "&nbsp;", "-110");
+
+      row.innerHTML = `
+        <div class="mkt">${market === "ml" ? "ML" : market}</div>
+        <div class="fields">${fields}</div>
+        <span class="cons">${cons}</span>
+        <span class="dot"></span>
+        <div class="err-msg" hidden></div>`;
+
+      row.dataset.saved = stored;
+      card.appendChild(row);
+      for (const inp of row.querySelectorAll("input")) inputs.push(inp);
+    }
+    el.rows.appendChild(card);
+  }
+}
+
+// ---- reading a row ------------------------------------------------------
+
+function readRow(row) {
+  const out = [];
+  for (const f of row.querySelectorAll(".field")) out.push(f.querySelector("input").value.trim());
+  return out;
+}
+
+function writeRow(row, vals) {
+  const fields = row.querySelectorAll(".field");
+  vals.forEach((v, i) => {
+    const f = fields[i];
+    if (f) f.querySelector("input").value = v || "";
+  });
+}
+
+function mark(row, cls, msg) {
+  const dot = row.querySelector(".dot");
+  dot.className = "dot" + (cls ? " " + cls : "");
+  const err = row.querySelector(".err-msg");
+  err.textContent = msg || "";
+  err.hidden = !msg;
+  for (const f of row.querySelectorAll(".field")) f.classList.toggle("err", cls === "error");
+}
+
+// saveRow posts one cell, or does nothing if the row has not changed.
+//
+// There is no submit button anywhere on this page, on purpose: a session that
+// loses ten minutes of typing to a backgrounded tab is the failure this is
+// built to avoid, and the only defence that always works is to never be
+// holding unsaved work.
+async function saveRow(row) {
+  const market = row.dataset.market;
+  const joined = joinValue(market, readRow(row));
+  if (joined.partial) { mark(row, "partial", ""); return; }
+  if (joined.conflict) { mark(row, "error", joined.conflict); return; }
+  if (joined.filled) writeRow(row, joined.filled);
+  if (joined.value === row.dataset.saved) { mark(row, joined.value ? "saved" : "", ""); return; }
+
+  mark(row, "saving", "");
+  try {
+    const res = await fetch(BASE + "api/price", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        week: state.week, game_id: row.dataset.game,
+        book: state.book, market: market, value: joined.value,
+      }),
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      // The rejected text stays in the box. A value that vanished with an
+      // error would leave you unable to see what you had mistyped.
+      mark(row, "error", body.error || ("HTTP " + res.status));
+      return;
+    }
+    row.dataset.saved = body.value || "";
+    // Show exactly what landed on disk, sign and all.
+    writeRow(row, splitStored(market, body.value || ""));
+    mark(row, body.value ? "saved" : "", "");
+  } catch (e) {
+    mark(row, "error", "not saved: " + e.message);
+  }
+}
+
+// ---- input behaviour ----------------------------------------------------
+
+
+function advanceFrom(input) {
+  const i = inputs.indexOf(input);
+  if (i >= 0 && i + 1 < inputs.length) inputs[i + 1].focus();
+  else input.blur(); // last field: close the keypad rather than trap it
+}
+
+el.rows.addEventListener("input", (e) => {
+  const input = e.target;
+  if (input.tagName !== "INPUT") return;
+  // Digits, a decimal point, and a leading sign. The sign is typed now rather
+  // than toggled on a chip, so it has to survive the filter.
+  let cleaned = input.value.replace(/[^0-9.+-]/g, "");
+  cleaned = cleaned.replace(/(?!^)[+-]/g, "");
+  if (cleaned !== input.value) input.value = cleaned;
+
+  // No timed auto-advance. It was not merely disliked, it corrupted input:
+  // a spread is 3.5, and typing "3" then pausing to read the next number moved
+  // focus to the odds field, so ".5" landed there and the row was rejected as
+  // "not an integer". Any timeout long enough to be safe is long enough to be
+  // useless, because there is no way to know whether a pause means "done" or
+  // "reading". Enter and Tab advance; nothing else does.
+});
+
+el.rows.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && e.target.tagName === "INPUT") {
+    e.preventDefault();
+    advanceFrom(e.target);
+  }
+});
+
+// focusout rather than blur: blur does not bubble, and one listener on the
+// list is what keeps this working after a re-render.
+el.rows.addEventListener("focusout", (e) => {
+  const row = e.target.closest && e.target.closest(".row");
+  if (!row) return;
+  // Moving between two fields of the same row is not a finished edit.
+  if (row.contains(e.relatedTarget)) return;
+  saveRow(row);
+});
+
+
+// ---- the bets view -------------------------------------------------------
+//
+// The whole point of entering a board is to find out what to bet, and that
+// answer used to live only in `edgectl board report` on a terminal. Prices are
+// typed on a phone with a book's app open next to it; making the operator walk
+// to a desk to read the result is the friction this page exists to remove.
+
+function pct(x) { return (x * 100).toFixed(1) + "%"; }
+// Shared rather than defined inside one renderer. It was local to renderLog,
+// and using it from renderReport threw at the moment a bankroll existed --
+// which is to say, the first time the feature it formats was exercised.
+function money(x) { return "$" + Number(x || 0).toFixed(2); }
+function amer(n) { return n > 0 ? "+" + n : String(n); }
+
+async function loadReport() {
+  el.report.innerHTML = `<p class="muted">working…</p>`;
+  try {
+    const res = await fetch(BASE + "api/report?week=" + encodeURIComponent(state.week) +
+      "&books=" + encodeURIComponent((state.books || [state.book]).join(",")) +
+      "&shots=" + encodeURIComponent(state.shots || 4));
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
+    renderReport(r);
+  } catch (e) {
+    el.report.innerHTML = `<p class="muted">could not build the report: ${e.message}</p>`;
+  }
+}
+
+function renderReport(r) {
+  lastReport = r;
+  const out = [];
+
+  // What this is a report OF. After switching selectors -- or looking at a
+  // screenshot later -- there must be no ambiguity about which books and how
+  // much of them produced these numbers.
+  out.push(`<div class="scope">week ${r.week} · <b>${(r.books || [r.book]).join(" + ")}</b> ·
+    ${r.priced} of ${r.total} priced</div>`);
+
+  // The book pool is a SEPARATE control from the entry selector, deliberately.
+  // Entering prices is one book at a time -- you are looking at one app --
+  // while pooling for a report is many. One multi-select serving both would
+  // make the enter tab nonsensical.
+  //
+  // Each chip says why it is worth tapping: whether the book has prices this
+  // week, and whether it holds funds. A book with neither is the commonest
+  // wrong tap, and nothing on the chip would otherwise say so.
+  const pooled = new Set(r.books || [r.book]);
+  const priced = new Set(r.priced_books || []);
+  const funded = r.funds || {};
+  out.push(`<div class="chips">${(data && data.books ? data.books : []).map((b) => {
+    const bits = [];
+    if (priced.has(b)) bits.push("priced");
+    if (funded[b] > 0) bits.push(money(funded[b]));
+    return `<button type="button" class="chip${pooled.has(b) ? " on" : ""}" data-book="${b}">
+      ${b}${bits.length ? `<span class="muted">${bits.join(" · ")}</span>` : ""}
+    </button>`;
+  }).join("")}</div>`);
+
+  if (!r.priced) {
+    out.push(`<section class="rep"><h2>nothing priced</h2>
+      <p class="muted">No ${r.book} prices in week ${r.week} yet. Enter some on the
+      enter tab, or switch the book selector to consensus to see the schedule's
+      own numbers.</p></section>`);
+    el.report.innerHTML = out.join("");
+    return;
+  }
+
+  // Suspect lines come first. A price the tool cannot believe is the one thing
+  // here that is probably a typo rather than a decision, and it is cheapest to
+  // fix while the book is still open in the other app.
+  if (r.suspect && r.suspect.length) {
+    out.push(`<section class="rep warn">
+      <h2>check these first</h2>
+      ${r.suspect.map(s => `<div class="srow">
+        <b>${s.game}</b> <span class="mono">${s.price}</span>
+        <div class="muted">${pct(s.overround)} overround — ${s.why}</div>
+      </div>`).join("")}
+      <p class="muted">Held out of the wagers below: a de-vig you cannot trust
+      should not propagate into three more numbers.</p>
+    </section>`);
+  }
+
+  // The bankroll, when there is one. How far to split it is the deployment
+  // decision, and it belongs above the tickets it produces.
+  if ((r.frontier || []).length) {
+    out.push(`<section class="rep">
+      <h2>deploying ${money(Object.values(r.funds || {}).reduce((a, b) => a + b, 0))}</h2>
+      ${r.free_split ? `<p class="muted">Splitting further costs nothing here: every row
+        below is beaten by the last on BOTH conversion and hit rate.</p>` : ""}
+      <div class="front">
+        ${r.frontier.map(f => `<button type="button" class="frow${
+            f.shots === (state.shots || 4) ? " on" : ""}${f.dominated ? " dom" : ""}"
+            data-shots="${f.shots}">
+          <b>${f.shots}</b> \u00d7 ${money(f.stake)}
+          <span class="muted">${pct(f.conversion)} \u00b7 ${pct(f.any_hit)} hit \u00b7 ${money(f.ev)}</span>
+        </button>`).join("")}
+      </div>
+      ${(r.advice || []).map(x => `<p class="muted">\u2014 ${x}</p>`).join("")}
+    </section>`);
+  }
+  if ((r.alloc || []).length) {
+    out.push(`<section class="rep">
+      <h2>per-book allocation</h2>
+      ${r.alloc.map(a => `<div class="dog${a.idle ? " under" : ""}">
+        <span class="team">${a.book}</span>
+        <span class="price">${a.tickets} ticket(s)</span>
+        <span class="conv">${a.stake ? money(a.stake) + " each" : "\u2014"}</span>
+        ${a.unfunded ? `<span class="tag">no balance</span>`
+          : a.idle ? `<span class="tag">unused</span>` : ""}
+      </div>`).join("")}
+      <p class="muted">Each book funds its own tickets: a promotional balance cannot
+      move between books. An unused balance is only stranded if it is bonus money.</p>
+    </section>`);
+  }
+
+  // The wagers. This is the answer the page is for, so it goes above the
+  // reasoning rather than below it.
+  if (r.set && r.set.length) {
+    out.push(`<section class="rep">
+      <h2>wagers — ${r.set.length} disjoint shot${r.set.length > 1 ? "s" : ""}${
+        r.provisional ? ` <span class="badge">provisional</span>` : ""}</h2>
+      ${r.provisional ? `<p class="muted prov">${r.missing} game${r.missing === 1 ? " has" : "s have"}
+        no ${r.book} price. This is the best pairing of the ${r.priced} that do, which is not the
+        same as the best pairing of the week — expect it to change as you enter more.</p>` : ""}
+      ${r.set.map((p, i) => { const bst = (r.boosts || []).find(b => b.ticket === i); return `<div class="bet" data-i="${i}">
+        <div class="legs">${p.book && (r.books || []).length > 1
+          ? `<span class="bk">${p.book}</span> ` : ""}${p.teams.join(" + ")}</div>
+        <div class="nums"><span class="price mono">${amer(p.price)}</span>
+          <span class="muted">${pct(p.conversion)} conv · ${pct(p.true_prob)} to hit</span></div>
+        <button type="button" class="rec" data-i="${i}">record</button>
+        ${bst ? `<div class="boosted">apply <b>${bst.label}</b> \u2014 adds ${money(bst.adds)}${
+          bst.capped ? " (capped at its max stake)" : ""}</div>` : ""}
+      </div>`; }).join("")}
+      ${r.boost_adds ? `<p class="sum">boosts add <b>${money(r.boost_adds)}</b> on top</p>` : ""}
+      ${r.prop_boosts ? `<p class="muted">${r.prop_boosts} prop-only boost(s) held and not
+        counted \u2014 the board carries no prop prices to match them against.</p>` : ""}
+      ${r.cash_boosts ? `<p class="muted">${r.cash_boosts} boost(s) held that need a
+        REAL-MONEY stake and will not attach to bonus money \u2014 worth nothing against
+        this bankroll, however good the terms look.</p>` : ""}
+      <p class="sum">avg conversion <b>${pct(r.avg_conversion)}</b> ·
+        <b>${pct(r.any_hit)}</b> chance at least one hits</p>
+      <p class="muted">No team appears twice, so every ticket can be live at
+      once without one hedging another.${r.unfilled ? ` ${r.unfilled} shot(s)
+      could not be built from the games priced so far.` : ""}</p>
+    </section>`);
+  } else {
+    // Distinguish "the board is empty" from "you have already bet it all".
+    // Both show no wagers, and only one of them is a problem.
+    const n = (r.committed || []).length;
+    out.push(`<section class="rep"><h2>no wagers available</h2>
+      <p class="muted">${n
+        ? `Every priced game is already carrying an open wager, or was excluded.
+           This week is spent \u2014 settle what is open, or move to a later week.`
+        : `Not enough priced games from distinct matchups to build a disjoint set.
+           Enter a few more.`}</p></section>`);
+  }
+
+  // Committed wagers, always shown when there are any. A derived exclusion has
+  // to be visible: silently dropping half the board leaves "you already bet it"
+  // and "the tool is broken" looking identical from outside.
+  if ((r.committed || []).length) {
+    out.push(`<section class="rep">
+      <h2>already committed \u2014 ${r.committed.length} open</h2>
+      ${r.committed.map(c => `<div class="dog">
+        <span class="team">${c.teams.join(",")}</span>
+        <span class="conv muted">${c.selection}</span>
+      </div>`).join("")}
+      <p class="muted">These games are off the board until they settle. Two tickets on
+      one game are one chance counted twice, not two.</p>
+    </section>`);
+  }
+
+  // Dogs, ranked by what a bonus bet actually converts rather than by price --
+  // the distinction the whole tool turns on.
+  out.push(`<section class="rep">
+    <h2>dogs by conversion</h2>
+    <p class="muted">Floor is ${amer(r.floor)} (${pct(r.target)}). Ranked by what a
+    bonus bet returns after the vig comes off, not by price.</p>
+    ${r.dogs.map(d => `<div class="dog${d.clears ? "" : " under"}">
+      <span class="team">${d.team}</span>
+      <span class="price mono">${amer(d.price)}</span>
+      <span class="conv">${pct(d.conversion)}</span>
+      ${d.suspect ? `<span class="tag">suspect</span>`
+        : d.clears ? "" : `<span class="tag">below floor</span>`}
+    </div>`).join("")}
+  </section>`);
+
+  // Line shopping only says something once a second book has prices in it.
+  const shop = (r.shop || []).filter(s => s.points_valid && Math.abs(s.points) >= 10);
+  if (shop.length) {
+    const nBooks = (r.priced_books || []).length;
+    out.push(`<section class="rep">
+      <h2>${nBooks < 2 ? `${r.book} vs consensus` : `line shopping — ${nBooks} books`}</h2>
+      ${nBooks < 2 ? `<p class="muted">Only ${r.book} has prices this week, so there is nothing
+        to shop yet — this is that book against the schedule's own number.</p>` : ""}
+      ${shop.map(s => `<div class="dog">
+        <span class="team">${s.team}</span>
+        <span class="price mono">${amer(s.best)}</span>
+        <span class="conv ${s.points > 0 ? "good" : "bad"}">${s.points > 0 ? "+" : ""}${s.points}</span>
+      </div>`).join("")}
+      <p class="muted">Points against the consensus number. A large negative gap
+      is a worse price than the market's, and worth a second look before taking it.</p>
+    </section>`);
+  }
+
+  if (r.notes && r.notes.length) {
+    out.push(`<section class="rep warn"><h2>unreadable cells</h2>
+      ${r.notes.map(n => `<div class="muted">${n}</div>`).join("")}</section>`);
+  }
+
+  el.report.innerHTML = out.join("");
+}
+
+async function loadLog() {
+  el.betlog.innerHTML = `<p class="muted">reading the log…</p>`;
+  try {
+    const res = await fetch(BASE + "api/log");
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
+    renderLog(r);
+  } catch (e) {
+    el.betlog.innerHTML = `<p class="muted">could not read the log: ${e.message}</p>`;
+  }
+}
+
+function renderLog(r) {
+  if (!r.entries.length) {
+    el.betlog.innerHTML = `<section class="rep"><h2>no bets recorded</h2>
+      <p class="muted">Nothing in ${r.path} yet. Place a wager from the bets tab and
+      it lands here.</p></section>`;
+    return;
+  }
+  el.betlog.innerHTML = `
+    <div class="scope">${r.count} recorded · ${Math.round(r.open)} open ·
+      ${money(r.staked)} staked · <b>${money(r.ev)}</b> expected</div>
+    <section class="rep">
+      ${r.entries.map(e => `<div class="logrow ${e.result}" data-id="${e.id}">
+        <div class="sel">${e.selection}</div>
+        <div class="meta">
+          <span class="mono">${e.price > 0 ? "+" : ""}${e.price}</span>
+          <span class="muted">${money(e.stake)} ${e.bankroll}</span>
+          <span class="muted">pred ${(e.predicted * 100).toFixed(1)}%</span>
+          <span class="res">${e.result}</span>
+          <span class="when muted">${e.placed}</span>
+        </div>
+        ${e.result === "open" ? `<div class="settle">
+          ${["won", "lost", "push", "void"].map(x =>
+            `<button type="button" data-res="${x}" data-id="${e.id}">${x}</button>`).join("")}
+        </div>` : ""}
+      </div>`).join("")}
+    </section>
+    <section class="rep">
+      <p class="muted">Predictions are recorded before the outcome and settled by
+      appending, never by rewriting — so nothing here can be re-predicted after the
+      fact. Settle with <span class="mono">edgectl log settle</span>, score with
+      <span class="mono">edgectl log score</span>.</p>
+    </section>`;
+}
+
+// Recording sends the numbers the report DISPLAYED, not a reference to the
+// board. A cell holds only the latest price and re-entering prices is what the
+// board is for, so anything that recomputed later would let a price update
+// rewrite what was predicted -- the hindsight the log exists to prevent.
+let lastReport = null;
+
+el.report.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".rec");
+  if (!btn || !lastReport) return;
+  const p = lastReport.set[Number(btn.dataset.i)];
+  if (!p) return;
+
+  // Default to the stake this row of the frontier implies, not a hardcoded
+  // figure: the deployment decision was already made above.
+  const al = (lastReport.alloc || []).find((a) => a.book === p.book);
+  const suggested = al && al.stake ? al.stake.toFixed(2) : "12.50";
+  const stake = Number(prompt("Stake for " + p.teams.join(" + ") + "?", suggested));
+  if (!stake || stake <= 0) return;
+
+  btn.disabled = true;
+  btn.textContent = "recording…";
+  try {
+    const res = await fetch(BASE + "api/place", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        selection: p.teams.join(" + ") + " (Week " + lastReport.week + ")",
+        price: p.price, stake: stake, predicted: p.true_prob,
+        bankroll: "bonus bet", book: p.book,
+        narrative: "Placed from the board at " + lastReport.book + ", week " +
+          lastReport.week + ". Conversion " + pct(p.conversion) +
+          ". predicted is the product of the de-vigged leg probabilities, not a " +
+          "de-vig of the parlay price.",
+      }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+    btn.textContent = "recorded";
+    btn.classList.add("done");
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = "record";
+    alert("not recorded: " + err.message);
+  }
+});
+
+// Settling appends an outcome; it never edits the prediction. A result that
+// could rewrite the number predicted would make the whole log worthless, so
+// the only thing these buttons can send is an id and an outcome.
+el.betlog.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".settle button");
+  if (!btn) return;
+  const res = btn.dataset.res;
+  if (!confirm(`Settle as ${res.toUpperCase()}? This cannot be undone from here.`)) return;
+
+  for (const b of btn.parentElement.querySelectorAll("button")) b.disabled = true;
+  try {
+    const r = await fetch(BASE + "api/settle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: btn.dataset.id, result: res, note: "settled from the board" }),
+    });
+    const body = await r.json();
+    if (!r.ok) throw new Error(body.error || ("HTTP " + r.status));
+    loadLog();
+  } catch (err) {
+    for (const b of btn.parentElement.querySelectorAll("button")) b.disabled = false;
+    alert("not settled: " + err.message);
+  }
+});
+
+// ---- the bankroll -------------------------------------------------------
+//
+// Funds are declared here rather than on a command line because the board is
+// used from a phone, and a bankroll nobody can enter is a bankroll nobody
+// keeps -- the ledger sat built and empty for exactly that reason. Declaring
+// APPENDS a grant rather than setting a total: "I was given $50" and "I have
+// $50 left" are different facts, and only the first can be recorded honestly
+// after the event.
+
+// Boosts are inventory, not balance. They are listed by CEILING rather than by
+// headline percentage, because a promo page is written to be read the other
+// way: a 100% boost capped at a $5 stake is worth less than a 25% boost capped
+// at $50, and sorting by the big number puts the useless one on top.
+async function loadBoosts() {
+  try {
+    const res = await fetch(BASE + "api/boosts");
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
+    return renderBoosts(r);
+  } catch (e) {
+    return `<section class="rep"><h2>boosts</h2>
+      <p class="muted">could not read them: ${e.message}</p></section>`;
+  }
+}
+
+function renderBoosts(r) {
+  const b = r.boosts || [];
+  if (!b.length) {
+    return `<section class="rep"><h2>profit boosts</h2>
+      <p class="muted">None recorded. Worth entering only the ones worth planning
+      around \u2014 a small token on a bet you already want is just ticked in the
+      slip.</p></section>`;
+  }
+  const chase = b.filter(x => x.chase);
+  const rest = b.filter(x => !x.chase);
+  // The equivalent face value, not just the ceiling. They are the same number,
+  // but "a $12 bonus bet" says what the ranking MEANS in a unit already
+  // understood, where "$12 max" reads as a cap and explains nothing.
+  const row = (x) => `<div class="dog${x.chase ? "" : " under"}">
+      <span class="team">${x.book}</span>
+      <span class="price">${Math.round(x.percent * 100)}% \u00d7 ${money(x.max_stake)}</span>
+      <span class="conv">= a ${money(x.ceiling)} bonus bet</span>
+      ${x.restricted ? `<span class="tag mkt">${x.market}</span>` : ""}
+      ${x.min_odds ? `<span class="tag when">${x.min_odds > 0 ? "+" : ""}${x.min_odds} or longer</span>` : ""}
+      ${x.needs_cash ? `<span class="tag">cash only</span>` : ""}
+      ${x.expires ? `<span class="tag when">${x.in_hours < 48
+        ? x.in_hours + "h" : Math.round(x.in_hours / 24) + "d"}</span>` : ""}
+    </div>`;
+
+  return `<section class="rep">
+    <h2>profit boosts \u2014 worth planning around</h2>
+    ${chase.length ? chase.map(row).join("")
+      : `<p class="muted">None above the ${money(r.floor)} line.</p>`}
+    ${rest.length ? `<h2 style="margin-top:.7rem">below the line</h2>
+      ${rest.map(row).join("")}
+      <p class="muted">Under ${money(r.floor)} at their best. Not worthless \u2014 apply one
+      to a wager you already want \u2014 but not worth building a bet around. A
+      market-restricted one still points at a market you would otherwise not price.</p>`
+      : ""}
+    <p class="muted">A boost pays <b>percent \u00d7 stake \u00d7 (1 \u2212 raw) \u00f7 (1 + hold)</b>
+    and a bonus bet pays <b>face \u00d7 (1 \u2212 raw) \u00f7 (1 + hold)</b> \u2014 the same instrument
+    when <b>face = percent \u00d7 stake</b>. That is why a 100% boost capped at $5 ranks below a
+    30% boost capped at $50, however the promo page prints it, and why a boost belongs where a
+    bonus bet belongs: the longest price you will take, on the lowest-vig market.</p>
+    <p class="muted">The equivalence hides one thing. A bonus bet risks nothing; a boost needs
+    the whole stake at risk, and the cash wager under it is negative EV by the vig.</p>
+  </section>`;
+}
+
+async function loadFunds() {
+  el.funds.innerHTML = `<p class="muted">reading the bankroll\u2026</p>`;
+  try {
+    const res = await fetch(BASE + "api/funds");
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
+    renderFunds(r);
+  } catch (e) {
+    el.funds.innerHTML = `<p class="muted">could not read the bankroll: ${e.message}</p>`;
+  }
+}
+
+function renderFunds(r) {
+  const m = money;
+  const books = (data && data.books) || ["fanatics"];
+  const bal = r.balances || [];
+  const exp = r.expiring || [];
+
+  el.funds.innerHTML = `
+    ${exp.length ? `<section class="rep warn">
+      <h2>expiring</h2>
+      ${exp.map(e => `<div class="dog${e.expired ? " under" : ""}">
+        <span class="team">${e.book}</span>
+        <span class="price">${e.label}</span>
+        <span class="conv">${e.expired ? "EXPIRED"
+          : e.in_hours < 48 ? `${e.in_hours}h left` : `${Math.round(e.in_hours / 24)}d left`}</span>
+      </div>`).join("")}
+      <p class="muted">Every meaningful loss last campaign was a deadline, not a bad
+      price. This is the part of a bankroll worth looking at.</p>
+    </section>` : ""}
+
+    <section class="rep">
+      <h2>balances</h2>
+      ${bal.length ? bal.map(b => `<div class="dog">
+        <span class="team">${b.book}</span>
+        <span class="price">${b.asset}</span>
+        <span class="conv">${b.units ? b.units + " unit(s)" : m(b.amount)}</span>
+        ${b.units ? "" : `<button type="button" class="fix" data-book="${b.book}"
+          data-asset="${b.asset}" data-amt="${b.amount}">fix</button>`}
+      </div>`).join("") : `<p class="muted">Nothing recorded yet.</p>`}
+      <p class="muted">Amounts and units are not addable. A boost is a right to a
+      better price, not a sum of money.</p>
+    </section>
+
+    <div id="boostbox"></div>
+
+    <section class="rep">
+      <h2>declare funds</h2>
+      <div class="fundform">
+        <select id="f-book">${books.map(b => `<option>${b}</option>`).join("")}</select>
+        <select id="f-asset"><option>bonus</option><option>cash</option><option>fancash</option></select>
+        <input id="f-amt" inputmode="decimal" placeholder="50.00">
+        <input id="f-exp" inputmode="numeric" placeholder="expires 2026-08-26">
+        <button type="button" id="f-add">add</button>
+      </div>
+      <p class="muted">Recorded as a grant, so the balance stays derived from what
+      arrived and what has been spent since.</p>
+    </section>
+
+    <section class="rep">
+      <h2>declare a boost</h2>
+      <div class="fundform">
+        <select id="b-book">${books.map(x => `<option>${x}</option>`).join("")}</select>
+        <input id="b-pct" inputmode="decimal" placeholder="50 (%)">
+        <input id="b-max" inputmode="decimal" placeholder="max stake 25">
+        <input id="b-min" inputmode="tel" placeholder="min line -200">
+        <input id="b-mkt" placeholder="market: any, atd, ftd">
+        <input id="b-exp" placeholder="expires 2026-09-14">
+        <label class="chk"><input type="checkbox" id="b-cash"> needs cash</label>
+        <button type="button" id="b-add">add</button>
+      </div>
+      <p class="muted">A boost is a unit, not a balance: spent whole, and never
+      counted as money you can wager.</p>
+    </section>`;
+
+  // Correcting a balance appends a compensating entry rather than editing
+  // one. A log you cannot fix gets abandoned the first time a number is
+  // fat-fingered; a log you can edit cannot answer "what did I hold on the
+  // 20th", which is the only reason to keep one. So a mistake and its
+  // correction both stay on the record.
+  //
+  // You state what the balance SHOULD be and the difference is derived --
+  // asking for a delta would mean doing arithmetic against the number you
+  // have just discovered you got wrong.
+  for (const f of el.funds.querySelectorAll(".fix")) {
+    f.addEventListener("click", async () => {
+      const cur = Number(f.dataset.amt);
+      const raw = prompt(
+        `Correct balance for ${f.dataset.book} ${f.dataset.asset}?\n` +
+        `Recorded as ${m(cur)}. Enter what it actually is.`, cur.toFixed(2));
+      if (raw === null) return;
+      const target = Number(raw);
+      if (Number.isNaN(target) || target < 0) { alert("not an amount"); return; }
+      f.disabled = true;
+      try {
+        const res = await fetch(BASE + "api/funds/adjust", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            book: f.dataset.book, asset: f.dataset.asset, target: target,
+          }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+        loadFunds();
+      } catch (e) {
+        f.disabled = false;
+        alert("not corrected: " + e.message);
+      }
+    });
+  }
+
+  loadBoosts().then((html) => {
+    const box = document.getElementById("boostbox");
+    if (box) box.innerHTML = html;
+  });
+
+  const badd = document.getElementById("b-add");
+  if (badd) badd.addEventListener("click", async () => {
+    // Percent is entered as a whole number because that is how a promo states
+    // it, and divided here. Asking for 0.5 invites 50, which is a hundredfold
+    // error that looks like a legitimate entry.
+    const pct100 = Number(document.getElementById("b-pct").value);
+    const max = Number(document.getElementById("b-max").value);
+    if (!pct100 || pct100 <= 0) { alert("percent? e.g. 50"); return; }
+    if (!max || max <= 0) { alert("max stake? a boost with no cap cannot be valued"); return; }
+    badd.disabled = true;
+    try {
+      const res = await fetch(BASE + "api/boosts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          book: document.getElementById("b-book").value,
+          percent: pct100 / 100,
+          max_stake: max,
+          market: document.getElementById("b-mkt").value.trim() || "any",
+          min_odds: Number(document.getElementById("b-min").value) || 0,
+          expires: document.getElementById("b-exp").value.trim(),
+          needs_cash: document.getElementById("b-cash").checked,
+          label: Math.round(pct100) + "% boost",
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+      if (!body.chase) {
+        alert(`Recorded, but its ceiling is ${money(body.ceiling)} \u2014 below the line ` +
+              `worth building a bet around. Apply it to something you already want.`);
+      }
+      loadFunds();
+    } catch (e) {
+      badd.disabled = false;
+      alert("not recorded: " + e.message);
+    }
+  });
+
+  const btn = document.getElementById("f-add");
+  if (btn) btn.addEventListener("click", async () => {
+    const amt = Number(document.getElementById("f-amt").value);
+    if (!amt || amt <= 0) { alert("amount?"); return; }
+    btn.disabled = true;
+    try {
+      const res = await fetch(BASE + "api/funds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          book: document.getElementById("f-book").value,
+          asset: document.getElementById("f-asset").value,
+          amount: amt,
+          expires: document.getElementById("f-exp").value.trim(),
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+      loadFunds();
+    } catch (e) {
+      btn.disabled = false;
+      alert("not recorded: " + e.message);
+    }
+  });
+}
+
+function syncView() {
+  const v = state.view;
+  el.rows.hidden = v !== "enter";
+  el.report.hidden = v !== "bets";
+  el.betlog.hidden = v !== "log";
+  el.funds.hidden = v !== "funds";
+  el.hint.hidden = v !== "enter";
+  for (const b of el.views.querySelectorAll("button")) {
+    b.classList.toggle("on", b.dataset.view === v);
+  }
+  if (v === "bets") loadReport();
+  if (v === "log") loadLog();
+  if (v === "funds") loadFunds();
+}
+
+// Toggling a book re-runs the report over the new pool. Emptying it falls back
+// to the entry book rather than sending nothing, because an empty pool is a
+// question with no answer, not a request for every book.
+el.report.addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  const b = chip.dataset.book;
+  const cur = new Set(state.books && state.books.length ? state.books : [state.book]);
+  if (cur.has(b)) cur.delete(b); else cur.add(b);
+  state.books = cur.size ? [...cur] : [state.book];
+  save();
+  loadReport();
+});
+
+// Choosing a frontier row re-runs the report at that split.
+el.report.addEventListener("click", (e) => {
+  const row = e.target.closest(".frow");
+  if (!row) return;
+  state.shots = Number(row.dataset.shots);
+  save();
+  loadReport();
+});
+
+el.views.addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  state.view = b.dataset.view;
+  save();
+  syncView();
+});
+
+// ---- selectors ----------------------------------------------------------
+
+el.week.addEventListener("change", () => {
+  state.week = Number(el.week.value); save(); refresh();
+});
+el.book.addEventListener("change", () => {
+  state.book = el.book.value; save();
+  // Both views are book-scoped, so whichever is showing has to follow the
+  // selector. Rebuilding the hidden one as well would fetch a report nobody
+  // is looking at.
+  // Changing the entry book resets the pool to it. Leaving a stale pool behind
+  // would mean the bets tab quietly reporting on books the header no longer
+  // names.
+  state.books = [state.book];
+  if (state.view === "bets") loadReport(); else render();
+});
+
+
+function fillSelect(sel, values, current, label) {
+  sel.innerHTML = "";
+  for (const v of values) {
+    const o = document.createElement("option");
+    o.value = v;
+    o.textContent = label ? label(v) : v;
+    sel.appendChild(o);
+  }
+  sel.value = current;
+  if (sel.value !== String(current) && values.length) sel.value = values[0];
+  return sel.value;
+}
+
+// ---- paste import (desktop) --------------------------------------------
+
+el.pasteToggle.addEventListener("click", () => {
+  el.pasteBody.hidden = !el.pasteBody.hidden;
+});
+
+async function importCall(path) {
+  const res = await fetch(BASE + path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ week: state.week, book: state.book, market: "ml", blob: el.blob.value }),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+  return body;
+}
+
+el.preview.addEventListener("click", async () => {
+  el.apply.disabled = true;
+  try {
+    const body = await importCall("api/import/preview");
+    if (!body.changes || !body.changes.length) {
+      el.diff.textContent = "nothing to change: these prices are already on the board.";
+      return;
+    }
+    el.diff.innerHTML = body.changes.map((c) =>
+      `<div class="add">${c.game_id}  ${c.away} @ ${c.home}  ${c.old || "(empty)"} → ${c.new}</div>`
+    ).join("");
+    // Confirmation is not optional: a blob that shifted by one entry produces
+    // a diff that is entirely plausible until you read the team names.
+    el.apply.disabled = false;
+  } catch (e) {
+    el.diff.innerHTML = `<div class="bad">${e.message}</div>`;
+  }
+});
+
+el.apply.addEventListener("click", async () => {
+  el.apply.disabled = true;
+  try {
+    const body = await importCall("api/import/apply");
+    el.diff.innerHTML = `<div class="add">wrote ${body.applied} price(s).</div>`;
+    el.blob.value = "";
+    refresh();
+  } catch (e) {
+    el.diff.innerHTML = `<div class="bad">${e.message}</div>`;
+  }
+});
+
+// ---- load ---------------------------------------------------------------
+
+async function refresh(retried) {
+  try {
+    const res = await fetch(BASE + "api/board?week=" + encodeURIComponent(state.week));
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+    data = body;
+    el.banner.hidden = true;
+    syncView();
+
+    state.week = fillSelect(el.week, data.weeks, data.week, (w) => "Week " + w) * 1;
+    // consensus is a generated reference column, not a book you can bet or
+    // edit, so it is never offered as a target.
+    const books = data.books.filter((b) => b !== "consensus");
+    state.book = fillSelect(el.book, books, state.book, (b) => b);
+        save();
+    render();
+  } catch (e) {
+    // A remembered week whose file has since been removed would otherwise
+    // leave the page with no week selector to escape from. Fall back once.
+    if (!retried && state.week !== 1) {
+      state.week = 1;
+      save();
+      return refresh(true);
+    }
+    el.banner.hidden = false;
+    el.banner.textContent = "could not load the board: " + e.message;
+  }
+}
+
+refresh();

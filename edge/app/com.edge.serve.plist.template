@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.edge.serve</string>
+
+    <!-- The line board: a phone-shaped form for typing sportsbook prices into
+         edge/moneylines/, served at /edge over Tailscale. Prices are entered
+         from a phone while looking at a book's app, so the server has to be
+         up whenever you happen to be, not only when a terminal is open. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/adamwieberg/adori/fantasy_sports/edge/app/edgectl</string>
+        <string>board</string>
+        <string>serve</string>
+        <string>-addr</string>
+        <string>:8085</string>
+    </array>
+
+    <!-- WorkingDirectory is load-bearing, not cosmetic: `board serve` defaults
+         -dir to ../moneylines, which only resolves from edge/app. Launched
+         from anywhere else it would find no week files. -->
+    <key>WorkingDirectory</key>
+    <string>/Users/adamwieberg/adori/fantasy_sports/edge/app</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/edgeboard.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/edgeboard.error.log</string>
+</dict>
+</plist>

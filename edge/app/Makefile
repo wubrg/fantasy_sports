@@ -26,7 +26,19 @@ lint: ## Run golangci-lint
 clean: ## Remove built binaries
 	rm -f $(BINS)
 
-check: fmt-check vet test ## Run fmt-check + vet + test (the pre-commit bundle)
+## The board's UI is JavaScript, which `go test` cannot see. `node --check`
+## only parses -- it passes happily on a file with a function deleted out of
+## it, which then fails at render time while the page still serves HTTP 200.
+## smoke.js executes the thing. Skipped when node is absent rather than
+## failing the build, since the Go side must stay buildable without it.
+smoke: ## Execute the board UI against a stub DOM (needs node; skipped if absent)
+	@if command -v node >/dev/null 2>&1; then \
+		node cmd/edgectl/static/smoke.js; \
+	else \
+		echo "node not found - skipping the board UI smoke test"; \
+	fi
+
+check: fmt-check vet test smoke ## Run fmt-check + vet + test + UI smoke (the pre-commit bundle)
 
 list: ## List available targets
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_.-]+:.*?## /{printf "  %-26s %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
