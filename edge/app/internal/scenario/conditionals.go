@@ -112,6 +112,12 @@ var ErrDefinitionMismatch = errors.New("scenario definition mismatch")
 // An artifact with no recorded definitions fails closed. It predates this check
 // and cannot be verified, and the failure mode it guards against is silent.
 func (c *Conditionals) CheckDefinition(scenario, basis string, threshold float64) error {
+	// Validation first. An unvalidated scenario cannot be priced on any basis,
+	// so reporting a threshold mismatch would name the wrong problem and send
+	// the caller off to fix a flag that was never the obstacle.
+	if err := c.checkValidated(scenario); err != nil {
+		return err
+	}
 	def, ok := c.Definitions[scenario]
 	if !ok {
 		return fmt.Errorf(

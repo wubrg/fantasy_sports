@@ -187,7 +187,7 @@ from, so you can find out whether your reads or the line-derived ones were bette
 make help          # every target
 make demo          # the whole tool, worked end to end — no data needed
 make check         # Go tests
-make data          # ~185 MB of open NFL data, once, only if you want to refit
+make data          # ~490 MB of open NFL data, once, only if you want to refit
 ```
 
 `make demo` is the fastest way to see what this does. Everything in it runs off
@@ -334,7 +334,7 @@ edge/
     FINDINGS.md        every measured claim, with the script that produced it
     ingest/            nflverse -> local cache (gitignored)
     analysis/          fits and validation; emits the artifacts above
-    data/raw/          the cache itself (gitignored, ~185 MB)
+    data/raw/          the cache itself (gitignored, ~490 MB)
 ```
 
 Two Makefiles, deliberately. The **root** one builds `edge/app` alongside the other two Go modules,

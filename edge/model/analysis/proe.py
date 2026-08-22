@@ -75,14 +75,24 @@ def team_weeks(season: int) -> dict[tuple[int, int, str], dict]:
     off = defaultdict(list)
     deff = defaultdict(list)
     with gzip.open(path, "rt", newline="") as fh:
-        for r in csv.DictReader(fh):
-            if r.get("season_type") != "REG":
+        reader = csv.reader(fh)
+        header = next(reader)
+        # Index the five columns wanted rather than building a 372-key dict per
+        # row. Play-by-play is ~48,000 rows a season and DictReader spends most
+        # of its time on columns nothing here reads.
+        try:
+            ix = {c: header.index(c) for c in
+                  ("season_type", "pass_oe", "week", "posteam", "defteam")}
+        except ValueError as e:
+            raise SystemExit(f"{path}: expected column missing ({e})")
+        for row in reader:
+            if row[ix["season_type"]] != "REG":
                 continue
-            oe = num(r.get("pass_oe"))
+            oe = num(row[ix["pass_oe"]])
             if oe is None:
                 continue  # xpass undefined for this play: kickoff, punt, kneel
-            week = num(r.get("week"))
-            posteam, defteam = r.get("posteam", "").strip(), r.get("defteam", "").strip()
+            week = num(row[ix["week"]])
+            posteam, defteam = row[ix["posteam"]].strip(), row[ix["defteam"]].strip()
             if week is None or not posteam or not defteam:
                 continue
             off[(season, int(week), posteam)].append(oe)

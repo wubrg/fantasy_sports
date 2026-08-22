@@ -126,6 +126,10 @@ in 12 of 15 out of sample, and it "needs a play-by-play definition rather than f
 One usable scenario: `shootout`. Anything else requires stated `-q`/`-r`, which is judgement
 wearing a number's clothes.
 
+A third scenario, `pass_heavy` (offense PROE > 3.0), is **fitted and gated off**. It separates
+better than `shootout` on every measure except one out-of-sample cell, which the rule requires.
+See `FINDINGS.md` §4.
+
 **The Tier 3 case is now priceable** (closed 2026-08-22). `8–11` projected targets with a
 rising role — the corpus's "usage vacuum", high volume meeting climbing usage — held 97
 observations against a floor of 100 and could not be priced at all. Extending the fit window
