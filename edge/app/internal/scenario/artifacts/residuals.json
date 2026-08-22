@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-07T01:49:20Z",
+ "generated_at": "2026-08-22T15:25:13Z",
  "generated_by": "edge/model/analysis/fit_residuals.py",
  "note": "Residual is ACTUAL MINUS EXPECTED, so the sign convention belongs to the caller. cdf is [[residual, P(X <= residual)], ...].",
  "window_selected_by": "rolling-origin CV",
@@ -23,9 +23,9 @@
  ],
  "source": {
   "games.csv": {
-   "bytes": 2175338,
-   "fetched_at": "2026-08-07T00:11:42Z",
-   "sha256": "93e2fb150310fa64473cc0e5c4514b9d2de7db268ccbf383e3b294e8a87dc187",
+   "bytes": 2177175,
+   "fetched_at": "2026-08-20T13:07:43Z",
+   "sha256": "b4970da16bba2cc409ea40156516cab2b53f6e5a59553eb4005689d0f4cab6de",
    "url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
   }
  },
