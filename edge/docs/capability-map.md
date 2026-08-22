@@ -149,6 +149,12 @@ Every lookup now reports the effective observations past the line and labels the
 clamped into a small probability. Previously a `q` of 2.3% on seven observations and one of
 25.2% on ninety-four printed identically — the thin one with the *narrower* interval.
 
+### ~~The scenario's definition was not recorded, so the query could diverge from it~~ — closed
+
+The artifact now records what each name means (`shootout` = `total > 50`), the fit derives its
+predicate from those same fields so the two cannot drift, and a query whose `-threshold` or
+`-basis` disagrees is refused before any output. An artifact predating the field fails closed.
+
 ### Filter 2 and 3 inputs are hand-typed over a cache that already holds them
 
 `hitrate -values` is pasted by hand while `model/data/raw/stats_player_week_*.csv` holds those

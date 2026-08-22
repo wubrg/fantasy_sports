@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-22T15:25:19Z",
+ "generated_at": "2026-08-22T15:51:35Z",
  "generated_by": "edge/model/analysis/fit_conditionals.py",
  "outcome": "receiving_yards",
  "seasons": [
@@ -81,6 +81,18 @@
   }
  },
  "min_cell": 100,
+ "scenario_definitions": {
+  "shootout": {
+   "basis": "total",
+   "op": ">",
+   "threshold": 50
+  },
+  "blowout_loss": {
+   "basis": "margin",
+   "op": "<",
+   "threshold": -7
+  }
+ },
  "scenario_status": {
   "shootout": {
    "validated": true,

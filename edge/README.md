@@ -147,6 +147,14 @@ than a `q` of 25.2% resting on ninety-four, and reads as the more precise of the
 effective observations the estimate is marked `THIN` and `s*` is a direction rather than a
 threshold.
 
+The threshold is checked against the grid, not taken on trust. `q` and `r` are fitted once
+against a fixed condition — `shootout` means `total > 50`, recorded in the artifact — while `s`
+is derived per query from whatever `-threshold` you pass. Those used to be unconnected, so
+`-threshold 65` produced `s = P(total > 65)` blended against a `q` measured on `total > 50`:
+well-formed, confident, and a probability of nothing, printed under a header that said
+`total > 65.0` directly above cells meaning something else. A mismatch is now refused before
+anything is printed. Stated `-q`/`-r` skip the check, because then the conditionals are yours.
+
 A line past anything the cell ever produced is refused outright. That is not a small probability,
 it is an absence of evidence, and the clamp that keeps the arithmetic sane would otherwise make
 the two indistinguishable — `s*` divides by `q − r`, and two clamped endpoints yield a confident
