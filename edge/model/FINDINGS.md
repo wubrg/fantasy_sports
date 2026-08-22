@@ -243,10 +243,37 @@ this whole section of the pipeline was built to prevent.
 Opponent-induced PROE persists at only r = +0.124 and its prior form is null on yards (t = 1.49).
 A funnel is measurable after the fact and not forecastable, so there is nothing to condition on.
 
-**What would un-gate `pass_heavy`:** more evidence in that one cell, or an out-of-sample test that
-accounts for magnitude rather than sign alone. The second is a real methodological question and is
-deliberately not being decided here, because it was noticed at the exact moment it would have
-admitted a scenario.
+**What would un-gate `pass_heavy`:** more evidence in that one cell. The other candidate — an
+out-of-sample test accounting for magnitude rather than sign alone — was tested and rejected. See
+below.
+
+### The magnitude-aware out-of-sample test was tried, and it does not work
+
+`pass_heavy` fails on a single out-of-sample cell whose test-half delta is −0.5 yards on 65
+observations: a sign flip that is plainly noise. The obvious fix is to stop counting a near-zero
+flip as a disagreement — classify each cell as agree, disagree, or *uninformative*, where
+uninformative means the test-half delta's player-clustered bootstrap interval covers zero, and
+require zero disagreements rather than universal agreement.
+
+Tested on the two scenarios whose verdicts are already settled, **before** applying it to the one
+it would have admitted:
+
+| scenario | sign-only | three-way (agree / disagree / uninformative) |
+|---|---|---|
+| `shootout` | 15/15 | 15 / 0 / 0 |
+| `blowout_loss` | 12/15 | 12 / **0** / 3 |
+| `pass_heavy` | 15/16 | 15 / **0** / 1 |
+
+Every one of `blowout_loss`'s three disagreements is within noise. Under the new criterion all
+three scenarios pass, including the one gated for failing this very test. **The criterion stops
+discriminating**, and a gate that cannot fail is not a gate. Rejected; the sign-only rule stands
+and `pass_heavy` stays gated.
+
+The exercise did establish something worth keeping, which is that **the existing test is weaker
+than it appears.** `shootout`'s 0/15 against `blowout_loss`'s 3/15 is roughly p = 0.1 on a
+binomial — it discriminates partly by counting coin flips as evidence. The honest strengthening
+is more held-out seasons, which is a matter of waiting rather than of choosing a better threshold.
+Recorded here so the limitation is visible rather than implied by a passing grade.
 
 **What would un-gate `blowout_loss`:** defining the scenario on play-by-play — time remaining crossed with score
 differential — rather than final margin. Which is precisely what this whole result argues for.

@@ -131,7 +131,10 @@ fit-conditionals: ## Refit the pooled q/r grid
 lag: ## Run the utilization-lag test (~10s)
 	$(PY) $(MODEL)/analysis/utilization_lag.py
 
-findings: verify-model lag ## Reproduce every measured claim in model/FINDINGS.md
+compare-oos: ## Reproduce the rejected magnitude-aware out-of-sample table (FINDINGS.md 4)
+	@cd $(MODEL)/analysis && $(PY) validate.py --compare-oos
+
+findings: verify-model lag compare-oos ## Reproduce every measured claim in model/FINDINGS.md
 
 ## --- Examples ---
 
