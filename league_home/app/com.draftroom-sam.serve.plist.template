@@ -6,8 +6,11 @@
     <string>com.draftroom-sam.serve</string>
 
     <!-- A read-only research board for Sam's team, on its own port and served
-         at /draftroom/sam. `-leans blank` shows the pure model valuation of
-         his roster with none of your reads overlaid. -->
+         at /draftroom/sam. `-leans sam` shows the pure model valuation of his
+         roster with none of your reads overlaid: the set starts as a copy of
+         the empty `blank.yaml`, but it must be his own file rather than the
+         shared template, because reads he sets on the board are written back
+         to whichever set the board was opened with. -->
     <key>ProgramArguments</key>
     <array>
         <string>/Users/adamwieberg/adori/fantasy_sports/league_home/app/draftroom</string>
@@ -15,7 +18,7 @@
         <string>-addr</string>
         <string>:8084</string>
         <string>-leans</string>
-        <string>blank</string>
+        <string>sam</string>
     </array>
 
     <!-- DRAFTROOM_OWNER_ID is Sam's Sleeper owner ID, which makes this board

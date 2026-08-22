@@ -51,7 +51,7 @@ func leanServerFile(t *testing.T, name, mine string) (*server, string) {
 	static.leanSets = setNames(sets)
 	static.minePath = writableSetPath(cfg, sets)
 
-	srv, err := newServer(static, cfg)
+	srv, err := newServer(static, cfg, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -362,7 +362,7 @@ func TestSavingReachesTheSetTheBoardActuallyReads(t *testing.T) {
 	}
 	static.leans = set.Leans
 
-	srv, err := newServer(static, cfg)
+	srv, err := newServer(static, cfg, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -396,7 +396,7 @@ func leanServerAt(t *testing.T, cfg string) *server {
 	static.leans = merged
 	static.leanSets = setNames(sets)
 	static.minePath = writableSetPath(cfg, sets)
-	srv, err := newServer(static, cfg)
+	srv, err := newServer(static, cfg, "")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -18,7 +18,7 @@ func TestSavedTeamsDoNotCrossOwners(t *testing.T) {
 
 	mine := testStatic()
 	mine.ownerID = "243501760939814912"
-	host, err := newServer(mine, cfg)
+	host, err := newServer(mine, cfg, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +29,7 @@ func TestSavedTeamsDoNotCrossOwners(t *testing.T) {
 
 	theirs := testStatic()
 	theirs.ownerID = "467790106363686912"
-	guest, err := newServer(theirs, cfg)
+	guest, err := newServer(theirs, cfg, "")
 	if err != nil {
 		t.Fatal(err)
 	}

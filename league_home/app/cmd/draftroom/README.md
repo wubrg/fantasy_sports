@@ -451,6 +451,50 @@ the blanket rule is still `*` and he is standing in your whole tailnet.
 Still `serve`, still no `funnel`. The extra port is a fence, not a door: it is
 reachable only by someone the share and the ACL both let in.
 
+**One port per guest.** A second guest repeats the whole shape on his own port
+-- Sam on `:8443`, Jeff on `:8444` -- because the port is the only thing the
+ACL can bind to. Sharing a port between two guests would make them one guest.
+
+#### Each guest gets his own lean set
+
+Reads set on a board are written back to **whichever set the board was opened
+with** (`writableSetPath` takes the first one named). So two boards opened on
+`-leans blank` would write into each other's reads, and into `blank.yaml`,
+which is tracked -- a guest setting a read would dirty the repo and change the
+template every other board starts from.
+
+So `blank.yaml` stays an empty tracked template that nothing runs on, and each
+guest gets a copy of it under his own name: `-leans sam`, `-leans jeff`. Those
+copies are gitignored, because they collect someone else's reads and are not
+this repo's to publish, which means a fresh checkout does not have them and a
+board whose set is missing will not start. `make draftroom-<name>-install`
+seeds the set from `blank.yaml` if it is absent, and never overwrites one that
+exists.
+
+#### A guest who drafts somewhere else
+
+Jeff's board (`:8086`, served on `:8444`) is a different thing from Sam's. Sam
+is in this league, so his board is his team, fed by Sleeper. Jeff drafts in his
+own league, so there is no feed for him at all and nothing here is his:
+
+- **No Sleeper owner id.** `DRAFTROOM_OWNER_ID` is the string `jeff`, which
+  matches no roster, so the board reads every team as a flat budget with no
+  keepers deducted. That is the generic board he wants, and it still keys his
+  saved shortlist to a file of his own.
+- **`-keepers none`.** Without it the board opens on draft night, which deducts
+  *this* league's keeper money -- a $2018 pool where his draft has $2400. It
+  would look like a working board and understate every price. The flag is what
+  makes the default right for him, since the scenario control resets on every
+  restart and he has no reason to know to touch it.
+- **He records each sale by hand** as players go, which is the ordinary
+  manual-entry path the board already has. His entries live in his process
+  only; nothing he types reaches your board or anyone else's.
+
+What he does not get is a board tuned to his league: the prices come from this
+league's scoring, roster shape, team count and budget, so they are indicative
+for his draft rather than exact. If his league turns out to be on Sleeper,
+pointing his board's `LEAGUE_ID` at it is what would make it truly his.
+
 ### Rehearsing against a mock draft
 
 The board is a draft-night tool that gets used once a year, which is a bad

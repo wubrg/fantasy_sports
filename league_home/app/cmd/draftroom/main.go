@@ -100,6 +100,7 @@ func main() {
 	addr := fs.String("addr", ":8083", "address for the serve command (leagueweb owns :8081)")
 	me := fs.String("me", envOr("DRAFTROOM_OWNER_ID", ""), "your Sleeper owner ID, so the board knows your budget")
 	leans := fs.String("leans", defaultLeanSets, "lean sets to apply, in precedence order: the first to name a player owns him")
+	keepers := fs.String("keepers", "", "keeper scenario the board opens on: none, locks, or expected (default: draft night, which deducts this league's keeper money)")
 	generate := fs.Bool("generate", false, "leans: rebuild the generated sets from source data")
 	convert := fs.Bool("convert", false, "leans: rewrite the named sets as YAML, leaving the originals in place")
 	unmatched := fs.Bool("unmatched", false, "sources: show only the rows that reach no Sleeper player")
@@ -169,7 +170,7 @@ func main() {
 		}
 	case "serve":
 		if err := runServe(*addr, *leagueID, *draftID, orBuiltin(*configDir, builtinConfigDir),
-			orBuiltin(*dataDir, builtinDataDir), *me, draft.Baseline(*baseline), draft.SetNames(*leans)); err != nil {
+			orBuiltin(*dataDir, builtinDataDir), *me, draft.Baseline(*baseline), draft.SetNames(*leans), *keepers); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}

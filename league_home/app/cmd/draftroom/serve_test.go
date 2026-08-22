@@ -97,7 +97,7 @@ func TestBuildLowersTheCeilingAfterSpending(t *testing.T) {
 // TestManualSalesOverrideTheLiveFeed — you know a sale closed before the
 // API does, so a hand entry must survive the next poll.
 func TestManualSalesOverrideTheLiveFeed(t *testing.T) {
-	srv, err := newServer(testStatic(), t.TempDir())
+	srv, err := newServer(testStatic(), t.TempDir(), "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,5 +145,41 @@ func TestTempoComparesRealPricesToTheCostBoard(t *testing.T) {
 	}
 	if got.Ratio() <= 1 {
 		t.Errorf("ratio = %.2f, want above 1 for a hot room", got.Ratio())
+	}
+}
+
+// TestServeOpensOnTheNamedKeeperScenario covers the wiring the -keepers flag
+// adds; the scenarios' own arithmetic is keepers_scenario_test.go's job.
+//
+// It matters for a guest board drafting somewhere else. The default is draft
+// night, which deducts this league's keeper money, and a guest has no reason
+// to know that or to re-pick a scenario after every restart -- so the board
+// has to be able to open on the one he wants.
+func TestServeOpensOnTheNamedKeeperScenario(t *testing.T) {
+	srv, err := newServer(testStatic(), t.TempDir(), "none")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if srv.keeperScenario != "none" {
+		t.Errorf("board opened on scenario %q, want %q", srv.keeperScenario, "none")
+	}
+	if _, err := srv.static.Build(nil, nil, srv.keeperScenario); err != nil {
+		t.Errorf("board could not build on the scenario it opened with: %v", err)
+	}
+}
+
+// A scenario name that reaches Build unrecognised silently means draft night,
+// so a typo in the plist would look like a working board with the wrong pool.
+// It has to be refused where it is typed instead.
+func TestUnknownKeeperScenarioIsRejected(t *testing.T) {
+	for _, name := range []string{"", "none", "locks", "expected"} {
+		if !validKeeperScenario(name) {
+			t.Errorf("scenario %q rejected, want accepted", name)
+		}
+	}
+	for _, name := range []string{"nope", "None", "no-keepers", " none"} {
+		if validKeeperScenario(name) {
+			t.Errorf("scenario %q accepted, want rejected", name)
+		}
 	}
 }
