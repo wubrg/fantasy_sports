@@ -14,12 +14,23 @@ Three tables are pulled:
     stats_player_week_<yr>    weekly player production, with target_share and
                               air_yards_share already computed.
     snap_counts_<yr>          snap share. Note the coverage gap below.
+    play_by_play_<yr>         every play, 372 columns. Fetched for two of them:
+                              xpass (the modelled probability a play is a pass,
+                              given down, distance, score and time) and pass_oe
+                              (actual minus xpass). Their team-week mean is PASS
+                              RATE OVER EXPECTED -- tendency with game script
+                              already divided out, which raw pass rate cannot
+                              give you. Gzipped, ~19 MB a season.
 
 Coverage, established by probing the releases rather than assumed:
 
     games.csv               1999-2026 (2026 lines only, no results yet)
     stats_player_week       2005-2025
     snap_counts             2012-2025  <- starts in 2012, not 2005
+    play_by_play            1999-2025 as files. Whether pass_oe is POPULATED
+                            that far back is a separate question from whether
+                            the file exists, and is checked by analysis/proe.py
+                            rather than assumed here.
 
 That snap-counts gap is real and load-bearing. Pro-Football-Reference's snap
 data begins in 2012, so any analysis depending on snap share is limited to
@@ -56,7 +67,7 @@ GAMES_URL = "https://raw.githubusercontent.com/nflverse/nfldata/master/data/game
 
 # Earliest season each table covers. Requesting earlier is not an error; the
 # season is skipped with a note.
-FIRST_SEASON = {"stats_player_week": 2005, "snap_counts": 2012}
+FIRST_SEASON = {"stats_player_week": 2005, "snap_counts": 2012, "play_by_play": 1999}
 
 DEFAULT_FIRST, DEFAULT_LAST = 2005, 2025
 
@@ -148,12 +159,20 @@ def targets(first: int, last: int) -> list[tuple[str, str]]:
     """(cache name, url) pairs for the requested seasons."""
     out = [("games.csv", GAMES_URL)]
     for season in range(first, last + 1):
-        for table in ("stats_player_week", "snap_counts"):
+        for table in ("stats_player_week", "snap_counts", "play_by_play"):
             if season < FIRST_SEASON[table]:
                 continue
-            release = "stats_player" if table == "stats_player_week" else table
+            # The release TAG is not always the table name: stats_player_week
+            # lives under "stats_player", play_by_play under "pbp". Getting this
+            # wrong reports "not published" for a file that is right there.
+            release = {"stats_player_week": "stats_player", "play_by_play": "pbp"}.get(
+                table, table
+            )
+            # play-by-play is served gzipped and is the only table large enough
+            # for that to matter: 19 MB a season against 99 MB uncompressed.
+            ext = "csv.gz" if table == "play_by_play" else "csv"
             out.append(
-                (f"{table}_{season}.csv", f"{RELEASES}/{release}/{table}_{season}.csv")
+                (f"{table}_{season}.{ext}", f"{RELEASES}/{release}/{table}_{season}.{ext}")
             )
     return out
 

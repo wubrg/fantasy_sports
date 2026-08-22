@@ -322,6 +322,12 @@ def build(rows, games) -> list[dict]:
                     # Carried for the out-of-sample split in validate.py. The
                     # fit itself pools across seasons and does not use it.
                     "season": x["season"],
+                    # Carried so team-week series (PROE, and anything else keyed
+                    # that way) can be joined on. build() used to drop both,
+                    # which made such a join impossible without reimplementing
+                    # this function.
+                    "week": x["week"],
+                    "team": x["team"],
                     "proj_targets": baseline * team_vol,
                     "trend": recent - baseline,
                     "yards": x["yards"],
