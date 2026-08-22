@@ -73,6 +73,12 @@ far more authoritative than it is.
 `urps-wager-engine.md` replaces it: market data is supplied by the user or the wager is
 omitted, and the model never retrieves, simulates, infers, estimates, or recalls a price.
 
+## What is implemented
+
+The audit below checks whether the source documents are *correct*.
+[`../capability-map.md`](../capability-map.md) checks whether we *implemented* them — and
+names the gaps as explicitly as the coverage.
+
 ## Math audit
 
 The EV arithmetic in the source documents was independently verified. All 14 cells of the
