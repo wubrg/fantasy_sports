@@ -121,7 +121,7 @@ do not.
 
 ## Where q and r come from
 
-`-q` and `-r` can be stated, or looked up from a grid fitted on 27,288 player-games:
+`-q` and `-r` can be stated, or looked up from a grid fitted on 27,287 player-games:
 
 ```
 $ ./edgectl scenario -name shootout -total 49 -threshold 50 -belief 0.55 \
@@ -129,8 +129,8 @@ $ ./edgectl scenario -name shootout -total 49 -threshold 50 -belief 0.55 \
 
   CONDITIONALS from the fitted grid (receiving_yards, 2014-2025)
     7.5 projected targets, +7.0 pt trend, line 52.5
-    q = 56.5%  [48.7-63.5]  n=169   median 59 yds  (scenario occurred)
-    r = 44.5%  [39.5-49.5]  n=378   median 49 yds  (it did not)
+    q = 56.5%  [49.1-64.1]  n=169 (eff 164)  median 59 yds  (scenario occurred)
+    r = 43.5%  [38.5-48.7]  n=377 (eff 363)  median 49 yds  (it did not)
 ```
 
 Three axes: **projected targets** (volume over efficiency — every measurement here has agreed that
@@ -206,11 +206,11 @@ $ edgectl scenario -name shootout -total 49 -threshold 50 \
 
   market says 45.6%   you say 55.0%   (you are +9.4 points apart)
   q = 56.5%  [49.1-64.1]  n=169 (eff 164)   (scenario occurred)
-  r = 44.5%  [39.5-49.7]  n=378 (eff 359)   (it did not)
+  r = 43.5%  [38.5-48.7]  n=377 (eff 363)   (it did not)
 
-  REQUIRES  believing the scenario is at least 45.8% likely
+  REQUIRES  believing the scenario is at least 50.0% likely
   VERDICT   DISAGREEMENT-REQUIRED
-  your read is what carries this. Margin over the requirement: +9.2 pts
+  your read is what carries this. Margin over the requirement: +5.0 pts
 ```
 
 Three verdicts are possible and they mean different things. `disagreement-required` is the normal

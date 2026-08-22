@@ -1,11 +1,85 @@
 {
- "generated_at": "2026-08-07T21:19:55Z",
+ "generated_at": "2026-08-22T15:25:19Z",
  "generated_by": "edge/model/analysis/fit_conditionals.py",
  "outcome": "receiving_yards",
  "seasons": [
   2014,
   2025
  ],
+ "source": {
+  "stats_player_week_2014.csv": {
+   "bytes": 7883194,
+   "fetched_at": "2026-08-22T14:59:13Z",
+   "sha256": "a389b10d94eb8e6b9a153223d381aab821b0eff4cd73967835a21032192abc61",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2014.csv"
+  },
+  "stats_player_week_2015.csv": {
+   "bytes": 7881066,
+   "fetched_at": "2026-08-22T14:59:14Z",
+   "sha256": "21052baa3b3291a92faf3e6827891295010dca8cc5cefd5a909984b9d7b64664",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2015.csv"
+  },
+  "stats_player_week_2016.csv": {
+   "bytes": 7852359,
+   "fetched_at": "2026-08-22T14:59:15Z",
+   "sha256": "eb0264c65d1ef593196afcd4ba24e9f2e9b7942923bf6f4bb4639684e2c4d470",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2016.csv"
+  },
+  "stats_player_week_2017.csv": {
+   "bytes": 7821392,
+   "fetched_at": "2026-08-22T14:59:16Z",
+   "sha256": "592b0916065987b0b3afb0480162f03350d16b12250dc42b0f194e2ab1378563",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2017.csv"
+  },
+  "stats_player_week_2018.csv": {
+   "bytes": 7792665,
+   "fetched_at": "2026-08-22T14:59:17Z",
+   "sha256": "c53021bcfc9f89d30edd6f1fe145a1d7d6ce469efeec75974fe9f0adac568642",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2018.csv"
+  },
+  "stats_player_week_2019.csv": {
+   "bytes": 7767165,
+   "fetched_at": "2026-08-22T14:59:18Z",
+   "sha256": "a05558126b1209b80fe11a8f18938cb35816370bf9990975a87de49e9eed7376",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2019.csv"
+  },
+  "stats_player_week_2020.csv": {
+   "bytes": 7883276,
+   "fetched_at": "2026-08-22T14:59:19Z",
+   "sha256": "c02dbb80fe2ccafe684e9c50457ce705d9bd600c4e77ba479dc9a867af0a8baa",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2020.csv"
+  },
+  "stats_player_week_2021.csv": {
+   "bytes": 8477784,
+   "fetched_at": "2026-08-22T14:59:20Z",
+   "sha256": "41915fb49238902ad1f129ebf0405b11a1e710454ae0fe8f7b3e4f9145875f48",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2021.csv"
+  },
+  "stats_player_week_2022.csv": {
+   "bytes": 8408729,
+   "fetched_at": "2026-08-20T13:07:43Z",
+   "sha256": "ad426c3fe5bf1cc30c3f137fdfe96d054e19d400879ee4413129da49fa7b54be",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2022.csv"
+  },
+  "stats_player_week_2023.csv": {
+   "bytes": 8332874,
+   "fetched_at": "2026-08-20T13:07:45Z",
+   "sha256": "f19cb71a5de0dce7fd09376026237c9ee9d5a93fe13815a2ea3ec2d37204cb17",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2023.csv"
+  },
+  "stats_player_week_2024.csv": {
+   "bytes": 8470040,
+   "fetched_at": "2026-08-20T13:07:46Z",
+   "sha256": "3ddc45a84f759aa348ce465ae001752c530575455717657cdfe1f8abfcdb4759",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2024.csv"
+  },
+  "stats_player_week_2025.csv": {
+   "bytes": 8656387,
+   "fetched_at": "2026-08-20T13:07:47Z",
+   "sha256": "e5e0615b3d96a3eaebfaee91e55afb4a4e7fe0caf057454177bcd7d6ad4bcfc2",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2025.csv"
+  }
+ },
  "min_cell": 100,
  "scenario_status": {
   "shootout": {
@@ -683,10 +757,10 @@
    "targets_max": 4,
    "trend_min": 0.06,
    "trend_max": 99.0,
-   "n": 311,
-   "n_eff": 303.4,
+   "n": 310,
+   "n_eff": 303.0,
    "players": 221,
-   "icc": 0.0613,
+   "icc": 0.0577,
    "median": 23.0,
    "quantiles": [
     [
@@ -731,7 +805,7 @@
     ],
     [
      0.2,
-     6.0
+     5.0
     ],
     [
      0.22,
@@ -775,7 +849,7 @@
     ],
     [
      0.42,
-     17.0
+     16.0
     ],
     [
      0.44,
@@ -799,7 +873,7 @@
     ],
     [
      0.54,
-     27.0
+     26.0
     ],
     [
      0.56,
@@ -807,7 +881,7 @@
     ],
     [
      0.58,
-     30.0
+     31.0
     ],
     [
      0.6,
@@ -902,10 +976,10 @@
    "targets_max": 6,
    "trend_min": -99.0,
    "trend_max": -0.03,
-   "n": 551,
-   "n_eff": 411.7,
+   "n": 550,
+   "n_eff": 411.6,
    "players": 276,
-   "icc": 0.3406,
+   "icc": 0.3397,
    "median": 33.0,
    "quantiles": [
     [
@@ -942,11 +1016,11 @@
     ],
     [
      0.16,
-     9.0
+     8.0
     ],
     [
      0.18,
-     11.0
+     10.0
     ],
     [
      0.2,
@@ -970,7 +1044,7 @@
     ],
     [
      0.3,
-     19.0
+     18.0
     ],
     [
      0.32,
@@ -994,7 +1068,7 @@
     ],
     [
      0.42,
-     28.0
+     27.0
     ],
     [
      0.44,
@@ -1121,10 +1195,10 @@
    "targets_max": 6,
    "trend_min": -0.03,
    "trend_max": 0.03,
-   "n": 1184,
-   "n_eff": 931.9,
+   "n": 1185,
+   "n_eff": 932.4,
    "players": 400,
-   "icc": 0.1383,
+   "icc": 0.1384,
    "median": 34.0,
    "quantiles": [
     [
@@ -1293,7 +1367,7 @@
     ],
     [
      0.82,
-     71.0
+     70.0
     ],
     [
      0.84,
@@ -1340,10 +1414,10 @@
    "targets_max": 6,
    "trend_min": 0.03,
    "trend_max": 0.06,
-   "n": 370,
-   "n_eff": 325.3,
+   "n": 371,
+   "n_eff": 325.4,
    "players": 237,
-   "icc": 0.2455,
+   "icc": 0.2485,
    "median": 35.0,
    "quantiles": [
     [
@@ -1368,7 +1442,7 @@
     ],
     [
      0.1,
-     5.0
+     6.0
     ],
     [
      0.12,
@@ -1432,7 +1506,7 @@
     ],
     [
      0.42,
-     27.0
+     28.0
     ],
     [
      0.44,
@@ -1560,9 +1634,9 @@
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 249,
-   "n_eff": 221.7,
-   "players": 170,
-   "icc": 0.2666,
+   "n_eff": 220.9,
+   "players": 171,
+   "icc": 0.28,
    "median": 37.0,
    "quantiles": [
     [
@@ -1997,10 +2071,10 @@
    "targets_max": 8,
    "trend_min": -0.03,
    "trend_max": 0.03,
-   "n": 756,
-   "n_eff": 550.6,
+   "n": 757,
+   "n_eff": 551.3,
    "players": 240,
-   "icc": 0.1741,
+   "icc": 0.1738,
    "median": 50.0,
    "quantiles": [
     [
@@ -2165,7 +2239,7 @@
     ],
     [
      0.8,
-     93.0
+     92.0
     ],
     [
      0.82,
@@ -2216,11 +2290,11 @@
    "targets_max": 8,
    "trend_min": 0.03,
    "trend_max": 0.06,
-   "n": 250,
-   "n_eff": 240.6,
-   "players": 143,
-   "icc": 0.0528,
-   "median": 55.5,
+   "n": 249,
+   "n_eff": 238.9,
+   "players": 142,
+   "icc": 0.0565,
+   "median": 55.0,
    "quantiles": [
     [
      0.0,
@@ -2328,11 +2402,11 @@
     ],
     [
      0.52,
-     58.0
+     57.0
     ],
     [
      0.54,
-     61.0
+     60.0
     ],
     [
      0.56,
@@ -2348,7 +2422,7 @@
     ],
     [
      0.62,
-     69.0
+     68.0
     ],
     [
      0.64,
@@ -3311,10 +3385,10 @@
    "targets_max": 4,
    "trend_min": -99.0,
    "trend_max": -0.03,
-   "n": 1662,
-   "n_eff": 1311.2,
+   "n": 1663,
+   "n_eff": 1311.6,
    "players": 568,
-   "icc": 0.1391,
+   "icc": 0.1392,
    "median": 11.0,
    "quantiles": [
     [
@@ -3531,9 +3605,9 @@
    "trend_min": -0.03,
    "trend_max": 0.03,
    "n": 5139,
-   "n_eff": 3298.5,
-   "players": 842,
-   "icc": 0.1095,
+   "n_eff": 3295.8,
+   "players": 841,
+   "icc": 0.1096,
    "median": 12.0,
    "quantiles": [
     [
@@ -3586,7 +3660,7 @@
     ],
     [
      0.24,
-     2.0
+     3.0
     ],
     [
      0.26,
@@ -3749,10 +3823,10 @@
    "targets_max": 4,
    "trend_min": 0.03,
    "trend_max": 0.06,
-   "n": 1346,
-   "n_eff": 1220.0,
+   "n": 1342,
+   "n_eff": 1209.1,
    "players": 569,
-   "icc": 0.0757,
+   "icc": 0.081,
    "median": 15.0,
    "quantiles": [
     [
@@ -3941,7 +4015,7 @@
     ],
     [
      0.92,
-     60.0
+     59.0
     ],
     [
      0.94,
@@ -3968,10 +4042,10 @@
    "targets_max": 4,
    "trend_min": 0.06,
    "trend_max": 99.0,
-   "n": 662,
-   "n_eff": 629.4,
-   "players": 358,
-   "icc": 0.0612,
+   "n": 663,
+   "n_eff": 630.9,
+   "players": 359,
+   "icc": 0.0601,
    "median": 19.0,
    "quantiles": [
     [
@@ -4104,7 +4178,7 @@
     ],
     [
      0.64,
-     30.0
+     29.0
     ],
     [
      0.66,
@@ -4188,9 +4262,9 @@
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 1107,
-   "n_eff": 1015.0,
+   "n_eff": 1018.3,
    "players": 390,
-   "icc": 0.0494,
+   "icc": 0.0474,
    "median": 25.0,
    "quantiles": [
     [
@@ -4303,7 +4377,7 @@
     ],
     [
      0.54,
-     29.0
+     28.0
     ],
     [
      0.56,
@@ -4347,7 +4421,7 @@
     ],
     [
      0.76,
-     47.0
+     46.0
     ],
     [
      0.78,
@@ -4367,7 +4441,7 @@
     ],
     [
      0.86,
-     61.0
+     60.0
     ],
     [
      0.88,
@@ -4375,7 +4449,7 @@
     ],
     [
      0.9,
-     69.0
+     68.0
     ],
     [
      0.92,
@@ -4406,11 +4480,11 @@
    "targets_max": 6,
    "trend_min": -0.03,
    "trend_max": 0.03,
-   "n": 2257,
-   "n_eff": 1588.9,
+   "n": 2259,
+   "n_eff": 1587.8,
    "players": 513,
-   "icc": 0.1239,
-   "median": 28.0,
+   "icc": 0.1244,
+   "median": 27.0,
    "quantiles": [
     [
      0.0,
@@ -4498,7 +4572,7 @@
     ],
     [
      0.42,
-     23.0
+     22.0
     ],
     [
      0.44,
@@ -4514,7 +4588,7 @@
     ],
     [
      0.5,
-     28.0
+     27.0
     ],
     [
      0.52,
@@ -4626,9 +4700,9 @@
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 707,
-   "n_eff": 667.9,
+   "n_eff": 668.3,
    "players": 353,
-   "icc": 0.0585,
+   "icc": 0.0579,
    "median": 30.0,
    "quantiles": [
     [
@@ -4737,7 +4811,7 @@
     ],
     [
      0.52,
-     31.0
+     32.0
     ],
     [
      0.54,
@@ -4753,7 +4827,7 @@
     ],
     [
      0.6,
-     36.0
+     37.0
     ],
     [
      0.62,
@@ -4765,7 +4839,7 @@
     ],
     [
      0.66,
-     41.0
+     42.0
     ],
     [
      0.68,
@@ -4773,7 +4847,7 @@
     ],
     [
      0.7,
-     45.0
+     46.0
     ],
     [
      0.72,
@@ -4844,9 +4918,9 @@
    "targets_max": 6,
    "trend_min": 0.06,
    "trend_max": 99.0,
-   "n": 494,
-   "n_eff": 494.0,
-   "players": 257,
+   "n": 492,
+   "n_eff": 492.0,
+   "players": 256,
    "icc": 0.0,
    "median": 33.0,
    "quantiles": [
@@ -4872,7 +4946,7 @@
     ],
     [
      0.1,
-     5.0
+     6.0
     ],
     [
      0.12,
@@ -5004,7 +5078,7 @@
     ],
     [
      0.76,
-     52.0
+     53.0
     ],
     [
      0.78,
@@ -5024,7 +5098,7 @@
     ],
     [
      0.86,
-     69.0
+     70.0
     ],
     [
      0.88,
@@ -5282,10 +5356,10 @@
    "targets_max": 8,
    "trend_min": -0.03,
    "trend_max": 0.03,
-   "n": 1264,
-   "n_eff": 1116.6,
+   "n": 1265,
+   "n_eff": 1115.3,
    "players": 290,
-   "icc": 0.0394,
+   "icc": 0.04,
    "median": 41.0,
    "quantiles": [
     [
@@ -5338,7 +5412,7 @@
     ],
     [
      0.24,
-     22.0
+     21.0
     ],
     [
      0.26,
@@ -5446,7 +5520,7 @@
     ],
     [
      0.78,
-     72.0
+     71.0
     ],
     [
      0.8,
@@ -5501,11 +5575,11 @@
    "targets_max": 8,
    "trend_min": 0.03,
    "trend_max": 0.06,
-   "n": 407,
-   "n_eff": 395.8,
-   "players": 193,
-   "icc": 0.0255,
-   "median": 45.0,
+   "n": 408,
+   "n_eff": 390.1,
+   "players": 195,
+   "icc": 0.0423,
+   "median": 45.5,
    "quantiles": [
     [
      0.0,
@@ -5569,7 +5643,7 @@
     ],
     [
      0.3,
-     30.0
+     31.0
     ],
     [
      0.32,
@@ -5601,7 +5675,7 @@
     ],
     [
      0.46,
-     41.0
+     42.0
     ],
     [
      0.48,
@@ -5641,7 +5715,7 @@
     ],
     [
      0.66,
-     59.0
+     60.0
     ],
     [
      0.68,
@@ -5669,7 +5743,7 @@
     ],
     [
      0.8,
-     71.0
+     72.0
     ],
     [
      0.82,
@@ -5689,15 +5763,15 @@
     ],
     [
      0.9,
-     94.0
+     95.0
     ],
     [
      0.92,
-     98.0
+     101.0
     ],
     [
      0.94,
-     106.0
+     107.0
     ],
     [
      0.96,
@@ -5720,10 +5794,10 @@
    "targets_max": 8,
    "trend_min": 0.06,
    "trend_max": 99.0,
-   "n": 378,
-   "n_eff": 359.1,
-   "players": 178,
-   "icc": 0.0471,
+   "n": 377,
+   "n_eff": 363.3,
+   "players": 177,
+   "icc": 0.0335,
    "median": 49.0,
    "quantiles": [
     [
@@ -5840,7 +5914,7 @@
     ],
     [
      0.56,
-     53.0
+     52.0
     ],
     [
      0.58,
@@ -5880,23 +5954,23 @@
     ],
     [
      0.76,
-     74.0
+     72.0
     ],
     [
      0.78,
-     78.0
+     77.0
     ],
     [
      0.8,
-     81.0
+     80.0
     ],
     [
      0.82,
-     85.0
+     84.0
     ],
     [
      0.84,
-     89.0
+     88.0
     ],
     [
      0.86,
@@ -5908,7 +5982,7 @@
     ],
     [
      0.9,
-     101.0
+     98.0
     ],
     [
      0.92,
@@ -7253,10 +7327,10 @@
    "targets_max": 4,
    "trend_min": -0.03,
    "trend_max": 0.03,
-   "n": 1931,
-   "n_eff": 1530.8,
-   "players": 677,
-   "icc": 0.1414,
+   "n": 1930,
+   "n_eff": 1529.3,
+   "players": 676,
+   "icc": 0.1415,
    "median": 13.0,
    "quantiles": [
     [
@@ -7910,10 +7984,10 @@
    "targets_max": 6,
    "trend_min": -99.0,
    "trend_max": -0.03,
-   "n": 437,
-   "n_eff": 394.3,
+   "n": 436,
+   "n_eff": 390.7,
    "players": 255,
-   "icc": 0.1521,
+   "icc": 0.1639,
    "median": 27.0,
    "quantiles": [
     [
@@ -8054,7 +8128,7 @@
     ],
     [
      0.68,
-     40.0
+     39.0
     ],
     [
      0.7,
@@ -8129,10 +8203,10 @@
    "targets_max": 6,
    "trend_min": -0.03,
    "trend_max": 0.03,
-   "n": 892,
-   "n_eff": 742.4,
-   "players": 383,
-   "icc": 0.152,
+   "n": 893,
+   "n_eff": 744.3,
+   "players": 384,
+   "icc": 0.1511,
    "median": 27.0,
    "quantiles": [
     [
@@ -8161,7 +8235,7 @@
     ],
     [
      0.12,
-     5.0
+     6.0
     ],
     [
      0.14,
@@ -8233,7 +8307,7 @@
     ],
     [
      0.48,
-     25.0
+     26.0
     ],
     [
      0.5,
@@ -8249,7 +8323,7 @@
     ],
     [
      0.56,
-     31.0
+     32.0
     ],
     [
      0.58,
@@ -8348,11 +8422,11 @@
    "targets_max": 6,
    "trend_min": 0.03,
    "trend_max": 0.06,
-   "n": 267,
-   "n_eff": 256.3,
-   "players": 193,
-   "icc": 0.1095,
-   "median": 30.0,
+   "n": 268,
+   "n_eff": 257.6,
+   "players": 194,
+   "icc": 0.1063,
+   "median": 29.5,
    "quantiles": [
     [
      0.0,
@@ -8392,7 +8466,7 @@
     ],
     [
      0.18,
-     10.0
+     11.0
     ],
     [
      0.2,
@@ -8404,7 +8478,7 @@
     ],
     [
      0.24,
-     14.0
+     15.0
     ],
     [
      0.26,
@@ -8456,7 +8530,7 @@
     ],
     [
      0.5,
-     30.0
+     29.0
     ],
     [
      0.52,
@@ -8472,7 +8546,7 @@
     ],
     [
      0.58,
-     36.0
+     35.0
     ],
     [
      0.6,
@@ -8484,7 +8558,7 @@
     ],
     [
      0.64,
-     40.0
+     39.0
     ],
     [
      0.66,
@@ -8544,7 +8618,7 @@
     ],
     [
      0.94,
-     81.0
+     80.0
     ],
     [
      0.96,
@@ -8567,9 +8641,9 @@
    "targets_max": 6,
    "trend_min": 0.06,
    "trend_max": 99.0,
-   "n": 190,
-   "n_eff": 190.0,
-   "players": 147,
+   "n": 189,
+   "n_eff": 189.0,
+   "players": 146,
    "icc": 0.0,
    "median": 28.0,
    "quantiles": [
@@ -8643,7 +8717,7 @@
     ],
     [
      0.34,
-     22.0
+     21.0
     ],
     [
      0.36,
@@ -8703,7 +8777,7 @@
     ],
     [
      0.64,
-     40.0
+     41.0
     ],
     [
      0.66,
@@ -10319,10 +10393,10 @@
    "targets_max": 4,
    "trend_min": -99.0,
    "trend_max": -0.03,
-   "n": 1841,
-   "n_eff": 1397.0,
+   "n": 1842,
+   "n_eff": 1397.2,
    "players": 576,
-   "icc": 0.145,
+   "icc": 0.1451,
    "median": 11.0,
    "quantiles": [
     [
@@ -10439,7 +10513,7 @@
     ],
     [
      0.56,
-     14.0
+     13.0
     ],
     [
      0.58,
@@ -10463,7 +10537,7 @@
     ],
     [
      0.68,
-     21.0
+     20.0
     ],
     [
      0.7,
@@ -10538,10 +10612,10 @@
    "targets_max": 4,
    "trend_min": -0.03,
    "trend_max": 0.03,
-   "n": 5766,
-   "n_eff": 3458.5,
+   "n": 5767,
+   "n_eff": 3456.3,
    "players": 847,
-   "icc": 0.115,
+   "icc": 0.1152,
    "median": 14.0,
    "quantiles": [
     [
@@ -10622,7 +10696,7 @@
     ],
     [
      0.38,
-     8.0
+     9.0
     ],
     [
      0.4,
@@ -10757,10 +10831,10 @@
    "targets_max": 4,
    "trend_min": 0.03,
    "trend_max": 0.06,
-   "n": 1409,
-   "n_eff": 1185.5,
+   "n": 1405,
+   "n_eff": 1176.7,
    "players": 573,
-   "icc": 0.1294,
+   "icc": 0.1338,
    "median": 16.0,
    "quantiles": [
     [
@@ -10909,7 +10983,7 @@
     ],
     [
      0.72,
-     32.0
+     31.0
     ],
     [
      0.74,
@@ -10977,9 +11051,9 @@
    "trend_min": 0.06,
    "trend_max": 99.0,
    "n": 700,
-   "n_eff": 655.3,
+   "n_eff": 655.1,
    "players": 369,
-   "icc": 0.0762,
+   "icc": 0.0765,
    "median": 20.0,
    "quantiles": [
     [
@@ -11196,9 +11270,9 @@
    "trend_min": -99.0,
    "trend_max": -0.03,
    "n": 1221,
-   "n_eff": 998.4,
+   "n_eff": 997.8,
    "players": 400,
-   "icc": 0.1089,
+   "icc": 0.1092,
    "median": 29.0,
    "quantiles": [
     [
@@ -11315,7 +11389,7 @@
     ],
     [
      0.56,
-     34.0
+     33.0
     ],
     [
      0.58,
@@ -11379,7 +11453,7 @@
     ],
     [
      0.88,
-     73.0
+     72.0
     ],
     [
      0.9,
@@ -11414,10 +11488,10 @@
    "targets_max": 6,
    "trend_min": -0.03,
    "trend_max": 0.03,
-   "n": 2549,
-   "n_eff": 1896.1,
+   "n": 2551,
+   "n_eff": 1901.2,
    "players": 509,
-   "icc": 0.0861,
+   "icc": 0.0853,
    "median": 31.0,
    "quantiles": [
     [
@@ -11634,9 +11708,9 @@
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 810,
-   "n_eff": 726.6,
+   "n_eff": 727.1,
    "players": 369,
-   "icc": 0.0963,
+   "icc": 0.0957,
    "median": 32.0,
    "quantiles": [
     [
@@ -11705,7 +11779,7 @@
     ],
     [
      0.32,
-     19.0
+     20.0
     ],
     [
      0.34,
@@ -11852,10 +11926,10 @@
    "targets_max": 6,
    "trend_min": 0.06,
    "trend_max": 99.0,
-   "n": 553,
-   "n_eff": 499.7,
+   "n": 552,
+   "n_eff": 497.1,
    "players": 270,
-   "icc": 0.1021,
+   "icc": 0.106,
    "median": 35.0,
    "quantiles": [
     [
@@ -11876,7 +11950,7 @@
     ],
     [
      0.08,
-     2.0
+     3.0
     ],
     [
      0.1,
@@ -11972,7 +12046,7 @@
     ],
     [
      0.56,
-     40.0
+     39.0
     ],
     [
      0.58,
@@ -11996,7 +12070,7 @@
     ],
     [
      0.68,
-     49.0
+     48.0
     ],
     [
      0.7,
@@ -12290,10 +12364,10 @@
    "targets_max": 8,
    "trend_min": -0.03,
    "trend_max": 0.03,
-   "n": 1496,
-   "n_eff": 1028.1,
+   "n": 1498,
+   "n_eff": 1029.1,
    "players": 305,
-   "icc": 0.1169,
+   "icc": 0.1168,
    "median": 46.0,
    "quantiles": [
     [
@@ -12338,7 +12412,7 @@
     ],
     [
      0.2,
-     20.0
+     19.0
     ],
     [
      0.22,
@@ -12378,7 +12452,7 @@
     ],
     [
      0.4,
-     37.0
+     36.0
     ],
     [
      0.42,
@@ -12446,7 +12520,7 @@
     ],
     [
      0.74,
-     75.0
+     74.0
     ],
     [
      0.76,
@@ -12510,9 +12584,9 @@
    "trend_min": 0.03,
    "trend_max": 0.06,
    "n": 481,
-   "n_eff": 467.7,
-   "players": 204,
-   "icc": 0.021,
+   "n_eff": 457.6,
+   "players": 206,
+   "icc": 0.0385,
    "median": 52.0,
    "quantiles": [
     [
@@ -12677,11 +12751,11 @@
     ],
     [
      0.8,
-     86.0
+     87.0
     ],
     [
      0.82,
-     90.0
+     91.0
     ],
     [
      0.84,
@@ -12689,15 +12763,15 @@
     ],
     [
      0.86,
-     95.0
+     96.0
     ],
     [
      0.88,
-     100.0
+     101.0
     ],
     [
      0.9,
-     106.0
+     107.0
     ],
     [
      0.92,
@@ -12728,11 +12802,11 @@
    "targets_max": 8,
    "trend_min": 0.06,
    "trend_max": 99.0,
-   "n": 400,
-   "n_eff": 363.3,
-   "players": 187,
-   "icc": 0.089,
-   "median": 52.5,
+   "n": 399,
+   "n_eff": 368.4,
+   "players": 186,
+   "icc": 0.0728,
+   "median": 52.0,
    "quantiles": [
     [
      0.0,
@@ -12852,11 +12926,11 @@
     ],
     [
      0.58,
-     59.0
+     58.0
     ],
     [
      0.6,
-     61.0
+     60.0
     ],
     [
      0.62,
@@ -12880,7 +12954,7 @@
     ],
     [
      0.72,
-     76.0
+     75.0
     ],
     [
      0.74,
@@ -12892,7 +12966,7 @@
     ],
     [
      0.78,
-     85.0
+     84.0
     ],
     [
      0.8,
@@ -12900,7 +12974,7 @@
     ],
     [
      0.82,
-     93.0
+     91.0
     ],
     [
      0.84,
@@ -12912,7 +12986,7 @@
     ],
     [
      0.88,
-     107.0
+     106.0
     ],
     [
      0.9,

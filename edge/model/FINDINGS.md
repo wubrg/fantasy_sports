@@ -80,7 +80,7 @@ guarded against since it was written. The model can now price it.
 
 ## 2. Utilization trend does predict production — but only the tail is bettable
 
-`utilization_lag.py` · 39,127 player-games, 1,389 players, 2005–2025, errors clustered by player
+`utilization_lag.py` · 39,126 player-games, 1,389 players, 2005–2025, errors clustered by player
 
 The corpus claims: *"A player's utilization trend is a leading indicator of future production, whereas
 a box score is a lagging indicator."*
@@ -90,11 +90,11 @@ information in every era:
 
 | era | n | trend β (yards) | t | ΔR² |
 |---|---|---|---|---|
-| all | 39,127 | 41.99 (se 4.09) | 10.26 | +0.0032 |
+| all | 39,126 | 42.00 (se 4.09) | 10.27 | +0.0032 |
 | 2005–11 | 6,746 | 37.97 | 4.37 | +0.0038 |
 | 2012–17 | 13,317 | 34.99 | 4.75 | +0.0019 |
 | 2018–21 | 9,235 | 48.55 | 5.84 | +0.0039 |
-| 2022–25 | 9,829 | 48.91 | 6.86 | +0.0042 |
+| 2022–25 | 9,828 | 48.97 | 6.86 | +0.0042 |
 
 The mechanism checks out too — the effect is cleaner on **targets** than on yards (t = 11.9,
 ΔR² = +0.0054), which is what "a bet on opportunity" predicts.
@@ -137,7 +137,7 @@ everything, and prefer recency only where dispersion drifts.
 
 ## 3. Pooled conditionals: shootout confirmed, "trash time" reversed
 
-`fit_conditionals.py` · 27,288 player-games, 2014–2025 · 64 cells published, 16 dropped for n < 100
+`fit_conditionals.py` · 27,287 player-games, 2014–2025 · 64 cells published, 16 dropped for n < 100
 
 `q` and `r` were operator guesses. They are now looked up from a grid pooled across player-games
 sharing an opportunity band, a role-trend band, and a game script — cells of hundreds to thousands of
