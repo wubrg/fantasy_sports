@@ -543,41 +543,83 @@ func TestExtrapolatedLineIsRefused(t *testing.T) {
 // TestTailNMeasuresTheSparserSide pins what the interval cannot say.
 //
 // At a deep line the probability is small, so Wilson is narrow in absolute
-// terms no matter how little evidence there is. Two estimates that print
-// almost identically can rest on an order of magnitude different support, and
-// the thin one has the TIGHTER interval.
+// terms no matter how little evidence there is. Two estimates that print almost
+// identically can rest on an order of magnitude different support, and the thin
+// one has the TIGHTER interval.
+//
+// Written against properties rather than specific cells. An earlier version
+// asserted that 0-4 targets at 100.5 was THIN; extending the fit window to 2009
+// thickened that cell to 11.5 effective observations and the test failed on a
+// change that was entirely correct. What must hold across refits is the
+// relationship, not the datum.
 func TestTailNMeasuresTheSparserSide(t *testing.T) {
 	c, err := LoadConditionals()
 	if err != nil {
 		t.Fatal(err)
 	}
-	const line = 100.5
+	const lowVolume, highVolume = 3.0, 9.0
+	lines := []float64{60.5, 75.5, 100.5, 125.5, 150.5}
 
-	thin, err := c.Lookup("shootout", true, 3, 0.07, line, 0.95) // 0-4 targets
-	if err != nil {
-		t.Fatal(err)
-	}
-	solid, err := c.Lookup("shootout", true, 9, 0.0, line, 0.95) // 8-11 targets
-	if err != nil {
-		t.Fatal(err)
-	}
+	// Support must fall as the line deepens, and the low-volume band must never
+	// have more of it than the high-volume band at the same line.
+	var prevLow float64 = -1
+	var thinFound, solidFound bool
+	for _, line := range lines {
+		lo, err := c.Lookup("shootout", true, lowVolume, 0.07, line, 0.95)
+		if err != nil {
+			continue // past this cell's range; refusal is tested elsewhere
+		}
+		hi, err := c.Lookup("shootout", true, highVolume, 0.07, line, 0.95)
+		if err != nil {
+			continue
+		}
+		if lo.TailN > hi.TailN {
+			t.Errorf("line %.1f: %.0f targets has more support (%.1f) than %.0f targets (%.1f)",
+				line, lowVolume, lo.TailN, highVolume, hi.TailN)
+		}
+		if prevLow >= 0 && lo.TailN > prevLow {
+			t.Errorf("line %.1f: support rose to %.1f as the line deepened from %.1f",
+				line, lo.TailN, prevLow)
+		}
+		prevLow = lo.TailN
 
-	if !thin.Thin() {
-		t.Errorf("0-4 targets at %.1f: TailN %.1f, expected below the %d threshold",
-			line, thin.TailN, MinTailN)
-	}
-	if solid.Thin() {
-		t.Errorf("8-11 targets at %.1f: TailN %.1f, expected at or above %d",
-			line, solid.TailN, MinTailN)
-	}
+		if lo.Thin() {
+			thinFound = true
+		}
+		if !hi.Thin() {
+			solidFound = true
+		}
 
-	// The trap, stated as an assertion: the thin estimate's interval is the
-	// narrower of the two. Anything keying off width alone gets this backwards.
-	thinWidth, solidWidth := thin.Upper-thin.Lower, solid.Upper-solid.Lower
-	if thinWidth >= solidWidth {
-		t.Fatalf("expected the thin estimate to print the tighter interval "+
-			"(thin %.4f vs solid %.4f); if this ever stops holding, the THIN "+
-			"label may be redundant", thinWidth, solidWidth)
+		// The trap, asserted wherever the two regimes actually differ: the thin
+		// estimate prints the NARROWER interval. Anything keying off width alone
+		// gets this backwards.
+		if lo.Thin() && !hi.Thin() && (lo.Upper-lo.Lower) >= (hi.Upper-hi.Lower) {
+			t.Errorf("line %.1f: thin estimate's interval (%.4f) is not narrower than "+
+				"the solid one's (%.4f); if this stops holding, the THIN label may be redundant",
+				line, lo.Upper-lo.Lower, hi.Upper-hi.Lower)
+		}
+	}
+	if !thinFound {
+		t.Error("no line in the sweep produced a THIN estimate; the threshold may be unreachable")
+	}
+	if !solidFound {
+		t.Error("no line in the sweep produced a MEASURED estimate at high volume")
+	}
+}
+
+// TestThinIsPureFunctionOfSupport checks the labelling itself, independent of
+// any fitted data, so a refit can move every cell without moving this.
+func TestThinIsPureFunctionOfSupport(t *testing.T) {
+	for _, tc := range []struct {
+		tailN float64
+		thin  bool
+	}{
+		{0, true}, {1, true}, {float64(MinTailN) - 0.1, true},
+		{float64(MinTailN), false}, {100, false},
+	} {
+		if got := (Conditional{TailN: tc.tailN}).Thin(); got != tc.thin {
+			t.Errorf("TailN %.1f: Thin() = %v, want %v", tc.tailN, got, tc.thin)
+		}
 	}
 }
 

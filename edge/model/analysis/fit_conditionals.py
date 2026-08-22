@@ -60,9 +60,30 @@ MANIFEST = CACHE / "manifest.json"
 ARTIFACT = ROOT.parent / "app" / "internal" / "scenario" / "artifacts" / "conditionals.json"
 
 # stats_player_week carries target_share only from 2009 and air yards from 2006,
-# but targets reach back to 2005. 2014 is chosen to match the residual fit's
-# recency preference rather than to maximise n.
-FIRST, LAST = 2014, 2025
+# but targets reach back to 2005. (This fit computes share from raw targets
+# rather than reading the column, so 2009 is not a hard floor for it.)
+#
+# Was 2014, chosen to match the residual fit's recency preference rather than to
+# maximise n. Extended to 2009 to publish the cells that matter most and were
+# missing: 8-11 projected targets with a rising role -- high volume plus climbing
+# usage, which is the corpus's "usage vacuum", the strongest edge it claims, and
+# the one situation the grid could not price. That cell held 97 observations
+# against a floor of 100.
+#
+# The trade is era dilution, and it was measured rather than assumed before being
+# taken. Extending keeps the effect: shootout goes from 15/15 to 16/16 cells
+# consistent and 14/14 to 15/15 out of sample, with resolution improving from
+# 11/15 to 12/16. Cells that already published move by at most 2.5 points of
+# P(>52.5), most by under one. validate.py re-checks all of this on every fit and
+# fails if it stops holding.
+#
+# What was NOT done, and why: merging 8-11 with 11+ would have published the same
+# cell without new data, but the bands do not behave alike -- at a 100.5 line the
+# 11+ band's NO-shootout rate (0.289) exceeds 8-11's WITH-shootout rate (0.277),
+# so pooling understates a 12-target projection by ~11 points on q. Lowering
+# MIN_CELL would have cleared a three-observation shortfall by weakening the floor
+# everywhere.
+FIRST, LAST = 2009, 2025
 POSITIONS = {"WR", "TE", "RB"}
 
 MIN_PRIOR_GAMES = 4

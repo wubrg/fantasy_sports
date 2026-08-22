@@ -137,7 +137,7 @@ everything, and prefer recency only where dispersion drifts.
 
 ## 3. Pooled conditionals: shootout confirmed, "trash time" reversed
 
-`fit_conditionals.py` · 27,287 player-games, 2014–2025 · 64 cells published, 16 dropped for n < 100
+`fit_conditionals.py` · 37,078 player-games, 2009–2025 · 68 cells published, 12 dropped for n < 100
 
 `q` and `r` were operator guesses. They are now looked up from a grid pooled across player-games
 sharing an opportunity band, a role-trend band, and a game script — cells of hundreds to thousands of
@@ -183,11 +183,10 @@ stays reproducible and the data remains available for the work that would valida
 Three independent failures, any one disqualifying:
 
 1. **The direction is not consistent across cells** — the dominant sign (negative) holds in
-   **14 of 15**, against shootout's 15/15. One band disagrees with the rest.
+   **14 of 16**, against shootout's 16/16. Two bands disagree with the rest.
 2. **The sign is unresolved almost everywhere.** A player-level cluster bootstrap of the median delta
-   clears zero in only **3 of 15** cells. The lone positive cell's CI is [0.0, 4.0]. Twelve of
-   fifteen signs are noise.
-3. **It does not survive out of sample** — 10/13 against shootout's 14/14.
+   clears zero in only **6 of 16** cells, against shootout's 12.
+3. **It does not survive out of sample** — 12/15 against shootout's 15/15.
 
 > **Correction, 2026-08-22.** This section previously led with a fourth claim: that the direction
 > *inverts at ordinary lines*, with `q > r` at 6.5, 20.5 and 24.5 receiving yards. Those crossings
@@ -206,14 +205,23 @@ the failure then looks resolved.
 **What would un-gate it:** defining the scenario on play-by-play — time remaining crossed with score
 differential — rather than final margin. Which is precisely what this whole result argues for.
 
-Shootout passes: positive in 15/15 cells and 14/14 out of sample, resolved in 11/15.
+Shootout passes: positive in 16/16 cells and 15/15 out of sample, resolved in 12/16.
 
 These numbers are no longer typed here by hand. `fit_conditionals.py` runs `validate.py` on every
 fit, writes the measured note into the artifact, and **fails if the evidence and the recorded
 verdict disagree** — so a scenario cannot quietly stop qualifying and keep its flag. The bootstrap
-records its seed and resample count in the artifact, which is why resolution reads 11/15 here
-against the 10/15 originally reported: one cell sits near the boundary and the earlier figure came
-from an unrecorded seed. Reproducible now, rather than merely repeatable.
+records its seed and resample count in the artifact, so the figures are reproducible rather than
+merely repeatable.
+
+**The window was extended from 2014 to 2009 on 2026-08-22**, to publish the one cell that mattered
+most and was missing: 8–11 projected targets with a rising role. That is high volume meeting climbing
+usage — the corpus's "usage vacuum", the strongest edge it claims — and it held 97 observations
+against a floor of 100. The trade is era dilution, measured before it was taken: cells that already
+published move by at most 2.5 points of `P(>52.5)`, most by under one, and the effect strengthens
+rather than weakens (15/15 → 16/16 consistent, 14/14 → 15/15 out of sample). Merging 8–11 with 11+
+would have published the same cell for free, but the bands do not behave alike: at a 100.5 line the
+11+ band's *no-shootout* rate (0.289) exceeds 8–11's *with-shootout* rate (0.277), so pooling
+understates a 12-target projection by roughly 11 points on `q`.
 
 The reason is the end-state proxy. Final margin conflates "trailed and threw a lot" with "was simply
 bad," and the second dominates: losing by more than a touchdown mostly identifies offenses that did

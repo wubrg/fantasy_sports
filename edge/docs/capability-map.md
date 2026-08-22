@@ -120,10 +120,17 @@ operator-supplied numbers. Every input is typed by hand.
 
 ### The fitted grid is one stat and one scenario
 
-`conditionals.json` covers **receiving yards only**, 2014–2025. Of its two scenarios,
-`blowout_loss` is gated off as unvalidated — its direction inverts at common lines and it
-"needs a play-by-play definition rather than final margin." One usable scenario: `shootout`.
-Anything else requires stated `-q`/`-r`, which is judgement wearing a number's clothes.
+`conditionals.json` covers **receiving yards only**, 2009–2025. Of its two scenarios,
+`blowout_loss` is gated off — its direction is consistent in only 14 of 16 cells and it holds
+in 12 of 15 out of sample, and it "needs a play-by-play definition rather than final margin."
+One usable scenario: `shootout`. Anything else requires stated `-q`/`-r`, which is judgement
+wearing a number's clothes.
+
+**The Tier 3 case is now priceable** (closed 2026-08-22). `8–11` projected targets with a
+rising role — the corpus's "usage vacuum", high volume meeting climbing usage — held 97
+observations against a floor of 100 and could not be priced at all. Extending the fit window
+to 2009 publishes it at 139/295. `11+` projected targets still cannot be priced: only the
+no-scenario side clears the floor, and `q` needs both.
 
 ### `p_true` by simulation does not exist
 
