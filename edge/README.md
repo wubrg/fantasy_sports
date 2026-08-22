@@ -7,6 +7,8 @@ Two things live here:
 - **`docs/frameworks/`** — the NFL wagering frameworks, transcribed to Markdown, plus the operative
   prompt template derived from them. Start at
   [`docs/frameworks/README.md`](docs/frameworks/README.md).
+- **[`docs/capability-map.md`](docs/capability-map.md)** — which clauses of those frameworks are
+  actually implemented, which are not, and what is left for a person to judge.
 - **`app/`** — a Go module whose `internal/wager` package does the arithmetic, and an `edgectl` CLI
   that exposes it.
 
