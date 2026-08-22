@@ -155,6 +155,14 @@ The artifact now records what each name means (`shootout` = `total > 50`), the f
 predicate from those same fields so the two cannot drift, and a query whose `-threshold` or
 `-basis` disagrees is refused before any output. An artifact predating the field fails closed.
 
+### ~~`SCENARIO_STATUS` was asserted prose~~ — closed
+
+The three validation tests are implemented in `model/analysis/validate.py` and run on every fit.
+The artifact carries measured evidence with the bootstrap's seed and resample count. The verdict
+remains a human judgement, but the fit **fails** when the stated rule and the recorded verdict
+disagree. Doing this surfaced a correction to `FINDINGS.md`: the "direction inverts at ordinary
+lines" disqualifier does not clear sampling error for either scenario.
+
 ### Filter 2 and 3 inputs are hand-typed over a cache that already holds them
 
 `hitrate -values` is pasted by hand while `model/data/raw/stats_player_week_*.csv` holds those

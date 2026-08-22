@@ -49,6 +49,8 @@ import json
 import statistics as st
 import sys
 import time
+
+import validate
 from collections import defaultdict
 from pathlib import Path
 
@@ -145,20 +147,53 @@ SCENARIOS = {
 # What would un-gate blowout_loss: defining it on play-by-play (time remaining
 # crossed with score differential) rather than final margin, which is the
 # measurement this whole result argues for.
+# Whether a scenario may be priced. The VERDICT is a human judgement and stays
+# one; the EVIDENCE behind it is measured every run by validate.py and written
+# into the artifact's note, so it can no longer drift away from the data while
+# continuing to read as authoritative.
+#
+# The rule below is the bar the verdict is held to. It is written out rather
+# than inferred, and the fit fails if a recorded verdict and the measured
+# evidence disagree -- which is the whole mechanism: a scenario cannot quietly
+# stop qualifying and keep its flag.
+#
+# It is deliberately not a computed threshold. Two scenarios is not enough to
+# calibrate one on, and a bar reverse-engineered to reproduce the answer already
+# written down would look derived while being fitted to its conclusion.
 SCENARIO_STATUS = {
-    "shootout": {
-        "validated": True,
-        "note": "positive in 15/15 cells, 10/15 bootstrap-resolved, 14/14 out of sample",
-    },
+    "shootout": {"validated": True},
     "blowout_loss": {
         "validated": False,
-        "note": (
-            "direction inverts at common lines (q>r at 6.5/20.5/24.5 yards, 6-8 target band); "
-            "only 3/15 cells bootstrap-resolved; 10/13 out of sample vs shootout's 14/14. "
-            "Needs a play-by-play definition rather than final margin."
-        ),
+        "why": "Needs a play-by-play definition (time remaining crossed with score "
+        "differential) rather than final margin, which is the measurement this result "
+        "argues for.",
     },
 }
+
+
+def qualifies(ev: dict) -> bool:
+    """The stated rule. All three must hold.
+
+    1. The direction is consistent in every cell -- whichever direction it is.
+       An effect that reverses from band to band is a description of noise.
+    2. It survives out of sample, in every cell the late seasons can speak to.
+       A separation that exists only where it was found is not a separation.
+
+    Two things are measured and reported but deliberately NOT gated on:
+
+    Inversions at ordinary prop lines. This was going to be the first
+    criterion, on the strength of the note it replaces. Measured against
+    sampling error, not one crossing clears 2 SE -- for either scenario. They
+    are noise, and gating on a noise count would have rejected shootout on the
+    strength of a single 1.3-point wobble at 6.5 yards, a line at which ~88% of
+    player-games clear either way.
+
+    Resolution. A player-clustered bootstrap over a few hundred correlated
+    games is demanding, and shootout clears only 11 of 15. Requiring all of them
+    would reject a real effect; reporting it keeps the reader honest about how
+    much of the grid is firmly held.
+    """
+    return ev["consistent"] == ev["cells"] and ev["oos_agree"] == ev["oos_cells"]
 
 QUANTILE_STEPS = 51  # p0..p100 in 2% steps
 
@@ -263,6 +298,9 @@ def build(rows, games) -> list[dict]:
             obs.append(
                 {
                     "player": player,
+                    # Carried for the out-of-sample split in validate.py. The
+                    # fit itself pools across seasons and does not use it.
+                    "season": x["season"],
                     "proj_targets": baseline * team_vol,
                     "trend": recent - baseline,
                     "yards": x["yards"],
@@ -346,6 +384,31 @@ def main(argv):
     rows, seasons_read = load_player_weeks()
     obs = build(rows, games)
     print(f"player-weeks {FIRST}-{LAST}: {len(rows)}   usable observations: {len(obs)}\n")
+
+    # Measure the evidence before building cells, so a fit can never emit an
+    # artifact whose validation note disagrees with the data in the same file.
+    print("VALIDATION")
+    status = {}
+    for scenario, definition in SCENARIOS.items():
+        ev = validate.evidence(obs, definition, TARGET_BANDS, TREND_BANDS, MIN_CELL)
+        recorded = SCENARIO_STATUS[scenario]["validated"]
+        measured = qualifies(ev)
+        note = validate.note(ev)
+        if why := SCENARIO_STATUS[scenario].get("why"):
+            note = f"{note}. {why}"
+        print(f"  {scenario:14} {note}")
+        print(f"  {'':14} rule says {measured}, recorded {recorded}")
+        if measured != recorded:
+            raise SystemExit(
+                f"\n{scenario}: the evidence and the recorded verdict disagree.\n"
+                f"  measured: {note}\n"
+                f"  the stated rule gives validated={measured}, but SCENARIO_STATUS "
+                f"says {recorded}.\n"
+                f"  Change the verdict, or change the rule and say why -- do not ship "
+                f"a flag the data no longer supports."
+            )
+        status[scenario] = {"validated": recorded, "note": note, "evidence": ev}
+    print()
 
     cells, dropped = [], 0
     for scenario, definition in SCENARIOS.items():
@@ -442,7 +505,7 @@ def main(argv):
                 # a cell belonged to "shootout" but not what "shootout" was, so
                 # nothing could check the caller's threshold against it.
                 "scenario_definitions": {k: v.as_json() for k, v in SCENARIOS.items()},
-                "scenario_status": SCENARIO_STATUS,
+                "scenario_status": status,
                 "note": (
                     "quantiles are [[probability, yards], ...]; P(yards > L) is "
                     "1 minus the interpolated CDF. n supports a Wilson interval "
