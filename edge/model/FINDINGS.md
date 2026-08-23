@@ -495,6 +495,65 @@ Three options are on the table: report each cell's own held-out record at pricin
 the gate alone; gate per cell; or gate per cell with a minimum effect-size floor that encodes the
 pattern above explicitly. Recorded here so the measurement survives the decision being deferred.
 
+## 9. Four belief signals gated; one survived, and the best one is not a scenario
+
+`analysis/signals.py --gate1` · play-by-play 2009–2025, 8,862 team-weeks
+
+Four candidates from data already cached, each held to the gates PROE went through.
+
+| signal | persists | vs shootout | vs margin | ΔR² (realized) | separation | verdict |
+|---|---|---|---|---|---|---|
+| `success_rate` | +0.318 | +0.302 | +0.389 | +0.0142 | +0.128 | **fitted** |
+| `chunk_rate` | **+0.141** | +0.274 | +0.257 | +0.0242 | +0.150 | rejected |
+| `tempo` | +0.765 | +0.038 | −0.290 | +0.0005 | +0.020 | rejected |
+
+**`chunk_rate` has the largest effect in the table and fails anyway.** It persists at +0.141 —
+the same range as the defensive pass funnel rejected at +0.124 in §4. Explosiveness is measurable
+after the fact and not forecastable, so there is nothing to condition on before kickoff. Rejecting
+it is the precedent set by that earlier decision, applied to a signal that is more tempting.
+
+**`tempo` is the mirror image and fails for the opposite reason.** It persists at +0.765, the most
+forecastable quantity measured anywhere in this project — teams have stable tempo — and it does
+nothing. Prior form is null on receiving yards (t = −1.34) and top-quartile against bottom
+separates by 2 points. Perfect foreknowledge of a thing that does not matter.
+
+**`success_rate` was the one that needed a real test**, because it is far more entangled with game
+script than PROE: r = +0.302 against the shootout indicator and +0.389 against margin, where PROE
+manages +0.098 and +0.020. Teams that succeed win, so much of the raw effect could have been the
+script the grid already conditions on. Measured directly: shootout and blowout together explain
+ΔR² = +0.0127 of receiving yards; adding success rate takes it to +0.0196, an extra +0.0068 at
+t = 17.23, with the coefficient falling from 54.25 to 41.47. About a quarter of the raw effect is
+overlap and three quarters is not.
+
+Fitted as `efficient_offense` (success rate > 0.46, roughly the 66th percentile, base rate near
+shootout's). It **validates for passing yards only** — 10/10 consistent, 6/6 out of sample — and
+misses by one cell for receptions and rushing, by three for receiving. It is positive for all four
+outcomes including rushing, unlike `pass_heavy`: an efficient offence sustains drives and the back
+eats too, where a pass-heavy one takes his carries away.
+
+### The snap counts are a better axis than the one in use
+
+`snap_counts` has been fetched since the ingest shipped and read by nothing. It is not a scenario —
+a snap-share trend is known before kickoff, so it is a conditioning variable, and the honest test is
+whether it beats the target-share trend the grid already conditions on.
+
+It does. On 28,054 observations carrying both (2012–2025, 86% of weekly rows match a snap record):
+
+| trend axis | β | t | ΔR² |
+|---|---|---|---|
+| target share (in use) | 45.50 | 9.49 | +0.00340 |
+| **snap share** | 2172.18 | **13.85** | **+0.00530** |
+| both | — | — | +0.00605 |
+
+Snap share carries **56% more explanatory power**, and the two are only about 30% overlapping —
+which is the corpus's Tier 2 example measured, since it describes a role change in *snaps*
+("70% of snaps last week, up from 40%") rather than targets.
+
+Not acted on here. Switching the axis costs the 2009–2011 seasons, drops the 14% of rows with no
+snap record, changes every cell in the grid and forces a full revalidation. Using both would beat
+either, and multiplies cell count — the density constraint that ruled out a fourth axis in §4.
+Recorded as a measured option, not a pending change.
+
 ## Data note
 
 `target_share` in nflverse only starts in 2009, but raw `targets` reaches back to 2005, so share is

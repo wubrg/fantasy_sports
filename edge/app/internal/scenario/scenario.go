@@ -66,6 +66,14 @@ const (
 	// does not price a team's PROE. A scenario on this basis therefore requires
 	// an operator-supplied -smarket, and says so rather than inventing one.
 	OffensePROE
+	// SuccessRate measures the fraction of a team's scrimmage plays that
+	// gained positive expected points -- the efficiency staple, and the
+	// substitute for DVOA, which is proprietary.
+	//
+	// Like OffensePROE it has no fitted residual distribution: books price
+	// points and margins, not a team's success rate, so there is no line to
+	// derive its probability from.
+	SuccessRate
 )
 
 func (b Basis) String() string {
@@ -74,6 +82,8 @@ func (b Basis) String() string {
 		return "margin"
 	case OffensePROE:
 		return "offense_proe"
+	case SuccessRate:
+		return "success_rate"
 	}
 	return "total"
 }
@@ -81,7 +91,9 @@ func (b Basis) String() string {
 // NeedsStatedProbability reports whether this basis has no fitted residual
 // distribution, so its scenario probability must be supplied rather than
 // derived from a line.
-func (b Basis) NeedsStatedProbability() bool { return b == OffensePROE }
+func (b Basis) NeedsStatedProbability() bool {
+	return b == OffensePROE || b == SuccessRate
+}
 
 // Source records where a scenario's probability came from.
 //

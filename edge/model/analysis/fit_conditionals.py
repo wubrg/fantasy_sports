@@ -242,7 +242,8 @@ class ScenarioDef:
 
     # Which observation field each basis measures. Adding a basis means adding
     # a row here and populating that field in build(); nothing else changes.
-    FIELD = {"total": "game_total", "margin": "margin", "offense_proe": "proe"}
+    FIELD = {"total": "game_total", "margin": "margin", "offense_proe": "proe",
+             "success_rate": "success_rate"}
 
     def __init__(self, basis: str, op: str, threshold: float):
         assert basis in self.FIELD, basis
@@ -284,6 +285,23 @@ SCENARIOS = {
     # everything from 0.0 to +6.0 -- so this is chosen for interpretability and
     # balance, not to maximise an effect.
     "pass_heavy": ScenarioDef("offense_proe", ">", 3.0),
+    # Team offensive success rate -- the fraction of plays with positive EPA.
+    # The efficiency staple, and the honest substitute for DVOA, which is
+    # proprietary to FTN and not obtainable.
+    #
+    # 0.46 sits at roughly the 66th percentile of team-weeks and puts the base
+    # rate near shootout's, keeping cell density comparable. It is also a round,
+    # readable number in the units the rate is measured in.
+    #
+    # It is more entangled with game script than PROE is -- r = +0.302 against
+    # the shootout indicator and +0.389 against margin, where PROE manages
+    # +0.098 and +0.020 -- so it was tested for redundancy rather than assumed
+    # independent. Conditioning on shootout AND blowout together explains
+    # dR2 = +0.0127 of receiving yards; adding success rate on top takes it to
+    # +0.0196, an extra +0.0068 at t = 17.23. Its coefficient falls from 54.25
+    # to 41.47 under that control, so about a quarter of the raw effect is
+    # script overlap and three quarters is not.
+    "efficient_offense": ScenarioDef("success_rate", ">", 0.46),
 }
 
 # Whether a scenario is fit to bet on. Cells are still emitted for unvalidated
@@ -331,6 +349,12 @@ SCENARIO_STATUS = {
     # passing yards -- different players, different opportunity axis, different
     # mechanism -- so each pairing carries its own verdict and its own evidence.
     "receiving_yards": {
+        "efficient_offense": {
+            "validated": False,
+            "why": "Consistent in 17 of 17 cells but holds in only 13 of 16 out of sample -- "
+            "three failures, not the one that pass_heavy carries, and no override is offered "
+            "for it. The direction is never in doubt; the recent seasons are.",
+        },
         "shootout": {"validated": True},
         "pass_heavy": {
             "validated": True,
@@ -364,6 +388,11 @@ SCENARIO_STATUS = {
         },
     },
     "receptions": {
+        "efficient_offense": {
+            "validated": False,
+            "why": "Consistent in 17 of 17 and resolved in 16 of 17, failing one "
+            "out-of-sample cell. A near miss, recorded rather than overridden.",
+        },
         # Same rows and same opportunity axis as receiving yards; only the
         # outcome column differs. The verdicts do not match, which is the
         # point of gating per outcome.
@@ -401,6 +430,12 @@ SCENARIO_STATUS = {
         },
     },
     "rushing_yards": {
+        "efficient_offense": {
+            "validated": False,
+            "why": "Misses each criterion by a single cell: 13 of 14 consistent, 12 of 13 "
+            "out of sample. Positive, unlike pass_heavy -- an efficient offence sustains "
+            "drives and the back eats too, where a pass-heavy one takes his carries away.",
+        },
         # The sign flips here, and that is the finding. pass_heavy helps a
         # receiver and hurts a back, because the carries went somewhere.
         "pass_heavy": {"validated": True},
@@ -421,6 +456,7 @@ SCENARIO_STATUS = {
         },
     },
     "passing_yards": {
+        "efficient_offense": {"validated": True},
         # All three qualify here, and one of them -- blowout_loss -- is gated
         # for receiving yards. Read that with the caveat below before trusting
         # it more than it deserves.
@@ -552,7 +588,8 @@ def load_player_weeks(outcome: Outcome) -> tuple[list[dict], list[int]]:
     return rows, seasons
 
 
-def build(rows, games, outcome: Outcome, proe_tw: dict | None = None) -> list[dict]:
+def build(rows, games, outcome: Outcome, proe_tw: dict | None = None,
+          signals_tw: dict | None = None) -> list[dict]:
     """One observation per player-game, using only prior information as inputs.
 
     proe_tw is the team-week PROE series from analysis/proe.py, keyed
@@ -621,6 +658,11 @@ def build(rows, games, outcome: Outcome, proe_tw: dict | None = None) -> list[di
                     "proe": (proe_tw or {}).get(
                         (x["season"], x["week"], x["team"]), {}
                     ).get("offense"),
+                    # None when play-by-play is not cached for the season, or
+                    # the team-week had too few scrimmage plays to be a rate.
+                    "success_rate": (signals_tw or {}).get(
+                        (x["season"], x["week"], x["team"]), {}
+                    ).get("success_rate"),
                     "opportunity": projected,
                     "trend": recent - baseline,
                     "yards": x["yards"],
@@ -728,19 +770,22 @@ def main(argv):
     # simply falls below MIN_CELL and is dropped, which is the honest outcome
     # and is visible in the dropped count rather than silently wrong.
     import proe as proe_mod
+    import signals as signals_mod
 
     cells, dropped = [], 0
     status: dict[str, dict] = {}
     seasons_read = None
     proe_tw = None
+    signals_tw = None
 
     for oname, outcome in OUTCOMES.items():
         rows, seasons = load_player_weeks(outcome)
         if seasons_read is None:
             seasons_read = seasons
             proe_tw = proe_mod.load(seasons[0], seasons[-1])
-            print(f"team-weeks with PROE: {len(proe_tw)}")
-        obs = build(rows, games, outcome, proe_tw)
+            signals_tw = signals_mod.load(seasons[0], seasons[-1])
+            print(f"team-weeks with PROE: {len(proe_tw)}   with rates: {len(signals_tw)}")
+        obs = build(rows, games, outcome, proe_tw, signals_tw)
         print(f"\n=== {oname} ===")
         print(f"player-weeks {FIRST}-{LAST}: {len(rows)}   usable observations: {len(obs)}")
 
