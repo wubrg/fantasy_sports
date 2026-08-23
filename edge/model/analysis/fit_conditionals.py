@@ -518,6 +518,19 @@ def qualifies(ev: dict) -> bool:
 
 QUANTILE_STEPS = 51  # p0..p100 in 2% steps
 
+# Decimal places on a stored quantile VALUE.
+#
+# One was right while the grid stored yards: 0.1 against a 0-200 range is
+# nothing. The values are now RATIOS to a player's own baseline, spanning about
+# 0-3.5, where 0.1 is a tenth of the useful range -- 0.95, 1.00 and 1.04 all
+# collapsing to the same stored number, on a table the lookup then interpolates
+# across. It left only 45% of the 51 points distinct.
+#
+# The calibration measurements never saw this: they build a grid from the
+# unrounded values, so the number that was measured and the number that shipped
+# were not the same number.
+VALUE_DP = 4
+
 
 def num(s) -> float:
     s = (s or "").strip()
@@ -757,13 +770,13 @@ def quantiles(values: list[float], discrete: bool = False) -> list[list[float]]:
         seen = 0
         for v in sorted(set(s)):
             seen += s.count(v)
-            out.append([round(seen / n, 6), round(v, 1)])
+            out.append([round(seen / n, 6), round(v, VALUE_DP)])
         return out
     out = []
     for i in range(QUANTILE_STEPS):
         p = i / (QUANTILE_STEPS - 1)
         idx = min(int(p * (n - 1)), n - 1)
-        out.append([round(p, 4), round(s[idx], 1)])
+        out.append([round(p, 4), round(s[idx], VALUE_DP)])
     return out
 
 

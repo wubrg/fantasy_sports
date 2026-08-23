@@ -805,6 +805,20 @@ Nothing above is in the artifact. The two quantities are plumbed; the axis chang
 > The practical consequence is the one C3 predicted. A line at 0.95× a player's baseline now
 > returns `q = 58.9%` where every standard −110 over used to come back `beyond-your-read`.
 >
+> **A defect the ratio change introduced, found later.** Quantile *values* were stored rounded to
+> one decimal, which was right for yards — 0.1 against a 0–200 range is nothing — and wrong for
+> ratios, which span about 0–3.5. It left 0.95, 1.00 and 1.04 collapsing to the same stored number
+> on a table the lookup then interpolates across, with only **45% of each cell's 51 points
+> distinct**. Fixed at four decimals. Measured over 1,648 reads on validated cells, the shipped
+> probabilities move by a median of 0.59pp, **6.0pp at the 99th percentile and 8.2pp at worst**,
+> and 7.8% of reads shift by more than the vig cushion — the same order as the C3 defect this
+> section is about.
+>
+> It survived because **the calibration measurements never saw it.** `calibration.py` builds its
+> grid from the unrounded values, so the number that was measured and the number that shipped were
+> not the same number. The lesson is narrower than "test more": a measurement that reconstructs the
+> artifact instead of reading it cannot see anything the serialisation does.
+>
 > **What it cost.** The override recorded for `pass_heavy`/receptions named a site in the old grid
 > and could not be carried across the re-cut; it is withdrawn rather than re-pointed. And the
 > exact-CDF reader built in §6 was removed — see the note there.

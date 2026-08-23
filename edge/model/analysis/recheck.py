@@ -65,6 +65,9 @@ def s2(loaded) -> None:
             tot_flip += flips
             print(f"  {oname:<17}{sname:<18}{na:>8}{nb:>7}{flips:>7}")
     print(f"\n  {'TOTAL':<35}{tot_med:>8}{tot_mean:>7}{tot_flip:>7}")
+    print("\n  These are the STATISTICAL counts, before the operator vetoes and the")
+    print("  sign-coherence guard are applied, so they run higher than the priceable")
+    print("  total the artifact reports.")
     print("\n  The switch is NOT neutral. It moves verdicts, and it moves them one way:")
     print("  the mean publishes more sites than the median at almost every pairing.")
     print("  The shipped grid uses the MEDIAN for every outcome -- the conservative")
