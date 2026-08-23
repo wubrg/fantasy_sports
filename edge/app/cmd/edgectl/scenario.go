@@ -72,6 +72,13 @@ func scenarioCmd(args []string) error {
 	if basisVal == scenario.Total && !supplied["total"] && *sMarket < 0 {
 		return fmt.Errorf("-basis total needs an explicit -total (or -smarket)")
 	}
+	if basisVal.NeedsStatedProbability() && *sMarket < 0 {
+		return fmt.Errorf(
+			"-basis %s has no fitted residual distribution, so its probability cannot be "+
+				"derived from a line -- books do not price a team's pass rate over expected.\n"+
+				"  Supply -smarket with your own estimate of how likely the scenario is",
+			basisVal)
+	}
 	// Check the grid's definition before printing anything. The failure this
 	// guards against is a header reading "shootout (total > 65.0)" sitting
 	// directly above q and r that mean total > 50 -- so emitting the header
@@ -244,6 +251,19 @@ func resolveConditionals(
 			trendScale, trendUnit = 100.0, " pt"
 		}
 	}
+	if af := c.AcceptedFailureFor(outcome, name); af != nil {
+		fmt.Printf("  OVERRIDDEN GATE — this scenario does NOT pass validation and is\n")
+		fmt.Printf("  being priced on a failure the operator accepted.\n")
+		fmt.Printf("    failing cell   %s\n", af.Cell)
+		fmt.Printf("    measured       %s\n", af.Measured)
+		fmt.Printf("    accepted by    %s\n", af.AcceptedBy)
+		if af.Covers(projTargets, trend) {
+			fmt.Printf("  THIS WAGER IS IN THAT CELL. You are betting the part that failed\n")
+			fmt.Printf("  out of sample, not the fifteen cells that held.\n\n")
+		} else {
+			fmt.Printf("  This wager is outside that cell.\n\n")
+		}
+	}
 	fmt.Printf("  CONDITIONALS from the fitted grid (%s, %d-%d)\n",
 		outcome, c.Seasons[0], c.Seasons[1])
 	fmt.Printf("    %.1f projected %s, %+.1f%s trend, line %.1f\n",
@@ -405,8 +425,11 @@ func parseBasis(s string) (scenario.Basis, error) {
 		return scenario.Total, nil
 	case "margin", "m":
 		return scenario.Margin, nil
+	case "offense_proe", "proe":
+		return scenario.OffensePROE, nil
 	}
-	return scenario.Total, fmt.Errorf("-basis must be total or margin, got %q", s)
+	return scenario.Total, fmt.Errorf(
+		"-basis must be total, margin or offense_proe, got %q", s)
 }
 
 func parseBankroll(s string) (wager.Bankroll, error) {

@@ -58,14 +58,30 @@ const (
 	// underdog), so it may be negative when the favourite loses. Used as the
 	// proxy for blowout and garbage-time scripts.
 	Margin
+	// OffensePROE measures a team's pass rate over expected: how much more it
+	// threw than down, distance, score and time called for.
+	//
+	// Unlike Total and Margin there is no residual distribution fitted for it,
+	// so its probability cannot be derived from a posted line -- the market
+	// does not price a team's PROE. A scenario on this basis therefore requires
+	// an operator-supplied -smarket, and says so rather than inventing one.
+	OffensePROE
 )
 
 func (b Basis) String() string {
-	if b == Margin {
+	switch b {
+	case Margin:
 		return "margin"
+	case OffensePROE:
+		return "offense_proe"
 	}
 	return "total"
 }
+
+// NeedsStatedProbability reports whether this basis has no fitted residual
+// distribution, so its scenario probability must be supplied rather than
+// derived from a line.
+func (b Basis) NeedsStatedProbability() bool { return b == OffensePROE }
 
 // Source records where a scenario's probability came from.
 //

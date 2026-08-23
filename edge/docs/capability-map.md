@@ -174,6 +174,14 @@ remains a human judgement, but the fit **fails** when the stated rule and the re
 disagree. Doing this surfaced a correction to `FINDINGS.md`: the "direction inverts at ordinary
 lines" disqualifier does not clear sampling error for either scenario.
 
+### A gated scenario can be overridden, loudly
+
+`SCENARIO_STATUS` may carry an `accepted_failure` naming the specific cell, what was measured, why
+it was accepted and by whom. `qualifies()` is unchanged and the artifact records what the rule said
+alongside the verdict; `edgectl scenario` prints the override at the point of pricing and reports
+whether the wager falls inside the failing cell. Currently used once: `pass_heavy` for receiving
+yards and receptions.
+
 ### The out-of-sample gate has limited power, and no better version was found
 
 `shootout` clears it 15/15 and `blowout_loss` 12/15 — roughly p = 0.1 on a binomial, so the test

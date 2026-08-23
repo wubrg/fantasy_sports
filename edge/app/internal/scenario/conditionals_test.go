@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math"
+	"slices"
 	"strings"
 	"testing"
 
@@ -279,8 +280,27 @@ func TestUnvalidatedScenariosCannotBePriced(t *testing.T) {
 	if _, _, err := c.QR("receiving_yards", "shootout", 7, 0.0, 45, 0.95); err != nil {
 		t.Errorf("shootout passed validation and must remain priceable: %v", err)
 	}
-	if got := c.ValidatedScenarioNames("receiving_yards"); len(got) != 1 || got[0] != "shootout" {
-		t.Errorf("validated scenarios = %v, want [shootout]", got)
+	// Priceable means "passes, or passes on a recorded override" -- asserting a
+	// fixed list would break every time a verdict legitimately changes, which
+	// is a test measuring the wrong thing.
+	got := c.ValidatedScenarioNames("receiving_yards")
+	if len(got) == 0 {
+		t.Error("nothing is priceable for receiving yards; the gate has eaten everything")
+	}
+	for _, name := range got {
+		st := c.ScenarioStatus["receiving_yards"][name]
+		if !st.RuleSays && st.AcceptedFailure == nil {
+			t.Errorf("%q is priceable but neither passes the rule nor carries an override", name)
+		}
+	}
+	// And whatever is gated must genuinely be refused.
+	for name := range c.ScenarioStatus["receiving_yards"] {
+		if slices.Contains(got, name) {
+			continue
+		}
+		if _, _, err := c.QR("receiving_yards", name, 7, 0.0, 45, 0.95); err == nil {
+			t.Errorf("%q is not in the priceable list but QR accepted it", name)
+		}
 	}
 	// Cells are still present -- gating is about pricing, not deletion.
 	blowout := 0
@@ -962,4 +982,80 @@ func TestContinuousOutcomesStillInterpolate(t *testing.T) {
 		return
 	}
 	t.Skip("no receiving shootout cell")
+}
+
+// TestAcceptedFailureIsFullySpecified guards the override from decaying into a
+// general escape hatch.
+//
+// An exception that does not say which cell failed, what was measured, why it
+// was accepted and by whom is indistinguishable from switching the gate off —
+// and a gate that can be switched off silently stops discriminating for every
+// scenario after it, not just this one.
+func TestAcceptedFailureIsFullySpecified(t *testing.T) {
+	c := mustConditionals(t)
+	found := 0
+	for outcome, byScenario := range c.ScenarioStatus {
+		for name, st := range byScenario {
+			if st.AcceptedFailure == nil {
+				// No override: the recorded verdict must match the rule.
+				if st.Validated != st.RuleSays {
+					t.Errorf("%s/%s: validated=%v but rule says %v, with no accepted_failure",
+						outcome, name, st.Validated, st.RuleSays)
+				}
+				continue
+			}
+			found++
+			af := st.AcceptedFailure
+			// An override only makes sense where the rule actually says no.
+			if st.RuleSays {
+				t.Errorf("%s/%s carries an accepted_failure but passes on its own; "+
+					"the override is stale", outcome, name)
+			}
+			if !st.Validated {
+				t.Errorf("%s/%s has an accepted_failure but is still gated; it does nothing",
+					outcome, name)
+			}
+			for field, v := range map[string]string{
+				"cell": af.Cell, "measured": af.Measured, "why": af.Why,
+				"accepted_by": af.AcceptedBy,
+			} {
+				if v == "" {
+					t.Errorf("%s/%s accepted_failure has an empty %s", outcome, name, field)
+				}
+			}
+			if af.OpportunityMax <= af.OpportunityMin || af.TrendMax <= af.TrendMin {
+				t.Errorf("%s/%s accepted_failure has no usable cell bounds: opp [%v,%v) "+
+					"trend [%v,%v)", outcome, name,
+					af.OpportunityMin, af.OpportunityMax, af.TrendMin, af.TrendMax)
+			}
+		}
+	}
+	if found == 0 {
+		t.Skip("no accepted failures recorded")
+	}
+}
+
+// TestAcceptedFailureCoversTheRightCell checks the bounds actually discriminate,
+// so the warning at the point of pricing means something.
+func TestAcceptedFailureCoversTheRightCell(t *testing.T) {
+	c := mustConditionals(t)
+	af := c.AcceptedFailureFor("receiving_yards", "pass_heavy")
+	if af == nil {
+		t.Skip("pass_heavy is not overridden for receiving yards")
+	}
+	mid := (af.OpportunityMin + af.OpportunityMax) / 2
+	midTrend := (af.TrendMin + af.TrendMax) / 2
+	if !af.Covers(mid, midTrend) {
+		t.Errorf("the middle of the failing cell (%v, %v) is not covered", mid, midTrend)
+	}
+	// Just outside, on each axis.
+	if af.Covers(af.OpportunityMax, midTrend) {
+		t.Error("opportunity at the upper bound should be excluded (half-open interval)")
+	}
+	if af.Covers(mid, af.TrendMax) {
+		t.Error("trend at the upper bound should be excluded (half-open interval)")
+	}
+	if af.Covers(mid, af.TrendMin-0.01) {
+		t.Error("a trend below the cell is covered; the bounds do not discriminate")
+	}
 }
