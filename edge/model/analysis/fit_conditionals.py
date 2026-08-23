@@ -272,7 +272,21 @@ SCENARIOS = {
     "shootout": ScenarioDef("total", ">", 50),
     "blowout_loss": ScenarioDef("margin", "<", -7),
     # Pass rate over expected: the team threw more than down, distance, score
-    # and time called for. Coach and scheme tendency with game script divided
+    # and time called for.
+    #
+    # HOW MUCH OF IT IS VOLUME. Holding realised opportunity fixed, the share
+    # of the separation that survives differs sharply by outcome:
+    #
+    #   receiving_yards   t 14.25 -> 1.97   90% volume   WITHDRAWN, identity
+    #   receptions        t 22.01 -> 9.17   78% volume   kept
+    #   passing_yards     t 16.56 -> 5.05   77% volume   kept
+    #   rushing_yards     t-18.69 ->-9.80   72% volume   kept
+    #
+    # Receiving yards is targets x catch rate x yards-per-catch, and this
+    # scenario acts only on the first term, so fixing realised targets leaves
+    # nothing. The others retain a real effect beyond volume -- plausibly a
+    # shorter, safer throw distribution for receptions, and game script beyond
+    # carry count for rushing. Coach and scheme tendency with game script divided
     # out -- which is why it needs play-by-play rather than the weekly table,
     # and why it is near-independent of `shootout` (r = +0.098) instead of a
     # second measurement of it.
@@ -357,28 +371,20 @@ SCENARIO_STATUS = {
         },
         "shootout": {"validated": True},
         "pass_heavy": {
-            "validated": True,
-            "accepted_failure": {
-                "cell": "6-8 projected targets, +0.03..+0.06 role trend",
-                # Machine-readable bounds so the CLI can tell the operator
-                # whether THIS wager sits in the failing cell, rather than
-                # printing a warning to be cross-referenced by hand.
-                "opportunity_min": 6,
-                "opportunity_max": 8,
-                "trend_min": 0.03,
-                "trend_max": 0.06,
-                "measured": "15/16 out of sample; consistent 17/17; resolved 13/17",
-                "why": "The failing cell shows +14.5 yards and +1.22 receptions of separation "
-                "over 2009-2021 and -0.5 / -0.02 across 2022-2025, on 65 held-out games. Half a "
-                "yard is not a reversal, and the cluster bootstrap cannot distinguish it from "
-                "zero. The rule still says no, and is not being softened: a magnitude-aware "
-                "version was tested and rejected because it makes every scenario pass "
-                "(FINDINGS.md 4). This is an operator accepting one named failure instead. "
-                "Receptions and receiving yards fail the SAME cell on the SAME player-games, so "
-                "this is one failure seen twice, not two. Revisit when the held-out half has "
-                "enough seasons to resolve it -- roughly 15-20 games a year accrue to this cell.",
-                "accepted_by": "operator, 2026-08-22",
-            },
+            "validated": False,
+            "why": "WITHDRAWN 2026-08-23 as a volume identity, not on the out-of-sample cell it "
+            "was previously overridden for. Holding REALISED targets fixed, its coefficient "
+            "collapses from t = 14.25 to t = 1.97 -- 90% of the separation is explained by volume "
+            "the projection failed to anticipate. It measures the inadequacy of our own projected "
+            "targets (prior share x prior 3-game team pool, no market input), not a market "
+            "inefficiency. The earlier defence -- that separation holds within projected-target "
+            "bands and widens with volume -- is the identity's signature rather than a refutation: "
+            "a higher-share player converts extra team attempts into proportionally more targets, "
+            "so share x extra attempts IS the widening. Receiving yards is the one outcome where "
+            "this is fatal, because it is targets x catch rate x yards-per-catch and pass_heavy "
+            "acts only on the first term. It survives volume conditioning for receptions (t=9.17), "
+            "rushing (t=-9.80) and passing (t=5.05), and is kept there. See "
+            "docs/reviews/2026-08-23-adversarial.md finding C2.",
         },
         "blowout_loss": {
             "validated": False,

@@ -347,6 +347,15 @@ Two corrections from the audit, both now in effect:
 
 ---
 
+> **`pass_heavy` was withdrawn for receiving yards on 2026-08-23.** Holding *realised* targets
+> fixed, its coefficient collapses from t = 14.25 to **t = 1.97** — 90% of the separation is
+> volume the projection failed to anticipate, so it measures the inadequacy of this project's own
+> projected targets rather than a market inefficiency. The defence recorded above — that separation
+> holds within projected-target bands and *widens* with volume — is the identity's signature, not a
+> refutation. It survives volume conditioning for receptions (t = 9.17), rushing (t = −9.80) and
+> passing (t = 5.05) and is kept there; receiving yards is targets × catch rate × yards-per-catch
+> and this scenario acts only on the first term. The override granted for it is withdrawn with it.
+
 ## 5. Passing yards fits, and its gate is weaker than the receiving one
 
 `fit_conditionals.py` · 5,726 usable QB game-weeks, 2009–2025 · 63 cells

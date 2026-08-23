@@ -100,7 +100,7 @@ each one:
 | outcome | usable scenarios |
 |---|---|
 | passing yards | `shootout`, `pass_heavy`, `blowout_loss`, `efficient_offense` |
-| receiving yards | `shootout`, `pass_heavy`\* |
+| receiving yards | `shootout` |
 | receptions | `shootout`, `pass_heavy`\* |
 | rushing yards | `pass_heavy` |
 
@@ -131,6 +131,10 @@ make fit            # REWRITES the committed artifacts
 
 `make fit` changes what `edgectl` prices. Read the diff — a half-yard shift in one cell median once
 moved a documented belief requirement by 4.2 points.
+
+**Rebuild after fitting.** The grid is embedded into the binary at build time, so `edgectl` keeps
+serving the old artifact until `make build` runs. A refit that appears to have done nothing has
+usually done exactly this.
 
 ## Layout
 

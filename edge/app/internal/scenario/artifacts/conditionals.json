@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-23T09:50:30Z",
+ "generated_at": "2026-08-23T12:32:24Z",
  "generated_by": "edge/model/analysis/fit_conditionals.py",
  "outcomes": {
   "receiving_yards": {
@@ -541,8 +541,8 @@
     "rule_says": false
    },
    "pass_heavy": {
-    "validated": true,
-    "note": "positive in 17/17 cells; 13/17 bootstrap-resolved; 15/16 out of sample",
+    "validated": false,
+    "note": "positive in 17/17 cells; 13/17 bootstrap-resolved; 15/16 out of sample. WITHDRAWN 2026-08-23 as a volume identity, not on the out-of-sample cell it was previously overridden for. Holding REALISED targets fixed, its coefficient collapses from t = 14.25 to t = 1.97 -- 90% of the separation is explained by volume the projection failed to anticipate. It measures the inadequacy of our own projected targets (prior share x prior 3-game team pool, no market input), not a market inefficiency. The earlier defence -- that separation holds within projected-target bands and widens with volume -- is the identity's signature rather than a refutation: a higher-share player converts extra team attempts into proportionally more targets, so share x extra attempts IS the widening. Receiving yards is the one outcome where this is fatal, because it is targets x catch rate x yards-per-catch and pass_heavy acts only on the first term. It survives volume conditioning for receptions (t=9.17), rushing (t=-9.80) and passing (t=5.05), and is kept there. See docs/reviews/2026-08-23-adversarial.md finding C2.",
     "evidence": {
      "cells": 17,
      "consistent": 17,
@@ -557,17 +557,7 @@
      "oos_split": 2021,
      "location": "median"
     },
-    "rule_says": false,
-    "accepted_failure": {
-     "cell": "6-8 projected targets, +0.03..+0.06 role trend",
-     "opportunity_min": 6,
-     "opportunity_max": 8,
-     "trend_min": 0.03,
-     "trend_max": 0.06,
-     "measured": "15/16 out of sample; consistent 17/17; resolved 13/17",
-     "why": "The failing cell shows +14.5 yards and +1.22 receptions of separation over 2009-2021 and -0.5 / -0.02 across 2022-2025, on 65 held-out games. Half a yard is not a reversal, and the cluster bootstrap cannot distinguish it from zero. The rule still says no, and is not being softened: a magnitude-aware version was tested and rejected because it makes every scenario pass (FINDINGS.md 4). This is an operator accepting one named failure instead. Receptions and receiving yards fail the SAME cell on the SAME player-games, so this is one failure seen twice, not two. Revisit when the held-out half has enough seasons to resolve it -- roughly 15-20 games a year accrue to this cell.",
-     "accepted_by": "operator, 2026-08-22"
-    }
+    "rule_says": false
    },
    "efficient_offense": {
     "validated": false,

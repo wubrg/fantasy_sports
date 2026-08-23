@@ -131,7 +131,7 @@ operator-supplied numbers. Every input is typed by hand.
 | outcome | priceable |
 |---|---|
 | passing yards | `shootout`, `pass_heavy`, `blowout_loss`, `efficient_offense` |
-| receiving yards | `shootout`, `pass_heavy`\* |
+| receiving yards | `shootout` |
 | receptions | `shootout`, `pass_heavy`\* |
 | rushing yards | `pass_heavy` |
 
