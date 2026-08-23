@@ -113,6 +113,17 @@ No override is in force. The one that was — `pass_heavy` for receptions — na
 grid as it was cut before 2026-08-23, and an override cannot be carried across a re-cut: the
 failure it accepted was measured on a cell that no longer exists.
 
+### What it is worth, measured
+
+Scored on a season the grid never saw — fitted 2009–2024, run against 2025 — the tool's
+probabilities are right to within **0.74pp on 16,512 wagers**. And every one of those wagers loses
+at −110. That is the finding, not a contradiction: **calibration is not an edge.** A perfectly
+calibrated number priced at the market's own line returns the vig, negatively.
+
+What the backtest actually produces is the price you would need: **+137** on a line at a player's
+average, **+185** at 1.15× it. Whether a book offers that is a question about prices, and this
+repository does not collect prop prices. See [Findings §15](model/FINDINGS.md).
+
 `model/analysis/player.py` reads `-baseline` and `-trend` off the cache for a given player and
 upcoming week, tells you which cell they land in and whether it is priceable, and prints the
 `edgectl` command. Typing those two numbers from memory is the one mistake here that fails
@@ -126,7 +137,14 @@ scenario: receiving_yards/shootout is priceable, but not at posted 46-999, basel
   the bootstrap interval does not clear zero; the seasons after 2021 are too thin here to check it.
 ```
 
-Anything else is refused with the measurement attached. The list is short on purpose — of six
+Anything else is refused with the measurement attached.
+
+`edgectl belief` supplies the other half. `P(hit) = q·s + r·(1−s)`: the grid fits `q` and `r`, and
+`s` — how likely the scenario is — came off the posted total for `shootout` and off the spread for
+`blowout_loss`. For the other two there was no market to read, so the operator invented it. A
+team's own prior form predicts it, and now does: `edgectl belief -name efficient_offense -prior
+0.48` returns `s = 0.487`, and `edgectl scenario -prior 0.48` uses it directly. The bands hold
+their *order* out of sample and drift in *level*, so the command says to treat `s` as a rank. The list is short on purpose — of six
 candidate signals tested, one survived, and the corpus's strongest claimed edge measured *backwards*.
 See [Findings](model/FINDINGS.md).
 

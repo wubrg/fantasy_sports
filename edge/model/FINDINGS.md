@@ -1027,6 +1027,78 @@ to correct a bias of known sign and roughly known size. That is a judgement abou
 capability to trade for cleanliness, and it is the operator's, not the fit's. Recorded here with
 the numbers so it can be made deliberately.
 
+## 15. The tool is calibrated, and calibration is not an edge
+
+The first end-to-end score of the whole apparatus. A grid fitted 2009–2024 and a belief model
+fitted the same way, against the 2025 season neither of them saw. Reproduce with `make backtest`.
+
+It reads the **artifact**, not a rebuilt copy of it. A backtest that reconstructs what it is scoring
+cannot see anything the serialisation does — which is how a one-decimal rounding survived every
+calibration check this project had (§11).
+
+`P(hit) = q·s + r·(1−s)` can be wrong in two unrelated ways, so the halves are scored apart.
+
+### A. q and r, with `s` removed
+
+Each read scored against games where the scenario did or did not actually occur.
+
+| | worst \|error\| |
+|---|---|
+| rows with n ≥ 200 | **2.31pp** |
+| thinner rows | 13.55pp |
+
+Where there is data the grid is calibrated to about the vig cushion. Every large miss is passing
+yards, where one held-out season is ~32 quarterbacks — `blowout_loss` at 13.55pp rests on **39
+reads**, which is thirteen games.
+
+### B. the belief model
+
+The bands hold their **order** out of sample and drift in **level** — up to 5.8pp for
+`efficient_offense` and 8.2pp for `pass_heavy`. `edgectl belief` says so at the point of use and
+tells the reader to treat `s` as a rank rather than a probability.
+
+### C. the product, against a −110 line
+
+There are no historical prop prices here, so each line sits at a multiple of the player's own
+baseline. 16,512 simulated wagers:
+
+| scenario | line | n | predicted | actual | error | at −110 | price needed |
+|---|---|---|---|---|---|---|---|
+| efficient_offense | 0.85× | 3131 | 0.502 | 0.503 | −0.09pp | −2.08pp | −101 |
+| efficient_offense | 1.00× | 3131 | 0.425 | 0.422 | +0.29pp | −10.19pp | +137 |
+| efficient_offense | 1.15× | 3131 | 0.354 | 0.350 | +0.41pp | −17.34pp | +185 |
+| pass_heavy | 0.85× | 2373 | 0.519 | 0.505 | +1.33pp | −1.85pp | −102 |
+| pass_heavy | 1.00× | 2373 | 0.435 | 0.415 | +1.96pp | −10.87pp | +141 |
+| pass_heavy | 1.15× | 2373 | 0.351 | 0.341 | +1.04pp | −18.29pp | +193 |
+
+**Overall: predicted 0.430, actual 0.423 — an error of +0.74pp on 16,512 wagers.**
+
+### What that means, and what it does not
+
+The tool works. On a season it never saw, its probabilities are right to within a point.
+
+**And every one of those wagers loses money at −110.** That is not a contradiction, it is the
+result: *calibration is not an edge*. A perfectly calibrated model priced at the market's number
+returns exactly the vig, negatively. The only thing that pays is a price better than your own
+probability by more than the hold, and no amount of internal accuracy produces one.
+
+So the `price needed` column is the actual output of this project. At a line on a player's own
+average you need **+137 or better**; at 1.15× his average, **+185**. Whether a book ever offers
+that is a question about *prices*, and this repository does not collect prop prices — the board
+holds moneylines, spreads and totals only. **The apparatus is finished and the input it exists to
+consume is missing.**
+
+That also disposes of "chase the tails" as stated. The deeper lines are not better — they are
+calibrated too, and lose more at a flat −110. Tails only pay if the book misprices them, which is
+again a claim about prices.
+
+### The January slate
+
+`make backtest-slate` restricts the same run to games on or after 2026-01-01: one week of football,
+1,227 wagers, overall error **+0.36pp**. Consistent with the season and far too small to add
+anything — 32 team-weeks put most of its rows under n = 200. It is reported because it was asked
+for, and it should not be read as confirmation of anything.
+
 ## Data note
 
 `target_share` in nflverse only starts in 2009, but raw `targets` reaches back to 2005, so share is

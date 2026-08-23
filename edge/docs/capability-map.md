@@ -232,6 +232,23 @@ It stays on the Python side of the boundary deliberately: `edgectl` has no runti
 and giving it one to save a copy-paste would trade the project's clearest invariant for a
 convenience.
 
+### `s` is measured for every scenario now
+
+`P(hit) = q·s + r·(1−s)`. The grid fits `q` and `r`; `s` came off the posted total for `shootout`
+and the spread for `blowout_loss`, and for `pass_heavy` and `efficient_offense` it was **stated by
+the operator** — a project built to reduce unfalsifiable judgement, relocating it into a number
+someone invents. That was the review's S-problem.
+
+`fit_belief.py` fits it from the team's own prior form, in the same shape the grid uses: band the
+predictor, read the empirical rate off each band, check the bands hold out of sample. Both are
+monotone with real spread — `efficient_offense` runs 0.169→0.487 across its bands, `pass_heavy`
+0.127→0.573.
+
+The **order** holds out of sample; the **level** drifts, by up to 5.8pp and 8.2pp. `edgectl belief`
+reports the drift and says to treat `s` as a rank rather than a precise probability. A probability
+derived this way is recorded as `derived-from-signals`, never as `stated`, so the bet log can score
+the two apart.
+
 ### Both directions are priceable
 
 `edgectl scenario -side over|under`. The grid fits `P(output > line)` only and reads the under off

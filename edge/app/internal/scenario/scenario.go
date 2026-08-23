@@ -168,11 +168,11 @@ const (
 	Stated Source = iota
 	// DerivedFromLine: computed from the game total or spread.
 	DerivedFromLine
-	// DerivedFromSignals is reserved. Signals (target funnel meeting a funnel
-	// defense, a snap-share trend implying a role change) can both estimate
-	// the probability of a named scenario and identify which scenario is in
-	// play at all. Not implemented; declared so the type does not change when
-	// it is.
+	// DerivedFromSignals: read off the fitted belief model from a team's own
+	// prior form. This was the reserved seam and is now in use for the two
+	// scenarios with no market line -- the probability that used to be an
+	// operator's invention. Recorded separately from Stated precisely so the
+	// bet log can score the two apart and find out which is better calibrated.
 	DerivedFromSignals
 )
 
@@ -259,6 +259,17 @@ func normalQuantile(p float64) (float64, error) {
 		return 0, fmt.Errorf("scenario: quantile undefined at p=%v", p)
 	}
 	return math.Sqrt2 * math.Erfinv(2*p-1), nil
+}
+
+// FromSignals builds a scenario whose probability came from the fitted belief
+// model rather than from a person or a game line.
+func FromSignals(name string, basis Basis, threshold, prob float64, below bool) (Scenario, error) {
+	s := Scenario{Name: name, Basis: basis, Threshold: threshold, Prob: prob,
+		Source: DerivedFromSignals, Below: below}
+	if err := s.Validate(); err != nil {
+		return Scenario{}, err
+	}
+	return s, nil
 }
 
 // StateProb builds a scenario from a probability the operator supplies.

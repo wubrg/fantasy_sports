@@ -828,9 +828,23 @@ def effective_n(values: list[float], players: list[str]) -> tuple[float, float]:
 def main(argv):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--report", action="store_true", help="print cells, write nothing")
+    ap.add_argument("--through", type=int, default=None,
+                    help="last season to FIT on. Later ones are excluded entirely, so a "
+                         "backtest can score an artifact that never saw them.")
+    ap.add_argument("--out", type=Path, default=None,
+                    help="write the artifact here instead of the committed path")
     args = ap.parse_args(argv)
 
     games = load_games()
+    # A backtest needs a grid that never saw the seasons it is scored on, and it
+    # has to score the ARTIFACT rather than a reconstruction of it -- a
+    # measurement that rebuilds the grid in memory cannot see anything the
+    # serialisation does, which is how a one-decimal rounding survived (11).
+    global LAST, ARTIFACT
+    if args.through is not None:
+        LAST = args.through
+    if args.out is not None:
+        ARTIFACT = args.out
 
     # PROE comes from play-by-play, which is a separate and much larger table.
     # A scenario whose quantity is missing everywhere still fits -- every cell

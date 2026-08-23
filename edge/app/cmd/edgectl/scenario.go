@@ -21,6 +21,9 @@ func scenarioCmd(args []string) error {
 	threshold := fs.Float64("threshold", 0, "scenario threshold (combined points, or final margin)")
 	sigma := fs.Float64("sigma", 0, "override the dispersion; 0 uses the documented default")
 	sMarket := fs.Float64("smarket", -1, "market scenario probability, overriding the derived one")
+	priorForm := fs.Float64("prior", 0,
+		"the team's prior-form value, to derive s from the fitted belief model instead "+
+			"of stating it. Only for the bases with no market line (see `edgectl belief`)")
 	belief := fs.Float64("belief", -1, "your scenario probability (required)")
 	q := fs.Float64("q", -1, "P(hit | scenario) (required)")
 	r := fs.Float64("r", -1, "P(hit | no scenario) (required)")
@@ -78,6 +81,18 @@ func scenarioCmd(args []string) error {
 	if basisVal == scenario.Total && !supplied["total"] && *sMarket < 0 {
 		return fmt.Errorf("-basis total needs an explicit -total (or -smarket)")
 	}
+	// A prior-form value derives s where the operator would otherwise invent
+	// it. Resolved before the "you must state it" check below, so supplying
+	// -prior satisfies that requirement.
+	if supplied["prior"] && *sMarket < 0 {
+		p, err := beliefFor(*name, *priorForm)
+		if err != nil {
+			return err
+		}
+		*sMarket = p
+		fmt.Printf("  s = %.3f derived from the belief model (prior form %g)\n\n",
+			p, *priorForm)
+	}
 	if basisVal.NeedsStatedProbability() && *sMarket < 0 {
 		return fmt.Errorf(
 			"-basis %s has no fitted residual distribution, so its probability cannot be "+
@@ -110,7 +125,8 @@ func scenarioCmd(args []string) error {
 		}
 	}
 
-	sc, err := marketScenario(*name, basisVal, *total, *spread, *threshold, *sigma, *sMarket, below)
+	sc, err := marketScenario(*name, basisVal, *total, *spread, *threshold, *sigma, *sMarket,
+		below, supplied["prior"])
 	if err != nil {
 		return err
 	}
@@ -453,8 +469,14 @@ func ladderReport(spec string, sMarket, belief float64, b wager.Bankroll, stake 
 	return nil
 }
 
-func marketScenario(name string, basis scenario.Basis, total, spread, threshold, sigma, override float64, below bool) (scenario.Scenario, error) {
+func marketScenario(name string, basis scenario.Basis, total, spread, threshold, sigma, override float64, below, fromSignals bool) (scenario.Scenario, error) {
 	if override >= 0 {
+		// Provenance, not decoration: a probability the belief model produced
+		// must not be logged as one a person asserted, or the log cannot score
+		// them apart later.
+		if fromSignals {
+			return scenario.FromSignals(name, basis, threshold, override, below)
+		}
 		return scenario.StateProb(name, basis, threshold, override, below)
 	}
 	switch basis {
