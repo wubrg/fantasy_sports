@@ -76,6 +76,37 @@ type Cell struct {
 
 	// Override is set when an operator accepted THIS site's specific failure.
 	Override *AcceptedFailure `json:"override,omitempty"`
+
+	// Stability is the share of MIN_CELL x OOS_SPLIT settings under which this
+	// site reaches the same verdict -- 1.0 for a verdict about the data, less
+	// for one the two constants can move.
+	//
+	// It exists because those constants were chosen after the rule they feed,
+	// and nothing said so. A verdict that holds at MIN_CELL 100 and fails at
+	// 150 is a fact about 100. Reported at the point of pricing rather than in
+	// a sweep nobody runs.
+	Stability *float64 `json:"stability"`
+}
+
+// Firm reports whether every swept knob setting agrees with this cell's
+// verdict. Anything less is priceable but worth saying out loud.
+func (c Cell) Firm() bool {
+	return c.Stability != nil && *c.Stability >= 1.0
+}
+
+// StabilityNote describes the verdict's dependence on the two constants, or ""
+// when it does not depend on them at all.
+func (c Cell) StabilityNote() string {
+	if c.Stability == nil {
+		return "verdict stability was not measured for this cell"
+	}
+	if *c.Stability >= 1.0 {
+		return ""
+	}
+	return fmt.Sprintf(
+		"this verdict holds at %.0f%% of the swept MIN_CELL x OOS_SPLIT settings, not all "+
+			"of them — it depends partly on where those two constants were set",
+		*c.Stability*100)
 }
 
 // SiteLabel names the cell's coordinates the way a person reads them, for use

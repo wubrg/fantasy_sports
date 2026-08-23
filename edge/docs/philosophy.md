@@ -81,6 +81,24 @@ so this is multiple comparisons with better manners. That was measured rather th
 the scenario label across games and the three-test conjunction passes **1.6%** of site-tests,
 against 38–75% for the real scenarios (§12). The conjunction does the work, not the granularity.
 
+## Why a verdict reports its own sensitivity
+
+Two constants decide what the gate sees: `MIN_CELL`, which sets what counts as a cell, and
+`OOS_SPLIT`, which sets what counts as out of sample. Both were chosen after the rule they feed —
+and an adversarial review found verdicts that turned on them rather than on the data.
+
+The tempting response is to defend the settings. That does not work: every plausible setting is
+defensible, which is the whole problem. Arguing 100 over 150 produces a better-argued arbitrary
+choice.
+
+So each cell is re-decided under all 25 combinations and carries the share that agree. A verdict
+holding at every setting is a fact about the data. One holding at 80% is partly a fact about where
+someone put a constant, and it says so at the point of pricing rather than in a sweep nobody runs.
+Of 103 priceable sites, 86 are firm and 17 are not.
+
+This is the same move as recording a verdict against a stated rule, one level down. The rule was
+written where a reader could see it; now the rule's *inputs* are too.
+
 ## Why an override is by name, and never by softening the rule
 
 `pass_heavy` fails on a single out-of-sample cell whose held-out delta is −0.5 yards on 65 games.

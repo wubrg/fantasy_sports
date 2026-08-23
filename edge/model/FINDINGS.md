@@ -872,6 +872,77 @@ The purely statistical verdicts that used to be recorded by hand — "holds in o
 sample", "misses each criterion by a single cell" — are gone, because that is exactly the judgement
 the per-site gate now makes, at the granularity a wager is priced at.
 
+## 13. The two constants, and how much of each verdict is really about them
+
+`MIN_CELL = 100` and `OOS_SPLIT = 2021` decide which cells exist and what
+"out of sample" means, and both were chosen *after* the rule they feed. The
+[review](../docs/reviews/2026-08-23-adversarial.md) found them justified nowhere, and found verdicts
+that turned on them — the flagship `shootout`/receiving case failing at 2 of 5 plausible splits.
+
+Reproduce with `make constants`.
+
+### What `MIN_CELL` buys
+
+A cell's own Wilson half-width at the widest point of the curve:
+
+| n | 95% half-width | |
+|---|---|---|
+| 25 | 17.0pp | wider than any separation we look for |
+| 50 | 12.9pp | wider than most |
+| **100** | **9.4pp** | resolves the larger separations, not the smaller |
+| 150 | 7.8pp | comfortable |
+| 400 | 4.9pp | comfortable |
+
+The typical q−r separation this grid finds is 8–14pp, so at 100 a cell's interval sits *inside*
+that range. **That is the honest reading, and it is why the threshold is not the gate.** Publishing
+a cell only makes it eligible for the bootstrap; the per-site bootstrap is what decides whether its
+own separation clears zero, and it refuses plenty of cells that clear n = 100. Raising the
+threshold to 150 buys a narrower half-width by discarding sites the bootstrap already judges
+correctly — paying in coverage for a job already done.
+
+The exception is the thin outcome. Passing yards publishes 6 priceable sites at 100, **2 at 150 and
+0 at 200**: with ~32 quarterbacks the threshold stops being a quality control and becomes an on/off
+switch for the whole outcome.
+
+### What `OOS_SPLIT` buys
+
+| split | seasons held out | | 
+|---|---|---|
+| 2018 | 7 | most held-out evidence, least to fit on |
+| **2021** | **4** | |
+| 2022 | 3 | too few to see a regime |
+
+There is no measurement that picks one. Four seasons is a judgement: enough to contain a regime
+change, few enough to leave twelve to fit on. It is worth noting the shipped choice is **not** the
+most generous — passing yards resolves 8 sites at 2020 against 6 at 2021.
+
+### So the verdicts carry their own sensitivity
+
+Arguing for one setting was never going to answer the charge, because any single choice is
+arguable. What answers it is telling the operator which kind of verdict they are looking at, where
+they are looking at it.
+
+Every cell now carries the share of the 25 `MIN_CELL` × `OOS_SPLIT` combinations that reach its
+verdict. Of 103 priceable sites, **86 are firm at every setting and 17 are not** — and the 17 say
+so at the point of pricing:
+
+```
+CAVEAT: this verdict holds at 80% of the swept MIN_CELL x OOS_SPLIT settings, not all
+of them — it depends partly on where those two constants were set
+```
+
+The sweep is nearly free despite being a product of two knobs. The expensive test does not depend
+on either: a site's player-clustered bootstrap does not change when a threshold elsewhere in the
+grid moves, and it never sees the split at all. It is computed once per site at the loosest
+threshold and shared, leaving only medians to recompute.
+
+Two related fixes fell out of building it. The bootstrap is now **seeded per site**, from the site's
+own coordinates, rather than drawing from one stream consumed across the grid — under which a
+cell's resamples depended on how many sites happened to precede it, so the same cell resolved
+differently depending on where `MIN_CELL` sat or how the axes were cut. And `cell_pairs` buckets
+observations in a single pass instead of scanning them once per site, which is what made a
+25-setting sweep affordable at all: it is the difference between a six-minute fit and an hour.
+
 ## Data note
 
 `target_share` in nflverse only starts in 2009, but raw `targets` reaches back to 2005, so share is

@@ -220,6 +220,25 @@ nothing — this alone removes receptions/`blowout_loss` and rushing/`shootout`.
 was tested against a permutation null: it passes **1.6%** of site-tests when the scenario label is
 shuffled across games, against 38–75% for the real thing. See `FINDINGS.md` §12.
 
+### Every verdict says how much of it is the two constants
+
+`MIN_CELL = 100` and `OOS_SPLIT = 2021` decide which cells exist and what "out of sample" means,
+and both were chosen after the rule they feed. Rather than argue for one setting — any single
+choice is arguable — every cell carries the share of the 25 `MIN_CELL` × `OOS_SPLIT` combinations
+that reach its verdict. Of 103 priceable sites, **86 are firm at every setting and 17 are not**, and
+the 17 announce themselves where the price is formed:
+
+```
+CAVEAT: this verdict holds at 80% of the swept MIN_CELL x OOS_SPLIT settings, not all
+of them — it depends partly on where those two constants were set
+```
+
+`make constants` shows what each setting buys. The short version: at `MIN_CELL = 100` a cell's own
+Wilson half-width is 9.4pp against a typical q−r separation of 8–14pp, so the threshold resolves
+the larger separations and not the smaller — which is why it is not the gate. Publishing a cell
+only makes it eligible for the bootstrap, and the bootstrap refuses plenty that clear n = 100.
+See `FINDINGS.md` §13.
+
 ### A refused site can be overridden, loudly
 
 `ACCEPTED_FAILURES` is keyed by the **site** — outcome, scenario and the four coordinates — and is

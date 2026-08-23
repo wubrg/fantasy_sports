@@ -1242,3 +1242,54 @@ func TestGateIsScaleInvariant(t *testing.T) {
 	t.Error("every priceable pairing passes at ALL of its sites, which is what the " +
 		"old whole-scenario rule required; the per-site gate may not be in effect")
 }
+
+// TestStabilityTravelsWithTheVerdict is the answer to review finding S1:
+// MIN_CELL and OOS_SPLIT were chosen after the rule they feed, and nothing
+// recorded how much the published verdicts turned on them. A sweep in a
+// document would not have fixed that — the number has to reach the point of
+// pricing, or nobody sees it when it matters.
+func TestStabilityTravelsWithTheVerdict(t *testing.T) {
+	c := mustConditionals(t)
+	var measured, firm, fragile int
+	for _, cell := range c.Cells {
+		if cell.Stability == nil {
+			continue
+		}
+		measured++
+		if *cell.Stability < 0 || *cell.Stability > 1 {
+			t.Errorf("%s/%s at %s: stability %.3f is not a share",
+				cell.Outcome, cell.Scenario, cell.SiteLabel(), *cell.Stability)
+		}
+		if !cell.Validated {
+			continue
+		}
+		if cell.Firm() {
+			firm++
+			if cell.StabilityNote() != "" {
+				t.Errorf("%s/%s at %s is firm but still carries a caveat",
+					cell.Outcome, cell.Scenario, cell.SiteLabel())
+			}
+			continue
+		}
+		fragile++
+		// A priceable-but-knob-sensitive cell MUST announce itself.
+		if cell.StabilityNote() == "" {
+			t.Errorf("%s/%s at %s is priceable at only %.0f%% of settings and says nothing",
+				cell.Outcome, cell.Scenario, cell.SiteLabel(), *cell.Stability*100)
+		}
+	}
+	if measured == 0 {
+		t.Fatal("no cell carries a stability share; the sweep is not reaching the artifact")
+	}
+	// Both kinds must exist, or the measure is not discriminating: all-firm
+	// would mean the sweep never varies anything, all-fragile that the shipped
+	// constants are arbitrary.
+	if firm == 0 {
+		t.Error("no validated cell is firm across the sweep; the shipped constants look arbitrary")
+	}
+	if fragile == 0 {
+		t.Error("every validated cell is firm; the sweep is not varying anything " +
+			"and the stability number is decorative")
+	}
+	t.Logf("%d cells measured: %d firm, %d knob-sensitive", measured, firm, fragile)
+}

@@ -840,8 +840,19 @@ def main(argv):
             # artifact stays a statement about the data.
             ev = validate.evidence(obs, definition, outcome.axes(),
                                    MIN_CELL, False)
+            # The sweep runs FIRST and hands back the bootstrap it computed at
+            # the loosest threshold, so the expensive test runs once rather
+            # than twice over overlapping site sets.
+            stab = validate.verdict_stability(obs, definition, outcome.axes(), False)
             sv = validate.site_verdicts(obs, definition, outcome.axes(),
-                                        MIN_CELL, False, require_oos=True)
+                                        MIN_CELL, False, require_oos=True,
+                                        resolved=stab["resolved"])
+            # How much of each verdict is the data and how much is the two
+            # knobs. Stamped onto the cell so it travels with the number it
+            # qualifies, rather than living in a report nobody reads at the
+            # point of pricing.
+            for key, v in sv.items():
+                v["stability"] = stab["sites"].get(key, {}).get("share")
             sites_by[oname][scenario] = sv
             note = validate.note(ev)
             # .strip(): these are written as wrapped implicit-concat literals,
@@ -917,7 +928,13 @@ def main(argv):
 
             ok = sum(1 for v in sv.values() if v["priceable"])
             print(f"  {scenario:18} {note}")
-            print(f"  {'':18} {ok}/{len(sv)} sites priceable   sign p={p_sign:.4f}"
+            # FIRM means every one of the 25 MIN_CELL x OOS_SPLIT settings
+            # agrees. Anything short of that is a verdict the knobs can move,
+            # and is labelled rather than quietly counted as a pass.
+            firm = sum(1 for v in sv.values()
+                       if v["priceable"] and (v.get("stability") or 0) >= 1.0)
+            print(f"  {'':18} {ok}/{len(sv)} sites priceable ({firm} firm at every "
+                  f"knob setting)   sign p={p_sign:.4f}"
                   + ("  [VETOED]" if veto else "")
                   + ("  [NO DIRECTION]" if incoherent else ""))
             if qualifies(ev) != (ok == len(sv)):
@@ -980,6 +997,10 @@ def main(argv):
                                         ["this cell has no opposite half above "
                                          f"n={MIN_CELL}, so no q/r pair exists here"]),
                                 "override": (sv or {}).get("override"),
+                                # The share of MIN_CELL x OOS_SPLIT settings
+                                # under which this site is priceable. None
+                                # where no setting publishes the site at all.
+                                "stability": (sv or {}).get("stability"),
                                 "posted_min": combo[0][0],
                                 "posted_max": combo[0][1],
                                 "baseline_min": combo[1][0],

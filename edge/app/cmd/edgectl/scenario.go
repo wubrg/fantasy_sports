@@ -289,6 +289,12 @@ func resolveConditionals(
 	fmt.Printf("    %.1f %s baseline, posted total %.1f, %+.1f%s trend\n",
 		at.Baseline, unit, at.Posted, at.Trend*trendScale, trendUnit)
 	fmt.Printf("    line %.1f = %.2fx his baseline\n", line, line/at.Baseline)
+	// The gate's own dependence on its two constants, stated where the number
+	// is used. A verdict that moves when MIN_CELL moves is still a verdict,
+	// but the operator should not have to run a sweep to find that out.
+	if note := qc.Cell.StabilityNote(); note != "" {
+		fmt.Printf("    CAVEAT: %s\n", note)
+	}
 	// n_eff is shown beside n, not instead of it. The interval is built on the
 	// smaller number, and printing only the raw count would overstate the
 	// evidence behind the interval printed next to it.

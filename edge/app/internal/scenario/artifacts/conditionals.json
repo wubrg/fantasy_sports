@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-23T17:29:34Z",
+ "generated_at": "2026-08-23T18:52:42Z",
  "generated_by": "edge/model/analysis/fit_conditionals.py",
  "outcomes": {
   "receiving_yards": {
@@ -537,7 +537,7 @@
     "validated": false,
     "sites": 23,
     "sites_priceable": 0,
-    "note": "negative in 17/23 cells; 3/23 bootstrap-resolved; 11/17 out of sample; 6 sub-noise crossings",
+    "note": "negative in 17/23 cells; 4/23 bootstrap-resolved; 11/17 out of sample; 6 sub-noise crossings",
     "evidence": {
      "cells": 23,
      "consistent": 17,
@@ -629,7 +629,7 @@
        "median_delta": 0.08391714027857844
       }
      ],
-     "resolved": 3,
+     "resolved": 4,
      "oos_cells": 17,
      "oos_agree": 11,
      "bootstrap_resamples": 1000,
@@ -646,7 +646,7 @@
     "validated": false,
     "sites": 29,
     "sites_priceable": 0,
-    "note": "positive in 28/29 cells; 16/29 bootstrap-resolved; 19/22 out of sample; 7 sub-noise crossings",
+    "note": "positive in 28/29 cells; 18/29 bootstrap-resolved; 19/22 out of sample; 7 sub-noise crossings",
     "evidence": {
      "cells": 29,
      "consistent": 28,
@@ -738,7 +738,7 @@
        "median_delta": 0.18881517867692987
       }
      ],
-     "resolved": 16,
+     "resolved": 18,
      "oos_cells": 22,
      "oos_agree": 19,
      "bootstrap_resamples": 1000,
@@ -863,8 +863,8 @@
    "shootout": {
     "validated": true,
     "sites": 30,
-    "sites_priceable": 10,
-    "note": "positive in 29/30 cells; 11/30 bootstrap-resolved; 20/26 out of sample; 2 sub-noise crossings",
+    "sites_priceable": 11,
+    "note": "positive in 29/30 cells; 12/30 bootstrap-resolved; 20/26 out of sample; 2 sub-noise crossings",
     "evidence": {
      "cells": 30,
      "consistent": 29,
@@ -900,7 +900,7 @@
        "median_delta": 0.10840579710144926
       }
      ],
-     "resolved": 11,
+     "resolved": 12,
      "oos_cells": 26,
      "oos_agree": 20,
      "bootstrap_resamples": 1000,
@@ -915,7 +915,7 @@
     "validated": false,
     "sites": 26,
     "sites_priceable": 0,
-    "note": "positive in 13/26 cells; 4/26 bootstrap-resolved; 7/21 out of sample; 3 sub-noise crossings",
+    "note": "positive in 13/26 cells; 2/26 bootstrap-resolved; 7/21 out of sample; 3 sub-noise crossings",
     "evidence": {
      "cells": 26,
      "consistent": 13,
@@ -965,7 +965,7 @@
        "median_delta": 0.1071428571428571
       }
      ],
-     "resolved": 4,
+     "resolved": 2,
      "oos_cells": 21,
      "oos_agree": 7,
      "bootstrap_resamples": 1000,
@@ -1367,14 +1367,14 @@
     "validated": false,
     "sites": 7,
     "sites_priceable": 0,
-    "note": "negative in 6/7 cells; 3/7 bootstrap-resolved; 1/3 out of sample",
+    "note": "negative in 6/7 cells; 4/7 bootstrap-resolved; 1/3 out of sample",
     "evidence": {
      "cells": 7,
      "consistent": 6,
      "sign": "negative",
      "inversions": 0,
      "inversion_detail": [],
-     "resolved": 3,
+     "resolved": 4,
      "oos_cells": 3,
      "oos_agree": 1,
      "bootstrap_resamples": 1000,
@@ -1440,6 +1440,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -1666,6 +1667,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -1891,9 +1893,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.039, +0.287]"
+    "the bootstrap interval does not clear zero [-0.054, +0.305]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -2119,10 +2122,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.141, +0.328]",
+    "the bootstrap interval does not clear zero [-0.127, +0.311]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -2348,9 +2352,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.046, +0.296]"
+    "the bootstrap interval does not clear zero [-0.036, +0.278]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -2577,6 +2582,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -2803,6 +2809,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -3028,10 +3035,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.07, +0.333]",
+    "the bootstrap interval does not clear zero [-0.062, +0.314]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -3258,6 +3266,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -3484,6 +3493,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -3709,10 +3719,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.023, +0.341]",
+    "the bootstrap interval does not clear zero [-0.031, +0.343]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -3941,6 +3952,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -4169,6 +4181,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -4394,9 +4407,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.007, +0.256]"
+    "the bootstrap interval does not clear zero [-0.003, +0.244]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -4625,6 +4639,7 @@
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -4851,6 +4866,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -5076,9 +5092,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.055, +0.415]"
+    "the bootstrap interval does not clear zero [-0.045, +0.44]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -5304,9 +5321,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.039, +0.206]"
+    "the bootstrap interval does not clear zero [-0.04, +0.208]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -5533,6 +5551,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -5758,9 +5777,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.021, +0.323]"
+    "the bootstrap interval does not clear zero [-0.015, +0.313]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -5986,10 +6006,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.087, +0.486]",
+    "the bootstrap interval does not clear zero [-0.097, +0.465]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -6216,6 +6237,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -6442,6 +6464,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -6667,10 +6690,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.135, +0.198]",
+    "the bootstrap interval does not clear zero [-0.127, +0.201]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -6897,6 +6921,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -7122,9 +7147,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.06, +0.172]"
+    "the bootstrap interval does not clear zero [-0.071, +0.186]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -7351,6 +7377,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -7577,6 +7604,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -7802,10 +7830,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.071, +0.285]",
+    "the bootstrap interval does not clear zero [-0.097, +0.282]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -8032,6 +8061,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -8258,6 +8288,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -8483,9 +8514,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.039, +0.287]"
+    "the bootstrap interval does not clear zero [-0.054, +0.305]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -8711,10 +8743,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.141, +0.328]",
+    "the bootstrap interval does not clear zero [-0.127, +0.311]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -8940,9 +8973,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.046, +0.296]"
+    "the bootstrap interval does not clear zero [-0.036, +0.278]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -9169,6 +9203,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -9395,6 +9430,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -9620,10 +9656,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.07, +0.333]",
+    "the bootstrap interval does not clear zero [-0.062, +0.314]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -9850,6 +9887,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -10076,6 +10114,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -10301,10 +10340,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.023, +0.341]",
+    "the bootstrap interval does not clear zero [-0.031, +0.343]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -10533,6 +10573,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -10761,6 +10802,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -10989,6 +11031,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -11217,6 +11260,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -11445,6 +11489,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -11670,9 +11715,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.007, +0.256]"
+    "the bootstrap interval does not clear zero [-0.003, +0.244]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -11901,6 +11947,7 @@
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -12127,6 +12174,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -12352,9 +12400,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.055, +0.415]"
+    "the bootstrap interval does not clear zero [-0.045, +0.44]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -12580,9 +12629,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.039, +0.206]"
+    "the bootstrap interval does not clear zero [-0.04, +0.208]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -12809,6 +12859,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -13034,9 +13085,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.021, +0.323]"
+    "the bootstrap interval does not clear zero [-0.015, +0.313]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -13262,10 +13314,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.087, +0.486]",
+    "the bootstrap interval does not clear zero [-0.097, +0.465]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -13492,6 +13545,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -13718,6 +13772,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -13943,10 +13998,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.135, +0.198]",
+    "the bootstrap interval does not clear zero [-0.127, +0.201]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -14173,6 +14229,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -14398,9 +14455,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.06, +0.172]"
+    "the bootstrap interval does not clear zero [-0.071, +0.186]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -14627,6 +14685,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -14853,6 +14912,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -15078,10 +15138,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.071, +0.285]",
+    "the bootstrap interval does not clear zero [-0.097, +0.282]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -15310,6 +15371,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -15538,6 +15600,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -15766,6 +15829,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -15994,6 +16058,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -16222,6 +16287,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -16450,6 +16516,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -16678,6 +16745,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -16906,6 +16974,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -17134,6 +17203,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.4,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -17362,6 +17432,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -17590,6 +17661,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -17818,6 +17890,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -18046,6 +18119,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -18274,6 +18348,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -18502,6 +18577,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -18730,6 +18806,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -18958,6 +19035,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -19186,6 +19264,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -19414,6 +19493,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -19642,6 +19722,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -19870,6 +19951,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -20098,6 +20180,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -20326,6 +20409,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -20554,6 +20638,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -20782,6 +20867,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -21010,6 +21096,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -21238,6 +21325,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -21466,6 +21554,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -21694,6 +21783,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -21922,6 +22012,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -22150,6 +22241,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -22378,6 +22470,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.4,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -22606,6 +22699,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -22834,6 +22928,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -23062,6 +23157,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -23290,6 +23386,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -23518,6 +23615,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -23746,6 +23844,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -23974,6 +24073,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -24202,6 +24302,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -24430,6 +24531,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -24658,6 +24760,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -24886,6 +24989,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -25114,6 +25218,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -25342,6 +25447,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -25570,6 +25676,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -25798,6 +25905,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -26026,6 +26134,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -26254,6 +26363,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -26482,6 +26592,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -26710,6 +26821,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -26938,6 +27050,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -27166,6 +27279,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -27394,6 +27508,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -27622,6 +27737,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -27850,6 +27966,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -28078,6 +28195,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -28306,6 +28424,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -28534,6 +28653,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -28762,6 +28882,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -28990,6 +29111,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -29218,6 +29340,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -29446,6 +29569,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -29674,6 +29798,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -29902,6 +30027,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -30130,6 +30256,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -30358,6 +30485,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -30586,6 +30714,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -30814,6 +30943,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -31042,6 +31172,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -31270,6 +31401,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -31498,6 +31630,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -31726,6 +31859,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -31954,6 +32088,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -32182,6 +32317,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -32410,6 +32546,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -32638,6 +32775,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -32866,6 +33004,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -33094,6 +33233,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -33322,6 +33462,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -33550,6 +33691,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -33778,6 +33920,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -34006,6 +34149,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -34234,6 +34378,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -34462,6 +34607,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -34690,6 +34836,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -34918,6 +35065,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -35146,6 +35294,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -35374,6 +35523,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -35602,6 +35752,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -35830,6 +35981,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -36058,6 +36210,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -36286,6 +36439,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -36514,6 +36668,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -36742,6 +36897,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -36970,6 +37126,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -37198,6 +37355,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -37426,6 +37584,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -37654,6 +37813,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -37882,6 +38042,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -38110,6 +38271,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -38338,6 +38500,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -38566,6 +38729,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -38794,6 +38958,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -39022,6 +39187,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -39250,6 +39416,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -39478,6 +39645,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -39706,6 +39874,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -39934,6 +40103,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -40162,6 +40332,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -40390,6 +40561,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -40618,6 +40790,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -40846,6 +41019,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -41074,6 +41248,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -41302,6 +41477,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -41530,6 +41706,7 @@
     "the operator vetoed this pairing"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -41755,10 +41932,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.051, +0.15]",
+    "the bootstrap interval does not clear zero [-0.067, +0.14]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -41985,6 +42163,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -42211,6 +42390,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -42436,9 +42616,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.16, +0.283]"
+    "the bootstrap interval does not clear zero [-0.185, +0.291]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -42665,6 +42846,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -42891,6 +43073,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -43116,10 +43299,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.115, +0.253]",
+    "the bootstrap interval does not clear zero [-0.108, +0.243]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -43345,10 +43529,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.116, +0.199]",
+    "the bootstrap interval does not clear zero [-0.123, +0.209]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -43574,9 +43759,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.048, +0.226]"
+    "the bootstrap interval does not clear zero [-0.057, +0.229]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -43803,6 +43989,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -44031,6 +44218,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -44256,10 +44444,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.016, +0.247]",
+    "the bootstrap interval does not clear zero [-0.005, +0.249]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -44488,6 +44677,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -44713,9 +44903,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.022, +0.167]"
+    "the bootstrap interval does not clear zero [-0.026, +0.166]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -44942,6 +45133,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -45168,6 +45360,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -45393,10 +45586,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.13, +0.219]",
+    "the bootstrap interval does not clear zero [-0.136, +0.221]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -45623,6 +45817,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -45848,9 +46043,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.093, +0.171]"
+    "the bootstrap interval does not clear zero [-0.086, +0.178]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -46077,6 +46273,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -46302,9 +46499,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.049, +0.275]"
+    "the bootstrap interval does not clear zero [-0.037, +0.273]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -46530,10 +46728,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.04, +0.395]",
+    "the bootstrap interval does not clear zero [-0.034, +0.393]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -46759,10 +46958,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.157, +0.107]",
+    "the bootstrap interval does not clear zero [-0.158, +0.105]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -46989,6 +47189,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -47214,10 +47415,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.095, +0.227]",
+    "the bootstrap interval does not clear zero [-0.106, +0.224]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -47444,6 +47646,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -47669,9 +47872,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.045, +0.227]"
+    "the bootstrap interval does not clear zero [-0.049, +0.215]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -47898,6 +48102,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -48126,6 +48331,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -48351,10 +48557,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.03, +0.278]",
+    "the bootstrap interval does not clear zero [-0.011, +0.28]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -48580,10 +48787,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.051, +0.15]",
+    "the bootstrap interval does not clear zero [-0.067, +0.14]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -48810,6 +49018,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -49036,6 +49245,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -49261,9 +49471,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.16, +0.283]"
+    "the bootstrap interval does not clear zero [-0.185, +0.291]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -49490,6 +49701,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -49716,6 +49928,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -49941,10 +50154,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.115, +0.253]",
+    "the bootstrap interval does not clear zero [-0.108, +0.243]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -50170,10 +50384,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.116, +0.199]",
+    "the bootstrap interval does not clear zero [-0.123, +0.209]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 35,
@@ -50399,9 +50614,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.048, +0.226]"
+    "the bootstrap interval does not clear zero [-0.057, +0.229]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -50628,6 +50844,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -50856,6 +51073,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -51081,10 +51299,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.016, +0.247]",
+    "the bootstrap interval does not clear zero [-0.005, +0.249]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 50,
@@ -51313,6 +51532,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -51538,9 +51758,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.022, +0.167]"
+    "the bootstrap interval does not clear zero [-0.026, +0.166]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -51769,6 +51990,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -51997,6 +52219,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 70,
@@ -52223,6 +52446,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -52449,6 +52673,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -52674,10 +52899,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.13, +0.219]",
+    "the bootstrap interval does not clear zero [-0.136, +0.221]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -52904,6 +53130,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -53129,9 +53356,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.093, +0.171]"
+    "the bootstrap interval does not clear zero [-0.086, +0.178]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -53358,6 +53586,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -53583,9 +53812,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.049, +0.275]"
+    "the bootstrap interval does not clear zero [-0.037, +0.273]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -53811,10 +54041,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.04, +0.395]",
+    "the bootstrap interval does not clear zero [-0.034, +0.393]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 35,
@@ -54040,10 +54271,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.157, +0.107]",
+    "the bootstrap interval does not clear zero [-0.158, +0.105]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -54270,6 +54502,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -54495,10 +54728,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.095, +0.227]",
+    "the bootstrap interval does not clear zero [-0.106, +0.224]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -54725,6 +54959,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 50,
@@ -54950,9 +55185,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.045, +0.227]"
+    "the bootstrap interval does not clear zero [-0.049, +0.215]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -55179,6 +55415,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -55407,6 +55644,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -55632,10 +55870,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.03, +0.278]",
+    "the bootstrap interval does not clear zero [-0.011, +0.28]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 70,
@@ -55862,6 +56101,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -56088,6 +56328,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -56313,10 +56554,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.083, +0.311]",
+    "the bootstrap interval does not clear zero [-0.093, +0.308]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -56542,9 +56784,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.041, +0.494]"
+    "the bootstrap interval does not clear zero [-0.049, +0.441]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -56770,10 +57013,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.068, +0.142]",
+    "the bootstrap interval does not clear zero [-0.068, +0.145]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -57000,6 +57244,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -57225,9 +57470,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.029, +0.209]"
+    "the bootstrap interval does not clear zero [-0.042, +0.226]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -57454,10 +57700,11 @@
    "validated": false,
    "why": [
     "delta -0.066 runs against the scenario's positive direction",
-    "the bootstrap interval does not clear zero [-0.193, +0.095]",
+    "the bootstrap interval does not clear zero [-0.186, +0.094]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -57684,6 +57931,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -57910,6 +58158,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -58135,9 +58384,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.076, +0.277]"
+    "the bootstrap interval does not clear zero [-0.079, +0.272]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -58363,10 +58613,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.019, +0.233]",
+    "the bootstrap interval does not clear zero [-0.007, +0.235]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -58592,10 +58843,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.011, +0.246]",
+    "the bootstrap interval does not clear zero [-0.009, +0.246]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -58822,6 +59074,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -59047,10 +59300,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.135, +0.113]",
+    "the bootstrap interval does not clear zero [-0.128, +0.113]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -59277,6 +59531,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -59502,9 +59757,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.04, +0.365]"
+    "the bootstrap interval does not clear zero [-0.04, +0.361]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -59733,6 +59989,7 @@
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -59958,9 +60215,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.058, +0.097]"
+    "the bootstrap interval does not clear zero [-0.055, +0.111]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -60187,6 +60445,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -60410,11 +60669,10 @@
    "outcome": "receptions",
    "scenario": "shootout",
    "occurred": true,
-   "validated": false,
-   "why": [
-    "the bootstrap interval does not clear zero [-0.007, +0.284]"
-   ],
+   "validated": true,
+   "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -60640,9 +60898,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.022, +0.329]"
+    "the bootstrap interval does not clear zero [-0.027, +0.33]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -60868,9 +61127,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.004, +0.147]"
+    "the bootstrap interval does not clear zero [-0.008, +0.158]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -61096,10 +61356,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.07, +0.084]",
+    "the bootstrap interval does not clear zero [-0.067, +0.095]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -61325,9 +61586,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.044, +0.144]"
+    "the bootstrap interval does not clear zero [-0.041, +0.135]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -61554,6 +61816,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -61779,9 +62042,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.015, +0.14]"
+    "the bootstrap interval does not clear zero [-0.013, +0.134]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -62008,6 +62272,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -62233,10 +62498,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.049, +0.257]",
+    "the bootstrap interval does not clear zero [-0.066, +0.24]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -62462,10 +62728,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.192, +0.193]",
+    "the bootstrap interval does not clear zero [-0.191, +0.185]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -62692,6 +62959,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -62918,6 +63186,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -63143,10 +63412,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.083, +0.311]",
+    "the bootstrap interval does not clear zero [-0.093, +0.308]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -63372,9 +63642,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.041, +0.494]"
+    "the bootstrap interval does not clear zero [-0.049, +0.441]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -63600,10 +63871,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.068, +0.142]",
+    "the bootstrap interval does not clear zero [-0.068, +0.145]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -63830,6 +64102,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -64055,9 +64328,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.029, +0.209]"
+    "the bootstrap interval does not clear zero [-0.042, +0.226]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -64284,10 +64558,11 @@
    "validated": false,
    "why": [
     "delta -0.066 runs against the scenario's positive direction",
-    "the bootstrap interval does not clear zero [-0.193, +0.095]",
+    "the bootstrap interval does not clear zero [-0.186, +0.094]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -64514,6 +64789,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -64740,6 +65016,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -64965,9 +65242,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.076, +0.277]"
+    "the bootstrap interval does not clear zero [-0.079, +0.272]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -65193,10 +65471,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.019, +0.233]",
+    "the bootstrap interval does not clear zero [-0.007, +0.235]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -65422,10 +65701,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.011, +0.246]",
+    "the bootstrap interval does not clear zero [-0.009, +0.246]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -65652,6 +65932,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -65880,6 +66161,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -66108,6 +66390,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -66333,10 +66616,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.135, +0.113]",
+    "the bootstrap interval does not clear zero [-0.128, +0.113]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -66563,6 +66847,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -66788,9 +67073,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.04, +0.365]"
+    "the bootstrap interval does not clear zero [-0.04, +0.361]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -67019,6 +67305,7 @@
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -67244,9 +67531,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.058, +0.097]"
+    "the bootstrap interval does not clear zero [-0.055, +0.111]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -67473,6 +67761,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -67696,11 +67985,10 @@
    "outcome": "receptions",
    "scenario": "shootout",
    "occurred": false,
-   "validated": false,
-   "why": [
-    "the bootstrap interval does not clear zero [-0.007, +0.284]"
-   ],
+   "validated": true,
+   "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -67926,9 +68214,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.022, +0.329]"
+    "the bootstrap interval does not clear zero [-0.027, +0.33]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -68154,9 +68443,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.004, +0.147]"
+    "the bootstrap interval does not clear zero [-0.008, +0.158]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -68382,10 +68672,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.07, +0.084]",
+    "the bootstrap interval does not clear zero [-0.067, +0.095]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -68611,9 +68902,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.044, +0.144]"
+    "the bootstrap interval does not clear zero [-0.041, +0.135]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -68840,6 +69132,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -69065,9 +69358,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.015, +0.14]"
+    "the bootstrap interval does not clear zero [-0.013, +0.134]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -69294,6 +69588,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -69519,10 +69814,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.049, +0.257]",
+    "the bootstrap interval does not clear zero [-0.066, +0.24]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -69748,10 +70044,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.192, +0.193]",
+    "the bootstrap interval does not clear zero [-0.191, +0.185]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -69980,6 +70277,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -70208,6 +70506,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -70436,6 +70735,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -70664,6 +70964,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -70892,6 +71193,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -71120,6 +71422,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -71348,6 +71651,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -71576,6 +71880,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -71804,6 +72109,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -72032,6 +72338,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -72260,6 +72567,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -72488,6 +72796,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -72716,6 +73025,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -72944,6 +73254,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -73172,6 +73483,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -73400,6 +73712,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -73628,6 +73941,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -73856,6 +74170,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -74084,6 +74399,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -74312,6 +74628,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -74540,6 +74857,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -74768,6 +75086,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -74996,6 +75315,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -75224,6 +75544,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -75452,6 +75773,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -75680,6 +76002,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.08,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -75908,6 +76231,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -76136,6 +76460,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -76364,6 +76689,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -76592,6 +76918,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -76820,6 +77147,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -77048,6 +77376,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -77276,6 +77605,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -77504,6 +77834,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -77732,6 +78063,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -77960,6 +78292,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -78188,6 +78521,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -78416,6 +78750,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -78644,6 +78979,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -78872,6 +79208,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -79100,6 +79437,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -79328,6 +79666,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -79556,6 +79895,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -79784,6 +80124,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -80012,6 +80353,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -80240,6 +80582,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -80468,6 +80811,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -80696,6 +81040,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -80924,6 +81269,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -81152,6 +81498,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -81380,6 +81727,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -81608,6 +81956,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -81836,6 +82185,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -82064,6 +82414,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -82292,6 +82643,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -82520,6 +82872,7 @@
     "the scenario has no established direction: it leans one way in only 13 of 26 cells (p=1.000)"
    ],
    "override": null,
+   "stability": 0.08,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -82748,6 +83101,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -82976,6 +83330,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -83201,9 +83556,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.061, +0.177]"
+    "the bootstrap interval does not clear zero [-0.061, +0.169]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -83430,6 +83786,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -83656,6 +84013,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -83882,6 +84240,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -84108,6 +84467,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -84334,6 +84694,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -84560,6 +84921,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -84785,9 +85147,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.071, +0.273]"
+    "the bootstrap interval does not clear zero [-0.065, +0.262]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -85014,6 +85377,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -85240,6 +85604,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -85466,6 +85831,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -85694,6 +86060,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -85922,6 +86289,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -86148,6 +86516,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -86373,9 +86742,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.026, +0.228]"
+    "the bootstrap interval does not clear zero [-0.025, +0.242]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -86602,6 +86972,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -86827,10 +87198,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.024, +0.408]",
+    "the bootstrap interval does not clear zero [-0.059, +0.408]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -87056,10 +87428,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.014, +0.777]",
+    "the bootstrap interval does not clear zero [-0.013, +0.771]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -87286,6 +87659,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -87512,6 +87886,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -87737,10 +88112,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.043, +0.268]",
+    "the bootstrap interval does not clear zero [-0.045, +0.271]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -87966,9 +88342,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.126, +0.275]"
+    "the bootstrap interval does not clear zero [-0.13, +0.281]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -88195,6 +88572,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -88421,6 +88799,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -88647,6 +89026,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -88872,10 +89252,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.035, +0.192]",
+    "the bootstrap interval does not clear zero [-0.025, +0.186]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -89102,6 +89483,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -89328,6 +89710,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -89553,10 +89936,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.036, +0.247]",
+    "the bootstrap interval does not clear zero [-0.027, +0.232]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -89782,10 +90166,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.016, +0.315]",
+    "the bootstrap interval does not clear zero [-0.015, +0.312]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -90011,9 +90396,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.061, +0.177]"
+    "the bootstrap interval does not clear zero [-0.061, +0.169]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -90240,6 +90626,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -90466,6 +90853,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -90692,6 +91080,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -90918,6 +91307,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -91144,6 +91534,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -91370,6 +91761,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -91595,9 +91987,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.071, +0.273]"
+    "the bootstrap interval does not clear zero [-0.065, +0.262]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -91824,6 +92217,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -92050,6 +92444,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -92276,6 +92671,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -92504,6 +92900,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -92732,6 +93129,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -92958,6 +93356,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -93186,6 +93585,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -93414,6 +93814,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -93639,9 +94040,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.026, +0.228]"
+    "the bootstrap interval does not clear zero [-0.025, +0.242]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -93868,6 +94270,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -94093,10 +94496,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.024, +0.408]",
+    "the bootstrap interval does not clear zero [-0.059, +0.408]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -94322,10 +94726,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.014, +0.777]",
+    "the bootstrap interval does not clear zero [-0.013, +0.771]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -94552,6 +94957,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -94778,6 +95184,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -95003,10 +95410,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.043, +0.268]",
+    "the bootstrap interval does not clear zero [-0.045, +0.271]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -95232,9 +95640,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.126, +0.275]"
+    "the bootstrap interval does not clear zero [-0.13, +0.281]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -95461,6 +95870,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -95687,6 +96097,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -95913,6 +96324,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -96138,10 +96550,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.035, +0.192]",
+    "the bootstrap interval does not clear zero [-0.025, +0.186]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -96368,6 +96781,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -96594,6 +97008,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -96819,10 +97234,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.036, +0.247]",
+    "the bootstrap interval does not clear zero [-0.027, +0.232]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -97048,10 +97464,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.016, +0.315]",
+    "the bootstrap interval does not clear zero [-0.015, +0.312]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -97277,10 +97694,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.043, +0.173]",
+    "the bootstrap interval does not clear zero [-0.034, +0.167]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -97507,6 +97925,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -97733,10 +98152,11 @@
    "validated": false,
    "why": [
     "delta +0 runs against the scenario's positive direction",
-    "the bootstrap interval does not clear zero [-0.1, +0.288]",
+    "the bootstrap interval does not clear zero [-0.111, +0.29]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -97962,10 +98382,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.09, +0.444]",
+    "the bootstrap interval does not clear zero [-0.111, +0.46]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -98191,10 +98612,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.033, +0.129]",
+    "the bootstrap interval does not clear zero [-0.04, +0.124]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -98421,6 +98843,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -98647,6 +99070,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -98872,10 +99296,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.16, +0.13]",
+    "the bootstrap interval does not clear zero [-0.175, +0.122]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -99102,6 +99527,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -99328,6 +99754,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -99554,6 +99981,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -99779,10 +100207,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.016, +0.216]",
+    "the bootstrap interval does not clear zero [-0.019, +0.231]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -100011,6 +100440,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -100236,9 +100666,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.043, +0.143]"
+    "the bootstrap interval does not clear zero [-0.033, +0.15]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -100464,10 +100895,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.079, +0.19]",
+    "the bootstrap interval does not clear zero [-0.078, +0.187]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -100696,6 +101128,7 @@
     "the bootstrap interval does not clear zero [-0.052, +0.111]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -100922,10 +101355,11 @@
    "validated": false,
    "why": [
     "delta -0.11 runs against the scenario's positive direction",
-    "the bootstrap interval does not clear zero [-0.333, +0.067]",
+    "the bootstrap interval does not clear zero [-0.327, +0.091]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -101151,9 +101585,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.011, +0.655]"
+    "the bootstrap interval does not clear zero [-0.011, +0.637]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -101379,10 +101814,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.073, +0.078]",
+    "the bootstrap interval does not clear zero [-0.073, +0.085]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -101609,6 +102045,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -101834,9 +102271,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.056, +0.278]"
+    "the bootstrap interval does not clear zero [-0.04, +0.274]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -102065,6 +102503,7 @@
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.4,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -102290,10 +102729,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.046, +0.106]",
+    "the bootstrap interval does not clear zero [-0.043, +0.101]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -102522,6 +102962,7 @@
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.4,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -102747,10 +103188,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.013, +0.158]",
+    "the bootstrap interval does not clear zero [-0.009, +0.168]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -102976,10 +103418,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.024, +0.199]",
+    "the bootstrap interval does not clear zero [-0.027, +0.208]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -103206,6 +103649,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -103432,6 +103876,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -103657,10 +104102,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.104, +0.193]",
+    "the bootstrap interval does not clear zero [-0.125, +0.203]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -103886,10 +104332,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.017, +0.311]",
+    "the bootstrap interval does not clear zero [-0.025, +0.312]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -104115,10 +104562,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.043, +0.173]",
+    "the bootstrap interval does not clear zero [-0.034, +0.167]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -104345,6 +104793,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -104571,10 +105020,11 @@
    "validated": false,
    "why": [
     "delta +0 runs against the scenario's positive direction",
-    "the bootstrap interval does not clear zero [-0.1, +0.288]",
+    "the bootstrap interval does not clear zero [-0.111, +0.29]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -104800,10 +105250,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.09, +0.444]",
+    "the bootstrap interval does not clear zero [-0.111, +0.46]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 0,
@@ -105029,10 +105480,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.033, +0.129]",
+    "the bootstrap interval does not clear zero [-0.04, +0.124]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -105259,6 +105711,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -105485,6 +105938,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -105710,10 +106164,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.16, +0.13]",
+    "the bootstrap interval does not clear zero [-0.175, +0.122]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 2.5,
@@ -105940,6 +106395,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -106166,6 +106622,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -106392,6 +106849,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -106617,10 +107075,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.016, +0.216]",
+    "the bootstrap interval does not clear zero [-0.019, +0.231]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 4,
@@ -106849,6 +107308,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -107074,9 +107534,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.043, +0.143]"
+    "the bootstrap interval does not clear zero [-0.033, +0.15]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -107305,6 +107766,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -107533,6 +107995,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 46,
    "baseline_min": 5.5,
@@ -107758,10 +108221,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.079, +0.19]",
+    "the bootstrap interval does not clear zero [-0.078, +0.187]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -107990,6 +108454,7 @@
     "the bootstrap interval does not clear zero [-0.052, +0.111]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -108216,10 +108681,11 @@
    "validated": false,
    "why": [
     "delta -0.11 runs against the scenario's positive direction",
-    "the bootstrap interval does not clear zero [-0.333, +0.067]",
+    "the bootstrap interval does not clear zero [-0.327, +0.091]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -108445,9 +108911,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.011, +0.655]"
+    "the bootstrap interval does not clear zero [-0.011, +0.637]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 0,
@@ -108673,10 +109140,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.073, +0.078]",
+    "the bootstrap interval does not clear zero [-0.073, +0.085]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -108903,6 +109371,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -109128,9 +109597,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.056, +0.278]"
+    "the bootstrap interval does not clear zero [-0.04, +0.274]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -109359,6 +109829,7 @@
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.4,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 2.5,
@@ -109584,10 +110055,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.046, +0.106]",
+    "the bootstrap interval does not clear zero [-0.043, +0.101]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -109816,6 +110288,7 @@
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.4,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -110041,10 +110514,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.013, +0.158]",
+    "the bootstrap interval does not clear zero [-0.009, +0.168]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -110270,10 +110744,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.024, +0.199]",
+    "the bootstrap interval does not clear zero [-0.027, +0.208]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 4,
@@ -110500,6 +110975,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -110726,6 +111202,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -110951,10 +111428,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.104, +0.193]",
+    "the bootstrap interval does not clear zero [-0.125, +0.203]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -111180,10 +111658,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.017, +0.311]",
+    "the bootstrap interval does not clear zero [-0.025, +0.312]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 46,
    "posted_max": 999,
    "baseline_min": 5.5,
@@ -111412,6 +111891,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -111640,6 +112120,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -111868,6 +112349,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -112096,6 +112578,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -112324,6 +112807,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -112552,6 +113036,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -112780,6 +113265,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -113008,6 +113494,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -113236,6 +113723,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -113464,6 +113952,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -113692,6 +114181,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -113920,6 +114410,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 80,
@@ -114148,6 +114639,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -114376,6 +114868,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -114604,6 +115097,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -114832,6 +115326,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -115060,6 +115555,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -115288,6 +115784,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -115516,6 +116013,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -115744,6 +116242,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -115972,6 +116471,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -116200,6 +116700,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -116428,6 +116929,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -116656,6 +117158,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -116884,6 +117387,7 @@
     "the scenario has no established direction: it leans one way in only 9 of 12 cells (p=0.146)"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 80,
@@ -117112,6 +117616,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 80,
@@ -117337,9 +117842,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.218, +0.044]"
+    "the bootstrap interval does not clear zero [-0.226, +0.049]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -117566,6 +118072,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -117791,9 +118298,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.502, +0.075]"
+    "the bootstrap interval does not clear zero [-0.489, +0.033]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -118020,6 +118528,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -118246,6 +118755,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -118472,6 +118982,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -118698,6 +119209,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -118924,6 +119436,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -119152,6 +119665,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -119378,6 +119892,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -119604,6 +120119,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 80,
@@ -119829,9 +120345,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.218, +0.044]"
+    "the bootstrap interval does not clear zero [-0.226, +0.049]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -120058,6 +120575,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -120283,9 +120801,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.502, +0.075]"
+    "the bootstrap interval does not clear zero [-0.489, +0.033]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -120512,6 +121031,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -120738,6 +121258,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -120964,6 +121485,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -121190,6 +121712,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -121416,6 +121939,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -121644,6 +122168,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -121870,6 +122395,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -122098,6 +122624,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -122326,6 +122853,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -122552,6 +123080,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 80,
@@ -122780,6 +123309,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 80,
@@ -123006,6 +123536,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -123232,6 +123763,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -123458,6 +123990,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -123684,6 +124217,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -123910,6 +124444,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -124136,6 +124671,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -124362,6 +124898,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -124590,6 +125127,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -124818,6 +125356,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -125044,6 +125583,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -125272,6 +125812,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -125500,6 +126041,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.4,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 80,
@@ -125726,6 +126268,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -125952,6 +126495,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -126178,6 +126722,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -126404,6 +126949,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -126630,6 +127176,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -126856,6 +127403,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -127082,6 +127630,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -127310,6 +127859,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -127538,6 +128088,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -127764,6 +128315,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -127992,6 +128544,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -128220,6 +128773,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -128448,6 +129002,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 80,
@@ -128676,6 +129231,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.4,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 80,
@@ -128904,6 +129460,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 80,
@@ -129129,9 +129686,10 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.06, +0.317]"
+    "the bootstrap interval does not clear zero [-0.037, +0.308]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -129358,6 +129916,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -129584,6 +130143,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -129809,10 +130369,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.081, +0.826]",
+    "the bootstrap interval does not clear zero [-0.095, +0.795]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -130039,6 +130600,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -130265,6 +130827,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -130491,6 +131054,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -130717,6 +131281,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -130943,6 +131508,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -131169,6 +131735,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -131394,10 +131961,11 @@
    "occurred": true,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.004, +0.229]",
+    "the bootstrap interval does not clear zero [-0.003, +0.235]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -131624,6 +132192,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 80,
@@ -131849,9 +132418,10 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.06, +0.317]"
+    "the bootstrap interval does not clear zero [-0.037, +0.308]"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -132078,6 +132648,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -132304,6 +132875,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -132529,10 +133101,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.081, +0.826]",
+    "the bootstrap interval does not clear zero [-0.095, +0.795]",
     "the direction does not hold in the held-out seasons"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -132759,6 +133332,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -132985,6 +133559,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -133211,6 +133786,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -133437,6 +134013,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 30,
@@ -133663,6 +134240,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -133889,6 +134467,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -134114,10 +134693,11 @@
    "occurred": false,
    "validated": false,
    "why": [
-    "the bootstrap interval does not clear zero [-0.004, +0.229]",
+    "the bootstrap interval does not clear zero [-0.003, +0.235]",
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -134346,6 +134926,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 55,
@@ -134572,6 +135153,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 80,
@@ -134800,6 +135382,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 80,
@@ -135028,6 +135611,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -135254,6 +135838,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -135480,6 +136065,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -135706,6 +136292,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -135932,6 +136519,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -136158,6 +136746,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -136384,6 +136973,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -136612,6 +137202,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -136840,6 +137431,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -137068,6 +137660,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.4,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -137296,6 +137889,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -137524,6 +138118,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -137752,6 +138347,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -137978,6 +138574,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -138204,6 +138801,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -138430,6 +139028,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -138656,6 +139255,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -138882,6 +139482,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -139108,6 +139709,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -139336,6 +139938,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -139564,6 +140167,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -139792,6 +140396,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.4,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -140020,6 +140625,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -140248,6 +140854,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.75,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -140476,6 +141083,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -140704,6 +141312,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.4,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -140932,6 +141541,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -141160,6 +141770,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -141388,6 +141999,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -141616,6 +142228,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -141844,6 +142457,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -142072,6 +142686,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -142300,6 +142915,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.75,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -142528,6 +143144,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -142756,6 +143373,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.4,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -142984,6 +143602,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -143212,6 +143831,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -143440,6 +144060,7 @@
     "the scenario has no established direction: it leans one way in only 6 of 7 cells (p=0.125)"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -143668,6 +144289,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -143896,6 +144518,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -144124,6 +144747,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -144352,6 +144976,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -144578,6 +145203,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -144806,6 +145432,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -145032,6 +145659,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -145258,6 +145886,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -145484,6 +146113,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -145710,6 +146340,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -145938,6 +146569,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -146166,6 +146798,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -146394,6 +147027,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -146622,6 +147256,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -146850,6 +147485,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -147078,6 +147714,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -147304,6 +147941,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -147532,6 +148170,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -147758,6 +148397,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -147984,6 +148624,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -148210,6 +148851,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -148436,6 +149078,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -148664,6 +149307,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -148892,6 +149536,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -149120,6 +149765,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -149348,6 +149994,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -149574,6 +150221,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -149802,6 +150450,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -150030,6 +150679,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -150256,6 +150906,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -150482,6 +151133,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -150708,6 +151360,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -150936,6 +151589,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -151164,6 +151818,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -151392,6 +152047,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -151620,6 +152276,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -151848,6 +152505,7 @@
     "this cell has no opposite half above n=100, so no q/r pair exists here"
    ],
    "override": null,
+   "stability": null,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -152076,6 +152734,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.8,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 0,
@@ -152302,6 +152961,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -152530,6 +153190,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -152758,6 +153419,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 200,
@@ -152984,6 +153646,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -153210,6 +153873,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -153436,6 +154100,7 @@
    "validated": true,
    "why": [],
    "override": null,
+   "stability": 1.0,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 240,
@@ -153664,6 +154329,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -153892,6 +154558,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
@@ -154120,6 +154787,7 @@
     "the seasons after 2021 are too thin here to check it"
    ],
    "override": null,
+   "stability": 0.6,
    "posted_min": 0,
    "posted_max": 999,
    "baseline_min": 275,
