@@ -539,18 +539,30 @@ def num(s) -> float:
 
 
 def load_games() -> dict:
-    """(season, week, team) -> (game total, that team's margin)."""
+    """(season, week, team) -> (realized total, that team's margin, posted total).
+
+    Three quantities, and confusing any two of them is a real hazard. `total`
+    is the points actually scored and `result` the margin actually achieved --
+    both OUTCOMES, and what a scenario predicate tests. `total_line` is the
+    number the market posted before kickoff: PRIOR information, never an
+    outcome, and the variable `s` is derived from downstream.
+
+    A game with no posted total is dropped rather than defaulted. Conditioning
+    on a total we invented would be worse than not conditioning at all.
+    """
     path = CACHE / "games.csv"
     if not path.exists():
         raise SystemExit(f"{path} not found — run ingest/nflverse.py")
     out = {}
     for r in csv.DictReader(path.open()):
-        if not (r["result"].strip() and r["total"].strip()):
+        if not (r["result"].strip() and r["total"].strip()
+                and r["total_line"].strip()):
             continue
         season, week = int(num(r["season"])), int(num(r["week"]))
         total, result = num(r["total"]), num(r["result"])  # result = home - away
-        out[(season, week, r["home_team"])] = (total, result)
-        out[(season, week, r["away_team"])] = (total, -result)
+        posted = num(r["total_line"])
+        out[(season, week, r["home_team"])] = (total, result, posted)
+        out[(season, week, r["away_team"])] = (total, -result, posted)
     return out
 
 
@@ -635,6 +647,11 @@ def build(rows, games, outcome: Outcome, proe_tw: dict | None = None,
             if baseline < outcome.min_baseline:
                 continue
             recent = st.mean(p["basis"] for p in prior[-TREND_WINDOW:])
+            # The player's own prior mean OUTPUT, as opposed to his prior mean
+            # opportunity. Prior information only, and the quantity a book's
+            # line is actually set near -- see docs/reviews/2026-08-23-adversarial.md
+            # finding C3.
+            baseline_yards = st.mean(p["yards"] for p in prior)
             # Projected opportunity uses only prior information. For a share
             # outcome that is the baseline share against the team's recent
             # volume; for a volume outcome the baseline already IS the
@@ -646,7 +663,7 @@ def build(rows, games, outcome: Outcome, proe_tw: dict | None = None,
             ctx = games.get((x["season"], x["week"], x["team"]))
             if ctx is None:
                 continue
-            game_total, margin = ctx
+            game_total, margin, posted_total = ctx
             obs.append(
                 {
                     "player": player,
@@ -670,10 +687,15 @@ def build(rows, games, outcome: Outcome, proe_tw: dict | None = None,
                         (x["season"], x["week"], x["team"]), {}
                     ).get("success_rate"),
                     "opportunity": projected,
+                    "baseline_yards": baseline_yards,
                     "trend": recent - baseline,
                     "yards": x["yards"],
                     "game_total": game_total,
                     "margin": margin,
+                    # The POSTED total: prior information, and the variable the
+                    # operator's `s` is derived from. Distinct from game_total,
+                    # which is what was actually scored.
+                    "posted_total": posted_total,
                 }
             )
     return obs

@@ -318,20 +318,39 @@ def _compare_oos() -> int:
     """Reproduce the rejected-criterion table in FINDINGS.md section 4."""
     import fit_conditionals as fc
     import proe
+    import signals as signals_mod
 
+    # Both of these grew a required argument when the grid went from one
+    # outcome to four, and this function was not updated with them -- so the
+    # target that reproduces FINDINGS.md section 8 has been raising TypeError
+    # rather than printing a table. It is stated per-outcome now, because a
+    # criterion that cannot fail has to be shown unable to fail on each of
+    # them separately. See docs/reviews/2026-08-23-adversarial.md finding S4.
     games = fc.load_games()
-    rows, seasons = fc.load_player_weeks()
-    obs = fc.build(rows, games, proe.load(seasons[0], seasons[-1]))
+    seasons = None
+    proe_tw = signals_tw = None
 
     print("out-of-sample: sign-only (in use) vs magnitude-aware (rejected)\n")
-    print(f"  {'scenario':<14} {'sign-only':>10}   {'agree':>6} {'disagree':>9} {'uninform':>9}   new verdict")
-    for name, definition in fc.SCENARIOS.items():
-        strict = out_of_sample(obs, definition, fc.TARGET_BANDS, fc.TREND_BANDS, fc.MIN_CELL)
-        three = out_of_sample_threeway(obs, definition, fc.TARGET_BANDS, fc.TREND_BANDS, fc.MIN_CELL)
-        sign = f"{strict['agree']}/{strict['cells']}"
-        verdict = "PASS" if three["disagree"] == 0 else "FAIL"
-        print(f"  {name:<14} {sign:>10}   {three['agree']:>6} {three['disagree']:>9} "
-              f"{three['uninformative']:>9}   {verdict}")
+    print(f"  {'outcome':<16} {'scenario':<18} {'sign-only':>10}   {'agree':>6} {'disagree':>9} {'uninform':>9}   new verdict")
+    for oname, outcome in fc.OUTCOMES.items():
+        rows, seasons_read = fc.load_player_weeks(outcome)
+        seasons = seasons or seasons_read
+        if proe_tw is None:
+            # Both team-week series, not just PROE. Passing only the first left
+            # success_rate undefined everywhere, which silently reported
+            # efficient_offense as 0/0 cells rather than as a real comparison.
+            proe_tw = proe.load(seasons[0], seasons[-1])
+            signals_tw = signals_mod.load(seasons[0], seasons[-1])
+        obs = fc.build(rows, games, outcome, proe_tw, signals_tw)
+        for name, definition in fc.SCENARIOS.items():
+            strict = out_of_sample(obs, definition, outcome.bands,
+                                   outcome.trend_bands, fc.MIN_CELL)
+            three = out_of_sample_threeway(obs, definition, outcome.bands,
+                                           outcome.trend_bands, fc.MIN_CELL)
+            sign = f"{strict['agree']}/{strict['cells']}"
+            verdict = "PASS" if three["disagree"] == 0 else "FAIL"
+            print(f"  {oname:<16} {name:<18} {sign:>10}   {three['agree']:>6} {three['disagree']:>9} "
+                  f"{three['uninformative']:>9}   {verdict}")
     print("\n  Every scenario passes the magnitude-aware version, including the two that are")
     print("  gated. A criterion that cannot fail is not a gate. The sign-only rule stands.")
     return 0
