@@ -40,6 +40,11 @@ import signals as signals_mod
 
 BREAKEVEN = 0.5238  # -110
 
+# A ladder well past the median, because that is where the thesis lives: a book
+# sets its line near the middle and the conditional and unconditional
+# distributions diverge most in the tail.
+TAIL_MULTS = [1.0, 1.15, 1.3, 1.5, 1.75, 2.0]
+
 
 def prob_above(quantiles, x) -> float:
     xs = [p[1] for p in quantiles]
@@ -103,6 +108,12 @@ def main(argv) -> int:
     ap.add_argument("--from", dest="first_eval", type=int, required=True,
                     help="first season to SCORE (must be after the grid's fit window)")
     ap.add_argument("--since", default=None, help="only games on/after this date, e.g. 2026-01-01")
+    ap.add_argument("--tails", action="store_true",
+                    help="test the tail thesis: does a belief-derived s beat a base-rate "
+                         "blend by more than the vig, and does the gap widen with depth?")
+    ap.add_argument("--hold", type=float, default=0.06,
+                    help="PROPORTIONAL hold at the line. A flat number of points would "
+                         "tax a 12%% line at 20%%, which no book does")
     ap.add_argument("--multiples", default="0.85,1.0,1.15",
                     help="simulated lines, as multiples of the player's own baseline")
     args = ap.parse_args(argv)
@@ -170,12 +181,22 @@ def main(argv) -> int:
                 if s_hat is None:
                     continue
                 qc, rc = (c, other) if occurred else (other, c)
-                for m in mults:
+                s_base = belief[sname]["base_rate"]
+                for m in (TAIL_MULTS if args.tails else mults):
                     q = prob_above(qc["quantiles"], m)
                     r = prob_above(rc["quantiles"], m)
-                    rows_C.append((oname, sname, m, q * s_hat + r * (1 - s_hat),
-                                   1.0 if o["yards"] > m else 0.0))
+                    hit = 1.0 if o["yards"] > m else 0.0
+                    rows_C.append((oname, sname, m, q * s_hat + r * (1 - s_hat), hit,
+                                   # what a book pricing off the UNCONDITIONAL
+                                   # distribution would have: the same q and r,
+                                   # blended at the base rate rather than at
+                                   # this team's own.
+                                   q * s_base + r * (1 - s_base), q, r, s_hat))
 
+    if args.tails:
+        globals()["_BASES"] = {k: v["base_rate"] for k, v in belief.items()}
+        _report_tails(rows_C, args.hold)
+        return 0
     _report_A(rows_A)
     _report_B(belief, args, when or kickoffs())
     _report_C(rows_C)
@@ -258,21 +279,104 @@ def _report_C(rows) -> None:
     print("   of the player's own baseline and is priced at -110. That is the same")
     print("   assumption a book makes when it sets one, stated rather than hidden.\n")
     print(f"   {'scenario':<20}{'line':>7}{'n':>7}{'predicted':>11}{'actual':>9}"
-          f"{'error':>9}{'at -110':>10}{'price needed':>14}")
+          f"{'error':>9}{'rel err':>9}{'price needed':>14}")
     for (sname, m), rs in sorted(_bucket(rows, lambda r: (r[1], r[2])).items()):
         pred = st.mean(r[3] for r in rs)
         act = st.mean(r[4] for r in rs)
-        edge = (act - BREAKEVEN) * 100
+        # RELATIVE error, because that is the one that matters at plus money.
+        # +1.6 points on a 0.108 probability is a 15% overstatement, and a book
+        # holding 6% eats a 15% overstatement without noticing.
+        rel = (pred - act) / act * 100 if act > 0 else float("nan")
         print(f"   {sname:<20}{m:>7.2f}{len(rs):>7}{pred:>11.3f}{act:>9.3f}"
-              f"{(pred - act) * 100:>+8.2f}pp{edge:>+9.2f}pp{fair_price(act):>14}")
-    print("\n   `price needed` is where these wagers break even. A flat -110 on every")
-    print("   line was never the real offer -- a book prices a deeper line at plus")
-    print("   money -- so the -110 column is a floor, not a verdict on the tails.")
+              f"{(pred - act) * 100:>+8.2f}pp{rel:>+8.1f}%{fair_price(act):>14}")
+    print("\n   `price needed` is where these wagers break even. `rel err` is the same")
+    print("   error as a share of the probability itself: absolute points flatter a")
+    print("   deep line, where a 1.6-point miss on a 10.8% estimate is a 15%")
+    print("   overstatement and a 6% hold swallows it whole.")
     if rows:
         pred = st.mean(r[3] for r in rows)
         act = st.mean(r[4] for r in rows)
         print(f"\n   overall: predicted {pred:.3f}, actual {act:.3f}, "
               f"error {(pred - act) * 100:+.2f}pp on {len(rows)} wagers")
+
+
+def _report_tails(rows, hold) -> None:
+    """How much better must your belief be, and does screening on it pay?
+
+    The arithmetic of the thesis. A book prices the alt line off the
+    unconditional distribution; you price it off a conditional one. Both use
+    the same q and r, so the entire difference is which s they are blended at:
+
+        P_you - P_book = (q - r) * (s_you - s_book)
+
+    Beating a proportional hold needs P_you > P_book * (1 + hold), so
+
+        s_you - s_book  >  P_book * hold / (q - r)
+
+    That threshold is PER SITE AND PER DEPTH, and it varies enormously -- from
+    +0.03 where the scenario grips hard to beyond +0.5 where it does not.
+    Averaging q and r across sites destroys the pairing and hides this: it was
+    the difference between "the thesis fails" and "the thesis works on a tenth
+    of the grid".
+
+    Hold is proportional. A book taking a flat 2.5 points on a 12% line would
+    be charging a 20% tax, and none of them do.
+    """
+    print(f"\nCHASING A TAIL   (proportional hold {hold * 100:.0f}%)\n")
+    print("   Same q and same r on both sides. The only difference is s, so what")
+    print("   follows is attributable to the belief and nothing else.\n")
+
+    # The requirement, per depth, over the sites that actually carry a wager.
+    print(f"   {'line':>6}{'n':>8}{'best need':>11}{'p25':>8}{'median':>9}"
+          f"{'share under +0.10':>20}")
+    for m in sorted({r[2] for r in rows}):
+        rs = [r for r in rows if r[2] == m and abs(r[6] - r[7]) > 1e-9 and r[5] > 0.01]
+        if not rs:
+            continue
+        needs = sorted(r[5] * hold / (r[6] - r[7]) for r in rs if r[6] > r[7])
+        if not needs:
+            continue
+        cheap = sum(1 for n in needs if n < 0.10) / len(needs) * 100
+        print(f"   {m:>6.2f}{len(rs):>8}{needs[0]:>+11.3f}{needs[len(needs) // 4]:>+8.3f}"
+              f"{needs[len(needs) // 2]:>+9.3f}{cheap:>19.1f}%")
+
+    print("\n   `need` is how far your P(scenario) must exceed the market's before the")
+    print("   wager is +EV. It does not depend on where the belief comes from.\n")
+
+    # Screened: bet only where the site's own requirement is actually met.
+    print(f"   {'line':>6}{'unscreened':>12}{'ROI':>9}   {'screened':>10}{'ROI':>9}"
+          f"{'offered':>9}{'actual':>8}")
+    for m in sorted({r[2] for r in rows}):
+        rs = [r for r in rows if r[2] == m]
+        loose = [r for r in rs if r[3] > r[5] * (1 + hold)]
+        tight = [r for r in rs
+                 if r[6] > r[7] and r[5] > 0.01
+                 and (r[8] - _base_of(r)) > r[5] * hold / (r[6] - r[7])]
+
+        def roi(sel):
+            if not sel:
+                return None
+            off = st.mean(r[5] * (1 + hold) for r in sel)
+            act = st.mean(r[4] for r in sel)
+            return (act / off - 1) * 100 if off > 0 else None, off, act
+
+        lo, tg = roi(loose), roi(tight)
+        lo_s = f"{lo[0]:+.1f}%" if lo else "--"
+        if tg:
+            print(f"   {m:>6.2f}{len(loose):>12}{lo_s:>9}   {len(tight):>10}"
+                  f"{tg[0]:>+8.1f}%{tg[1]:>9.3f}{tg[2]:>8.3f}")
+        else:
+            print(f"   {m:>6.2f}{len(loose):>12}{lo_s:>9}   {0:>10}{'--':>9}{'--':>9}{'--':>8}")
+    print("\n   `unscreened` bets wherever our blend beats the offer at all. `screened`")
+    print("   bets only where the SITE's own requirement is met -- which is the thesis")
+    print("   as actually stated, rather than a blanket bet on every alt line.")
+
+
+_BASES: dict = {}
+
+
+def _base_of(row) -> float:
+    return _BASES.get(row[1], 0.0)
 
 
 if __name__ == "__main__":

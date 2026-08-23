@@ -1099,6 +1099,90 @@ again a claim about prices.
 anything — 32 team-weeks put most of its rows under n = 200. It is reported because it was asked
 for, and it should not be read as confirmation of anything.
 
+## 16. Chasing a tail: the arithmetic, and what actually blocks it
+
+The thesis, stated properly: a book sets its line near the median and takes the vig. Your edge is
+not a better `q` — it is a better **`s`**. If the market prices a prop off the unconditional
+distribution and you know the game script is likelier than its base rate, your conditional blend
+beats the offered price. And it should get *easier* with depth, because that is where the
+conditional and unconditional distributions separate most.
+
+Both halves of that are testable. Reproduce with `make backtest-tails`.
+
+### The price of admission
+
+Both sides use the same `q` and `r`; only `s` differs. So
+
+```
+P_you − P_book = (q − r) · (s_you − s_book)
+```
+
+and beating a proportional hold needs `P_you > P_book · (1 + hold)`, giving
+
+```
+s_you − s_book  >  P_book · hold / (q − r)
+```
+
+**That threshold falls with depth, exactly as the thesis predicts.** Over every validated site,
+at a 6% hold:
+
+| line | best site | p25 | median | share of sites needing < +0.10 |
+|---|---|---|---|---|
+| 1.00× | +0.089 | +0.191 | +0.290 | 2.4% |
+| 1.30× | +0.042 | +0.149 | +0.261 | 8.2% |
+| 1.50× | +0.032 | +0.108 | +0.224 | 23.2% |
+| 2.00× | +0.040 | +0.094 | +0.159 | **29.9%** |
+
+At the line you need to be 29 points better than the market to make it pay. At twice the line,
+the median site needs 16 and nearly a third need under 10. `passing_yards`/`pass_heavy` at 1.30×
+runs q = 0.187 against r = 0.051 — a **3.7× relative** separation, needing only **+0.042**.
+
+**The structural claim is correct.** Tails are more chaseable, and the formula above is the screen.
+
+### And it still loses. Not for the reason it looks like.
+
+Screening on each site's own requirement, held out on 2025:
+
+| line | bets | offered | actual | ROI |
+|---|---|---|---|---|
+| 1.00× | 301 | 0.420 | 0.422 | +0.5% |
+| 1.50× | 523 | 0.120 | 0.090 | −25.4% |
+| 2.00× | 662 | 0.077 | 0.059 | −23.1% |
+
+The cause is not the thesis and not the belief model. It is `q` itself:
+
+| line | predicted | actual | absolute error | **relative error** |
+|---|---|---|---|---|
+| 1.00× | 0.435 | 0.415 | +1.96pp | +4.7% |
+| 1.50× | 0.214 | 0.203 | +1.18pp | +5.8% |
+| 2.00× | 0.108 | 0.091 | +1.62pp | **+17.7%** |
+
+The grid is beautifully calibrated in **absolute points** all the way into the tail — never worse
+than 1.6pp. But a 1.6-point overstatement of a 10.8% probability is a **17.7% overstatement**, and
+a book holding 6% swallows that without noticing.
+
+**Absolute calibration is the wrong metric at plus money.** Every calibration number in this
+project — §11's 1.78pp, §15's +0.74pp — is in absolute points, and absolute points flatter a deep
+line. The tool has been reporting its accuracy in the units that make it look best, by accident.
+`make backtest` prints relative error beside absolute now.
+
+### So: can we do this?
+
+**Yes, but not yet, and the blocker is now specific.** The requirement is `+0.03` to `+0.16` at
+depth on a good site, which is well within reach of a real read on a game. What is not within
+reach is a `q` whose relative error at 2× the line is under the hold. Today it is 17.7% against a
+6% hold — the model must get roughly **three times more accurate in the tail**, or the wager must
+be found at a hold small enough to absorb it.
+
+Two things follow for how to look for candidates, and both are screens this project can now apply:
+
+1. **Screen on `q − r` first, not on the story.** A site where the scenario barely moves the
+   distribution can never pay, however confident the belief. The best sites separate 3–6× in
+   relative terms at depth; the median separates by almost nothing.
+2. **Prefer depth, but only where the cell is thick.** The requirement improves with depth and the
+   relative error worsens with it. Those pull opposite ways, and the crossing point is a property
+   of the site's `n`, not of the line.
+
 ## Data note
 
 `target_share` in nflverse only starts in 2009, but raw `targets` reaches back to 2005, so share is
