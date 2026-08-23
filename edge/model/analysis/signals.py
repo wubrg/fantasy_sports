@@ -172,6 +172,102 @@ def prior_form(tw: dict, min_prior: int = 3) -> dict[tuple[int, int, str], dict]
     return out
 
 
+def injuries_out(first: int, last: int) -> dict[tuple[int, int, str], set[str]]:
+    """(season, week, team) -> the gsis_ids listed OUT that week.
+
+    Only "Out". Questionable and Doubtful are forecasts of availability, not
+    facts about it, and a player listed Questionable plays most of the time --
+    folding them in would put maybes into a signal whose whole value is that it
+    is a checked fact.
+
+    Schema note: every season carries `game_type`; only 2025 also carries
+    `season_type`. Reading the newer name alone would silently return nothing
+    for sixteen of seventeen seasons, so the older one is what is used.
+    """
+    out: dict[tuple[int, int, str], set[str]] = defaultdict(set)
+    for season in range(first, last + 1):
+        path = CACHE / f"injuries_{season}.csv"
+        if not path.exists():
+            continue
+        for r in csv.DictReader(path.open()):
+            if r.get("game_type") != "REG":
+                continue
+            if (r.get("report_status") or "").strip() != "Out":
+                continue
+            gsis = (r.get("gsis_id") or "").strip()
+            week = num(r.get("week"))
+            team = (r.get("team") or "").strip()
+            if gsis and week is not None and team:
+                out[(season, int(week), team)].add(gsis)
+    return dict(out)
+
+
+def baseline_shares(rows: list[dict], min_prior: int = 4) -> dict:
+    """(player, season) -> {week: baseline share from games BEFORE that week}.
+
+    Defined for every week in the season after the player's fourth game, not
+    only the weeks he played. That distinction is the whole point: a usage
+    vacuum asks what an ABSENT player would have commanded, and an absent
+    player has no row in the week he missed. Keying the baseline on weeks
+    played makes exactly the players the signal is about unfindable -- which,
+    measured, left 9 non-zero values in 83,183.
+    """
+    by_player = defaultdict(list)
+    for r in rows:
+        by_player[(r["player"], r["season"])].append(r)
+
+    out = {}
+    for key, games in by_player.items():
+        games.sort(key=lambda x: x["week"])
+        weeks = {}
+        for i, x in enumerate(games):
+            if i < min_prior:
+                continue
+            weeks[x["week"]] = st.mean(p["share"] for p in games[:i])
+        if not weeks:
+            continue
+        # Carry forward across missed weeks: the baseline on the week he sat
+        # out is what he had established by then.
+        last_week = max(g["week"] for g in games)
+        running = None
+        filled = {}
+        for w in range(1, last_week + 2):
+            if w in weeks:
+                running = weeks[w]
+            if running is not None:
+                filled[w] = running
+        out[key] = filled
+    return out
+
+
+def usage_vacuum(rows: list[dict], outs: dict, baseline: dict) -> dict:
+    """(season, week, player) -> the baseline share sitting OUT around him.
+
+    The framework's Tier 3: "the WR1 just got ruled out, the WR2 priced at 30
+    yards will now see 10 targets, the math is simply broken." What makes that
+    bettable is not that someone is hurt but HOW MUCH OPPORTUNITY was vacated,
+    so the signal is the sum of the absent players' own baseline shares --
+    computed from their prior games, never from the game being predicted.
+
+    A star missing is worth several times a rotational player missing, and this
+    says so rather than counting bodies.
+    """
+    by_team_week = defaultdict(list)
+    for r in rows:
+        by_team_week[(r["season"], r["week"], r["team"])].append(r)
+
+    def share_of(player: str, season: int, week: int) -> float:
+        return baseline.get((player, season), {}).get(week, 0.0)
+
+    vac = {}
+    for (season, week, team), teammates in by_team_week.items():
+        absent = outs.get((season, week, team), set())
+        gone = sum(share_of(p, season, week) for p in absent)
+        for r in teammates:
+            vac[(season, week, r["player"])] = gone
+    return vac
+
+
 def corr(xs, ys) -> float:
     mx, my = st.mean(xs), st.mean(ys)
     n = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
@@ -231,6 +327,44 @@ def gate1(first: int, last: int) -> int:
     b, se, r2 = ols_clustered([[1.0, x["opportunity"], x["trend"]] for x in J], y, g)
     print(f"  {'role trend, for comparison':<28} {b[2]:>10.2f} {b[2]/se[2]:>7.2f} "
           f"{r2 - r2b:>+10.5f}")
+
+    # The usage vacuum, tested where the framework actually makes its claim.
+    pool = defaultdict(float)
+    raw, _ = fc.load_player_weeks(o)
+    for r in raw:
+        pool[(r["season"], r["week"], r["team"])] += r["opportunity"]
+    for r in raw:
+        dd = pool[(r["season"], r["week"], r["team"])]
+        r["share"] = r["opportunity"] / dd if dd > 0 else 0.0
+    base = baseline_shares(raw)
+    outs = injuries_out(first, last)
+    bytw = defaultdict(list)
+    for r in raw:
+        bytw[(r["season"], r["week"], r["team"])].append(r)
+    vac, is_top = {}, {}
+    for (ss, ww, tt), mates in bytw.items():
+        gone = sum(base.get((p, ss), {}).get(ww, 0.0) for p in outs.get((ss, ww, tt), set()))
+        ranked = sorted(mates, key=lambda r: -base.get((r["player"], ss), {}).get(ww, 0.0))
+        for i, r in enumerate(ranked):
+            vac[(ss, ww, r["player"])] = gone
+            is_top[(ss, ww, r["player"])] = i == 0
+    V = [dict(x, vacuum=vac[k], is_top=is_top[k])
+         for x in J if (k := (x["season"], x["week"], x["player"])) in vac]
+    print("\nUSAGE VACUUM  (baseline target share of the teammates listed OUT)")
+    for subset, label in ((V, "every pass-catcher"),
+                          ([x for x in V if x["is_top"]], "the TOP remaining receiver")):
+        gg = [x["player"] for x in subset]
+        yy = [x["yards"] for x in subset]
+        _, _, a = ols_clustered([[1.0, x["opportunity"]] for x in subset], yy, gg)
+        b, se, r2 = ols_clustered(
+            [[1.0, x["opportunity"], x["vacuum"]] for x in subset], yy, gg)
+        hi = [x for x in subset if x["vacuum"] > 0.15]
+        lo = [x for x in subset if x["vacuum"] <= 0.001]
+        q = sum(1 for x in hi if x["yards"] > 52.5) / len(hi)
+        r = sum(1 for x in lo if x["yards"] > 52.5) / len(lo)
+        print(f"  {label:<28} beta {b[2]:>7.2f}  t {b[2]/se[2]:>5.2f}  "
+              f"dR2 {r2-a:>+8.5f}   q-r {q-r:+.3f}")
+    print("  The framework's Tier 3 is a claim about the SECOND line: WR1 out, WR2 eats.")
 
     print("\nSEPARATION  (top vs bottom quartile of the REALIZED rate, at 52.5)")
     for n in NAMES:

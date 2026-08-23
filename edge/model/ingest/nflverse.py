@@ -14,6 +14,11 @@ Three tables are pulled:
     stats_player_week_<yr>    weekly player production, with target_share and
                               air_yards_share already computed.
     snap_counts_<yr>          snap share. Note the coverage gap below.
+    injuries_<yr>             the weekly injury report: report_status (Out,
+                              Doubtful, Questionable) and practice_status, per
+                              player per week. Small -- under a megabyte a
+                              season -- and the only source here for who did
+                              not play, which is what a usage vacuum is made of.
     play_by_play_<yr>         every play, 372 columns. Fetched for two of them:
                               xpass (the modelled probability a play is a pass,
                               given down, distance, score and time) and pass_oe
@@ -67,7 +72,12 @@ GAMES_URL = "https://raw.githubusercontent.com/nflverse/nfldata/master/data/game
 
 # Earliest season each table covers. Requesting earlier is not an error; the
 # season is skipped with a note.
-FIRST_SEASON = {"stats_player_week": 2005, "snap_counts": 2012, "play_by_play": 1999}
+FIRST_SEASON = {
+    "stats_player_week": 2005,
+    "snap_counts": 2012,
+    "play_by_play": 1999,
+    "injuries": 2009,
+}
 
 DEFAULT_FIRST, DEFAULT_LAST = 2005, 2025
 
@@ -159,7 +169,7 @@ def targets(first: int, last: int) -> list[tuple[str, str]]:
     """(cache name, url) pairs for the requested seasons."""
     out = [("games.csv", GAMES_URL)]
     for season in range(first, last + 1):
-        for table in ("stats_player_week", "snap_counts", "play_by_play"):
+        for table in ("stats_player_week", "snap_counts", "play_by_play", "injuries"):
             if season < FIRST_SEASON[table]:
                 continue
             # The release TAG is not always the table name: stats_player_week
@@ -168,6 +178,12 @@ def targets(first: int, last: int) -> list[tuple[str, str]]:
             release = {"stats_player_week": "stats_player", "play_by_play": "pbp"}.get(
                 table, table
             )
+            # depth_charts is deliberately NOT fetched. It is keyed on a
+            # snapshot timestamp rather than a week, so joining it to a game
+            # means choosing a nearest snapshot, and it costs 53 MB a season.
+            # A usage vacuum is better defined as the baseline target share of
+            # the teammates who are OUT, which this project already computes
+            # and which the injury report alone can answer.
             # play-by-play is served gzipped and is the only table large enough
             # for that to matter: 19 MB a season against 99 MB uncompressed.
             ext = "csv.gz" if table == "play_by_play" else "csv"

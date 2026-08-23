@@ -569,6 +569,49 @@ snap record, changes every cell in the grid and forces a full revalidation. Usin
 either, and multiplies cell count — the density constraint that ruled out a fourth axis in §4.
 Recorded as a measured option, not a pending change.
 
+## 10. The usage vacuum — the corpus's strongest claim — does not survive measurement
+
+`analysis/signals.py --gate1` · injuries 2009–2025, 6,882 team-weeks with a player Out
+
+`edge-of-vigor.md` calls this Tier 3, "The Error", worth **+15 percentage points** of probability
+and the strongest edge it describes: *"The WR1 just got ruled out 5 minutes ago. The WR2 (who is
+priced at 30 yards) will now see 10 targets. The math is simply broken."*
+
+Measured as the baseline target share of the teammates listed **Out** — a star missing is worth
+several times a rotational player missing, so the signal is vacated *share*, not a count of bodies:
+
+| tested on | β | t | ΔR² | q − r at 52.5 |
+|---|---|---|---|---|
+| every pass-catcher | 11.85 | 4.56 | +0.00054 | **−0.004** |
+| **the top remaining receiver** | 3.32 | 0.44 | +0.00003 | **−0.055** |
+
+**Statistically significant across all receivers, practically nil, and negative where the claim
+actually lives.** A 15-point vacuum moves the average pass-catcher by 0.3 yards. The top remaining
+receiver — the WR2 the framework is describing — clears 52.5 yards **50.1%** of the time with a
+large vacuum against **55.6%** without, and averages 61.4 yards against 63.9. He does worse.
+
+**The mechanism is that the vacated share does not concentrate.** Fifteen points of share going out
+delivers **+0.7 points** to the average remaining receiver: the targets disperse, or are not thrown
+at all. The framework assumes the opportunity lands on one man, and it does not.
+
+Two readings are consistent with the negative sign on the alpha, and this data cannot separate
+them. Defences can commit to the remaining threat once the other one is gone, which would make the
+extra looks worth less than they appear. Or a team missing a 15-point receiver is often depleted
+more broadly — a backup quarterback, more than one absence — and the whole offence is worse.
+Either way the net measured effect on the intended beneficiary is negative, so the signal is
+rejected at Gate 1 and never fitted. A scenario whose q equals its r carries no information, and
+`RequiredScenarioProb` refuses to price one.
+
+**A caveat on scope, stated because it bounds the claim.** "Out" on the injury report is a fact
+about availability; it is not the framework's *"ruled out 5 minutes ago"*. A genuinely late scratch
+may behave differently from a Friday designation, because the market has less time to move. This
+data cannot distinguish them, and the historical prop lines that would settle whether books price
+the vacuum are not available.
+
+The injuries table is kept in the ingest regardless. It is small, and it is the only source here
+for who did not play — which is a fact worth being able to check independently of whether it
+predicts anything.
+
 ## Data note
 
 `target_share` in nflverse only starts in 2009, but raw `targets` reaches back to 2005, so share is

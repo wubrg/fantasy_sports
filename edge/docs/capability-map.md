@@ -136,6 +136,14 @@ observations against a floor of 100 and could not be priced at all. Extending th
 to 2009 publishes it at 139/295. `11+` projected targets still cannot be priced: only the
 no-scenario side clears the floor, and `q` needs both.
 
+### The framework's Tier 3 was measured and does not hold
+
+The "usage vacuum" — WR1 out, WR2 eats — is the corpus's strongest claimed edge at +15 points.
+Measured on the top remaining receiver it is **negative**: 50.1% clearing 52.5 yards with a large
+vacuum against 55.6% without. Fifteen points of vacated share delivers 0.7 points to the average
+remaining receiver, so it does not concentrate. Rejected at Gate 1, never fitted. See
+`FINDINGS.md` §10.
+
 ### `p_true` by simulation does not exist
 
 `urps-wager-engine.md` requires it and says a prop with only a mean projection must be
