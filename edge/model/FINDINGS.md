@@ -137,7 +137,7 @@ everything, and prefer recency only where dispersion drifts.
 
 ## 3. Pooled conditionals: shootout confirmed, "trash time" reversed
 
-`fit_conditionals.py` · 37,078 receiving + 37,078 reception + 5,726 passing player-games, 2009–2025 · 267 cells published, 45 dropped for n < 100
+`fit_conditionals.py` · 37,078 receiving + 37,078 reception + 13,388 rushing + 5,726 passing player-games, 2009–2025 · 351 cells published, 57 dropped for n < 100
 
 `q` and `r` were operator guesses. They are now looked up from a grid pooled across player-games
 sharing an opportunity band, a role-trend band, and a game script — cells of hundreds to thousands of
@@ -418,6 +418,47 @@ it for receiving yards** — 6–8 targets, +3 to +6 pt trend, where a +14.5-yar
 effect over 2009–2021 goes to −0.5 and −0.02 across 2022–2025 on 65 games. Those are not two
 independent failures: receptions and receiving yards are measured on the same player-games, so it
 is one failure seen twice.
+
+## 7. Rushing inverts the sign, and that is the point
+
+`fit_conditionals.py` · 13,388 RB game-weeks, 2009–2025 · 84 cells
+
+**RB only.** A quarterback's carries are scrambles and kneels and a receiver's are jet sweeps —
+median 3 and 1 against a back's 8 — so they are not a share of the same designed-run pool. Pooling
+them would repeat the error §5 avoided by giving quarterbacks their own axis. The corpus's
+"Konami Code" mobile-QB angle is a different model and is not this one.
+
+**The axis was measured, not borrowed.** Carry-share trend has an sd of **0.131** against target
+share's ~0.05: backfields consolidate and split far more sharply than target trees do, so the
++6-share-point target threshold does not transfer. Bands sit at the same multiples of their own sd
+that the target bands sit at in theirs.
+
+The trend is a **much stronger** signal here than it is for receiving. RB rushing yards on baseline
+carry share plus trend, errors clustered by player: **β = 48.74, t = 18.25, ΔR² = +0.0268** — an
+order of magnitude more explanatory power than target-share trend manages for receiving yards
+(+0.0032). On carries themselves it is stronger still (ΔR² = +0.0418), which is the
+volume-over-efficiency thesis appearing where it should.
+
+**Verdicts, and the sign flip.**
+
+| scenario | rushing | direction |
+|---|---|---|
+| `pass_heavy` | **validated** · 13/13 consistent, 11/11 out of sample | **negative** |
+| `blowout_loss` | fails by one cell on each criterion · 11/12, 8/9 | negative |
+| `shootout` | fails · 10/14, resolved 2/14, 5/13 out of sample | — |
+
+`pass_heavy` is the cleanest validation in the grid, and it is **negative**: a team throwing more
+than the situation called for produces *fewer* rushing yards. The same scenario helps a receiver,
+helps a quarterback, and hurts a back — the carries went somewhere. That sign was predicted before
+the fit and measured after it, rather than assumed either way. At 14 projected carries with a
+rising role, a 74.5-yard line runs `q` = 12.3% against `r` = 34.3%.
+
+`shootout` failing is informative rather than disappointing: a high posted total says a game will be
+*scored in*, not *how*. It can arrive through the air or on the ground and the total alone cannot
+tell which. `pass_heavy` measures the how directly, and validates.
+
+`blowout_loss` misses each criterion by exactly one cell, with the right direction — a team losing
+badly abandons the run. The closest miss in the grid.
 
 ## Data note
 

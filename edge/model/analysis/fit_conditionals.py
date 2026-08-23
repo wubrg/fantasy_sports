@@ -161,6 +161,25 @@ ATTEMPT_TREND_BANDS = [(-99.0, -2.0), (-2.0, 2.0), (2.0, 99.0)]
 # utilization_lag.py: below it the effect cannot clear the vig.
 TREND_BANDS = [(-99.0, -0.03), (-0.03, 0.03), (0.03, 0.06), (0.06, 99.0)]
 
+# Rushing bands, measured rather than borrowed. Projected carries run p25=4.2,
+# p50=8.4, p75=13.7, so these are roughly quartiles of the real distribution.
+CARRY_BANDS = [(0, 5), (5, 10), (10, 15), (15, 999)]
+
+# Carry-share trend. The +6-share-point target threshold does NOT transfer:
+# carry-share trend has an sd of 0.131 against target share's ~0.05, because
+# backfields consolidate and split far more sharply than target trees do. These
+# sit at the same multiples of their own sd that the target bands sit at in
+# theirs (+/-0.6 sd and +1.2 sd), which puts +8 points at 3.9 rushing yards and
+# +16 at 7.8.
+#
+# Measured, not assumed: RB rushing yards on baseline carry share plus trend
+# gives the trend beta = 48.74 (t = 18.25, dR2 = +0.0268) with errors clustered
+# by player -- an order of magnitude more explanatory power than the target-share
+# trend manages for receiving yards (+0.0032). On carries themselves it is
+# stronger still (dR2 = +0.0418), which is the volume-over-efficiency thesis
+# showing up where it should.
+CARRY_TREND_BANDS = [(-99.0, -0.08), (-0.08, 0.08), (0.08, 0.16), (0.16, 99.0)]
+
 OUTCOMES = {
     "receiving_yards": Outcome(
         "receiving_yards", "receiving_yards", "targets", {"WR", "TE", "RB"},
@@ -176,6 +195,17 @@ OUTCOMES = {
         # count in single digits, so its distribution is stored exactly.
         discrete=True,
         unit="rec",
+    ),
+    "rushing_yards": Outcome(
+        "rushing_yards", "rushing_yards", "carries", {"RB"},
+        share_based=True, bands=CARRY_BANDS, trend_bands=CARRY_TREND_BANDS,
+        min_baseline=MIN_BASELINE_SHARE,
+        # RB only. A quarterback's carries are scrambles and kneels and a
+        # receiver's are jet sweeps -- median 3 and 1 against an RB's 8 -- so
+        # they are not a share of the same designed-run pool. Pooling them
+        # would be the same error as running QB attempts through a share axis.
+        # The corpus's "Konami Code" mobile-QB angle is a different model and
+        # is not this one.
     ),
     "passing_yards": Outcome(
         "passing_yards", "passing_yards", "attempts", {"QB"},
@@ -368,6 +398,26 @@ SCENARIO_STATUS = {
             "flip. Conditioning on projected targets absorbs most of what a blowout does "
             "to a CATCH COUNT, while it leaves the yardage effect intact, which is why "
             "this fails here and is merely marginal for receiving yards.",
+        },
+    },
+    "rushing_yards": {
+        # The sign flips here, and that is the finding. pass_heavy helps a
+        # receiver and hurts a back, because the carries went somewhere.
+        "pass_heavy": {"validated": True},
+        "shootout": {
+            "validated": False,
+            "why": "Consistent in only 10 of 14 cells and resolved in 2, with 5 of 13 "
+            "holding out of sample. A high posted total says a game will be scored in, "
+            "not how -- it can arrive through the air or on the ground, and the grid "
+            "cannot tell which from the total alone. Contrast pass_heavy, which measures "
+            "the HOW directly and validates cleanly.",
+        },
+        "blowout_loss": {
+            "validated": False,
+            "why": "Negative in 11 of 12 cells and 8 of 9 out of sample -- fails each "
+            "criterion by exactly one cell. The direction is right and mechanically "
+            "sensible: a team losing badly abandons the run. It is the closest miss in "
+            "the grid and worth revisiting when the held-out half has more seasons.",
         },
     },
     "passing_yards": {

@@ -140,8 +140,8 @@ that opportunity drives yards more than per-target skill), **role trend** (with 
 measured +6-share-point actionability threshold), and **game script** (the axis that separates `q`
 from `r` at all).
 
-The grid fits three outcomes — receiving yards, receptions and passing yards — and the opportunity
-axis is not shared between them. A pass-catcher
+The grid fits four outcomes — receiving yards, receptions, rushing yards and passing yards — and
+the opportunity axis is not shared between them. A pass-catcher
 competes for a fixed pool of team targets, so his opportunity is a *share* of it and the trend
 axis measures a change in that share. A quarterback takes essentially all his team's attempts —
 there is no share to hold — so his opportunity is his own prior attempt volume and his trend is a
