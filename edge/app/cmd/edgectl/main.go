@@ -127,6 +127,10 @@ func usage() {
         settled by appending, never by rewriting, so nothing can be re-predicted
         after the fact.
 
+Every command documents its own flags -- "edgectl scenario -h", "edgectl
+ledger add -h", "edgectl board report -h". This page is the map; those are
+the manual.
+
 edgectl never fetches prices and never guesses one. Bad input is an error, not
 a zero.
 `)
