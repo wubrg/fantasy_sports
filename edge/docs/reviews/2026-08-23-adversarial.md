@@ -96,6 +96,16 @@ for; `shootout` is the cleaner effect and deserved that confidence instead.
 **It is not worthless — it is filed under the wrong outcome.** A signal that predicts realized
 targets above projection is a signal about *opportunity*. That is task #7, targets as an outcome.
 
+> **Measured 2026-08-23. C1 and C3 were correctly triaged as one defect, and this review named
+> the weaker half as the cure.** C3 is the larger error by a factor of four (8.01pp against C1's
+> 3.12pp, on a 2.38pp vig cushion) and the posted-total axis does not touch it. Normalizing to the
+> player's own prior mean fixes C3 *and* takes C1 from 3.12pp to 2.68pp with no axis added.
+> The fix is blocked, not by its own measurement, but because it re-cuts the grid into more cells
+> and `qualifies()` is not scale-invariant — `shootout` for receiving yards then fails a gate it
+> passes today, on 20/24 out-of-sample cells rather than 15/15, with its direction *improving*
+> from 16/16 to 29/29. Per-cell gating is now a blocker for this item rather than an improvement.
+> See [FINDINGS.md §11](../../model/FINDINGS.md) and `make calibration`.
+
 ### C3 — the grid judges a player-specific line against a cohort median · critical · verified
 
 `scenario` takes no player identity. `q` is `P(any player in this band clears L)`; the book sets `L`

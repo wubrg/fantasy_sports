@@ -134,7 +134,13 @@ lag: ## Run the utilization-lag test (~10s)
 compare-oos: ## Reproduce the rejected magnitude-aware out-of-sample table (FINDINGS.md 4)
 	@cd $(MODEL)/analysis && $(PY) validate.py --compare-oos
 
-findings: verify-model lag compare-oos ## Reproduce every measured claim in model/FINDINGS.md
+calibration: ## Stratified calibration error, by posted total and by own baseline (FINDINGS.md 11)
+	@cd $(MODEL)/analysis && $(PY) calibration.py --strata
+
+calibration-search: ## The full axis-set search behind FINDINGS.md 11 (slow)
+	@cd $(MODEL)/analysis && $(PY) calibration.py
+
+findings: verify-model lag compare-oos calibration ## Reproduce every measured claim in model/FINDINGS.md
 
 ## --- Examples ---
 

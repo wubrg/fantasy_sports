@@ -637,6 +637,92 @@ The injuries table is kept in the ingest regardless. It is small, and it is the 
 for who did not play — which is a fact worth being able to check independently of whether it
 predicts anything.
 
+## 11. The cohort mismatch is the larger defect, and fixing it breaks the gate
+
+Findings C1 and C3 of the [adversarial review](../docs/reviews/2026-08-23-adversarial.md) were
+triaged as one item: `q` and `r` are pooled over the posted total that `s` is derived from (C1),
+and `q` is a cohort probability judged against a player-specific line (C3). Measured, they are not
+equally serious, and the review's proposed fix addresses the smaller one.
+
+**Both reproduce.** Held out on 2022–2025, fitting on 2014–2021, with the line placed at each
+player's own prior mean. Error is predicted minus actual, so negative means the grid *underrates*
+the over:
+
+| stratified by posted total | error | | stratified by the player's own baseline | error |
+|---|---|---|---|---|
+| 0–42 | +1.93pp | | under 35 yds | +2.75pp |
+| 42–45 | −0.23pp | | 35–50 | −2.15pp |
+| 45–48 | −0.96pp | | 50–70 | −5.84pp |
+| 48–51 | −1.15pp | | 70+ | **−8.01pp** |
+| 51+ | **−3.12pp** | | | |
+
+The vig cushion at −110 is 2.38pp. **C3 is four times it**, and it is monotone: the grid overrates
+small players and badly underrates big ones. That is the trap the review described — a line set
+near a 70-yard player's median sits far out in a cohort whose median is 43, so `q` collapses and
+the tool returns `beyond-your-read` on exactly the wagers a person actually places.
+
+**Aggregate calibration hides all of it.** Pooled over every stratum the grid is accurate to
+−0.00pp. Averaging over the strata cancels the errors, and a first pass at this measurement
+reported the grid as well-calibrated for that reason. Calibration has to be measured *within* the
+variable suspected of carrying the error or it cannot find it.
+
+**The fix is normalization, not the proposed axis.** Storing the distribution of yards relative to
+the player's own prior mean, and conditioning on a baseline tier:
+
+| | cells | worst by posted total | worst by own baseline |
+|---|---|---|---|
+| today | 33 | 3.12pp | 8.01pp |
+| + posted-total axis (the review's proposal) | 58 | **1.47pp** | 8.33pp |
+| ratio to own mean + baseline tier | 8 | 2.68pp | **1.78pp** |
+
+The posted-total axis fixes C1 and leaves C3 untouched. The normalization fixes C3 and *also*
+takes C1 from 3.12 to 2.68 without an axis at all — because part of what looked like posted-total
+miscalibration was the cohort mismatch showing up correlated with game totals. C1 and C3 were
+correctly triaged as one defect; the review named the weaker half as the cure.
+
+**The result generalizes.** Worst-stratum error by own baseline, before → after, on a temporal
+split and a random one:
+
+| outcome | today (time) | today (random) | proposed (time) | proposed (random) |
+|---|---|---|---|---|
+| receiving_yards | 8.01pp | 10.48pp | 1.78pp | 4.67pp |
+| receptions | 9.97pp | 9.78pp | 2.13pp | 2.59pp |
+| rushing_yards | 9.37pp | 10.39pp | 2.53pp | 4.35pp |
+| passing_yards | 4.70pp | 11.19pp | 4.68pp | 4.92pp |
+
+### The part that stops this from shipping
+
+**Cell count is the gate's strength, and the axis set sets the cell count.** Collapsing to 8 cells
+made five scenarios pass that fail today — including `pass_heavy` for receiving yards, withdrawn
+one commit earlier as a volume identity. A rule reading "the direction holds in every cell" is
+easier to satisfy the fewer cells there are, so an axis design chosen for calibration silently
+re-tunes the gate.
+
+Requiring the baseline tier and then taking the axis set with the *most* cells subject to a
+coverage floor avoids that, and yields more cells than today for every outcome — 58, 52, 29 and 21
+against 33, 33, 28 and 19. The gate gets stricter. And then:
+
+```
+receiving_yards  shootout   today     positive in 16/16 cells; 12/16 bootstrap-resolved; 15/15 out of sample
+                            proposed  positive in 29/29 cells; 15/29 bootstrap-resolved; 20/24 out of sample
+```
+
+**`shootout` for receiving yards — the only thing the tool can price today — fails the corrected
+grid.** Not on direction, which is now 29/29 rather than 16/16. On the out-of-sample test, which
+demands the direction hold in *every* held-out cell: 15/15 becomes 20/24.
+
+The effect did not weaken. The gate did. `qualifies()` is **not scale-invariant**: for a real
+effect with per-cell error probability `e`, an all-cells rule passes with probability
+`(1−e)^k`, which falls as `k` rises. Re-cutting the same data into more cells therefore rejects
+findings it previously accepted, and the number of cells is a design choice, not evidence.
+
+This is [task #9](../docs/reviews/2026-08-23-adversarial.md), per-cell gating, arriving as a
+blocker rather than an improvement. **The calibration fix cannot land until the gate is
+scale-invariant**, because shipping both at once would change two methods in one step and leave
+no way to attribute the verdict changes to either.
+
+Nothing above is in the artifact. The two quantities are plumbed; the axis change is not made.
+
 ## Data note
 
 `target_share` in nflverse only starts in 2009, but raw `targets` reaches back to 2005, so share is
