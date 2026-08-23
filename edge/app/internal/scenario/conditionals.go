@@ -493,9 +493,35 @@ type Conditional struct {
 // test to be valid at all, and this number is being used to price a wager.
 const MinTailN = 10
 
+// SparseTailN is where "thinly evidenced" stops and "measured" begins.
+//
+// A single threshold read as a promise it could not keep: 13 effective
+// observations printed MEASURED alongside 400, and the relative standard error
+// on a tail count k is about 1/sqrt(k) -- 28% at 13, and 5% at 400. Those are
+// not the same claim and should not carry the same word. At 30 the relative
+// error is ~18%, which is the point at which the interval printed beside it
+// starts to be the binding constraint rather than the count.
+const SparseTailN = 30
+
 // Thin reports whether too little of the sample sits on the side of the line
 // being bet for the estimate to carry its printed precision.
 func (c Conditional) Thin() bool { return c.TailN < MinTailN }
+
+// Sparse reports an estimate that clears the thin floor but still rests on few
+// enough observations that its relative error is above ~18%.
+func (c Conditional) Sparse() bool {
+	return c.TailN >= MinTailN && c.TailN < SparseTailN
+}
+
+// RelativeError is the approximate relative standard error of the estimate,
+// 1/sqrt(k) on the sparser side's effective count. Reported rather than left
+// for the reader to infer from a label.
+func (c Conditional) RelativeError() float64 {
+	if c.TailN <= 0 {
+		return math.Inf(1)
+	}
+	return 1 / math.Sqrt(c.TailN)
+}
 
 // probAbove returns P(yards > line) from a cell's quantile table.
 //

@@ -351,10 +351,18 @@ func resolveConditionals(
 // the number that decides whether the estimate means anything, and appending it
 // to an already-long row buries it exactly where it would be skimmed past.
 func support(c scenario.Conditional) string {
-	if c.Thin() {
-		return fmt.Sprintf("THIN — only ~%.0f effective observations past the line", c.TailN)
+	switch {
+	case c.Thin():
+		return fmt.Sprintf("THIN — only ~%.0f effective observations past the line (±%.0f%%)",
+			c.TailN, c.RelativeError()*100)
+	case c.Sparse():
+		// The middle band exists because one threshold made 13 observations and
+		// 400 print the same word, at ±28% and ±5% respectively.
+		return fmt.Sprintf("SPARSE — ~%.0f effective observations past the line (±%.0f%%)",
+			c.TailN, c.RelativeError()*100)
 	}
-	return fmt.Sprintf("MEASURED — ~%.0f effective observations past the line", c.TailN)
+	return fmt.Sprintf("MEASURED — ~%.0f effective observations past the line (±%.0f%%)",
+		c.TailN, c.RelativeError()*100)
 }
 
 // thinSide names which of q and r is short, since the remedy differs: a thin q

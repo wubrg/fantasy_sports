@@ -8,6 +8,10 @@ be re-run instead of re-remembered.
       existed at the time and moved none. Two outcomes and a scenario were
       added afterwards, and the grid was recut. Does it still move none?
 
+  S5  `shootout` is defined on the realised total, and a receiver's own yards
+      feed his team's points -- so the condition is partly caused by the thing
+      being predicted. The clean test is the OPPONENT's half of the total.
+
   S3  FINDINGS 8 argued that out-of-sample failures concentrate where the fit
       effect was already noise-sized, using a FULL-SAMPLE effect size against
       train-vs-test agreement -- so the half being predicted sat inside the
@@ -145,10 +149,58 @@ def s3(loaded) -> None:
     print("  effect -- receiving/shootout alone gives 1.07x on 4 disagreeing sites.")
 
 
+class _Threshold:
+    """A scenario on any observation field, for comparing definitions."""
+
+    def __init__(self, field, threshold):
+        self.field = field
+        self.threshold = threshold
+
+    def occurred(self, o):
+        v = o.get(self.field)
+        return None if v is None else v > self.threshold
+
+
+def s5(loaded) -> None:
+    """How much of `shootout` is the player causing his own condition?"""
+    oc, obs = loaded["receiving_yards"]
+    # own = (total + margin) / 2, opponent = (total - margin) / 2
+    for o in obs:
+        o["own_pts"] = (o["game_total"] + o["margin"]) / 2
+        o["opp_pts"] = (o["game_total"] - o["margin"]) / 2
+
+    print("\nS5 — is `shootout` partly a restatement of the player's own game?\n")
+    print("  A receiver's yards feed his team's points, so 'the game went over 50' is")
+    print("  partly 'this player had a big day'. The opponent's points are the half of")
+    print("  the total he cannot cause.\n")
+    print(f"  {'definition':<34}{'sites':>7}{'priceable':>11}{'median delta':>14}")
+    got = {}
+    for field, thr, label in (("game_total", 50, "shootout: total > 50 (shipped)"),
+                              ("own_pts", 27, "own team > 27 (self-referential)"),
+                              ("opp_pts", 27, "OPPONENT > 27 (exogenous)"),
+                              ("own_pts", 24, "own team > 24"),
+                              ("opp_pts", 24, "OPPONENT > 24")):
+        sv = validate.site_verdicts(obs, _Threshold(field, thr), oc.axes(),
+                                    F.MIN_CELL, False, True)
+        ok = sum(1 for v in sv.values() if v["priceable"])
+        med = st.median([v["delta"] for v in sv.values()])
+        got[(field, thr)] = med
+        print(f"  {label:<32}{len(sv):>7}{ok:>11}{med:>+14.4f}")
+    share = got[("opp_pts", 27)] / got[("own_pts", 27)]
+    print(f"\n  The effect SURVIVES on the exogenous half: the opponent's scoring alone")
+    print(f"  moves a receiver's ratio by {got[('opp_pts', 27)]:+.4f}, which is {share * 100:.0f}% of the own-team")
+    print("  figure at the same threshold. So this is not pass_heavy -- it does not")
+    print("  collapse. But the shipped definition combines both halves and reads")
+    print(f"  {got[('game_total', 50)] / got[('opp_pts', 27)]:.1f}x the exogenous effect, so some of what it credits to game")
+    print("  script is the player having caused the game script.")
+
+
 if __name__ == "__main__":
-    want = set(sys.argv[1:]) or {"--s2", "--s3"}
+    want = set(sys.argv[1:]) or {"--s2", "--s3", "--s5"}
     data = _load()
     if "--s2" in want:
         s2(data)
     if "--s3" in want:
         s3(data)
+    if "--s5" in want:
+        s5(data)

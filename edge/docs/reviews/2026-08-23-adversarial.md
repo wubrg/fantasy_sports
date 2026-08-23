@@ -213,6 +213,18 @@ from a wrong formula.
 
 ### M1–M4 — minor
 
+> **All four addressed 2026-08-23.** M1: the capability map is rewritten against the current grid.
+> M2: `THIN`/`MEASURED` was one threshold, so 13 effective observations and 400 printed the same
+> word at ±28% and ±5%; there is a `SPARSE` band between them now and every estimate prints its
+> relative error. M3 and M4's wording fix landed in the first commit.
+>
+> **M4's second half was not minor and is now §14.** `shootout` measured on the opponent's points
+> alone — the half of the total the player cannot cause — still separates (+0.086 median delta,
+> 7 sites priceable), so it does not collapse the way `pass_heavy` did. But the shipped definition
+> reads about **1.8× the exogenous effect**. Recorded rather than acted on: removing the
+> circularity would cut receiving yards from 13 priceable sites to 7.
+
+
 - `capability-map.md` is a version behind and contradicts the README on what is priceable.
 - `THIN` fires at 7 effective observations; 13 still prints `MEASURED`.
 - `ledger expiring` prints a 41-character lot id into a 20-character column.

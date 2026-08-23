@@ -111,6 +111,30 @@ $ edgectl scenario -name shootout -total 49 -threshold 50 -belief 0.62 \
   VERDICT   DISAGREEMENT-REQUIRED
 ```
 
+**Do not type these from memory.** A wrong `-baseline` does not fail — it lands in a neighbouring
+cell and prices a different population, with nothing to show that it happened. Read them off the
+same data the grid was fitted on:
+
+```
+$ python3 model/analysis/player.py --player "Ja'Marr Chase" --season 2024 --week 12 --total 49.5
+
+Ja'Marr Chase (CIN)  2024 week 12, from 11 prior games
+  -baseline  96.0 yds
+  -trend     +0.0481  (share points)
+
+  cell       posted 46-999, baseline 70-999, trend +0.03..+0.06
+             n=133  median 79.0 yds
+  PRICEABLE  holds at 80% of knob settings
+
+edgectl scenario -outcome receiving_yards -name shootout \
+  -total 49.5 -threshold 50 \
+  -baseline 96.0 -trend 0.0481 \
+  -line <LINE> -price <PRICE> -belief <YOUR P(scenario)> [-side under]
+```
+
+It refuses rather than guesses: fewer than four prior games in the season, an ambiguous name, or
+coordinates that fall outside every published cell all stop with a reason.
+
 `-baseline` is **what this player normally does**, in the outcome's own units — his prior mean, off
 the game log. The grid prices the line as a ratio to it (`52.5 = 0.95x his baseline`), because that
 is what a book sets a line near. A grid holding raw yards answers "what does the cohort do at this

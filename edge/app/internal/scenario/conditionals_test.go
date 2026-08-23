@@ -1347,3 +1347,54 @@ func TestComplementMirrorsTheInterval(t *testing.T) {
 	}
 	t.Logf("%d cells checked in both directions", checked)
 }
+
+// TestSupportBandsAreExhaustiveAndOrdered covers review finding M2: one
+// threshold made 13 effective observations and 400 print the same word, at
+// ±28% and ±5%. The bands must partition the range with no gap and no overlap,
+// or some estimate gets no label at all.
+func TestSupportBandsAreExhaustiveAndOrdered(t *testing.T) {
+	if MinTailN >= SparseTailN {
+		t.Fatalf("MinTailN %v must be below SparseTailN %v", MinTailN, SparseTailN)
+	}
+	for _, tc := range []struct {
+		tailN        float64
+		thin, sparse bool
+	}{
+		{0, true, false},
+		{MinTailN - 0.01, true, false},
+		{MinTailN, false, true},
+		{SparseTailN - 0.01, false, true},
+		{SparseTailN, false, false},
+		{1000, false, false},
+	} {
+		c := Conditional{TailN: tc.tailN}
+		if c.Thin() != tc.thin || c.Sparse() != tc.sparse {
+			t.Errorf("TailN=%v: thin=%v sparse=%v, want thin=%v sparse=%v",
+				tc.tailN, c.Thin(), c.Sparse(), tc.thin, tc.sparse)
+		}
+		// Exactly one band, always.
+		bands := 0
+		for _, in := range []bool{c.Thin(), c.Sparse(), !c.Thin() && !c.Sparse()} {
+			if in {
+				bands++
+			}
+		}
+		if bands != 1 {
+			t.Errorf("TailN=%v falls in %d bands, not exactly 1", tc.tailN, bands)
+		}
+	}
+	// The relative error must fall as evidence accumulates, and be reported
+	// rather than left for the reader to infer from a word.
+	prev := math.Inf(1)
+	for _, n := range []float64{5, 13, 30, 100, 400} {
+		got := (Conditional{TailN: n}).RelativeError()
+		if got >= prev {
+			t.Errorf("relative error at n=%v (%.4f) did not fall below n's predecessor (%.4f)",
+				n, got, prev)
+		}
+		prev = got
+	}
+	if got := (Conditional{TailN: 400}).RelativeError(); got > 0.06 {
+		t.Errorf("400 observations should be ~5%% relative error, got %.1f%%", got*100)
+	}
+}

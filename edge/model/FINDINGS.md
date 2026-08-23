@@ -979,6 +979,40 @@ differently depending on where `MIN_CELL` sat or how the axes were cut. And `cel
 observations in a single pass instead of scanning them once per site, which is what made a
 25-setting sweep affordable at all: it is the difference between a six-minute fit and an hour.
 
+## 14. `shootout` is partly caused by the player it is used to predict
+
+A receiver's yards feed his team's points, so "the game went over 50" is partly "this player had a
+big day". Conditioning on it is then partly conditioning on the outcome — the same circularity that
+withdrew `pass_heavy` (§11), and the review noted it in passing without measuring it.
+
+The clean test is the **opponent's** points: the half of the total the player cannot cause.
+Reproduce with `make recheck`.
+
+| definition | sites | priceable | median delta |
+|---|---|---|---|
+| `shootout`: total > 50 (shipped) | 29 | 13 | **+0.1520** |
+| own team > 27 (self-referential) | 27 | 7 | +0.1120 |
+| **opponent > 27 (exogenous)** | 27 | **7** | **+0.0860** |
+| own team > 24 | 30 | 10 | +0.1265 |
+| opponent > 24 | 30 | 7 | +0.0675 |
+
+**It does not collapse.** The opponent's scoring alone moves a receiver's ratio by +0.086 — 8.6% of
+his own baseline — and 7 sites clear the full three-test gate on that definition. This is not
+`pass_heavy`, which fell from t = 14.25 to 1.97 once its volume was controlled for. The mechanism is
+real: a defence that concedes points forces the other offence to keep throwing, and that is
+exogenous to any one receiver.
+
+**But the shipped definition overstates it by about 1.8×.** Combining both halves credits the
+scenario with production the player himself supplied. Anyone reading `q = 58.9%` under `shootout`
+should understand that some part of that number is "in games where this player did well, this
+player did well".
+
+**Not acted on.** Redefining `shootout` on opponent points alone would remove the circularity and
+cut receiving yards from 13 priceable sites to 7 — halving the tool's coverage of its main outcome
+to correct a bias of known sign and roughly known size. That is a judgement about how much
+capability to trade for cleanliness, and it is the operator's, not the fit's. Recorded here with
+the numbers so it can be made deliberately.
+
 ## Data note
 
 `target_share` in nflverse only starts in 2009, but raw `targets` reaches back to 2005, so share is

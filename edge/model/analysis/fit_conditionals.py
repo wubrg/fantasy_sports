@@ -634,15 +634,16 @@ def build(rows, games, outcome: Outcome, proe_tw: dict | None = None,
             if i < MIN_PRIOR_GAMES:
                 continue
             prior = g[:i]
-            baseline = st.mean(p["basis"] for p in prior)
+            stats = prior_stats(prior)
+            baseline = stats["baseline_share"]
             if baseline < outcome.min_baseline:
                 continue
-            recent = st.mean(p["basis"] for p in prior[-TREND_WINDOW:])
+            recent = stats["trend"] + baseline
             # The player's own prior mean OUTPUT, as opposed to his prior mean
             # opportunity. Prior information only, and the quantity a book's
             # line is actually set near -- see docs/reviews/2026-08-23-adversarial.md
             # finding C3.
-            baseline_yards = st.mean(p["yards"] for p in prior)
+            baseline_yards = stats["baseline_output"]
             if baseline_yards < outcome.min_output:
                 # Below this the ratio stops being a stable quantity: on a
                 # 3-yard baseline an ordinary game is a ratio of 8, and the
@@ -703,6 +704,27 @@ def build(rows, games, outcome: Outcome, proe_tw: dict | None = None,
                 }
             )
     return obs
+
+
+def prior_stats(prior: list[dict]) -> dict:
+    """Baseline and trend from a player's PRIOR games only.
+
+    Shared by the fit and by analysis/player.py rather than written twice.
+    player.py has to produce the same two numbers for an UPCOMING week, and a
+    wrong one does not fail -- it lands the operator in a neighbouring cell and
+    prices a different population with nothing to show that it happened. Two
+    copies of this arithmetic would eventually disagree, and the disagreement
+    would be silent.
+
+    Expects rows carrying `basis` (share of the team pool, or raw volume) and
+    `yards` (the raw output, before the fit turns it into a ratio).
+    """
+    baseline = st.mean(p["basis"] for p in prior)
+    return {
+        "baseline_share": baseline,
+        "baseline_output": st.mean(p["yards"] for p in prior),
+        "trend": st.mean(p["basis"] for p in prior[-TREND_WINDOW:]) - baseline,
+    }
 
 
 def band_index(bands, v):

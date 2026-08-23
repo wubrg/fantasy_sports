@@ -113,6 +113,11 @@ No override is in force. The one that was — `pass_heavy` for receptions — na
 grid as it was cut before 2026-08-23, and an override cannot be carried across a re-cut: the
 failure it accepted was measured on a cell that no longer exists.
 
+`model/analysis/player.py` reads `-baseline` and `-trend` off the cache for a given player and
+upcoming week, tells you which cell they land in and whether it is priceable, and prints the
+`edgectl` command. Typing those two numbers from memory is the one mistake here that fails
+silently — a wrong baseline prices a different population and says nothing.
+
 Ask for a site that did not survive and you get told which one and why, not a shrug:
 
 ```

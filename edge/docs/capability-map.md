@@ -220,6 +220,18 @@ nothing — this alone removes receptions/`blowout_loss` and rushing/`shootout`.
 was tested against a permutation null: it passes **1.6%** of site-tests when the scenario label is
 shuffled across games, against 38–75% for the real thing. See `FINDINGS.md` §12.
 
+### The two typed coordinates can be read from the cache
+
+`model/analysis/player.py --player <name> --season <n> --week <n> [--total <n>]` computes
+`-baseline` and `-trend` for an **upcoming** week using only prior games, reports the cell they
+land in and its verdict, and prints the command. It shares `prior_stats()` with the fit rather than
+reimplementing it, because two copies of that arithmetic would eventually disagree and the
+disagreement would be silent — which is the whole failure mode it exists to remove.
+
+It stays on the Python side of the boundary deliberately: `edgectl` has no runtime data dependency,
+and giving it one to save a copy-paste would trade the project's clearest invariant for a
+convenience.
+
 ### Both directions are priceable
 
 `edgectl scenario -side over|under`. The grid fits `P(output > line)` only and reads the under off
