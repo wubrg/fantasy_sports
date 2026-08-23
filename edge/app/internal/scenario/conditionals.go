@@ -48,6 +48,30 @@ type Cell struct {
 	NEff    float64 `json:"n_eff"`
 	Players int     `json:"players"`
 	ICC     float64 `json:"icc"`
+
+	// Validated is THE gate, and it is per cell because a price is per cell.
+	//
+	// It used to live on the scenario: one verdict covering every cell the
+	// scenario had, decided by whether the effect's direction held in ALL of
+	// them. That rule passes with probability (1-e)^k for k cells, so it grew
+	// stricter the more finely the same data was cut -- and cell count is a
+	// design choice, not evidence. Judging each site on its own evidence
+	// removes k from the expression.
+	//
+	// Both halves of a site (occurred and not) carry the same flag. q and r
+	// only mean something together, so half a validated pair is not usable.
+	Validated bool     `json:"validated"`
+	Why       []string `json:"why"`
+
+	// Override is set when an operator accepted THIS site's specific failure.
+	Override *AcceptedFailure `json:"override,omitempty"`
+}
+
+// SiteLabel names the cell's coordinates the way a person reads them, for use
+// in a refusal. A reason without a location sends the reader hunting.
+func (c Cell) SiteLabel() string {
+	return fmt.Sprintf("%g-%g opportunity, %+.2f..%+.2f trend",
+		c.OpportunityMin, c.OpportunityMax, c.TrendMin, c.TrendMax)
 }
 
 // effectiveN is the sample size intervals should be built on.
@@ -71,14 +95,30 @@ func (c Cell) effectiveN() int {
 // pricing a wager from one is refused. A scenario that is measurable is not the
 // same as a scenario that is usable.
 type ScenarioStatus struct {
+	// Validated now means "at least one site of this pairing may be priced".
+	// The per-cell flags say which. A pairing with no priceable site is as
+	// unbettable as a scenario that failed the old whole-scenario gate, so the
+	// name still carries its original meaning at this granularity.
 	Validated bool   `json:"validated"`
 	Note      string `json:"note"`
 
-	// RuleSays is what qualifies() computed, independently of the recorded
-	// verdict. When it disagrees with Validated an operator has accepted a
-	// specific failure, and AcceptedFailure names it.
-	RuleSays        bool             `json:"rule_says"`
-	AcceptedFailure *AcceptedFailure `json:"accepted_failure,omitempty"`
+	Sites          int `json:"sites"`
+	SitesPriceable int `json:"sites_priceable"`
+
+	// RuleSays is what the old whole-scenario rule computed. Kept because
+	// FINDINGS.md argues from it and the two verdicts should stay comparable.
+	RuleSays bool `json:"rule_says"`
+
+	// SignP is the two-sided binomial p-value that the scenario's dominant
+	// direction beats a coin flip. A site is judged by agreement with that
+	// direction, so when it is not established no site can be priced.
+	SignP float64 `json:"sign_p"`
+
+	// Vetoed is an operator removing the pairing for a reason no test can
+	// see -- the effect is real and still not something to bet on. It only
+	// ever subtracts.
+	Vetoed bool   `json:"vetoed,omitempty"`
+	Why    string `json:"why,omitempty"`
 }
 
 // AcceptedFailure is an operator overriding the gate for one named cell.
@@ -253,9 +293,17 @@ func (c *Conditionals) checkValidated(outcome, scenario string) error {
 			scenario, outcome, strings.Join(c.ScenarioNames(), ", "), ErrScenarioNotPriceable)
 	}
 	if !st.Validated {
+		if st.Vetoed {
+			return fmt.Errorf(
+				"scenario: %q is fitted for %s and vetoed by the operator, so it cannot be "+
+					"priced at any cell.\n  %s\n  %w",
+				scenario, outcome, st.Why, ErrScenarioNotPriceable)
+		}
 		return fmt.Errorf(
-			"scenario: %q is fitted but NOT validated for %s, so it cannot be priced.\n  %s: %w",
-			scenario, outcome, st.Note, ErrScenarioNotPriceable)
+			"scenario: %q is fitted for %s but no cell of it survives validation, so it "+
+				"cannot be priced.\n  %s\n  0 of %d sites priceable; the scenario's direction "+
+				"beats a coin flip with p=%.3f: %w",
+			scenario, outcome, st.Note, st.Sites, st.SignP, ErrScenarioNotPriceable)
 	}
 	return nil
 }
@@ -279,9 +327,13 @@ func (c *Conditionals) OccursBelow(scenario string) bool {
 // AcceptedFailureFor returns the override a scenario is being priced under, if
 // any. Callers must surface it; a wager placed on an overridden gate should
 // never look like one placed on a clean pass.
-func (c *Conditionals) AcceptedFailureFor(outcome, scenario string) *AcceptedFailure {
-	if st, ok := c.ScenarioStatus[outcome][scenario]; ok {
-		return st.AcceptedFailure
+func (c *Conditionals) AcceptedFailureFor(outcome, scenario string, opportunity, trend float64) *AcceptedFailure {
+	for i := range c.Cells {
+		cell := &c.Cells[i]
+		if cell.Outcome == outcome && cell.Scenario == scenario && cell.Override != nil &&
+			cell.Override.Covers(opportunity, trend) {
+			return cell.Override
+		}
 	}
 	return nil
 }
@@ -494,6 +546,16 @@ func (c *Conditionals) Lookup(outcome, scenario string, occurred bool, opportuni
 	cell, err := c.findCell(outcome, scenario, occurred, opportunity, trend)
 	if err != nil {
 		return Conditional{}, err
+	}
+	// The gate, at the granularity the price is formed at. checkValidated above
+	// only established that SOME site of this pairing is priceable; this is the
+	// one being asked for.
+	if !cell.Validated {
+		return Conditional{}, fmt.Errorf(
+			"scenario: %s/%s is priceable, but not at %s.\n  %s.\n"+
+				"  Supply -q and -r yourself if you have your own read on this cell: %w",
+			outcome, scenario, cell.SiteLabel(),
+			strings.Join(cell.Why, "; "), ErrScenarioNotPriceable)
 	}
 
 	n := cell.effectiveN()

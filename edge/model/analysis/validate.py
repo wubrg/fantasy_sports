@@ -29,6 +29,7 @@ already written down would look derived while being fitted to its conclusion.
 
 from __future__ import annotations
 
+import math
 import random
 import statistics as st
 
@@ -76,6 +77,17 @@ def _rate_above(rows: list[dict], line: float) -> float:
     return sum(1 for o in rows if o["yards"] > line) / len(rows)
 
 
+def site_key(tband, rband) -> tuple:
+    """A SITE is one (opportunity band, trend band) coordinate for one scenario.
+
+    It is the unit a price is actually looked up at -- the q cell and the r
+    cell together -- and therefore the right unit to gate at. The old gate
+    ruled on a whole scenario at once, which made its strictness depend on how
+    many sites the grid happened to be cut into. See FINDINGS.md section 12.
+    """
+    return (tband[0], tband[1], rband[0], rband[1])
+
+
 def cell_pairs(obs, definition, target_bands, trend_bands, min_cell):
     """The (occurred, not-occurred) row pairs for every publishable cell.
 
@@ -119,6 +131,15 @@ def direction(pairs, discrete: bool = False) -> dict:
     sign = 1 if sum(1 for d in deltas if d > 0) >= sum(1 for d in deltas if d < 0) else -1
     consistent = sum(1 for d in deltas if d * sign > 0)
 
+    # Per site, not merely counted. The count is a scenario-level summary; the
+    # verdict that gates a price is this one. The dominant SIGN stays a
+    # scenario-level claim -- a scenario means one direction everywhere or it
+    # means nothing -- but agreement with it is measured where it is priced.
+    by_site = {
+        site_key(tband, rband): {"delta": round(d, 3), "agrees": d * sign > 0}
+        for (tband, rband, _, _), d in zip(pairs, deltas)
+    }
+
     total = 0
     inversions = []
     for (tband, rband, yes, no), delta in zip(pairs, deltas):
@@ -137,6 +158,7 @@ def direction(pairs, discrete: bool = False) -> dict:
         "consistent": consistent,
         "sign": "positive" if sign > 0 else "negative",
         "inversions": inversions,
+        "sites": by_site,
     }
 
 
@@ -146,8 +168,11 @@ def resolution(pairs, discrete: bool = False, resamples=BOOTSTRAP_RESAMPLES,
     rng = random.Random(seed)
     loc = location(discrete)
     resolved = total = 0
+    by_site = {}
     for tband, rband, yes, no in pairs:
         total += 1
+        key = site_key(tband, rband)
+        by_site[key] = {"resolved": False, "lo": None, "hi": None}
         by_player: dict[str, tuple[list, list]] = {}
         for o in yes:
             by_player.setdefault(o["player"], ([], []))[0].append(o["yards"])
@@ -169,9 +194,11 @@ def resolution(pairs, discrete: bool = False, resamples=BOOTSTRAP_RESAMPLES,
         deltas.sort()
         lo = deltas[int(0.025 * len(deltas))]
         hi = deltas[min(int(0.975 * len(deltas)), len(deltas) - 1)]
+        by_site[key] = {"resolved": lo > 0 or hi < 0,
+                        "lo": round(lo, 3), "hi": round(hi, 3)}
         if lo > 0 or hi < 0:
             resolved += 1
-    return {"cells": total, "resolved": resolved}
+    return {"cells": total, "resolved": resolved, "sites": by_site}
 
 
 def out_of_sample(obs, definition, target_bands, trend_bands, min_cell,
@@ -180,6 +207,7 @@ def out_of_sample(obs, definition, target_bands, trend_bands, min_cell,
     train = [o for o in obs if o["season"] <= OOS_SPLIT]
     test = [o for o in obs if o["season"] > OOS_SPLIT]
     agree = total = 0
+    by_site = {}
     for tband, rband, _, _ in cell_pairs(train, definition, target_bands, trend_bands, min_cell):
         ta, tb = tband
         ra, rb = rband
@@ -195,13 +223,20 @@ def out_of_sample(obs, definition, target_bands, trend_bands, min_cell,
 
         tr_y, tr_n = half(train, True), half(train, False)
         te_y, te_n = half(test, True), half(test, False)
+        key = site_key(tband, rband)
         if min(len(te_y), len(te_n)) < MIN_OOS_CELL:
-            continue  # the late seasons cannot speak to this cell either way
+            # The late seasons cannot speak to this site either way. None is
+            # NOT False: it is the absence of evidence, and site_verdicts()
+            # refuses on it rather than passing it through.
+            by_site[key] = None
+            continue
         total += 1
         loc = location(discrete)
-        if (loc(tr_y) - loc(tr_n)) * (loc(te_y) - loc(te_n)) > 0:
+        held = (loc(tr_y) - loc(tr_n)) * (loc(te_y) - loc(te_n)) > 0
+        by_site[key] = held
+        if held:
             agree += 1
-    return {"cells": total, "agree": agree}
+    return {"cells": total, "agree": agree, "sites": by_site}
 
 
 def out_of_sample_threeway(obs, definition, target_bands, trend_bands, min_cell,
@@ -296,6 +331,89 @@ def evidence(obs, definition, target_bands, trend_bands, min_cell,
         "oos_split": OOS_SPLIT,
         "location": "mean" if discrete else "median",
     }
+
+
+def sign_coherence(consistent: int, cells: int) -> float:
+    """Two-sided binomial p-value that the dominant sign is better than a toss.
+
+    site_verdicts() judges a site by whether it agrees with the scenario's
+    dominant direction. If that direction is itself a coin flip -- receptions
+    under blowout_loss leans one way in 8 of 16 cells -- then "agrees with it"
+    carries no information, and the sites that agree are the lucky half rather
+    than the real ones. So the scenario must HAVE a direction before any of its
+    sites can be judged against it.
+
+    This is not the old all-cells rule returning in disguise. That rule asked
+    whether every cell agreed, and got harder to satisfy as the grid was cut
+    finer. This asks whether the agreement rate beats chance, and gets EASIER
+    to satisfy with more cells -- which is how evidence is supposed to behave.
+    """
+    if cells == 0:
+        return 1.0
+    k = max(consistent, cells - consistent)
+    tail = sum(math.comb(cells, i) for i in range(k, cells + 1)) / (2 ** cells)
+    return min(1.0, 2 * tail)
+
+
+COHERENCE_ALPHA = 0.05
+
+
+def site_verdicts(obs, definition, target_bands, trend_bands, min_cell,
+                  discrete: bool = False, require_oos: bool = True) -> dict:
+    """THE gate: one verdict per site, each decided on that site's own evidence.
+
+    A site is priceable only if all three tests pass AT THAT SITE:
+
+      direction      its delta agrees with the scenario's dominant sign
+      resolved       the player-clustered bootstrap separates it from zero
+      out of sample  that sign holds in the held-out seasons
+
+    Why per site. The old rule -- the sign holds in EVERY cell -- passes with
+    probability (1-e)^k for k cells and a per-cell error rate e, so it gets
+    harder to satisfy the more finely the same data is cut. Cell count is a
+    design choice, not evidence, and a gate that reads it as evidence rejects
+    findings when the grid is redrawn. Judging each site alone removes k from
+    the expression entirely.
+
+    Why all three. One 95% interval over ~30 sites resolves about 1.5 by
+    chance, so a single-test per-site gate really would be multiple comparisons
+    with better manners. Requiring agreement with a sign fixed scenario-wide,
+    resolution, AND out-of-sample persistence is a conjunction the null clears
+    far more rarely -- measured by permutation in FINDINGS.md section 12.
+
+    require_oos makes the absence of held-out evidence a refusal rather than a
+    pass. A site the late seasons cannot speak to has not been validated out of
+    sample, and "we never checked" is not a reason to price something.
+    """
+    pairs = list(cell_pairs(obs, definition, target_bands, trend_bands, min_cell))
+    d = direction(pairs, discrete)
+    res = resolution(pairs, discrete)
+    oos = out_of_sample(obs, definition, target_bands, trend_bands, min_cell, discrete)
+
+    out = {}
+    for key, dd in d["sites"].items():
+        rr = res["sites"].get(key, {"resolved": False, "lo": None, "hi": None})
+        oo = oos["sites"].get(key)
+        why = []
+        if not dd["agrees"]:
+            why.append(f"delta {dd['delta']:+g} runs against the scenario's {d['sign']} direction")
+        if not rr["resolved"]:
+            why.append("the bootstrap interval does not clear zero"
+                       + (f" [{rr['lo']:+g}, {rr['hi']:+g}]" if rr["lo"] is not None else ""))
+        if oo is False:
+            why.append("the direction does not hold in the held-out seasons")
+        elif oo is None and require_oos:
+            why.append(f"the seasons after {OOS_SPLIT} are too thin here to check it")
+        out[key] = {
+            "priceable": not why,
+            "delta": dd["delta"],
+            "agrees": dd["agrees"],
+            "resolved": rr["resolved"],
+            "ci": [rr["lo"], rr["hi"]],
+            "oos": oo,
+            "why": why,
+        }
+    return out
 
 
 def note(ev: dict) -> str:

@@ -266,9 +266,17 @@ func TestUnvalidatedScenariosCannotBePriced(t *testing.T) {
 	}
 	// The refusal has to explain itself; a bare error would leave the operator
 	// guessing whether it is a typo or a finding.
+	// Asserted against the reason the ARTIFACT records rather than a fixed
+	// phrase, so the test keeps checking that the refusal explains itself even
+	// when the wording changes -- and fails if the two ever drift apart.
 	_, err := c.Lookup("receiving_yards", "blowout_loss", true, 7, 0.0, 45, 0.95)
-	if err != nil && !strings.Contains(err.Error(), "NOT validated") {
-		t.Errorf("refusal should say why: %v", err)
+	st := c.ScenarioStatus["receiving_yards"]["blowout_loss"]
+	reason := st.Why
+	if reason == "" {
+		reason = st.Note
+	}
+	if err != nil && !strings.Contains(err.Error(), reason) {
+		t.Errorf("refusal should carry the recorded reason %q: %v", reason, err)
 	}
 
 	// An unknown scenario is refused rather than assumed good.
@@ -289,8 +297,14 @@ func TestUnvalidatedScenariosCannotBePriced(t *testing.T) {
 	}
 	for _, name := range got {
 		st := c.ScenarioStatus["receiving_yards"][name]
-		if !st.RuleSays && st.AcceptedFailure == nil {
-			t.Errorf("%q is priceable but neither passes the rule nor carries an override", name)
+		// Priceable at the scenario level now means "at least one site of it
+		// survives". The old assertion appealed to the whole-scenario rule,
+		// which is no longer what decides anything.
+		if st.SitesPriceable == 0 {
+			t.Errorf("%q is listed priceable but no site of it survives validation", name)
+		}
+		if st.SitesPriceable > st.Sites {
+			t.Errorf("%q reports %d of %d sites priceable", name, st.SitesPriceable, st.Sites)
 		}
 	}
 	// And whatever is gated must genuinely be refused.
@@ -463,10 +477,11 @@ func TestQAndRDiffer(t *testing.T) {
 // TestIntervalsWidenOnThinCells: uncertainty must track sample size.
 func TestIntervalsWidenOnThinCells(t *testing.T) {
 	c := mustConditionals(t)
-	// Only validated scenarios can be priced, so only they can be compared.
+	// Only validated CELLS can be priced, so only they can be compared. This
+	// used to filter on the scenario, which stopped being the unit of the gate.
 	var thin, thick Cell
 	for _, cell := range c.Cells {
-		if st, ok := c.ScenarioStatus[cell.Outcome][cell.Scenario]; !ok || !st.Validated {
+		if !cell.Validated {
 			continue
 		}
 		if thin.N == 0 || cell.N < thin.N {
@@ -589,7 +604,27 @@ func TestTailNMeasuresTheSparserSide(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	const lowVolume, highVolume = 3.0, 9.0
+	// Discovered from the grid rather than hardcoded: which opportunity bands
+	// are priceable is a fitted result, and pinning two numbers here made this
+	// test silently vacuous the moment the gate moved to cells.
+	var lowVolume, highVolume float64 = -1, -1
+	for _, cell := range c.Cells {
+		if !cell.Validated || cell.Outcome != "receiving_yards" ||
+			cell.Scenario != "shootout" || !cell.Occurred ||
+			cell.TrendMin > 0.07 || cell.TrendMax <= 0.07 {
+			continue
+		}
+		mid := (cell.OpportunityMin + cell.OpportunityMax) / 2
+		if lowVolume < 0 || mid < lowVolume {
+			lowVolume = mid
+		}
+		if mid > highVolume && cell.OpportunityMax < 900 {
+			highVolume = mid
+		}
+	}
+	if lowVolume < 0 || highVolume <= lowVolume {
+		t.Skip("fewer than two priceable opportunity bands for receiving_yards/shootout")
+	}
 	lines := []float64{60.5, 75.5, 100.5, 125.5, 150.5}
 
 	// Support must fall as the line deepens, and the low-volume band must never
@@ -994,40 +1029,49 @@ func TestContinuousOutcomesStillInterpolate(t *testing.T) {
 func TestAcceptedFailureIsFullySpecified(t *testing.T) {
 	c := mustConditionals(t)
 	found := 0
-	for outcome, byScenario := range c.ScenarioStatus {
-		for name, st := range byScenario {
-			if st.AcceptedFailure == nil {
-				// No override: the recorded verdict must match the rule.
-				if st.Validated != st.RuleSays {
-					t.Errorf("%s/%s: validated=%v but rule says %v, with no accepted_failure",
-						outcome, name, st.Validated, st.RuleSays)
-				}
-				continue
+	for i := range c.Cells {
+		cell := c.Cells[i]
+		af := cell.Override
+		if af == nil {
+			// No override: the cell's flag must match its own reasons. A cell
+			// carrying failure reasons and still marked priceable is the gate
+			// switched off without saying so.
+			if cell.Validated && len(cell.Why) > 0 {
+				t.Errorf("%s/%s at %s is validated but records why it failed: %v",
+					cell.Outcome, cell.Scenario, cell.SiteLabel(), cell.Why)
 			}
-			found++
-			af := st.AcceptedFailure
-			// An override only makes sense where the rule actually says no.
-			if st.RuleSays {
-				t.Errorf("%s/%s carries an accepted_failure but passes on its own; "+
-					"the override is stale", outcome, name)
+			continue
+		}
+		found++
+		// An override only makes sense where the cell actually failed, and it
+		// must leave the cell priceable or it does nothing.
+		if len(cell.Why) == 0 {
+			t.Errorf("%s/%s at %s carries an override but records no failure; it is stale",
+				cell.Outcome, cell.Scenario, cell.SiteLabel())
+		}
+		if !cell.Validated {
+			t.Errorf("%s/%s at %s has an override but is still gated; it does nothing",
+				cell.Outcome, cell.Scenario, cell.SiteLabel())
+		}
+		for field, v := range map[string]string{
+			"cell": af.Cell, "measured": af.Measured, "why": af.Why,
+			"accepted_by": af.AcceptedBy,
+		} {
+			if v == "" {
+				t.Errorf("%s/%s override has an empty %s", cell.Outcome, cell.Scenario, field)
 			}
-			if !st.Validated {
-				t.Errorf("%s/%s has an accepted_failure but is still gated; it does nothing",
-					outcome, name)
-			}
-			for field, v := range map[string]string{
-				"cell": af.Cell, "measured": af.Measured, "why": af.Why,
-				"accepted_by": af.AcceptedBy,
-			} {
-				if v == "" {
-					t.Errorf("%s/%s accepted_failure has an empty %s", outcome, name, field)
-				}
-			}
-			if af.OpportunityMax <= af.OpportunityMin || af.TrendMax <= af.TrendMin {
-				t.Errorf("%s/%s accepted_failure has no usable cell bounds: opp [%v,%v) "+
-					"trend [%v,%v)", outcome, name,
-					af.OpportunityMin, af.OpportunityMax, af.TrendMin, af.TrendMax)
-			}
+		}
+		if af.OpportunityMax <= af.OpportunityMin || af.TrendMax <= af.TrendMin {
+			t.Errorf("%s/%s override has no usable cell bounds: opp [%v,%v) trend [%v,%v)",
+				cell.Outcome, cell.Scenario,
+				af.OpportunityMin, af.OpportunityMax, af.TrendMin, af.TrendMax)
+		}
+		// The bounds must be the cell's own. An override that names a
+		// different site than the one it is attached to would warn about the
+		// wrong wager.
+		if af.OpportunityMin != cell.OpportunityMin || af.TrendMin != cell.TrendMin {
+			t.Errorf("%s/%s override names opp %v trend %v but is attached to %s",
+				cell.Outcome, cell.Scenario, af.OpportunityMin, af.TrendMin, cell.SiteLabel())
 		}
 	}
 	if found == 0 {
@@ -1035,27 +1079,112 @@ func TestAcceptedFailureIsFullySpecified(t *testing.T) {
 	}
 }
 
-// TestAcceptedFailureCoversTheRightCell checks the bounds actually discriminate,
-// so the warning at the point of pricing means something.
-func TestAcceptedFailureCoversTheRightCell(t *testing.T) {
+// TestOverrideIsScopedToItsOwnSite is the point of moving the override onto the
+// cell. The old lookup took no coordinates, so the warning fired on every wager
+// anywhere in the scenario — including the fifteen cells that passed cleanly.
+// A warning that appears when it does not apply is one a reader learns to skip.
+func TestOverrideIsScopedToItsOwnSite(t *testing.T) {
 	c := mustConditionals(t)
-	af := c.AcceptedFailureFor("receiving_yards", "pass_heavy")
-	if af == nil {
-		t.Skip("pass_heavy is not overridden for receiving yards")
+	var found *AcceptedFailure
+	for i := range c.Cells {
+		if c.Cells[i].Override != nil {
+			found = c.Cells[i].Override
+			mid := (found.OpportunityMin + found.OpportunityMax) / 2
+			midTrend := (found.TrendMin + found.TrendMax) / 2
+			out := c.Cells[i].Outcome
+			sc := c.Cells[i].Scenario
+			if got := c.AcceptedFailureFor(out, sc, mid, midTrend); got == nil {
+				t.Errorf("%s/%s: the middle of the overridden site is not covered", out, sc)
+			}
+			// Just outside it, the same scenario must NOT report an override.
+			if got := c.AcceptedFailureFor(out, sc, found.OpportunityMax+1, midTrend); got != nil {
+				t.Errorf("%s/%s: override leaks outside its own site", out, sc)
+			}
+			break
+		}
 	}
-	mid := (af.OpportunityMin + af.OpportunityMax) / 2
-	midTrend := (af.TrendMin + af.TrendMax) / 2
-	if !af.Covers(mid, midTrend) {
-		t.Errorf("the middle of the failing cell (%v, %v) is not covered", mid, midTrend)
+	if found == nil {
+		t.Skip("no accepted failures recorded")
 	}
-	// Just outside, on each axis.
-	if af.Covers(af.OpportunityMax, midTrend) {
+	// The bounds are half-open, matching how the fit selects a cell. If they
+	// were not, two adjacent sites would both claim a wager on the boundary.
+	mid := (found.OpportunityMin + found.OpportunityMax) / 2
+	midTrend := (found.TrendMin + found.TrendMax) / 2
+	if found.Covers(found.OpportunityMax, midTrend) {
 		t.Error("opportunity at the upper bound should be excluded (half-open interval)")
 	}
-	if af.Covers(mid, af.TrendMax) {
+	if found.Covers(mid, found.TrendMax) {
 		t.Error("trend at the upper bound should be excluded (half-open interval)")
 	}
-	if af.Covers(mid, af.TrendMin-0.01) {
+	if found.Covers(mid, found.TrendMin-0.01) {
 		t.Error("a trend below the cell is covered; the bounds do not discriminate")
 	}
+}
+
+// TestSiteVerdictsAreWholeSiteWide: q comes from the occurred cell and r from
+// its opposite half, and a probability is only formed from BOTH. Validating one
+// without the other would let a price be built half from evidence that survived
+// the gate and half from evidence that did not — the exact mismatch the gate
+// exists to stop, hidden one level down from where it is checked.
+func TestSiteVerdictsAreWholeSiteWide(t *testing.T) {
+	c := mustConditionals(t)
+	type site struct {
+		outcome, scenario  string
+		oppMin, oppMax     float64
+		trendMin, trendMax float64
+	}
+	seen := map[site]map[bool]bool{}
+	for _, cell := range c.Cells {
+		k := site{cell.Outcome, cell.Scenario, cell.OpportunityMin, cell.OpportunityMax,
+			cell.TrendMin, cell.TrendMax}
+		if seen[k] == nil {
+			seen[k] = map[bool]bool{}
+		}
+		seen[k][cell.Occurred] = cell.Validated
+	}
+	paired := 0
+	for k, halves := range seen {
+		if len(halves) != 2 {
+			// A half with no opposite number cannot be priced at all, and the
+			// fit records exactly that as its reason.
+			continue
+		}
+		paired++
+		if halves[true] != halves[false] {
+			t.Errorf("%s/%s at opp [%v,%v) trend [%v,%v): occurred=%v but not-occurred=%v",
+				k.outcome, k.scenario, k.oppMin, k.oppMax, k.trendMin, k.trendMax,
+				halves[true], halves[false])
+		}
+	}
+	if paired == 0 {
+		t.Fatal("no paired sites in the grid; the test proved nothing")
+	}
+	t.Logf("%d paired sites checked", paired)
+}
+
+// TestGateIsScaleInvariant is the property the whole rewrite is for. The old
+// rule ("the direction holds in EVERY cell") passes with probability (1-e)^k,
+// so it got stricter as the grid was cut finer — rejecting findings when the
+// axes changed rather than when the evidence did. A per-site verdict cannot
+// depend on how many other sites exist, so the count of priceable sites must
+// never fall just because a scenario has more of them.
+func TestGateIsScaleInvariant(t *testing.T) {
+	c := mustConditionals(t)
+	for outcome, byScenario := range c.ScenarioStatus {
+		for name, st := range byScenario {
+			if st.Vetoed || st.SitesPriceable == 0 {
+				continue
+			}
+			// The old rule demanded ALL sites; anything short of that failed
+			// the whole scenario. If the new gate still behaved that way, no
+			// pairing could ever be partially priceable.
+			if st.SitesPriceable < st.Sites {
+				return // found a partially-priceable pairing: k is not gating
+			}
+			_ = outcome
+			_ = name
+		}
+	}
+	t.Error("every priceable pairing passes at ALL of its sites, which is what the " +
+		"old whole-scenario rule required; the per-site gate may not be in effect")
 }

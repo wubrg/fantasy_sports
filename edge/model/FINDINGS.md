@@ -723,6 +723,110 @@ no way to attribute the verdict changes to either.
 
 Nothing above is in the artifact. The two quantities are plumbed; the axis change is not made.
 
+> **Unblocked 2026-08-23 by §12**, which replaced the whole-scenario gate with a per-site one.
+> `k` no longer appears in the rule, so re-cutting the grid cannot by itself reject anything. The
+> axis change described here is now free to land on its own evidence, and is the next piece of
+> work rather than a blocked one.
+
+## 12. The gate was measuring the grid's shape, not the evidence
+
+Section 11 could not ship because fixing the calibration re-cut the grid into more cells, and the
+gate rejected `shootout` for receiving yards as a result — while its direction *improved* from
+16/16 to 29/29. That is not a close call about one scenario. It is a defect in the rule.
+
+**The old rule was not scale-invariant.** `qualifies()` required the direction to hold in *every*
+cell and *every* out-of-sample cell. For a real effect with per-cell error probability `e`, an
+all-cells rule passes with probability `(1−e)^k`. As `k` grows that falls to zero — so re-cutting
+the same data more finely rejects findings it previously accepted, and `k` is a design choice about
+axes rather than anything the data said.
+
+The same flaw is why the bootstrap was *reported but never gated on*. §3 recorded the reason
+plainly: "requiring all of them would reject a real effect." That was correct, and it was the
+scale-dependence talking. The test was sound; the conjunction over `k` cells was not.
+
+### The gate now rules on a site
+
+A **site** is one (opportunity band, trend band) coordinate of one scenario — the q cell and the r
+cell together. It is the unit a price is actually formed at, so it is the unit to gate. A site is
+priceable only if, **at that site**:
+
+| test | requirement |
+|---|---|
+| direction | its delta agrees with the scenario's dominant sign |
+| resolution | the player-clustered bootstrap interval clears zero |
+| out of sample | that sign holds in the seasons after 2021 |
+
+`k` does not appear. Adding axes no longer changes any surviving site's verdict, and the bootstrap
+becomes gateable for the first time — per site, requiring resolution is just "this effect is
+separated from zero here", with nothing to compound.
+
+Absence of held-out evidence is a **refusal, not a pass**. 21 sites are refused on that alone,
+15 of them in passing yards, where there are ~32 quarterbacks to fill cells. "We never checked" is
+not a reason to price something.
+
+### A scenario must have a direction before its sites can agree with one
+
+A site is judged by agreement with the scenario's dominant sign, so where that sign is a coin flip
+the agreeing sites are simply the lucky half. Receptions under `blowout_loss` leans one way in
+**8 of 16** cells; rushing under `shootout` in **10 of 14**. Both would otherwise have contributed
+2 priceable sites each.
+
+So the dominant sign must first beat chance — a two-sided binomial test at α = 0.05. This is not
+the old rule returning in disguise: the all-cells rule asked whether *every* cell agreed and got
+harder to satisfy as the grid was cut finer, while this asks whether the agreement *rate* beats
+chance and gets **easier** with more cells, which is how evidence is supposed to behave.
+
+### Is this multiple comparisons with better manners?
+
+It is the obvious charge — one 95% interval across ~30 sites resolves about 1.5 by luck — so it was
+measured rather than argued. The scenario label was shuffled across games, preserving its marginal
+rate, the player clustering and the season structure, and destroying only its link to production.
+12 permutations per scenario, receiving yards:
+
+| scenario | real | under the null |
+|---|---|---|
+| shootout | 12/16 = 75% | 1.6% |
+| blowout_loss | 6/16 = 38% | 1.6% |
+| pass_heavy | 12/17 = 71% | 0.5% |
+| efficient_offense | 12/17 = 71% | 2.6% |
+
+**The three-test conjunction passes 12 of 774 site-tests under the null — 1.6%.** That is below the
+5% a single 95% interval would give, and 20–45× below the real pass rates. The conjunction, not the
+granularity, is what does the work.
+
+### What it publishes
+
+118 of 222 sites, against 82 sites inside the four scenarios the old whole-scenario gate passed:
+
+| outcome | shootout | blowout_loss | pass_heavy | efficient_offense |
+|---|---|---|---|---|
+| receiving_yards | 12/16 | 0/16 vetoed | 0/17 vetoed | **12/17** |
+| receptions | 15/16 | 0/16 no direction | 16/17 | **15/17** |
+| rushing_yards | 0/14 no direction | **6/12** | 10/13 | **10/14** |
+| passing_yards | 6/10 | 5/7 | 5/10 | 6/10 |
+
+It is both more permissive and more demanding, which is the point. `efficient_offense` was gated
+everywhere for missing by a cell or two; 12, 15 and 10 of its sites hold on their own evidence.
+Passing yards passed all four scenarios wholesale and now loses 4–5 sites in each, having never
+been checked out of sample where the held-out seasons are thin.
+
+### What an operator can still do
+
+The statistical gate is measured, so there is nothing recorded for it to drift from. Two human
+levers remain, and both are narrower than before:
+
+- A **veto** removes a pairing for a reason no test can see. `receiving_yards`/`pass_heavy` (a
+  volume identity, §11) and `receiving_yards`/`blowout_loss` (needs a play-by-play definition, not
+  final margin). It can only ever subtract.
+- An **accepted failure** now names *one site* by its four coordinates, and is checked against that
+  site's measured verdict. It previously attached to a whole scenario, so the warning fired on
+  every wager anywhere in it — including the fifteen cells that passed cleanly. A warning that
+  appears when it does not apply is one a reader learns to skip.
+
+The purely statistical verdicts that used to be recorded by hand — "holds in only 13 of 16 out of
+sample", "misses each criterion by a single cell" — are gone, because that is exactly the judgement
+the per-site gate now makes, at the granularity a wager is priced at.
+
 ## Data note
 
 `target_share` in nflverse only starts in 2009, but raw `targets` reaches back to 2005, so share is

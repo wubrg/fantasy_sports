@@ -358,145 +358,63 @@ SCENARIOS = {
 # It is deliberately not a computed threshold. Two scenarios is not enough to
 # calibrate one on, and a bar reverse-engineered to reproduce the answer already
 # written down would look derived while being fitted to its conclusion.
-SCENARIO_STATUS = {
-    # Per OUTCOME. A scenario that separates receiving yards need not separate
-    # passing yards -- different players, different opportunity axis, different
-    # mechanism -- so each pairing carries its own verdict and its own evidence.
-    "receiving_yards": {
-        "efficient_offense": {
-            "validated": False,
-            "why": "Consistent in 17 of 17 cells but holds in only 13 of 16 out of sample -- "
-            "three failures, not the one that pass_heavy carries, and no override is offered "
-            "for it. The direction is never in doubt; the recent seasons are.",
-        },
-        "shootout": {"validated": True},
-        "pass_heavy": {
-            "validated": False,
-            "why": "WITHDRAWN 2026-08-23 as a volume identity, not on the out-of-sample cell it "
-            "was previously overridden for. Holding REALISED targets fixed, its coefficient "
-            "collapses from t = 14.25 to t = 1.97 -- 90% of the separation is explained by volume "
-            "the projection failed to anticipate. It measures the inadequacy of our own projected "
-            "targets (prior share x prior 3-game team pool, no market input), not a market "
-            "inefficiency. The earlier defence -- that separation holds within projected-target "
-            "bands and widens with volume -- is the identity's signature rather than a refutation: "
-            "a higher-share player converts extra team attempts into proportionally more targets, "
-            "so share x extra attempts IS the widening. Receiving yards is the one outcome where "
-            "this is fatal, because it is targets x catch rate x yards-per-catch and pass_heavy "
-            "acts only on the first term. It survives volume conditioning for receptions (t=9.17), "
-            "rushing (t=-9.80) and passing (t=5.05), and is kept there. See "
-            "docs/reviews/2026-08-23-adversarial.md finding C2.",
-        },
-        "blowout_loss": {
-            "validated": False,
-            "why": "Needs a play-by-play definition (time remaining crossed with score "
-            "differential) rather than final margin, which is the measurement this result "
-            "argues for.",
-        },
-    },
-    "receptions": {
-        "efficient_offense": {
-            "validated": False,
-            "why": "Consistent in 17 of 17 and resolved in 16 of 17, failing one "
-            "out-of-sample cell. A near miss, recorded rather than overridden.",
-        },
-        # Same rows and same opportunity axis as receiving yards; only the
-        # outcome column differs. The verdicts do not match, which is the
-        # point of gating per outcome.
-        "shootout": {"validated": True},
-        "pass_heavy": {
-            "validated": True,
-            "accepted_failure": {
-                "cell": "6-8 projected targets, +0.03..+0.06 role trend",
-                # Machine-readable bounds so the CLI can tell the operator
-                # whether THIS wager sits in the failing cell, rather than
-                # printing a warning to be cross-referenced by hand.
-                "opportunity_min": 6,
-                "opportunity_max": 8,
-                "trend_min": 0.03,
-                "trend_max": 0.06,
-                "measured": "15/16 out of sample; consistent 17/17; resolved 17/17 -- the strongest bootstrap of any pairing in the grid",
-                "why": "The failing cell shows +14.5 yards and +1.22 receptions of separation "
-                "over 2009-2021 and -0.5 / -0.02 across 2022-2025, on 65 held-out games. Half a "
-                "yard is not a reversal, and the cluster bootstrap cannot distinguish it from "
-                "zero. The rule still says no, and is not being softened: a magnitude-aware "
-                "version was tested and rejected because it makes every scenario pass "
-                "(FINDINGS.md 4). This is an operator accepting one named failure instead. "
-                "Receptions and receiving yards fail the SAME cell on the SAME player-games, so "
-                "this is one failure seen twice, not two. Revisit when the held-out half has "
-                "enough seasons to resolve it -- roughly 15-20 games a year accrue to this cell.",
-                "accepted_by": "operator, 2026-08-22",
-            },
-        },
-        "blowout_loss": {
-            "validated": False,
-            "why": "Consistent in only 8 of 16 cells and 8 of 15 out of sample -- a coin "
-            "flip. Conditioning on projected targets absorbs most of what a blowout does "
-            "to a CATCH COUNT, while it leaves the yardage effect intact, which is why "
-            "this fails here and is merely marginal for receiving yards.",
-        },
-    },
-    "rushing_yards": {
-        "efficient_offense": {
-            "validated": False,
-            "why": "Misses each criterion by a single cell: 13 of 14 consistent, 12 of 13 "
-            "out of sample. Positive, unlike pass_heavy -- an efficient offence sustains "
-            "drives and the back eats too, where a pass-heavy one takes his carries away.",
-        },
-        # The sign flips here, and that is the finding. pass_heavy helps a
-        # receiver and hurts a back, because the carries went somewhere.
-        "pass_heavy": {"validated": True},
-        "shootout": {
-            "validated": False,
-            "why": "Consistent in only 10 of 14 cells and resolved in 2, with 5 of 13 "
-            "holding out of sample. A high posted total says a game will be scored in, "
-            "not how -- it can arrive through the air or on the ground, and the grid "
-            "cannot tell which from the total alone. Contrast pass_heavy, which measures "
-            "the HOW directly and validates cleanly.",
-        },
-        "blowout_loss": {
-            "validated": False,
-            "why": "Negative in 11 of 12 cells and 8 of 9 out of sample -- fails each "
-            "criterion by exactly one cell. The direction is right and mechanically "
-            "sensible: a team losing badly abandons the run. It is the closest miss in "
-            "the grid and worth revisiting when the held-out half has more seasons.",
-        },
-    },
-    "passing_yards": {
-        "efficient_offense": {"validated": True},
-        # All three qualify here, and one of them -- blowout_loss -- is gated
-        # for receiving yards. Read that with the caveat below before trusting
-        # it more than it deserves.
-        #
-        # THE PASSING GATE IS WEAKER THAN THE RECEIVING ONE, structurally. The
-        # grid is 4x3 rather than 5x4 because there are ~32 starting
-        # quarterbacks in a week against ~237 pass-catchers, so it publishes 10
-        # cell pairs against 16 and its out-of-sample test sees 5-6 cells
-        # against 15. "Consistent in every cell" and "holds in every
-        # out-of-sample cell" are both much easier bars on a smaller grid, and
-        # qualifies() does not scale with cell count.
-        #
-        # The separation is real, not an artifact: measured as a share of each
-        # outcome's own baseline it is comparable across the two grids --
-        # shootout +23.0% of a 234-yard baseline against +28.8% of a 26-yard
-        # one, pass_heavy +23.7% against +30.8%, blowout_loss -12.4% against
-        # -16.3%. So these are the same effects at the same rough strength.
-        #
-        # What differs is the evidence available to falsify them. blowout_loss
-        # is negative in 14 of 16 receiving cells and 7 of 7 passing cells: the
-        # effect is the same, and only the receiving grid is large enough to
-        # show it wobbling. That is a limitation of the rule, recorded rather
-        # than tuned away -- the same decision taken over the magnitude-aware
-        # out-of-sample test in FINDINGS.md 4.
-        "shootout": {"validated": True},
-        "pass_heavy": {"validated": True},
-        "blowout_loss": {
-            "validated": True,
-            "why": "Validated HERE and gated for receiving yards. The effect is the same "
-            "direction and comparable relative magnitude in both; the receiving grid is "
-            "simply large enough to catch it disagreeing in 2 of 16 cells, while the "
-            "passing grid has 7 and sees none of it. Treat with more suspicion than the "
-            "flag implies.",
-        },
+# The statistical gate is now MEASURED PER SITE (validate.site_verdicts) and is
+# not recorded in this file, so there is nothing here for the data to drift
+# away from. What remains is the part measurement cannot do.
+#
+# A VETO is an operator removing a pairing for a reason no test can see -- the
+# effect is real and still not something to bet on. It can only ever subtract.
+# A scenario absent from this table is decided entirely by its sites.
+#
+# The purely statistical verdicts that used to live here ("holds in only 13 of
+# 16 out of sample", "misses each criterion by a single cell") are gone,
+# because that is exactly the judgement the per-site gate now makes -- and
+# makes at the granularity a wager is actually priced at. See FINDINGS.md 12.
+SCENARIO_VETO = {
+    ("receiving_yards", "pass_heavy"): (
+        "WITHDRAWN 2026-08-23 as a volume identity, not on the out-of-sample cell it was "
+        "previously overridden for. Holding REALISED targets fixed, its coefficient collapses "
+        "from t = 14.25 to t = 1.97 -- 90% of the separation is explained by volume the "
+        "projection failed to anticipate. It measures the inadequacy of our own projected "
+        "targets (prior share x prior 3-game team pool, no market input), not a market "
+        "inefficiency. The earlier defence -- that separation holds within projected-target "
+        "bands and widens with volume -- is the identity's signature rather than a "
+        "refutation: a higher-share player converts extra team attempts into proportionally "
+        "more targets, so share x extra attempts IS the widening. Receiving yards is the one "
+        "outcome where this is fatal, because it is targets x catch rate x yards-per-catch "
+        "and pass_heavy acts only on the first term. It survives volume conditioning for "
+        "receptions (t=9.17), rushing (t=-9.80) and passing (t=5.05), and is kept there. See "
+        "docs/reviews/2026-08-23-adversarial.md finding C2. "
+    ),
+    ("receiving_yards", "blowout_loss"): (
+        "Needs a play-by-play definition (time remaining crossed with score differential) "
+        "rather than final margin, which is the measurement this result argues for. "
+    ),
+}
+
+# An operator accepting ONE named site's failure. The key IS the site, so an
+# override can no longer quietly cover a whole scenario: it names the four
+# coordinates it applies to and is checked against the measured verdict for
+# exactly that site. If the site stops failing, the override is reported stale.
+ACCEPTED_FAILURES = {
+    ("receptions", "pass_heavy", (6, 8, 0.03, 0.06)): {
+        "cell": '6-8 projected targets, +0.03..+0.06 role trend',
+        "measured": (
+            "15/16 out of sample; consistent 17/17; resolved 17/17 -- the strongest bootstrap of "
+            "any pairing in the grid "
+        ),
+        "why": (
+            "The failing cell shows +14.5 yards and +1.22 receptions of separation over 2009-2021 "
+            "and -0.5 / -0.02 across 2022-2025, on 65 held-out games. Half a yard is not a "
+            "reversal, and the cluster bootstrap cannot distinguish it from zero. The rule still "
+            "says no, and is not being softened: a magnitude-aware version was tested and "
+            "rejected because it makes every scenario pass (FINDINGS.md 4). This is an operator "
+            "accepting one named failure instead. Receptions and receiving yards fail the SAME "
+            "cell on the SAME player-games, so this is one failure seen twice, not two. Revisit "
+            "when the held-out half has enough seasons to resolve it -- roughly 15-20 games a "
+            "year accrue to this cell. "
+        ),
+        "accepted_by": 'operator, 2026-08-22',
     },
 }
 
@@ -802,6 +720,9 @@ def main(argv):
 
     cells, dropped = [], 0
     status: dict[str, dict] = {}
+    # (outcome, scenario) -> {site key: verdict}. Attached to each cell below,
+    # so the gate travels with the numbers it gates rather than beside them.
+    sites_by: dict[str, dict] = {}
     seasons_read = None
     proe_tw = None
     signals_tw = None
@@ -826,59 +747,116 @@ def main(argv):
         # stop.
         print("VALIDATION")
         status[oname] = {}
+        sites_by[oname] = {}
         for scenario, definition in SCENARIOS.items():
+            # The scenario-level evidence is still measured, but it is now a
+            # SUMMARY rather than the gate -- reported so the note in the
+            # artifact stays a statement about the data.
             ev = validate.evidence(obs, definition, outcome.bands,
                                    outcome.trend_bands, MIN_CELL, outcome.discrete)
-            entry = SCENARIO_STATUS[oname][scenario]
-            recorded = entry["validated"]
-            measured = qualifies(ev)
+            sv = validate.site_verdicts(obs, definition, outcome.bands,
+                                        outcome.trend_bands, MIN_CELL,
+                                        outcome.discrete, require_oos=True)
+            sites_by[oname][scenario] = sv
             note = validate.note(ev)
-            if why := entry.get("why"):
-                note = f"{note}. {why}"
-            accepted = entry.get("accepted_failure")
-            print(f"  {scenario:14} {note}")
-            print(f"  {'':14} rule says {measured}, recorded {recorded}")
+            # .strip(): these are written as wrapped implicit-concat literals,
+            # which leaves a trailing space on the last fragment.
+            veto = (SCENARIO_VETO.get((oname, scenario)) or "").strip() or None
+            msgs = []
 
-            if measured != recorded:
-                # An operator may accept a SPECIFIC failure, naming it. The rule
-                # is not softened -- qualifies() still returns False and that
-                # False is what gets recorded as `measured` -- but the verdict
-                # can differ from it when the disagreement is written down and
-                # travels with the artifact. Anything less specific is a general
-                # escape hatch, which is how a gate stops meaning anything.
-                if not (recorded and accepted):
+            # Does this scenario have a direction at all? A site is judged by
+            # whether it agrees with the scenario's dominant sign, so if that
+            # sign is a coin flip the agreeing sites are the lucky half.
+            p_sign = validate.sign_coherence(ev["consistent"], ev["cells"])
+            incoherent = p_sign >= validate.COHERENCE_ALPHA
+
+            # An override names ONE site and is checked against that site's
+            # measured verdict. It cannot cover a scenario, and it cannot name
+            # a site the grid does not have.
+            for (o2, s2, key), acc in ACCEPTED_FAILURES.items():
+                if (o2, s2) != (oname, scenario):
+                    continue
+                if incoherent:
                     raise SystemExit(
-                        f"\n{oname}/{scenario}: the evidence and the recorded verdict disagree.\n"
-                        f"  measured: {note}\n"
-                        f"  the stated rule gives validated={measured}, but SCENARIO_STATUS "
-                        f"says {recorded}.\n"
-                        f"  Change the verdict, record an accepted_failure naming the specific "
-                        f"cell, or change the rule and say why -- do not ship a flag the data "
-                        f"does not support."
+                        f"\n{oname}/{scenario}: accepted_failure on a scenario with no "
+                        f"established direction ({ev['consistent']}/{ev['cells']}, "
+                        f"p={p_sign:.3f}). Accepting one named failure presumes the rest of "
+                        f"the pairing is sound; here there is nothing to except it from."
+                    )
+                if veto:
+                    raise SystemExit(
+                        f"\n{oname}/{scenario}: has both a veto and an accepted failure. "
+                        f"A veto removes the pairing outright; an override that survives it "
+                        f"would make the veto decorative."
+                    )
+                v = sv.get(key)
+                if v is None:
+                    raise SystemExit(
+                        f"\n{oname}/{scenario}: accepted_failure names site {key}, which is "
+                        f"not in the grid. An override for a cell that does not exist accepts "
+                        f"nothing and hides the fact."
                     )
                 for field in ("cell", "measured", "why", "accepted_by"):
-                    if not accepted.get(field):
+                    if not acc.get(field):
                         raise SystemExit(
                             f"\n{oname}/{scenario}: accepted_failure is missing {field!r}. "
                             f"An override that does not say WHICH failure was accepted, by "
                             f"whom, is indistinguishable from turning the gate off."
                         )
-                print(f"  {'':14} OVERRIDE: priced despite the rule, on an accepted failure")
-                print(f"  {'':14}   cell     {accepted['cell']}")
-                print(f"  {'':14}   accepted {accepted['accepted_by']}")
-            elif accepted:
-                # The override outlived the failure it was written for.
-                print(f"  {'':14} NOTE: accepted_failure is stale -- this now passes on its "
-                      f"own and the override can be removed")
+                if v["priceable"]:
+                    msgs.append(f"NOTE: accepted_failure for {key} is stale -- that site "
+                                f"now passes on its own and the override can be removed")
+                else:
+                    v["priceable"] = True
+                    # The site bounds travel with the override so a reader --
+                    # and the Go struct -- has the whole record in one place,
+                    # rather than the coordinates living only in the dict key.
+                    acc = {k: (v2.strip() if isinstance(v2, str) else v2)
+                           for k, v2 in acc.items()}
+                    v["override"] = dict(acc, opportunity_min=key[0],
+                                         opportunity_max=key[1],
+                                         trend_min=key[2], trend_max=key[3])
+                    msgs.append(f"OVERRIDE: {key} priced despite {'; '.join(v['why'])}")
+                    msgs.append(f"  accepted {acc['accepted_by']}")
+
+            if incoherent:
+                for v in sv.values():
+                    v["priceable"] = False
+                    v["why"] = [f"the scenario has no established direction: it leans one way "
+                                f"in only {ev['consistent']} of {ev['cells']} cells (p={p_sign:.3f})"]
+            if veto:
+                for v in sv.values():
+                    v["priceable"] = False
+                    v["vetoed"] = True
+                    v["why"] = ["the operator vetoed this pairing"]
+
+            ok = sum(1 for v in sv.values() if v["priceable"])
+            print(f"  {scenario:18} {note}")
+            print(f"  {'':18} {ok}/{len(sv)} sites priceable   sign p={p_sign:.4f}"
+                  + ("  [VETOED]" if veto else "")
+                  + ("  [NO DIRECTION]" if incoherent else ""))
+            if qualifies(ev) != (ok == len(sv)):
+                print(f"  {'':18} (the old scenario-level rule said {qualifies(ev)})")
+            for m in msgs:
+                print(f"  {'':18} {m}")
 
             status[oname][scenario] = {
-                "validated": recorded,
+                # Kept under the old key so a reader of the artifact is not
+                # silently handed a different meaning: it now says whether ANY
+                # site of this pairing may be priced, and the per-cell flags say
+                # which. A pairing with no priceable site is as unbettable as a
+                # scenario that failed the old gate.
+                "validated": ok > 0,
+                "sites": len(sv),
+                "sites_priceable": ok,
                 "note": note,
                 "evidence": ev,
-                "rule_says": measured,
+                "rule_says": qualifies(ev),
+                "sign_p": round(p_sign, 5),
             }
-            if accepted:
-                status[oname][scenario]["accepted_failure"] = accepted
+            if veto:
+                status[oname][scenario]["vetoed"] = True
+                status[oname][scenario]["why"] = veto
 
         for scenario, definition in SCENARIOS.items():
             for occurred in (True, False):
@@ -896,11 +874,24 @@ def main(argv):
                             continue
                         ys = [o["yards"] for o in sel]
                         n_eff, icc = effective_n(ys, [o["player"] for o in sel])
+                        # The verdict for the SITE this cell belongs to. Both
+                        # halves of a site carry the same flag, because q and r
+                        # are only meaningful together -- pricing one against a
+                        # cell that failed is the mismatch this gate exists to
+                        # stop. A cell with no site verdict was never paired
+                        # (its opposite half fell below MIN_CELL) and cannot be
+                        # priced from at all.
+                        sv = sites_by[oname][scenario].get((ta, tb, ra, rb))
                         cells.append(
                             {
                                 "outcome": oname,
                                 "scenario": scenario,
                                 "occurred": occurred,
+                                "validated": bool(sv and sv["priceable"]),
+                                "why": (sv["why"] if sv else
+                                        ["this cell has no opposite half above "
+                                         f"n={MIN_CELL}, so no q/r pair exists here"]),
+                                "override": (sv or {}).get("override"),
                                 "opportunity_min": ta,
                                 "opportunity_max": tb,
                                 "trend_min": ra,

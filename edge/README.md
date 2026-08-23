@@ -97,14 +97,27 @@ worth anything.
 The grid fits four prop outcomes, and a different set of scenarios has earned the right to price
 each one:
 
-| outcome | usable scenarios |
-|---|---|
-| passing yards | `shootout`, `pass_heavy`, `blowout_loss`, `efficient_offense` |
-| receiving yards | `shootout` |
-| receptions | `shootout`, `pass_heavy`\* |
-| rushing yards | `pass_heavy` |
+The gate rules on a **site** — one scenario at one (opportunity band, trend band) coordinate —
+rather than on a whole scenario, because that is the unit a price is formed at. So a scenario is
+not on or off for an outcome; some of its cells hold and some do not. 118 of 222 sites are
+priceable:
 
-\* on a recorded operator override, announced every time it is used.
+| outcome | `shootout` | `blowout_loss` | `pass_heavy` | `efficient_offense` |
+|---|---|---|---|---|
+| passing yards | 6/10 | 5/7 | 5/10 | 6/10 |
+| receiving yards | 12/16 | vetoed | vetoed | 12/17 |
+| receptions | 15/16 | no direction | 16/17\* | 15/17 |
+| rushing yards | no direction | 6/12 | 10/13 | 10/14 |
+
+\* one on a recorded operator override, announced every time it is used.
+
+Ask for a site that did not survive and you get told which one and why, not a shrug:
+
+```
+scenario: receiving_yards/shootout is priceable, but not at 8-11 opportunity, +0.06..+99.00 trend.
+  the bootstrap interval does not clear zero [-6.5, +17]; the seasons after 2021 are too thin
+  here to check it.
+```
 
 Anything else is refused with the measurement attached. The list is short on purpose — of six
 candidate signals tested, one survived, and the corpus's strongest claimed edge measured *backwards*.

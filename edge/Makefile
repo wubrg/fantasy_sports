@@ -140,6 +140,9 @@ calibration: ## Stratified calibration error, by posted total and by own baselin
 calibration-search: ## The full axis-set search behind FINDINGS.md 11 (slow)
 	@cd $(MODEL)/analysis && $(PY) calibration.py
 
+permutation: ## Permutation null for the per-site gate, FINDINGS.md 12 (VERY slow, ~30 min)
+	@cd $(MODEL)/analysis && $(PY) permutation.py
+
 findings: verify-model lag compare-oos calibration ## Reproduce every measured claim in model/FINDINGS.md
 
 ## --- Examples ---

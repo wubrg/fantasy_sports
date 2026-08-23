@@ -128,20 +128,28 @@ operator-supplied numbers. Every input is typed by hand.
 `conditionals.json` covers **receiving yards, receptions, rushing yards and passing yards**,
 2009–2025, with a different set of scenarios validated on each:
 
-| outcome | priceable |
-|---|---|
-| passing yards | `shootout`, `pass_heavy`, `blowout_loss`, `efficient_offense` |
-| receiving yards | `shootout` |
-| receptions | `shootout`, `pass_heavy`\* |
-| rushing yards | `pass_heavy` |
+Since 2026-08-23 the gate rules on a **site** — one (opportunity band, trend band) coordinate of
+one scenario — rather than on a whole scenario, so "priceable" is a count rather than a flag.
+118 of 222 sites are priceable:
 
-\* on a recorded operator override, announced at the point of pricing.
+| outcome | `shootout` | `blowout_loss` | `pass_heavy` | `efficient_offense` |
+|---|---|---|---|---|
+| receiving yards | 12/16 | 0/16 vetoed | 0/17 vetoed | 12/17 |
+| receptions | 15/16 | 0/16 no direction | 16/17\* | 15/17 |
+| rushing yards | 0/14 no direction | 6/12 | 10/13 | 10/14 |
+| passing yards | 6/10 | 5/7 | 5/10 | 6/10 |
 
-Anything else is refused with the measurement attached. Stated `-q`/`-r` always win over the grid.
+\* one of them on a recorded operator override, announced at the point of pricing.
 
-A third scenario, `pass_heavy` (offense PROE > 3.0), is **fitted and gated off**. It separates
-better than `shootout` on every measure except one out-of-sample cell, which the rule requires.
-See `FINDINGS.md` §4.
+So a scenario is not simply on or off for an outcome. Asking for a site that did not survive is
+refused by name and reason — "`receiving_yards/shootout` is priceable, but not at 8-11 opportunity,
++0.06..+99.00 trend: the bootstrap interval does not clear zero [-6.5, +17]". Anything else is
+refused with the measurement attached. Stated `-q`/`-r` always win over the grid.
+
+`pass_heavy` is **vetoed for receiving yards**: holding realised targets fixed its coefficient
+collapses from t = 14.25 to t = 1.97, so 90% of the separation is volume the projection failed to
+anticipate rather than a market inefficiency. It survives that test elsewhere and is kept there.
+See `FINDINGS.md` §11.
 
 **The Tier 3 case is now priceable** (closed 2026-08-22). `8–11` projected targets with a
 rising role — the corpus's "usage vacuum", high volume meeting climbing usage — held 97
@@ -195,21 +203,32 @@ remains a human judgement, but the fit **fails** when the stated rule and the re
 disagree. Doing this surfaced a correction to `FINDINGS.md`: the "direction inverts at ordinary
 lines" disqualifier does not clear sampling error for either scenario.
 
-### The gate is per scenario, and the evidence says it should be per cell
+### ~~The gate is per scenario, and the evidence says it should be per cell~~ — done 2026-08-23
 
-Measured across 141 testable cells: out-of-sample failures concentrate where the fit effect was
-already noise-sized (median 1.0 yard against 5.0 for cells that held). `blowout_loss` is gated for
-receiving yards while all three of its alpha-band cells held out of sample. A scenario-level gate
-therefore blocks wagers whose own evidence is sound. See `FINDINGS.md` §8; the decision on whether
-to regate is open.
+The old rule required the direction to hold in *every* cell, which passes with probability
+`(1−e)^k` for `k` cells: it grew stricter the more finely the grid was cut, so re-cutting the same
+data rejected findings it had previously accepted. Cell count is a choice about axes, not evidence.
 
-### A gated scenario can be overridden, loudly
+Each site is now judged on its own — direction, bootstrap resolution, and out-of-sample
+persistence, all three, at that site. `k` does not appear. This also made the bootstrap gateable
+for the first time: it was measured but never gated on precisely because requiring it in every cell
+would have rejected real effects.
 
-`SCENARIO_STATUS` may carry an `accepted_failure` naming the specific cell, what was measured, why
-it was accepted and by whom. `qualifies()` is unchanged and the artifact records what the rule said
-alongside the verdict; `edgectl scenario` prints the override at the point of pricing and reports
-whether the wager falls inside the failing cell. Currently used once: `pass_heavy` for receiving
-yards and receptions.
+Two guards come with it. A scenario's dominant sign must first beat chance (two-sided binomial,
+α = 0.05), because a site is judged by agreeing with that sign and agreeing with a coin flip means
+nothing — this alone removes receptions/`blowout_loss` and rushing/`shootout`. And the conjunction
+was tested against a permutation null: it passes **1.6%** of site-tests when the scenario label is
+shuffled across games, against 38–75% for the real thing. See `FINDINGS.md` §12.
+
+### A refused site can be overridden, loudly
+
+`ACCEPTED_FAILURES` is keyed by the **site** — outcome, scenario and the four coordinates — and is
+checked against that site's measured verdict, so an override cannot quietly cover a scenario. It
+must record what was measured, why it was accepted and by whom, and an override on a site that has
+started passing is reported stale. `edgectl scenario` prints it at the point of pricing; because
+the lookup is now keyed by site, it fires only on the wager it actually applies to. Previously it
+attached to the whole scenario and warned on every wager in it, including the cells that passed
+cleanly. Currently used once: `pass_heavy` for receptions at 6–8 targets, +0.03..+0.06 trend.
 
 ### The out-of-sample gate has limited power, and no better version was found
 

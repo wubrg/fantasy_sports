@@ -260,18 +260,18 @@ func resolveConditionals(
 			trendScale, trendUnit = 100.0, " pt"
 		}
 	}
-	if af := c.AcceptedFailureFor(outcome, name); af != nil {
-		fmt.Printf("  OVERRIDDEN GATE — this scenario does NOT pass validation and is\n")
-		fmt.Printf("  being priced on a failure the operator accepted.\n")
+	// An override now names one SITE, and this lookup is keyed by the site the
+	// wager falls in -- so a non-nil result already means "this wager is the
+	// overridden one". The old call took no coordinates and fired on every
+	// wager anywhere in the scenario, which made the warning something to read
+	// past rather than something to act on.
+	if af := c.AcceptedFailureFor(outcome, name, projTargets, trend); af != nil {
+		fmt.Printf("  OVERRIDDEN GATE — THIS CELL does not pass validation and is being\n")
+		fmt.Printf("  priced on a failure the operator accepted by name.\n")
 		fmt.Printf("    failing cell   %s\n", af.Cell)
 		fmt.Printf("    measured       %s\n", af.Measured)
 		fmt.Printf("    accepted by    %s\n", af.AcceptedBy)
-		if af.Covers(projTargets, trend) {
-			fmt.Printf("  THIS WAGER IS IN THAT CELL. You are betting the part that failed\n")
-			fmt.Printf("  out of sample, not the fifteen cells that held.\n\n")
-		} else {
-			fmt.Printf("  This wager is outside that cell.\n\n")
-		}
+		fmt.Printf("  You are betting the part that failed, not the sites that held.\n\n")
 	}
 	fmt.Printf("  CONDITIONALS from the fitted grid (%s, %d-%d)\n",
 		outcome, c.Seasons[0], c.Seasons[1])
