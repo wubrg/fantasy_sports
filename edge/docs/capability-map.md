@@ -220,6 +220,13 @@ nothing — this alone removes receptions/`blowout_loss` and rushing/`shootout`.
 was tested against a permutation null: it passes **1.6%** of site-tests when the scenario label is
 shuffled across games, against 38–75% for the real thing. See `FINDINGS.md` §12.
 
+### Both directions are priceable
+
+`edgectl scenario -side over|under`. The grid fits `P(output > line)` only and reads the under off
+the same cell, mirroring the interval rather than recomputing it. This is safe now and would not
+have been on the old count grid, where `P(X > 3)` and `P(X < 4)` differ by the mass sitting exactly
+on 3; ratios to a player's own baseline land on a stored quantile point essentially never.
+
 ### Every verdict says how much of it is the two constants
 
 `MIN_CELL = 100` and `OOS_SPLIT = 2021` decide which cells exist and what "out of sample" means,

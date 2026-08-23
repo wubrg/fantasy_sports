@@ -660,6 +660,28 @@ func (c *Conditionals) Lookup(outcome, scenario string, occurred bool, at Site, 
 	}, nil
 }
 
+// Complement turns P(output > line) into P(output < line), for pricing an
+// under off the same cell.
+//
+// The grid only ever fits one direction, because it only needs to: the two are
+// the same distribution read from opposite ends. What has to move with the
+// probability is the INTERVAL, and it has to be mirrored rather than
+// recomputed -- [lo, hi] on the over is [1-hi, 1-lo] on the under, and
+// forgetting to swap the ends would report an interval that does not contain
+// its own estimate.
+//
+// Ties are measure zero: the stored quantiles are ratios to a player's own
+// baseline, and a line divided by a baseline lands exactly on a stored point
+// essentially never. This would not be safe on the old count grid, where
+// P(X > 3) and P(X < 4) differ by the mass sitting exactly on 3.
+func (c Conditional) Complement() Conditional {
+	c.Prob = 1 - c.Prob
+	c.Lower, c.Upper = 1-c.Upper, 1-c.Lower
+	// TailN is min(p, 1-p) x NEff and so is already symmetric; CellMedian, N
+	// and NEff describe the cell rather than the direction.
+	return c
+}
+
 // clampToSupport stops a finite sample from claiming certainty.
 //
 // The quantile table's endpoints are the smallest and largest values actually

@@ -85,7 +85,8 @@ func usage() {
                    -belief <p> -q <p> -r <p> -price <american>
         What you would have to believe for a wager to be +EV, against what the
         game line already implies. Add -rungs line:price:q:r,... for a ladder,
-        or -log <path> to record the prediction. -baseline is what the player
+        or -log <path> to record the prediction. -side over|under picks the
+        direction. -baseline is what the player
         NORMALLY does in the outcome's own units; the grid prices the line as
         a ratio to it, because that is what a book sets it near.
 

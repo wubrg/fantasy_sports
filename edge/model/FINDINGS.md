@@ -444,6 +444,20 @@ effect over 2009–2021 goes to −0.5 and −0.02 across 2022–2025 on 65 game
 independent failures: receptions and receiving yards are measured on the same player-games, so it
 is one failure seen twice.
 
+> **The check recorded in this section had gone stale, and the switch it cleared was never
+> neutral.** It was true when written: the median→mean change was tested against the verdicts that
+> existed then and moved none. Rushing yards, `efficient_offense` and a full re-cut of the grid all
+> arrived afterwards, and nothing re-ran it. Re-run now (`make recheck`), the choice of location
+> moves **33 site verdicts across the grid, every one of them permissive** — 21 priceable sites
+> against 13 for `receiving`/`shootout` alone. A check that clears a decision has to be re-run when
+> the thing it cleared moves, or it is a fact about a moment.
+>
+> **The reason for the switch is also gone.** The mean was adopted because receptions on the
+> integers 0–21 had 12 of 16 cells with a median delta of *exactly zero*. On the ratio grid that is
+> **0 of 30**: dividing by each player's own baseline turns a count back into something a median
+> can resolve. So the grid uses the **median for every outcome** — the conservative estimator, now
+> a measured choice rather than an inherited one, and 33 sites narrower than the alternative.
+>
 > **The exact-CDF reader was removed on 2026-08-23**, when the grid began storing ratios to the
 > player's own baseline. Three receptions against a 4.2 baseline is 0.714, and pooling across
 > players with different denominators smears the integer lattice into something genuinely
@@ -536,6 +550,28 @@ front of us today.
 Three options are on the table: report each cell's own held-out record at pricing time and leave
 the gate alone; gate per cell; or gate per cell with a minimum effect-size floor that encodes the
 pattern above explicitly. Recorded here so the measurement survives the decision being deferred.
+
+> **Re-derived 2026-08-23 on a clean statistic, and it survives — smaller.** The statistic above
+> compares a **full-sample** effect size against **train-vs-test** agreement, so the half being
+> predicted sits inside the predictor. Under a pure null that manufactures a gap by itself, which
+> makes the 5× reported here weak evidence for anything.
+>
+> On `|train-only effect|`, pooled over all sixteen outcome × scenario pairings (`make recheck`):
+>
+> | | agreed out of sample | disagreed | ratio |
+> |---|---|---|---|
+> | real | n=180, median 0.1549 | n=62, median 0.0654 | **2.37×** |
+> | null | n=360, median 0.0464 | n=372, median 0.0446 | 1.04× |
+>
+> Sites that fail out of sample did have smaller effects in the training half, and the permutation
+> null confirms the statistic invents no such gap on its own. But it is **2.37×, not 5×**, and it
+> is a *pooled* effect — `receiving`/`shootout` alone gives 1.07× on four disagreeing sites, which
+> is to say nothing at all.
+>
+> This section was the corpus's argument for per-cell gating. **It is not the argument that was
+> used.** §12 rests on the gate's scale-dependence, which is arithmetic rather than a measurement,
+> and on a permutation null of its own. Had per-cell gating been decided on the number above, it
+> would have been decided on a statistic containing its own outcome.
 
 ## 9. Four belief signals gated; one survived, and the best one is not a scenario
 

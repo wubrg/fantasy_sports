@@ -143,10 +143,13 @@ calibration-search: ## The full axis-set search behind FINDINGS.md 11 (slow)
 constants: ## What MIN_CELL and OOS_SPLIT buy at each setting (FINDINGS.md 13)
 	@cd $(MODEL)/analysis && $(PY) validate.py --sweep
 
+recheck: ## Re-run the two checks that went stale (FINDINGS.md 6 and 8; slow)
+	@cd $(MODEL)/analysis && $(PY) recheck.py
+
 permutation: ## Permutation null for the per-site gate, FINDINGS.md 12 (VERY slow, ~30 min)
 	@cd $(MODEL)/analysis && $(PY) permutation.py
 
-findings: verify-model lag compare-oos calibration constants ## Reproduce every measured claim in model/FINDINGS.md
+findings: verify-model lag compare-oos calibration constants recheck ## Reproduce every measured claim in model/FINDINGS.md
 
 ## --- Examples ---
 

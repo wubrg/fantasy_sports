@@ -1293,3 +1293,57 @@ func TestStabilityTravelsWithTheVerdict(t *testing.T) {
 	}
 	t.Logf("%d cells measured: %d firm, %d knob-sensitive", measured, firm, fragile)
 }
+
+// TestComplementMirrorsTheInterval covers review finding S6: `scenario` could
+// not price an under at all, which is where this grid's value mostly sits —
+// a line set near a player's own median is one he clears less often than half
+// the time.
+//
+// The probability is the easy half. The interval is the half that gets it
+// wrong: [lo, hi] on the over is [1-hi, 1-lo] on the under, and complementing
+// the two ends without swapping them produces an interval that does not
+// contain its own estimate.
+func TestComplementMirrorsTheInterval(t *testing.T) {
+	c := mustConditionals(t)
+	checked := 0
+	for _, cell := range c.Cells {
+		if !cell.Validated || !cell.Occurred {
+			continue
+		}
+		over, err := c.Lookup(cell.Outcome, cell.Scenario, cell.Occurred,
+			midCell(cell), cell.MedianOutput, 0.95)
+		if err != nil {
+			continue
+		}
+		under := over.Complement()
+		if math.Abs((over.Prob+under.Prob)-1) > 1e-12 {
+			t.Errorf("%s/%s: over %.6f and under %.6f do not sum to 1",
+				cell.Outcome, cell.Scenario, over.Prob, under.Prob)
+		}
+		if under.Lower > under.Upper {
+			t.Errorf("%s/%s: complemented interval is inverted [%.4f, %.4f] — "+
+				"the ends were negated without being swapped",
+				cell.Outcome, cell.Scenario, under.Lower, under.Upper)
+		}
+		if under.Prob < under.Lower || under.Prob > under.Upper {
+			t.Errorf("%s/%s: complemented interval [%.4f, %.4f] does not contain its "+
+				"own estimate %.4f", cell.Outcome, cell.Scenario,
+				under.Lower, under.Upper, under.Prob)
+		}
+		// Width, the cell, and the support behind the sparser side are
+		// properties of the sample, not of which end it is read from.
+		if math.Abs((over.Upper-over.Lower)-(under.Upper-under.Lower)) > 1e-12 {
+			t.Errorf("%s/%s: complementing changed the interval width",
+				cell.Outcome, cell.Scenario)
+		}
+		if math.Abs(over.TailN-under.TailN) > 1e-12 || over.N != under.N {
+			t.Errorf("%s/%s: complementing changed the evidence behind the estimate",
+				cell.Outcome, cell.Scenario)
+		}
+		checked++
+	}
+	if checked == 0 {
+		t.Fatal("no validated cell could be looked up; the test proved nothing")
+	}
+	t.Logf("%d cells checked in both directions", checked)
+}

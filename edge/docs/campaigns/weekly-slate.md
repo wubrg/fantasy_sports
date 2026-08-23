@@ -121,6 +121,12 @@ against a 2.38-point vig cushion. See [FINDINGS §11](../../model/FINDINGS.md).
 probability — and now also selects the posted-total band the grid is conditioned on. `-trend` is the
 role change: share points for the share-based outcomes, raw volume for passing.
 
+**Unders.** `-side under` prices the other direction off the same cell. It matters more than it
+sounds: the grid stores a player's output as a ratio to his own baseline, and the median of that
+ratio is below 1.0 because yardage is right-skewed — a player clears his own average rather less
+than half the time. So an under at a line near his average is frequently where the grid's value
+sits, and until 2026-08-23 the tool could not express one at all.
+
 The three verdicts mean different things. `disagreement-required` is the normal case for a narrative
 bet. `market-alone` means the game line already justifies it — a real edge, and also the likeliest
 place to have mis-set `q` or `r`. `beyond-your-read` means not even your own belief covers the price.

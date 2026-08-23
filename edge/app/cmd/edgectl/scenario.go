@@ -39,6 +39,10 @@ func scenarioCmd(args []string) error {
 			"ratio to this, because that is what a book sets it near")
 	trend := fs.Float64("trend", 0, "two-game target-share trend, e.g. 0.06 for +6 points")
 	line := fs.Float64("line", 0, "the prop line in yards, required when looking up q and r")
+	side := fs.String("side", "over",
+		"over or under. The grid fits one direction and reads the other off the same "+
+			"cell; -q/-r, if you state them, are taken as already describing the side "+
+			"you are pricing")
 	confidence := fs.Float64("confidence", 0.95, "confidence level for looked-up intervals")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -138,7 +142,7 @@ func scenarioCmd(args []string) error {
 	qv, rv, condSource, err := resolveConditionals(
 		*outcome, *name, *q, *r,
 		scenario.Site{Posted: *total, Baseline: *baseline, Trend: *trend},
-		*line, *confidence, basisVal.String(), *threshold)
+		*line, *confidence, basisVal.String(), *threshold, *side)
 	if err != nil {
 		return err
 	}
@@ -210,8 +214,11 @@ func scenarioCmd(args []string) error {
 // scored separately later.
 func resolveConditionals(
 	outcome, name string, q, r float64, at scenario.Site, line, confidence float64,
-	basis string, threshold float64,
+	basis string, threshold float64, side string,
 ) (float64, float64, string, error) {
+	if side != "over" && side != "under" {
+		return 0, 0, "", fmt.Errorf("-side must be over or under, got %q", side)
+	}
 	if q >= 0 && r >= 0 {
 		return q, r, "stated", nil
 	}
@@ -254,6 +261,13 @@ func resolveConditionals(
 		}
 		return 0, 0, "", err
 	}
+	// The grid fits P(output > line) only. An under is the same cell read from
+	// the other end -- and it is where this grid's value tends to sit, because
+	// a line set near a player's own median is one he clears rather less often
+	// than half the time.
+	if side == "under" {
+		qc, rc = qc.Complement(), rc.Complement()
+	}
 
 	unit := "yds"
 	trendScale := 1.0
@@ -288,7 +302,8 @@ func resolveConditionals(
 	// and a reader should be able to see the number being looked up.
 	fmt.Printf("    %.1f %s baseline, posted total %.1f, %+.1f%s trend\n",
 		at.Baseline, unit, at.Posted, at.Trend*trendScale, trendUnit)
-	fmt.Printf("    line %.1f = %.2fx his baseline\n", line, line/at.Baseline)
+	fmt.Printf("    line %.1f = %.2fx his baseline, pricing the %s\n",
+		line, line/at.Baseline, side)
 	// The gate's own dependence on its two constants, stated where the number
 	// is used. A verdict that moves when MIN_CELL moves is still a verdict,
 	// but the operator should not have to run a sweep to find that out.
