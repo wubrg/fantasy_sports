@@ -702,11 +702,11 @@ func TestDefinitionMismatchIsRefused(t *testing.T) {
 		t.Fatalf("shootout is fitted as %s; the tests below assume total > 50", def)
 	}
 
-	if err := c.CheckDefinition("receiving_yards", "shootout", "total", 50); err != nil {
+	if err := c.CheckDefinition("receiving_yards", "shootout", "total", 50, false); err != nil {
 		t.Errorf("the definition the grid was fitted on was rejected: %v", err)
 	}
 	for _, bad := range []float64{65, 49.5, 0, -7} {
-		err := c.CheckDefinition("receiving_yards", "shootout", "total", bad)
+		err := c.CheckDefinition("receiving_yards", "shootout", "total", bad, false)
 		if err == nil {
 			t.Errorf("threshold %.1f was accepted against a grid fitted at %.1f",
 				bad, def.Threshold)
@@ -724,7 +724,7 @@ func TestDefinitionMismatchIsRefused(t *testing.T) {
 	// only runs for scenarios that could otherwise be priced -- validation is
 	// tested first, deliberately, and an unvalidated scenario short-circuits
 	// before its basis is ever compared.
-	if err := c.CheckDefinition("receiving_yards", "shootout", "margin", 50); !errors.Is(err, ErrDefinitionMismatch) {
+	if err := c.CheckDefinition("receiving_yards", "shootout", "margin", 50, false); !errors.Is(err, ErrDefinitionMismatch) {
 		t.Errorf("shootout accepted on the margin; it is fitted on the total: %v", err)
 	}
 }
@@ -737,7 +737,7 @@ func TestMissingDefinitionsFailClosed(t *testing.T) {
 	old := &Conditionals{ScenarioStatus: map[string]map[string]ScenarioStatus{
 		"receiving_yards": {"shootout": {Validated: true}},
 	}}
-	err := old.CheckDefinition("receiving_yards", "shootout", "total", 50)
+	err := old.CheckDefinition("receiving_yards", "shootout", "total", 50, false)
 	if err == nil {
 		t.Fatal("an artifact with no recorded definitions accepted a query")
 	}
@@ -793,7 +793,7 @@ func TestGatedScenarioReportsTheGate(t *testing.T) {
 		t.Skip("pass_heavy has since been validated; this test guards the gated case")
 	}
 
-	err = c.CheckDefinition("receiving_yards", "pass_heavy", "total", 50)
+	err = c.CheckDefinition("receiving_yards", "pass_heavy", "total", 50, false)
 	if err == nil {
 		t.Fatal("a gated scenario was accepted")
 	}
@@ -804,7 +804,7 @@ func TestGatedScenarioReportsTheGate(t *testing.T) {
 		t.Error("reported a threshold mismatch for a scenario that cannot be priced at all")
 	}
 	// Even asking on its OWN basis must still refuse, for the same reason.
-	if err := c.CheckDefinition("receiving_yards", "pass_heavy", "offense_proe", 3.0); !errors.Is(err, ErrScenarioNotPriceable) {
+	if err := c.CheckDefinition("receiving_yards", "pass_heavy", "offense_proe", 3.0, false); !errors.Is(err, ErrScenarioNotPriceable) {
 		t.Errorf("on its own basis: got %v, want not-priceable", err)
 	}
 }

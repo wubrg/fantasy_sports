@@ -81,11 +81,11 @@ func TestParseBankrollAndBasis(t *testing.T) {
 // TestMarketScenarioRequiresInput guards the case where neither a game line nor
 // an override is supplied: the tool must not invent a market view.
 func TestMarketScenarioRequiresInput(t *testing.T) {
-	if _, err := marketScenario("s", scenario.Total, 0, 0, 50, 0, -1); err == nil {
+	if _, err := marketScenario("s", scenario.Total, 0, 0, 50, 0, -1, false); err == nil {
 		t.Error("a total-based scenario with no total and no override must fail")
 	}
 	// An explicit override is enough on its own.
-	s, err := marketScenario("s", scenario.Total, 0, 0, 50, 0, 0.3)
+	s, err := marketScenario("s", scenario.Total, 0, 0, 50, 0, 0.3, false)
 	if err != nil {
 		t.Fatal(err)
 	}

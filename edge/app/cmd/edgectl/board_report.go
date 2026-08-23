@@ -379,7 +379,25 @@ func printSet(a *board.Analysis, stake float64, funds map[string]float64) error 
 		fmt.Printf("  do, which is not the same as the best pairing of the week — expect it\n")
 		fmt.Printf("  to change as you enter more.\n")
 	} else {
-		fmt.Printf("  DISJOINT PARLAY SET — %d shot(s) at %s\n", len(set.Parlays), money(stake))
+		// The headline must agree with the rows beneath it. With per-book
+		// balances the tickets are funded from the allocation, not from
+		// -stake, and printing the -stake default here announced $25.00 over
+		// returns computed on $12.50 -- in the one figure a bettor copies
+		// into a slip. The column was already fixed for this; the headline
+		// was not.
+		switch {
+		case len(perBook) == 1:
+			for _, st := range perBook {
+				fmt.Printf("  DISJOINT PARLAY SET — %d shot(s) at %s\n",
+					len(set.Parlays), money(st))
+			}
+		case len(perBook) > 1:
+			fmt.Printf("  DISJOINT PARLAY SET — %d shot(s), funded per book (see the "+
+				"allocation above)\n", len(set.Parlays))
+		default:
+			fmt.Printf("  DISJOINT PARLAY SET — %d shot(s) at %s\n",
+				len(set.Parlays), money(stake))
+		}
 	}
 	fmt.Printf("  No team appears twice and no game is used twice, so every ticket can\n")
 	fmt.Printf("  be live at once without one hedging another.\n")

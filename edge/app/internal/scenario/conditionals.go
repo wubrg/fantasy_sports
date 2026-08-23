@@ -129,7 +129,12 @@ type Definition struct {
 }
 
 func (d Definition) String() string {
-	return fmt.Sprintf("%s %s %.1f", d.Basis, d.Op, d.Threshold)
+	// %g, not %.1f. A success-rate threshold of 0.46 printed as "0.5", so the
+	// mismatch error below said "fitted as success_rate > 0.5, but you asked
+	// for 0.5" and told the caller to use 0.5 -- which can never match. The
+	// scenario was unreachable through the CLI by way of its own diagnostic
+	// rounding away the one number it exists to communicate.
+	return fmt.Sprintf("%s %s %g", d.Basis, d.Op, d.Threshold)
 }
 
 // OutcomeDef is what an outcome predicts and the opportunity axis it is
@@ -172,7 +177,7 @@ var ErrDefinitionMismatch = errors.New("scenario definition mismatch")
 //
 // An artifact with no recorded definitions fails closed. It predates this check
 // and cannot be verified, and the failure mode it guards against is silent.
-func (c *Conditionals) CheckDefinition(outcome, scenario, basis string, threshold float64) error {
+func (c *Conditionals) CheckDefinition(outcome, scenario, basis string, threshold float64, below bool) error {
 	// Validation first. An unvalidated scenario cannot be priced on any basis,
 	// so reporting a threshold mismatch would name the wrong problem and send
 	// the caller off to fix a flag that was never the obstacle.
@@ -192,12 +197,26 @@ func (c *Conditionals) CheckDefinition(outcome, scenario, basis string, threshol
 				"q and r would describe a different event from s: %w",
 			scenario, def.Basis, basis, ErrDefinitionMismatch)
 	}
+	// The operator is checked too, not just the quantity and the level. Its
+	// absence here is what let blowout_loss price on the complement of its own
+	// probability: basis matched, threshold matched, and "<" against ">" was
+	// never compared.
+	if (def.Op == "<") != below {
+		want := "above"
+		if def.Op == "<" {
+			want = "below"
+		}
+		return fmt.Errorf(
+			"scenario: %q occurs %s its threshold, but you asked for the other "+
+				"direction. s would be the complement of what q and r measure: %w",
+			scenario, want, ErrDefinitionMismatch)
+	}
 	if def.Threshold != threshold {
 		return fmt.Errorf(
-			"scenario: %q is fitted as %s, but you asked for a threshold of %.1f.\n"+
-				"  s would be P(%s %s %.1f) while q and r measure %s -- blending them is not "+
+			"scenario: %q is fitted as %s, but you asked for a threshold of %g.\n"+
+				"  s would be P(%s %s %g) while q and r measure %s -- blending them is not "+
 				"a probability of anything.\n"+
-				"  Use -threshold %.1f, or supply -q and -r for the line you actually mean: %w",
+				"  Use -threshold %g, or supply -q and -r for the line you actually mean: %w",
 			scenario, def, threshold, basis, def.Op, threshold, def,
 			def.Threshold, ErrDefinitionMismatch)
 	}
@@ -249,6 +268,12 @@ func (c *Conditionals) OutcomeNames() []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+// OccursBelow reports whether a scenario happens below its threshold, so a
+// caller can derive its probability in the right direction.
+func (c *Conditionals) OccursBelow(scenario string) bool {
+	return c.Definitions[scenario].Op == "<"
 }
 
 // AcceptedFailureFor returns the override a scenario is being priced under, if

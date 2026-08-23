@@ -159,9 +159,17 @@ demo: build demo-clean ## Walk through every command with real numbers
 	@echo "================================================================"
 	@echo " An alternate-line ladder: which rung needs the smallest leap"
 	@echo "================================================================"
+	@echo " -rungs takes YOUR conditionals, not the grid's. The q and r below"
+	@echo " are the fitted values for this cell at each line, so the demo shows"
+	@echo " what the tool measures rather than a number chosen to look good."
+	@echo ""
+	@echo " Every rung comes back beyond-your-read, and that is the honest"
+	@echo " result: the grid pools every player in the band, so a line set at"
+	@echo " one player's own median sits above the cohort's. See"
+	@echo " docs/reviews/2026-08-23-adversarial.md, finding C3."
 	@./$(APP)/edgectl scenario -name shootout -total 49 -threshold 50 -belief 0.55 \
 		-bankroll bonus -stake 10 \
-		-rungs "52.5:-110:0.72:0.48,75.5:145:0.55:0.26,100.5:450:0.40:0.08"
+		-rungs "52.5:-110:0.550:0.435,75.5:145:0.342:0.226,100.5:450:0.192:0.090"
 	@echo
 	@echo "================================================================"
 	@echo " Settle it, then score your calibration"

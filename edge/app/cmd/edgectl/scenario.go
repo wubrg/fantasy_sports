@@ -87,17 +87,25 @@ func scenarioCmd(args []string) error {
 	//
 	// Only when the grid will actually be consulted: stated -q/-r and -rungs
 	// carry the operator's own conditionals, and they own what those mean.
+	// The direction the scenario occurs in comes from the grid, not from a
+	// flag: it is a property of the fit, and asking the operator to restate it
+	// would be one more place for the two to disagree.
+	below := false
+	if c, err := scenario.LoadConditionals(); err == nil {
+		below = c.OccursBelow(*name)
+	}
+
 	if *rungs == "" && *q < 0 && *r < 0 {
 		c, err := scenario.LoadConditionals()
 		if err != nil {
 			return err
 		}
-		if err := c.CheckDefinition(*outcome, *name, basisVal.String(), *threshold); err != nil {
+		if err := c.CheckDefinition(*outcome, *name, basisVal.String(), *threshold, below); err != nil {
 			return err
 		}
 	}
 
-	sc, err := marketScenario(*name, basisVal, *total, *spread, *threshold, *sigma, *sMarket)
+	sc, err := marketScenario(*name, basisVal, *total, *spread, *threshold, *sigma, *sMarket, below)
 	if err != nil {
 		return err
 	}
@@ -222,7 +230,7 @@ func resolveConditionals(
 	// Before anything is looked up: the grid's q and r answer a fixed question,
 	// and s answers whatever -threshold was passed. If those differ, no amount
 	// of correct arithmetic downstream produces a meaningful number.
-	if err := c.CheckDefinition(outcome, name, basis, threshold); err != nil {
+	if err := c.CheckDefinition(outcome, name, basis, threshold, c.OccursBelow(name)); err != nil {
 		return 0, 0, "", err
 	}
 	qc, rc, err := c.QR(outcome, name, projTargets, trend, line, confidence)
@@ -404,9 +412,9 @@ func ladderReport(spec string, sMarket, belief float64, b wager.Bankroll, stake 
 	return nil
 }
 
-func marketScenario(name string, basis scenario.Basis, total, spread, threshold, sigma, override float64) (scenario.Scenario, error) {
+func marketScenario(name string, basis scenario.Basis, total, spread, threshold, sigma, override float64, below bool) (scenario.Scenario, error) {
 	if override >= 0 {
-		return scenario.StateProb(name, basis, threshold, override)
+		return scenario.StateProb(name, basis, threshold, override, below)
 	}
 	switch basis {
 	case scenario.Total:
@@ -414,9 +422,9 @@ func marketScenario(name string, basis scenario.Basis, total, spread, threshold,
 			return scenario.Scenario{}, fmt.Errorf(
 				"need -total to derive a total-based scenario (or pass -smarket)")
 		}
-		return scenario.FromTotal(name, total, threshold, sigma)
+		return scenario.FromTotal(name, total, threshold, sigma, below)
 	default:
-		return scenario.FromSpread(name, spread, threshold, sigma)
+		return scenario.FromSpread(name, spread, threshold, sigma, below)
 	}
 }
 

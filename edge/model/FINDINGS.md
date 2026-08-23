@@ -463,9 +463,15 @@ helps a quarterback, and hurts a back — the carries went somewhere. That sign 
 the fit and measured after it, rather than assumed either way. At 14 projected carries with a
 rising role, a 74.5-yard line runs `q` = 12.3% against `r` = 34.3%.
 
-`shootout` failing is informative rather than disappointing: a high posted total says a game will be
-*scored in*, not *how*. It can arrive through the air or on the ground and the total alone cannot
-tell which. `pass_heavy` measures the how directly, and validates.
+`shootout` failing is informative rather than disappointing: a high-scoring game says points *were*
+scored, not *how*. They can arrive through the air or on the ground and the total alone cannot tell
+which. `pass_heavy` measures the how directly, and validates.
+
+> **Correction, 2026-08-23.** This paragraph said "a high **posted** total". `shootout` is defined
+> on the **realized** final total (`games.csv` `total`, not `total_line`), so the wording named the
+> wrong quantity. The reasoning survives; the sentence did not. Related and worth stating: because
+> a receiver's own yards feed his team's points, `shootout` is mildly self-referential — splitting
+> it, own-team points over 27 is worth +7.52 yards while opponent points over 27 is worth +3.44.
 
 `blowout_loss` misses each criterion by exactly one cell, with the right direction — a team losing
 badly abandons the run. The closest miss in the grid.

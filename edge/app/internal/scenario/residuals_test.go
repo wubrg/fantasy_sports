@@ -101,7 +101,7 @@ func TestPushAtom(t *testing.T) {
 
 	// Consequence: a pick'em is NOT a 50/50 shot at "margin > 0", because the
 	// push is carved out of the win side.
-	s, err := FromSpread("fav wins", 0, 0, 0)
+	s, err := FromSpread("fav wins", 0, 0, 0, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +110,7 @@ func TestPushAtom(t *testing.T) {
 	}
 	// The normal path, being continuous, still says exactly 0.5 -- that is the
 	// contrast worth keeping visible.
-	sn, err := FromSpread("fav wins", 0, 0, DefaultSigmaMargin)
+	sn, err := FromSpread("fav wins", 0, 0, DefaultSigmaMargin, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,11 +122,11 @@ func TestPushAtom(t *testing.T) {
 // TestEmpiricalIsSelectedByDefault guards the switch: sigma = 0 must mean the
 // fitted model, not a fallback to the old constants.
 func TestEmpiricalIsSelectedByDefault(t *testing.T) {
-	emp, err := FromTotal("shootout", 41, 50, 0)
+	emp, err := FromTotal("shootout", 41, 50, 0, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	norm, err := FromTotal("shootout", 41, 50, DefaultSigmaTotal)
+	norm, err := FromTotal("shootout", 41, 50, DefaultSigmaTotal, false)
 	if err != nil {
 		t.Fatal(err)
 	}

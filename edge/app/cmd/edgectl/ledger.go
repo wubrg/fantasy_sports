@@ -24,6 +24,17 @@ func defaultLedgerPath() string {
 	return filepath.Join(home, "bankroll.jsonl")
 }
 
+// shortLot fits a lot id into the column it is printed in. Ids are 41
+// characters and the column was 20, so `expiring` -- the command whose whole
+// job is being readable on a phone at a glance -- wrapped into soup.
+func shortLot(id string) string {
+	const w = 24
+	if len(id) <= w {
+		return id
+	}
+	return id[:w-1] + "\u2026"
+}
+
 func ledgerCmd(args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("ledger needs a mode: add, balances or expiring")
@@ -305,7 +316,7 @@ func ledgerBalances(args []string) error {
 			if c.Unit {
 				amount = "1 unit"
 			}
-			fmt.Printf("  %-24s %-12s %-14s %10s\n", c.Wager, c.Book, c.Asset, amount)
+			fmt.Printf("  %-24s %-12s %-14s %10s\n", shortLot(c.Wager), c.Book, c.Asset, amount)
 			total += c.Amount
 		}
 		fmt.Printf("\n  %.2f staked and unresolved. it is neither held nor lost, so it is not in\n", total)
@@ -344,7 +355,7 @@ func ledgerExpiring(args []string) error {
 		return nil
 	}
 
-	fmt.Printf("  %-20s %-12s %-14s %10s  %s\n", "lot", "book", "asset", "value", "deadline")
+	fmt.Printf("  %-24s %-12s %-14s %10s  %s\n", "lot", "book", "asset", "value", "deadline")
 	fmt.Println("  " + strings.Repeat("-", 76))
 	overdue := 0
 	for _, e := range exp {
@@ -357,7 +368,7 @@ func ledgerExpiring(args []string) error {
 			overdue++
 			deadline = fmt.Sprintf("%s (PAST — %s ago)", e.At.Local().Format("Mon 2006-01-02 15:04"), humanLeft(-e.In))
 		}
-		fmt.Printf("  %-20s %-12s %-14s %10s  %s\n", e.Lot.ID, e.Lot.Book, e.Lot.Asset, value, deadline)
+		fmt.Printf("  %-24s %-12s %-14s %10s  %s\n", shortLot(e.Lot.ID), e.Lot.Book, e.Lot.Asset, value, deadline)
 	}
 
 	// The constraints that make a boost unusable are invisible in a value

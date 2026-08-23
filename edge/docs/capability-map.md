@@ -125,11 +125,19 @@ operator-supplied numbers. Every input is typed by hand.
 
 ### The fitted grid is four stats, with different scenarios usable on each
 
-`conditionals.json` covers **receiving yards, receptions, rushing yards and passing yards**, 2009–2025. Of its two scenarios,
-`blowout_loss` is gated off — its direction is consistent in only 14 of 16 cells and it holds
-in 12 of 15 out of sample, and it "needs a play-by-play definition rather than final margin."
-One usable scenario: `shootout`. Anything else requires stated `-q`/`-r`, which is judgement
-wearing a number's clothes.
+`conditionals.json` covers **receiving yards, receptions, rushing yards and passing yards**,
+2009–2025, with a different set of scenarios validated on each:
+
+| outcome | priceable |
+|---|---|
+| passing yards | `shootout`, `pass_heavy`, `blowout_loss`, `efficient_offense` |
+| receiving yards | `shootout`, `pass_heavy`\* |
+| receptions | `shootout`, `pass_heavy`\* |
+| rushing yards | `pass_heavy` |
+
+\* on a recorded operator override, announced at the point of pricing.
+
+Anything else is refused with the measurement attached. Stated `-q`/`-r` always win over the grid.
 
 A third scenario, `pass_heavy` (offense PROE > 3.0), is **fitted and gated off**. It separates
 better than `shootout` on every measure except one out-of-sample cell, which the rule requires.
