@@ -427,9 +427,11 @@ func parseBasis(s string) (scenario.Basis, error) {
 		return scenario.Margin, nil
 	case "offense_proe", "proe":
 		return scenario.OffensePROE, nil
+	case "success_rate", "success":
+		return scenario.SuccessRate, nil
 	}
 	return scenario.Total, fmt.Errorf(
-		"-basis must be total, margin or offense_proe, got %q", s)
+		"-basis must be total, margin, offense_proe or success_rate, got %q", s)
 }
 
 func parseBankroll(s string) (wager.Bankroll, error) {

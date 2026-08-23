@@ -763,7 +763,7 @@ func TestEveryFittedScenarioHasADefinition(t *testing.T) {
 		// an explicit list rather than a free string so that adding a basis is a
 		// deliberate act on both sides of the artifact.
 		switch def.Basis {
-		case "total", "margin", "offense_proe":
+		case "total", "margin", "offense_proe", "success_rate":
 		default:
 			t.Errorf("%q: basis %q is not one this build knows how to interpret", name, def.Basis)
 		}

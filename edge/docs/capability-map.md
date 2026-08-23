@@ -197,6 +197,13 @@ discriminates partly by counting noise as evidence. A magnitude-aware replacemen
 rejected: it makes all three scenarios pass, including the two that are gated. See `FINDINGS.md`
 §4. Strengthening it needs more held-out seasons, not a different threshold.
 
+### ~~`snap_counts` is fetched and read by nothing~~ — measured, not yet used
+
+Snap-share trend beats the target-share trend the grid conditions on: ΔR² +0.0053 against +0.0034,
+t = 13.85 against 9.49, and the two are only ~30% overlapping. Switching costs the 2009–2011
+seasons and a full revalidation, so it is recorded as a measured option rather than adopted.
+See `FINDINGS.md` §9.
+
 ### Filter 2 and 3 inputs are hand-typed over a cache that already holds them
 
 `hitrate -values` is pasted by hand while `model/data/raw/stats_player_week_*.csv` holds those
