@@ -28,17 +28,28 @@ type Cell struct {
 	Outcome  string `json:"outcome"`
 	Scenario string `json:"scenario"`
 	Occurred bool   `json:"occurred"`
-	// The opportunity axis, whose meaning depends on the outcome: projected
-	// targets for a pass-catcher, projected attempts for a quarterback. Was
-	// targets_min/max, which named one outcome's axis as though it were the
-	// only one.
-	OpportunityMin float64     `json:"opportunity_min"`
-	OpportunityMax float64     `json:"opportunity_max"`
-	TrendMin       float64     `json:"trend_min"`
-	TrendMax       float64     `json:"trend_max"`
-	N              int         `json:"n"`
-	Median         float64     `json:"median"`
-	Quantiles      [][]float64 `json:"quantiles"` // [[probability, yards], ...]
+	// The three conditioning axes. Projected opportunity used to be the first
+	// of them; it was dropped when the fitted value became a ratio to the
+	// player's own baseline, which carries most of what it stood in for at a
+	// third of the density cost.
+	//
+	// PostedMin/Max is the total the MARKET posted, which `s` is derived from.
+	// Pooling q and r across it while deriving s from it was finding C1.
+	// An outcome whose population cannot fill the split publishes one band
+	// covering everything, which is the same grid with the axis switched off.
+	PostedMin   float64 `json:"posted_min"`
+	PostedMax   float64 `json:"posted_max"`
+	BaselineMin float64 `json:"baseline_min"`
+	BaselineMax float64 `json:"baseline_max"`
+	TrendMin    float64 `json:"trend_min"`
+	TrendMax    float64 `json:"trend_max"`
+	N           int     `json:"n"`
+
+	// Median is a RATIO to the player's own baseline: 1.0 is a typical game
+	// for him. MedianOutput is the same cell in the units a person reads.
+	Median       float64     `json:"median"`
+	MedianOutput float64     `json:"median_output"`
+	Quantiles    [][]float64 `json:"quantiles"` // [[probability, ratio], ...]
 
 	// NEff is N discounted for repeat players. A cell pools many games from the
 	// same player and those rows are not independent, so the raw count claims
@@ -70,8 +81,23 @@ type Cell struct {
 // SiteLabel names the cell's coordinates the way a person reads them, for use
 // in a refusal. A reason without a location sends the reader hunting.
 func (c Cell) SiteLabel() string {
-	return fmt.Sprintf("%g-%g opportunity, %+.2f..%+.2f trend",
-		c.OpportunityMin, c.OpportunityMax, c.TrendMin, c.TrendMax)
+	return fmt.Sprintf("posted %g-%g, baseline %g-%g, trend %+.2f..%+.2f",
+		c.PostedMin, c.PostedMax, c.BaselineMin, c.BaselineMax,
+		c.TrendMin, c.TrendMax)
+}
+
+// Site is where a wager sits in the grid: the three coordinates a cell is
+// keyed on. Passed as one value rather than three bare floats, because three
+// adjacent float64 arguments is an invitation to transpose two of them.
+type Site struct {
+	// Posted is the total the market posted for the game.
+	Posted float64
+	// Baseline is what this player normally does -- his own prior mean output.
+	// It is what the book sets its line near, and the line is read against it
+	// as a ratio.
+	Baseline float64
+	// Trend is his role trend, in the outcome's own units.
+	Trend float64
 }
 
 // effectiveN is the sample size intervals should be built on.
@@ -139,16 +165,19 @@ type AcceptedFailure struct {
 	// The failing cell's bounds, so a caller can be told whether its own
 	// wager sits inside it. A warning that has to be cross-referenced by hand
 	// is a warning that gets skipped.
-	OpportunityMin float64 `json:"opportunity_min"`
-	OpportunityMax float64 `json:"opportunity_max"`
-	TrendMin       float64 `json:"trend_min"`
-	TrendMax       float64 `json:"trend_max"`
+	PostedMin   float64 `json:"posted_min"`
+	PostedMax   float64 `json:"posted_max"`
+	BaselineMin float64 `json:"baseline_min"`
+	BaselineMax float64 `json:"baseline_max"`
+	TrendMin    float64 `json:"trend_min"`
+	TrendMax    float64 `json:"trend_max"`
 }
 
 // Covers reports whether a wager falls inside the failing cell.
-func (a AcceptedFailure) Covers(opportunity, trend float64) bool {
-	return opportunity >= a.OpportunityMin && opportunity < a.OpportunityMax &&
-		trend >= a.TrendMin && trend < a.TrendMax
+func (a AcceptedFailure) Covers(at Site) bool {
+	return at.Posted >= a.PostedMin && at.Posted < a.PostedMax &&
+		at.Baseline >= a.BaselineMin && at.Baseline < a.BaselineMax &&
+		at.Trend >= a.TrendMin && at.Trend < a.TrendMax
 }
 
 // Definition is what a scenario name MEANS: the quantity it tests, the
@@ -185,8 +214,10 @@ type OutcomeDef struct {
 	YardsField  string `json:"yards_field"`
 	Opportunity string `json:"opportunity"`
 	ShareBased  bool   `json:"share_based"`
-	// Discrete outcomes are counts, not measurements. Their cells store an
-	// exact CDF and a line is read off it without interpolation.
+	// Discrete says the OUTCOME is a count. It no longer changes how a cell is
+	// read: the grid stores ratios to the player's own baseline, which are
+	// continuous even for counts. It survives because the unit and the way a
+	// median is summarised still depend on it.
 	Discrete    bool     `json:"discrete"`
 	Unit        string   `json:"unit"`
 	Positions   []string `json:"positions"`
@@ -327,11 +358,11 @@ func (c *Conditionals) OccursBelow(scenario string) bool {
 // AcceptedFailureFor returns the override a scenario is being priced under, if
 // any. Callers must surface it; a wager placed on an overridden gate should
 // never look like one placed on a clean pass.
-func (c *Conditionals) AcceptedFailureFor(outcome, scenario string, opportunity, trend float64) *AcceptedFailure {
+func (c *Conditionals) AcceptedFailureFor(outcome, scenario string, at Site) *AcceptedFailure {
 	for i := range c.Cells {
 		cell := &c.Cells[i]
 		if cell.Outcome == outcome && cell.Scenario == scenario && cell.Override != nil &&
-			cell.Override.Covers(opportunity, trend) {
+			cell.Override.Covers(at) {
 			return cell.Override
 		}
 	}
@@ -442,29 +473,6 @@ func (c Conditional) Thin() bool { return c.TailN < MinTailN }
 // at the low end -- plenty of player-games produce zero yards -- so the search
 // takes the LAST quantile at or below the line, which keeps a run of equal
 // values from collapsing the estimate.
-// probAboveDiscrete reads P(X > line) off an exact CDF, without interpolating.
-//
-// A count has no probability mass between its values: for receptions, P(X >
-// 3.5) is exactly P(X > 3), and any interpolation toward the next integer
-// invents mass that cannot exist. Measured on the real grid, interpolating a
-// discrete distribution sampled at 2% steps was wrong by up to 1.44 percentage
-// points -- bounded by half a step, and entirely avoidable.
-func probAboveDiscrete(cdf [][]float64, line float64) float64 {
-	if line < cdf[0][1] {
-		return 1
-	}
-	// The cumulative through the largest value at or below the line. Anything
-	// above that value is what clears it.
-	through := 0.0
-	for _, point := range cdf {
-		if point[1] <= line {
-			through = point[0]
-		} else {
-			break
-		}
-	}
-	return 1 - through
-}
 
 func probAbove(quantiles [][]float64, line float64) float64 {
 	n := len(quantiles)
@@ -510,40 +518,61 @@ func outsideSupport(quantiles [][]float64, line float64) bool {
 }
 
 // findCell locates the grid cell matching an opportunity level and role trend.
-func (c *Conditionals) findCell(outcome, scenario string, occurred bool, opportunity, trend float64) (Cell, error) {
+func (c *Conditionals) findCell(outcome, scenario string, occurred bool, at Site) (Cell, error) {
 	for _, cell := range c.Cells {
 		if cell.Outcome != outcome || cell.Scenario != scenario || cell.Occurred != occurred {
 			continue
 		}
-		if opportunity < cell.OpportunityMin || opportunity >= cell.OpportunityMax {
+		if at.Posted < cell.PostedMin || at.Posted >= cell.PostedMax {
 			continue
 		}
-		if trend < cell.TrendMin || trend >= cell.TrendMax {
+		if at.Baseline < cell.BaselineMin || at.Baseline >= cell.BaselineMax {
+			continue
+		}
+		if at.Trend < cell.TrendMin || at.Trend >= cell.TrendMax {
 			continue
 		}
 		return cell, nil
 	}
-	axis := "projected opportunity"
-	if def, ok := c.Outcomes[outcome]; ok {
-		axis = "projected " + def.Opportunity
+	unit := "yds"
+	if def, ok := c.Outcomes[outcome]; ok && def.Unit != "" {
+		unit = def.Unit
 	}
 	return Cell{}, fmt.Errorf(
-		"scenario: no fitted cell for %s/%s occurred=%v at %.1f %s and %+.3f trend "+
+		"scenario: no fitted cell for %s/%s occurred=%v at a posted total of %.1f, "+
+			"a %.1f %s baseline and %+.3f trend "+
 			"(cells thinner than %d observations are not published)",
-		outcome, scenario, occurred, opportunity, axis, trend, c.MinCell)
+		outcome, scenario, occurred, at.Posted, at.Baseline, unit, at.Trend, c.MinCell)
 }
 
-// Lookup returns P(yards > line) for one side of a scenario.
-func (c *Conditionals) Lookup(outcome, scenario string, occurred bool, opportunity, trend, line, confidence float64) (Conditional, error) {
+// Lookup returns P(output > line) for one side of a scenario.
+//
+// The grid stores ratios to the player's own baseline, so the line is divided
+// by that baseline before it is read off. This is the whole point of the
+// change: a book sets its line near THIS player's median, and a grid holding
+// raw yards answered "what does the cohort do at this line" when the question
+// was "what does he do". Measured, that mismatch reached 8pp at the top tier
+// against a 2.38pp vig cushion.
+func (c *Conditionals) Lookup(outcome, scenario string, occurred bool, at Site, line, confidence float64) (Conditional, error) {
 	if err := c.checkValidated(outcome, scenario); err != nil {
 		return Conditional{}, err
 	}
-	for name, v := range map[string]float64{"opportunity": opportunity, "trend": trend, "line": line, "confidence": confidence} {
+	for name, v := range map[string]float64{"posted": at.Posted, "baseline": at.Baseline,
+		"trend": at.Trend, "line": line, "confidence": confidence} {
 		if math.IsNaN(v) || math.IsInf(v, 0) {
 			return Conditional{}, fmt.Errorf("scenario: %s = %v is not a real number", name, v)
 		}
 	}
-	cell, err := c.findCell(outcome, scenario, occurred, opportunity, trend)
+	// A ratio to a non-positive baseline is not a quantity. Refused rather
+	// than clamped: a player with no prior production has no distribution here
+	// to price against, and pretending otherwise is how a divide-by-zero
+	// becomes a probability.
+	if at.Baseline <= 0 {
+		return Conditional{}, fmt.Errorf(
+			"scenario: a baseline of %g is not usable -- the grid prices a line as a ratio "+
+				"to what this player normally does, so it needs his own prior mean", at.Baseline)
+	}
+	cell, err := c.findCell(outcome, scenario, occurred, at)
 	if err != nil {
 		return Conditional{}, err
 	}
@@ -563,19 +592,23 @@ func (c *Conditionals) Lookup(outcome, scenario string, occurred bool, opportuni
 	// Refuse before clamping. A line past the observed range is not a small
 	// probability, it is an absence of evidence, and clampToSupport is about to
 	// make the two indistinguishable.
-	if outsideSupport(cell.Quantiles, line) {
+	// The line, expressed as a multiple of what this player normally does.
+	ratio := line / at.Baseline
+
+	if outsideSupport(cell.Quantiles, ratio) {
 		lo, hi := cell.Quantiles[0][1], cell.Quantiles[len(cell.Quantiles)-1][1]
 		return Conditional{}, fmt.Errorf(
-			"scenario: a line of %.1f is outside what %s/%s occurred=%v at %.1f opportunity "+
-				"ever produced (%.0f to %.0f over %d games); the grid cannot price it.\n"+
+			"scenario: a line of %.1f is %.2fx this player's %.1f baseline, and %s/%s "+
+				"occurred=%v never produced a game between %.2fx and %.2fx over %d "+
+				"games; the grid cannot price it.\n"+
 				"  Supply -q and -r yourself if you have a read on a line this far out",
-			line, outcome, scenario, occurred, opportunity, lo, hi, cell.N)
+			line, ratio, at.Baseline, outcome, scenario, occurred, lo, hi, cell.N)
 	}
 
-	raw := probAbove(cell.Quantiles, line)
-	if def, ok := c.Outcomes[outcome]; ok && def.Discrete {
-		raw = probAboveDiscrete(cell.Quantiles, line)
-	}
+	// Always the continuous reader. A ratio is continuous even when the
+	// outcome is a count: 3 receptions against a 4.2 baseline is 0.714, and
+	// there is no integer lattice left for the exact-CDF path to exploit.
+	raw := probAbove(cell.Quantiles, ratio)
 	p := clampToSupport(raw, n)
 
 	// Reuse the interval the hit-rate layer already uses, so a pooled estimate
@@ -588,7 +621,10 @@ func (c *Conditionals) Lookup(outcome, scenario string, occurred bool, opportuni
 	}
 	return Conditional{
 		Prob: p, Lower: lower, Upper: upper,
-		N: cell.N, NEff: n, CellMedian: cell.Median, Cell: cell,
+		// CellMedian is reported in the OUTCOME's units, not as the ratio the
+		// grid stores. A median of "1.02" beside a line of 52.5 tells a reader
+		// nothing they can check.
+		N: cell.N, NEff: n, CellMedian: cell.MedianOutput, Cell: cell,
 		TailN: math.Min(p, 1-p) * float64(n),
 	}, nil
 }
@@ -651,12 +687,12 @@ func clampToSupport(p float64, n int) float64 {
 // Both come from the same grid at the same opportunity and trend, so the only
 // thing that differs between them is the game script -- which is precisely what
 // the decomposition assumes.
-func (c *Conditionals) QR(outcome, scenario string, opportunity, trend, line, confidence float64) (q, r Conditional, err error) {
-	q, err = c.Lookup(outcome, scenario, true, opportunity, trend, line, confidence)
+func (c *Conditionals) QR(outcome, scenario string, at Site, line, confidence float64) (q, r Conditional, err error) {
+	q, err = c.Lookup(outcome, scenario, true, at, line, confidence)
 	if err != nil {
 		return Conditional{}, Conditional{}, err
 	}
-	r, err = c.Lookup(outcome, scenario, false, opportunity, trend, line, confidence)
+	r, err = c.Lookup(outcome, scenario, false, at, line, confidence)
 	if err != nil {
 		return Conditional{}, Conditional{}, err
 	}

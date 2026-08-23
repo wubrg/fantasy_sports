@@ -89,24 +89,37 @@ size that is unanswerable — but **"what would I have to believe?"**:
 
 ```
 $ edgectl scenario -name shootout -total 49 -threshold 50 -belief 0.62 \
-      -targets 7.5 -trend 0.07 -line 52.5 -price 100
+      -baseline 55 -trend 0.07 -line 52.5 -price 100
 
   market says 45.6%   you say 62.0%   (you are +16.4 points apart)
 
   CONDITIONALS from the fitted grid (receiving_yards, 2009-2025)
-    q = 55.0%  [48.6-61.5]  n=244 (eff 223)  median 59 yds  (scenario occurred)
-      MEASURED — ~100 effective observations past the line
-    r = 43.5%  [39.3-47.8]  n=522 (eff 522)  median 49 yds  (it did not)
-      MEASURED — ~227 effective observations past the line
+    55.0 yds baseline, posted total 49.0, +7.0 pt trend
+    line 52.5 = 0.95x his baseline
+    q = 58.9%  [50.6-67.1]  n=132 (eff 132)  median 62 yds  (scenario occurred)
+      MEASURED — ~54 effective observations past the line
+    r = 40.9%  [33.8-48.2]  n=174 (eff 174)  median 48 yds  (it did not)
+      MEASURED — ~71 effective observations past the line
+    note: these cells are thin; treat s* as indicative
 
-  REQUIRES  believing the scenario is at least 56.5% likely
+  price +100   hurdle 50.0%   q 58.9%   r 40.9%
+
+  REQUIRES  believing the scenario is at least 50.5% likely
+  your blended P(hit) ... 52.1%
+  EV (real money, stake 1.00) ... +0.0414
+
   VERDICT   DISAGREEMENT-REQUIRED
-  your read is what carries this. Margin over the requirement: +5.5 pts
 ```
 
-`-targets` is the **projected opportunity**, and it means different things per outcome: targets for
-a pass-catcher, attempts for a quarterback, carries for a back. `-trend` is the role change — share
-points for the share-based outcomes, raw volume for passing.
+`-baseline` is **what this player normally does**, in the outcome's own units — his prior mean, off
+the game log. The grid prices the line as a ratio to it (`52.5 = 0.95x his baseline`), because that
+is what a book sets a line near. A grid holding raw yards answers "what does the cohort do at this
+line" when the question was "what does *he* do", and that mismatch measured 8 points at the top tier
+against a 2.38-point vig cushion. See [FINDINGS §11](../../model/FINDINGS.md).
+
+`-total` is required for the same reason it always was — it derives the market's scenario
+probability — and now also selects the posted-total band the grid is conditioned on. `-trend` is the
+role change: share points for the share-based outcomes, raw volume for passing.
 
 The three verdicts mean different things. `disagreement-required` is the normal case for a narrative
 bet. `market-alone` means the game line already justifies it — a real edge, and also the likeliest

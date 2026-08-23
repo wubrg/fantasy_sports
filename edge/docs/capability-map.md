@@ -130,20 +130,20 @@ operator-supplied numbers. Every input is typed by hand.
 
 Since 2026-08-23 the gate rules on a **site** — one (opportunity band, trend band) coordinate of
 one scenario — rather than on a whole scenario, so "priceable" is a count rather than a flag.
-118 of 222 sites are priceable:
+102 of 311 sites are priceable:
 
 | outcome | `shootout` | `blowout_loss` | `pass_heavy` | `efficient_offense` |
 |---|---|---|---|---|
-| receiving yards | 12/16 | 0/16 vetoed | 0/17 vetoed | 12/17 |
-| receptions | 15/16 | 0/16 no direction | 16/17\* | 15/17 |
-| rushing yards | 0/14 no direction | 6/12 | 10/13 | 10/14 |
-| passing yards | 6/10 | 5/7 | 5/10 | 6/10 |
+| receiving yards | 13/29 | vetoed | vetoed | 12/30 |
+| receptions | 10/30 | no direction | 18/30 | 9/30 |
+| rushing yards | no direction | 8/11 | 8/12 | 9/12 |
+| passing yards | 6/10 | no direction | 5/10 | 4/10 |
 
-\* one of them on a recorded operator override, announced at the point of pricing.
+No override is currently in force; see below.
 
 So a scenario is not simply on or off for an outcome. Asking for a site that did not survive is
-refused by name and reason — "`receiving_yards/shootout` is priceable, but not at 8-11 opportunity,
-+0.06..+99.00 trend: the bootstrap interval does not clear zero [-6.5, +17]". Anything else is
+refused by name and reason — "`receiving_yards/shootout` is priceable, but not at posted 46-999,
+baseline 70-999, trend +0.06..+99.00: the bootstrap interval does not clear zero". Anything else is
 refused with the measurement attached. Stated `-q`/`-r` always win over the grid.
 
 `pass_heavy` is **vetoed for receiving yards**: holding realised targets fixed its coefficient
@@ -228,7 +228,12 @@ must record what was measured, why it was accepted and by whom, and an override 
 started passing is reported stale. `edgectl scenario` prints it at the point of pricing; because
 the lookup is now keyed by site, it fires only on the wager it actually applies to. Previously it
 attached to the whole scenario and warned on every wager in it, including the cells that passed
-cleanly. Currently used once: `pass_heavy` for receptions at 6–8 targets, +0.03..+0.06 trend.
+cleanly. **None is currently in force.** The one that was — `pass_heavy` for receptions at 6–8 projected
+targets — named a site in the grid as it was cut before the 2026-08-23 axis change, and the grid is
+no longer cut on projected targets at all. An override cannot be carried across a re-cut: the
+failure it accepted was measured on a cell that does not exist any more, and quietly re-pointing it
+at the nearest new cell would be accepting a failure nobody measured. The fit enforces this — an
+override naming a site the grid lacks is a hard error, not a warning.
 
 ### The out-of-sample gate has limited power, and no better version was found
 

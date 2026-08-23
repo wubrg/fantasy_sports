@@ -162,7 +162,7 @@ demo: build demo-clean ## Walk through every command with real numbers
 	@echo " The same wager as a belief, priced off the game line"
 	@echo "================================================================"
 	@./$(APP)/edgectl scenario -name shootout -total 49 -threshold 50 \
-		-belief 0.55 -targets 7.5 -trend 0.07 -line 52.5 \
+		-belief 0.55 -baseline 55 -trend 0.07 -line 52.5 \
 		-price 100 -stake 3 -label "Player A over 52.5 rec yds" -log $(DEMO_LOG)
 	@echo
 	@echo "================================================================"

@@ -85,8 +85,9 @@ func usage() {
                    -belief <p> -q <p> -r <p> -price <american>
         What you would have to believe for a wager to be +EV, against what the
         game line already implies. Add -rungs line:price:q:r,... for a ladder,
-        or -log <path> to record the prediction. -targets is the projected
-        opportunity: targets for a pass-catcher, attempts for a quarterback.
+        or -log <path> to record the prediction. -baseline is what the player
+        NORMALLY does in the outcome's own units; the grid prices the line as
+        a ratio to it, because that is what a book sets it near.
 
   edgectl hedge -face <amount> -back <american> -against <american>
         Convert a bonus bet to guaranteed cash by backing the other side at a

@@ -45,6 +45,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import itertools
 import json
 import statistics as st
 import sys
@@ -103,7 +104,8 @@ class Outcome:
     """
 
     def __init__(self, name, yards_field, opp_field, positions, share_based,
-                 bands, trend_bands, min_baseline, discrete=False, unit="yds"):
+                 bands, trend_bands, min_baseline, baseline_bands, min_output,
+                 posted_bands=None, discrete=False, unit="yds"):
         self.name = name
         self.yards_field = yards_field
         self.opp_field = opp_field
@@ -112,12 +114,38 @@ class Outcome:
         self.bands = bands
         self.trend_bands = trend_bands
         self.min_baseline = min_baseline
+        # Bands over the player's own prior mean OUTPUT -- the quantity a book
+        # sets its line near. Conditioning on it is what makes q a probability
+        # about THIS player rather than about the cohort he was pooled with;
+        # see FINDINGS.md 11.
+        self.baseline_bands = baseline_bands
+        # Below this the ratio is not a stable quantity: a 3-yard baseline
+        # turns an ordinary game into a ratio of 8.
+        self.min_output = min_output
+        # The POSTED total, which `s` is derived from. An outcome whose
+        # population cannot fill the split uses one band covering everything,
+        # which is the same grid with the axis switched off.
+        self.posted_bands = posted_bands or POSTED_BANDS
         # A count rather than a measurement. Changes how the cell's
         # distribution is stored and how a half-integer line is read off it.
         self.discrete = discrete
         # What the cell medians are counted in. Printing receptions as "yds"
         # is a small lie of exactly the kind this grid keeps finding.
         self.unit = unit
+
+    def axes(self) -> list:
+        """The grid's conditioning axes, in cell-key order.
+
+        Projected opportunity is NOT among them any more. It was the original
+        axis, and once the value being fitted is a ratio to the player's own
+        baseline, that baseline carries most of what projected opportunity was
+        standing in for -- while costing a third of the density it used to.
+        """
+        return [
+            ("posted_total", self.posted_bands),
+            ("baseline_yards", self.baseline_bands),
+            ("trend", self.trend_bands),
+        ]
 
     def as_json(self) -> dict:
         return {
@@ -127,14 +155,29 @@ class Outcome:
             "positions": sorted(self.positions),
             "bands": [list(b) for b in self.bands],
             "trend_bands": [list(b) for b in self.trend_bands],
+            "baseline_bands": [list(b) for b in self.baseline_bands],
+            "posted_bands": [list(b) for b in self.posted_bands],
             "min_baseline": self.min_baseline,
+            "min_output": self.min_output,
             "discrete": self.discrete,
             "unit": self.unit,
         }
 
+# The posted total, split at the median game. Two bands rather than three:
+# measured, three publishes more cells but the third is thin enough that its
+# sites fail resolution anyway. See FINDINGS.md 11.
+POSTED_BANDS = [(0, 46), (46, 999)]
+
 MIN_PRIOR_GAMES = 4
 TREND_WINDOW = 2
 MIN_BASELINE_SHARE = 0.05
+
+# Bands over the player's own prior mean output. Cut near the quartiles of each
+# outcome's population, so a tier holds players a book would price similarly.
+BASELINE_YARD_BANDS = [(0, 35), (35, 50), (50, 70), (70, 999)]
+BASELINE_RECEPTION_BANDS = [(0, 2.5), (2.5, 4), (4, 5.5), (5.5, 99)]
+BASELINE_RUSH_BANDS = [(0, 30), (30, 55), (55, 80), (80, 999)]
+BASELINE_PASS_BANDS = [(0, 200), (200, 240), (240, 275), (275, 999)]
 MIN_CELL = 100  # below this a cell is dropped rather than published thin
 
 # Projected targets. Boundaries follow the natural break points of usage --
@@ -185,11 +228,13 @@ OUTCOMES = {
         "receiving_yards", "receiving_yards", "targets", {"WR", "TE", "RB"},
         share_based=True, bands=TARGET_BANDS, trend_bands=TREND_BANDS,
         min_baseline=MIN_BASELINE_SHARE,
+        baseline_bands=BASELINE_YARD_BANDS, min_output=5.0,
     ),
     "receptions": Outcome(
         "receptions", "receptions", "targets", {"WR", "TE", "RB"},
         share_based=True, bands=TARGET_BANDS, trend_bands=TREND_BANDS,
         min_baseline=MIN_BASELINE_SHARE,
+        baseline_bands=BASELINE_RECEPTION_BANDS, min_output=1.0,
         # The same rows and the same opportunity axis as receiving yards --
         # only the outcome column differs. What changes is that this one is a
         # count in single digits, so its distribution is stored exactly.
@@ -200,6 +245,16 @@ OUTCOMES = {
         "rushing_yards", "rushing_yards", "carries", {"RB"},
         share_based=True, bands=CARRY_BANDS, trend_bands=CARRY_TREND_BANDS,
         min_baseline=MIN_BASELINE_SHARE,
+        baseline_bands=BASELINE_RUSH_BANDS, min_output=5.0,
+        # One band, on the same rule that gives the other outcomes two: the
+        # posted-total split earns its place by improving calibration across
+        # posted totals, and here it does not (worst stratum 5.94pp against
+        # 6.07pp without it) while costing 11 points of coverage. That is the
+        # same result FINDINGS 9 reached from the other direction -- a high
+        # total says a game will be scored in, not how -- and rushing yards
+        # stay miscalibrated across posted totals either way, which is recorded
+        # rather than papered over.
+        posted_bands=[(0, 999)],
         # RB only. A quarterback's carries are scrambles and kneels and a
         # receiver's are jet sweeps -- median 3 and 1 against an RB's 8 -- so
         # they are not a share of the same designed-run pool. Pooling them
@@ -213,6 +268,12 @@ OUTCOMES = {
         # Attempts, not a share: below ten a game is a relief appearance and its
         # prior mean describes a different job.
         min_baseline=10.0,
+        baseline_bands=BASELINE_PASS_BANDS, min_output=100.0,
+        # ~32 quarterbacks against ~150 pass-catchers. Splitting the posted
+        # total on top of four baseline tiers leaves 39-51% of real wagers
+        # unpriceable, so this outcome keeps one band and says so rather than
+        # publishing sites too thin to resolve.
+        posted_bands=[(0, 999)],
     ),
 }
 
@@ -396,7 +457,19 @@ SCENARIO_VETO = {
 # override can no longer quietly cover a whole scenario: it names the four
 # coordinates it applies to and is checked against the measured verdict for
 # exactly that site. If the site stops failing, the override is reported stale.
-ACCEPTED_FAILURES = {
+# WITHDRAWN 2026-08-23 with the axis change. The override below named a site in
+# the OLD grid -- 6-8 projected targets crossed with a role trend -- and the
+# grid is no longer cut on projected targets at all. There is no way to carry an
+# override across a re-cut: the failure it accepted was measured on a cell that
+# does not exist any more, and silently re-pointing it at the nearest new cell
+# would be accepting a failure nobody measured. If the equivalent site fails
+# again on the new grid, it can be accepted again, on new evidence.
+#
+# The fit enforces this: an override naming a site the grid does not have is a
+# hard error, not a warning.
+ACCEPTED_FAILURES: dict = {}
+
+_WITHDRAWN_ACCEPTED_FAILURES = {
     ("receptions", "pass_heavy", (6, 8, 0.03, 0.06)): {
         "cell": '6-8 projected targets, +0.03..+0.06 role trend',
         "measured": (
@@ -570,6 +643,12 @@ def build(rows, games, outcome: Outcome, proe_tw: dict | None = None,
             # line is actually set near -- see docs/reviews/2026-08-23-adversarial.md
             # finding C3.
             baseline_yards = st.mean(p["yards"] for p in prior)
+            if baseline_yards < outcome.min_output:
+                # Below this the ratio stops being a stable quantity: on a
+                # 3-yard baseline an ordinary game is a ratio of 8, and the
+                # tail of the cell would be made of arithmetic rather than
+                # football.
+                continue
             # Projected opportunity uses only prior information. For a share
             # outcome that is the baseline share against the team's recent
             # volume; for a volume outcome the baseline already IS the
@@ -607,7 +686,14 @@ def build(rows, games, outcome: Outcome, proe_tw: dict | None = None,
                     "opportunity": projected,
                     "baseline_yards": baseline_yards,
                     "trend": recent - baseline,
-                    "yards": x["yards"],
+                    # THE FITTED VALUE IS A RATIO, not the raw number. A book
+                    # sets its line near this player's own median, so a grid
+                    # holding raw yards answers "what does the cohort do at
+                    # this line" when the question was "what does HE do". That
+                    # mismatch measured 8pp at the top tier -- four times the
+                    # vig cushion. See FINDINGS.md 11.
+                    "yards": x["yards"] / baseline_yards,
+                    "output": x["yards"],
                     "game_total": game_total,
                     "margin": margin,
                     # The POSTED total: prior information, and the variable the
@@ -752,11 +838,10 @@ def main(argv):
             # The scenario-level evidence is still measured, but it is now a
             # SUMMARY rather than the gate -- reported so the note in the
             # artifact stays a statement about the data.
-            ev = validate.evidence(obs, definition, outcome.bands,
-                                   outcome.trend_bands, MIN_CELL, outcome.discrete)
-            sv = validate.site_verdicts(obs, definition, outcome.bands,
-                                        outcome.trend_bands, MIN_CELL,
-                                        outcome.discrete, require_oos=True)
+            ev = validate.evidence(obs, definition, outcome.axes(),
+                                   MIN_CELL, False)
+            sv = validate.site_verdicts(obs, definition, outcome.axes(),
+                                        MIN_CELL, False, require_oos=True)
             sites_by[oname][scenario] = sv
             note = validate.note(ev)
             # .strip(): these are written as wrapped implicit-concat literals,
@@ -858,15 +943,17 @@ def main(argv):
                 status[oname][scenario]["vetoed"] = True
                 status[oname][scenario]["why"] = veto
 
+        axes = outcome.axes()
+        fields = [f for f, _ in axes]
         for scenario, definition in SCENARIOS.items():
             for occurred in (True, False):
-                for ta, tb in outcome.bands:
-                    for ra, rb in outcome.trend_bands:
+                for combo in itertools.product(*[b for _, b in axes]):
+                    if True:
                         sel = [
                             o
                             for o in obs
-                            if ta <= o["opportunity"] < tb
-                            and ra <= o["trend"] < rb
+                            if all(lo <= o[f] < hi
+                                   for f, (lo, hi) in zip(fields, combo))
                             and definition.occurred(o) == occurred
                         ]
                         if len(sel) < MIN_CELL:
@@ -881,7 +968,8 @@ def main(argv):
                         # stop. A cell with no site verdict was never paired
                         # (its opposite half fell below MIN_CELL) and cannot be
                         # priced from at all.
-                        sv = sites_by[oname][scenario].get((ta, tb, ra, rb))
+                        sv = sites_by[oname][scenario].get(
+                            tuple(x for band in combo for x in band))
                         cells.append(
                             {
                                 "outcome": oname,
@@ -892,16 +980,27 @@ def main(argv):
                                         ["this cell has no opposite half above "
                                          f"n={MIN_CELL}, so no q/r pair exists here"]),
                                 "override": (sv or {}).get("override"),
-                                "opportunity_min": ta,
-                                "opportunity_max": tb,
-                                "trend_min": ra,
-                                "trend_max": rb,
+                                "posted_min": combo[0][0],
+                                "posted_max": combo[0][1],
+                                "baseline_min": combo[1][0],
+                                "baseline_max": combo[1][1],
+                                "trend_min": combo[2][0],
+                                "trend_max": combo[2][1],
                                 "n": len(sel),
                                 "n_eff": round(n_eff, 1),
                                 "players": len({o["player"] for o in sel}),
                                 "icc": round(icc, 4),
-                                "median": round(st.median(ys), 1),
-                                "quantiles": quantiles(ys, outcome.discrete),
+                                # The RATIO median -- 1.0 means a typical game
+                                # for this player. median_output is the same
+                                # cell in the units a person reads.
+                                "median": round(st.median(ys), 4),
+                                "median_output": round(
+                                    st.median([o["output"] for o in sel]), 1),
+                                # Ratios are continuous even when the outcome
+                                # is a count: 3 receptions against a 4.2
+                                # baseline is 0.714, and there is no integer
+                                # lattice left to store exactly.
+                                "quantiles": quantiles(ys, False),
                             }
                         )
 
@@ -910,28 +1009,35 @@ def main(argv):
     # Show the thing the decomposition is built on: does the scenario move the
     # distribution at all? If q and r are equal the scenario carries no
     # information, which RequiredScenarioProb rejects outright.
-    print("SCENARIO SEPARATION (median yards, occurred vs not)")
-    hdr = f"  {'outcome':>15} {'scenario':>13} {'opp':>9} {'trend':>14} {'occ':>7} {'not':>7} {'delta':>7}"
+    # Ratios, so 1.00 is a typical game for the player in question and the
+    # delta reads as a percentage of his own baseline rather than in yards.
+    print("SCENARIO SEPARATION (median ratio to own baseline, occurred vs not)")
+    hdr = (f"  {'outcome':>15} {'scenario':>18} {'posted':>9} {'baseline':>11} "
+           f"{'trend':>14} {'occ':>6} {'not':>6} {'delta':>7} {'':>3}")
     print(hdr)
     for oname, outcome in OUTCOMES.items():
         for scenario in SCENARIOS:
-            for ta, tb in outcome.bands:
-                for ra, rb in outcome.trend_bands:
-                    got = {
-                        c["occurred"]: c
-                        for c in cells
-                        if c["outcome"] == oname
-                        and c["scenario"] == scenario
-                        and c["opportunity_min"] == ta
-                        and c["trend_min"] == ra
-                    }
-                    if len(got) != 2:
-                        continue
-                    a, b = got[True]["median"], got[False]["median"]
-                    print(
-                        f"  {oname:>15} {scenario:>13} {f'{ta}-{tb}':>9} "
-                        f"{f'{ra:+.2f}..{rb:+.2f}':>14} {a:>7.1f} {b:>7.1f} {a - b:>+7.1f}"
-                    )
+            for combo in itertools.product(*[b for _, b in outcome.axes()]):
+                got = {
+                    c["occurred"]: c
+                    for c in cells
+                    if c["outcome"] == oname
+                    and c["scenario"] == scenario
+                    and c["posted_min"] == combo[0][0]
+                    and c["baseline_min"] == combo[1][0]
+                    and c["trend_min"] == combo[2][0]
+                }
+                if len(got) != 2:
+                    continue
+                a, b = got[True]["median"], got[False]["median"]
+                mark = "" if got[True]["validated"] else "gated"
+                print(
+                    f"  {oname:>15} {scenario:>18} "
+                    f"{f'{combo[0][0]:g}-{combo[0][1]:g}':>9} "
+                    f"{f'{combo[1][0]:g}-{combo[1][1]:g}':>11} "
+                    f"{f'{combo[2][0]:+.2f}..{combo[2][1]:+.2f}':>14} "
+                    f"{a:>6.3f} {b:>6.3f} {a - b:>+7.3f} {mark:>5}"
+                )
 
     if args.report:
         print("\n--report: artifact not written")

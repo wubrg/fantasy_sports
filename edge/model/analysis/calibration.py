@@ -71,18 +71,26 @@ def evalcfg(oname, axes, ratio, split="time", detail=False):
         if 'trend' in axes: k.append(bi(oc.trend_bands,o["trend"]))
         if 'posted' in axes: k.append(bi(PB,o["posted_total"]))
         if 'bl' in axes: k.append(bi(BL,o["baseline_yards"]))
+        # The shipped grid names its axes by the observation field they read,
+        # so the same evaluator can score it without a second spelling.
+        if 'posted_total' in axes: k.append(bi(oc.posted_bands,o["posted_total"]))
+        if 'baseline_yards' in axes: k.append(bi(oc.baseline_bands,o["baseline_yards"]))
         return tuple(k)
     g={}
     for o in fit:
         k=key(o)
         if None in k: continue
-        g.setdefault(k,[]).append(o["yards"]/o["baseline_yards"] if ratio else o["yards"])
+        # build() now stores the RATIO in "yards" and the raw number in
+        # "output". Reading "yards" for the raw grid would score a ratio
+        # against a yard line and report both sides as zero.
+        g.setdefault(k,[]).append(o["output"]/o["baseline_yards"] if ratio else o["output"])
     g={k:sorted(v) for k,v in g.items() if len(v)>=F.MIN_CELL}
     res=[];miss=0
     for o in hold:
         k=key(o)
         if None in k or k not in g: miss+=1; continue
-        res.append((o, prob(g[k], 1.0 if ratio else o["baseline_yards"]), 1.0 if o["yards"]>o["baseline_yards"] else 0.0))
+        res.append((o, prob(g[k], 1.0 if ratio else o["baseline_yards"]),
+                    1.0 if o["output"] > o["baseline_yards"] else 0.0))
     if not res: return None
     def stratify(f, bands):
         """Worst |error| across strata, and the per-stratum line behind it.
@@ -122,15 +130,25 @@ def search():
 
 
 def strata():
-    """The two error tables: by posted total (C1) and by own baseline (C3)."""
+    """The two error tables: by posted total (C1) and by own baseline (C3).
+
+    "today" is the grid as it was fitted before 2026-08-23: raw yards, cut on
+    projected opportunity crossed with role trend. "shipped" is the grid as
+    fit_conditionals now builds it, read from the Outcome definitions rather
+    than restated here, so this cannot drift away from what actually ships.
+    """
     for oname in F.OUTCOMES:
+        oc = F.OUTCOMES[oname]
         print(f"\n===== {oname} =====")
-        for axes, ratio, name in ((('opp', 'trend'), 0, 'today'),
-                                  (('trend', 'posted', 'bl'), 1, 'proposed')):
+        shipped = tuple(f for f, _ in oc.axes())
+        for axes, ratio, name in ((('opp', 'trend'), 0, 'before'),
+                                  (shipped, 1, 'shipped')):
             r = evalcfg(oname, axes, ratio, "time", detail=True)
-            if r:
-                print(f"  {name:<10} by posted total  " + r[4])
-                print(f"  {'':<10} by own baseline  " + r[5])
+            if not r:
+                continue
+            print(f"  {name:<9} cells {r[0]:<4} unpriceable {r[3]:>4.1f}%")
+            print(f"  {'':<9} by posted total  " + r[4])
+            print(f"  {'':<9} by own baseline  " + r[5])
 
 
 if __name__ == "__main__":

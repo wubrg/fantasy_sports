@@ -276,14 +276,17 @@ func TestCheckDefinitionComparesTheOperator(t *testing.T) {
 		t.Fatal("shootout should be an above-threshold scenario")
 	}
 	// Right basis, right threshold, wrong direction: must be refused.
-	err = c.CheckDefinition("passing_yards", "blowout_loss", "margin", -7, false)
+	// rushing_yards, because passing_yards/blowout_loss no longer has a
+	// priceable site and checkValidated would refuse it before the operator is
+	// ever compared -- which would leave this test passing for the wrong reason.
+	err = c.CheckDefinition("rushing_yards", "blowout_loss", "margin", -7, false)
 	if err == nil {
 		t.Fatal("a direction mismatch was accepted")
 	}
 	if !errors.Is(err, ErrDefinitionMismatch) {
 		t.Errorf("got %v, want ErrDefinitionMismatch", err)
 	}
-	if err := c.CheckDefinition("passing_yards", "blowout_loss", "margin", -7, true); err != nil {
+	if err := c.CheckDefinition("rushing_yards", "blowout_loss", "margin", -7, true); err != nil {
 		t.Errorf("the correct direction was refused: %v", err)
 	}
 }

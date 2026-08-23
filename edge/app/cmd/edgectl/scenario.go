@@ -33,9 +33,10 @@ func scenarioCmd(args []string) error {
 	rungs := fs.String("rungs", "", "ladder as line:price:q:r,... (replaces -price/-q/-r)")
 	outcome := fs.String("outcome", "receiving_yards",
 		"what the prop measures: "+outcomeNames())
-	projTargets := fs.Float64("targets", 0,
-		"projected opportunity for the grid lookup: targets for a pass-catcher, "+
-			"attempts for a quarterback")
+	baseline := fs.Float64("baseline", 0,
+		"what this player NORMALLY does: his prior mean in the outcome's own units "+
+			"(e.g. 52 for a 52-yards-a-game receiver). The grid prices the line as a "+
+			"ratio to this, because that is what a book sets it near")
 	trend := fs.Float64("trend", 0, "two-game target-share trend, e.g. 0.06 for +6 points")
 	line := fs.Float64("line", 0, "the prop line in yards, required when looking up q and r")
 	confidence := fs.Float64("confidence", 0.95, "confidence level for looked-up intervals")
@@ -135,8 +136,9 @@ func scenarioCmd(args []string) error {
 	}
 
 	qv, rv, condSource, err := resolveConditionals(
-		*outcome, *name, *q, *r, *projTargets, *trend, *line, *confidence,
-		basisVal.String(), *threshold)
+		*outcome, *name, *q, *r,
+		scenario.Site{Posted: *total, Baseline: *baseline, Trend: *trend},
+		*line, *confidence, basisVal.String(), *threshold)
 	if err != nil {
 		return err
 	}
@@ -207,7 +209,7 @@ func scenarioCmd(args []string) error {
 // The two sources are reported separately into the bet log so they can be
 // scored separately later.
 func resolveConditionals(
-	outcome, name string, q, r, projTargets, trend, line, confidence float64,
+	outcome, name string, q, r float64, at scenario.Site, line, confidence float64,
 	basis string, threshold float64,
 ) (float64, float64, string, error) {
 	if q >= 0 && r >= 0 {
@@ -218,9 +220,17 @@ func resolveConditionals(
 			"-q and -r must be supplied together: one alone would be silently dropped in " +
 				"favour of the fitted grid, and you would never be told")
 	}
-	if projTargets <= 0 || line <= 0 {
+	if at.Baseline <= 0 || line <= 0 {
 		return 0, 0, "", fmt.Errorf(
-			"supply both -q and -r, or -targets and -line to look them up from the fitted grid")
+			"supply both -q and -r, or -baseline and -line to look them up from the fitted grid")
+	}
+	// The grid is conditioned on the POSTED total as well, so a lookup without
+	// one would silently land in whichever band contains zero. Refused: the
+	// number is on the board next to the price.
+	if at.Posted <= 0 {
+		return 0, 0, "", fmt.Errorf(
+			"-total is required for a grid lookup: q and r are fitted per posted-total band, " +
+				"so without it the lookup lands in whichever band contains zero")
 	}
 
 	c, err := scenario.LoadConditionals()
@@ -233,7 +243,7 @@ func resolveConditionals(
 	if err := c.CheckDefinition(outcome, name, basis, threshold, c.OccursBelow(name)); err != nil {
 		return 0, 0, "", err
 	}
-	qc, rc, err := c.QR(outcome, name, projTargets, trend, line, confidence)
+	qc, rc, err := c.QR(outcome, name, at, line, confidence)
 	if err != nil {
 		// Only list the alternatives when the SCENARIO is what failed. A line
 		// outside the observed range is a different problem, and answering it
@@ -245,12 +255,10 @@ func resolveConditionals(
 		return 0, 0, "", err
 	}
 
-	axis := "opportunity"
 	unit := "yds"
 	trendScale := 1.0
 	trendUnit := ""
 	if def, ok := c.Outcomes[outcome]; ok {
-		axis = def.Opportunity
 		if def.Unit != "" {
 			unit = def.Unit
 		}
@@ -265,7 +273,7 @@ func resolveConditionals(
 	// overridden one". The old call took no coordinates and fired on every
 	// wager anywhere in the scenario, which made the warning something to read
 	// past rather than something to act on.
-	if af := c.AcceptedFailureFor(outcome, name, projTargets, trend); af != nil {
+	if af := c.AcceptedFailureFor(outcome, name, at); af != nil {
 		fmt.Printf("  OVERRIDDEN GATE — THIS CELL does not pass validation and is being\n")
 		fmt.Printf("  priced on a failure the operator accepted by name.\n")
 		fmt.Printf("    failing cell   %s\n", af.Cell)
@@ -275,8 +283,12 @@ func resolveConditionals(
 	}
 	fmt.Printf("  CONDITIONALS from the fitted grid (%s, %d-%d)\n",
 		outcome, c.Seasons[0], c.Seasons[1])
-	fmt.Printf("    %.1f projected %s, %+.1f%s trend, line %.1f\n",
-		projTargets, axis, trend*trendScale, trendUnit, line)
+	// The line is stated as a multiple of the player's own baseline as well as
+	// in its own units, because the multiple is what the grid actually reads
+	// and a reader should be able to see the number being looked up.
+	fmt.Printf("    %.1f %s baseline, posted total %.1f, %+.1f%s trend\n",
+		at.Baseline, unit, at.Posted, at.Trend*trendScale, trendUnit)
+	fmt.Printf("    line %.1f = %.2fx his baseline\n", line, line/at.Baseline)
 	// n_eff is shown beside n, not instead of it. The interval is built on the
 	// smaller number, and printing only the raw count would overstate the
 	// evidence behind the interval printed next to it.

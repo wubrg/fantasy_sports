@@ -29,6 +29,7 @@ already written down would look derived while being fitted to its conclusion.
 
 from __future__ import annotations
 
+import itertools
 import math
 import random
 import statistics as st
@@ -77,38 +78,46 @@ def _rate_above(rows: list[dict], line: float) -> float:
     return sum(1 for o in rows if o["yards"] > line) / len(rows)
 
 
-def site_key(tband, rband) -> tuple:
-    """A SITE is one (opportunity band, trend band) coordinate for one scenario.
+def site_key(bands: tuple) -> tuple:
+    """A SITE is one coordinate of the grid for one scenario.
 
     It is the unit a price is actually looked up at -- the q cell and the r
     cell together -- and therefore the right unit to gate at. The old gate
     ruled on a whole scenario at once, which made its strictness depend on how
     many sites the grid happened to be cut into. See FINDINGS.md section 12.
+
+    The key is a flat tuple of the band bounds, in axis order, so it stays
+    hashable and prints readably in a refusal.
     """
-    return (tband[0], tband[1], rband[0], rband[1])
+    return tuple(x for band in bands for x in band)
 
 
-def cell_pairs(obs, definition, target_bands, trend_bands, min_cell):
+def cell_pairs(obs, definition, axes, min_cell):
     """The (occurred, not-occurred) row pairs for every publishable cell.
+
+    `axes` is [(field, bands), ...] rather than two fixed arguments. The grid
+    used to be conditioned on projected opportunity crossed with role trend and
+    nothing else, so those two were named in every signature; it is now
+    conditioned on the player's own baseline, the posted total and the trend,
+    and which axes an outcome can support is a per-outcome decision.
 
     Mirrors the selection in fit_conditionals.build so validation is measured on
     exactly the cells that ship, not on a differently-drawn grid.
     """
-    for ta, tb in target_bands:
-        for ra, rb in trend_bands:
-            in_band = [
-                o
-                for o in obs
-                if ta <= o["opportunity"] < tb and ra <= o["trend"] < rb
-            ]
-            # `is True` / `is False`, not truthiness: occurred() returns None
-            # when the quantity is missing for that game, and those must fall
-            # out of both sides rather than into the baseline.
-            yes = [o for o in in_band if definition.occurred(o) is True]
-            no = [o for o in in_band if definition.occurred(o) is False]
-            if len(yes) < min_cell or len(no) < min_cell:
-                continue
-            yield (ta, tb), (ra, rb), yes, no
+    fields = [f for f, _ in axes]
+    for combo in itertools.product(*[bands for _, bands in axes]):
+        in_band = [
+            o for o in obs
+            if all(lo <= o[f] < hi for f, (lo, hi) in zip(fields, combo))
+        ]
+        # `is True` / `is False`, not truthiness: occurred() returns None
+        # when the quantity is missing for that game, and those must fall
+        # out of both sides rather than into the baseline.
+        yes = [o for o in in_band if definition.occurred(o) is True]
+        no = [o for o in in_band if definition.occurred(o) is False]
+        if len(yes) < min_cell or len(no) < min_cell:
+            continue
+        yield combo, yes, no
 
 
 def direction(pairs, discrete: bool = False) -> dict:
@@ -126,7 +135,7 @@ def direction(pairs, discrete: bool = False) -> dict:
     loc = location(discrete)
     lines = COMMON_LINES_DISCRETE if discrete else COMMON_LINES
     deltas = []
-    for tband, rband, yes, no in pairs:
+    for combo, yes, no in pairs:
         deltas.append(loc([o["yards"] for o in yes]) - loc([o["yards"] for o in no]))
     sign = 1 if sum(1 for d in deltas if d > 0) >= sum(1 for d in deltas if d < 0) else -1
     consistent = sum(1 for d in deltas if d * sign > 0)
@@ -136,13 +145,13 @@ def direction(pairs, discrete: bool = False) -> dict:
     # scenario-level claim -- a scenario means one direction everywhere or it
     # means nothing -- but agreement with it is measured where it is priced.
     by_site = {
-        site_key(tband, rband): {"delta": round(d, 3), "agrees": d * sign > 0}
-        for (tband, rband, _, _), d in zip(pairs, deltas)
+        site_key(combo): {"delta": round(d, 3), "agrees": d * sign > 0}
+        for (combo, _, _), d in zip(pairs, deltas)
     }
 
     total = 0
     inversions = []
-    for (tband, rband, yes, no), delta in zip(pairs, deltas):
+    for (combo, yes, no), delta in zip(pairs, deltas):
         total += 1
         for line in lines:
             q, r = _rate_above(yes, line), _rate_above(no, line)
@@ -150,7 +159,7 @@ def direction(pairs, discrete: bool = False) -> dict:
             # is what makes a wager priced at that line carry the wrong belief.
             if (q - r) * delta < 0:
                 inversions.append(
-                    {"targets": tband, "trend": rband, "line": line,
+                    {"site": site_key(combo), "line": line,
                      "q": round(q, 4), "r": round(r, 4), "median_delta": delta}
                 )
     return {
@@ -169,9 +178,9 @@ def resolution(pairs, discrete: bool = False, resamples=BOOTSTRAP_RESAMPLES,
     loc = location(discrete)
     resolved = total = 0
     by_site = {}
-    for tband, rband, yes, no in pairs:
+    for combo, yes, no in pairs:
         total += 1
-        key = site_key(tband, rband)
+        key = site_key(combo)
         by_site[key] = {"resolved": False, "lo": None, "hi": None}
         by_player: dict[str, tuple[list, list]] = {}
         for o in yes:
@@ -201,29 +210,27 @@ def resolution(pairs, discrete: bool = False, resamples=BOOTSTRAP_RESAMPLES,
     return {"cells": total, "resolved": resolved, "sites": by_site}
 
 
-def out_of_sample(obs, definition, target_bands, trend_bands, min_cell,
+def out_of_sample(obs, definition, axes, min_cell,
                   discrete: bool = False) -> dict:
     """Test 3: does the direction found in the early seasons hold in the late ones?"""
     train = [o for o in obs if o["season"] <= OOS_SPLIT]
     test = [o for o in obs if o["season"] > OOS_SPLIT]
     agree = total = 0
     by_site = {}
-    for tband, rband, _, _ in cell_pairs(train, definition, target_bands, trend_bands, min_cell):
-        ta, tb = tband
-        ra, rb = rband
+    fields = [f for f, _ in axes]
+    for combo, _, _ in cell_pairs(train, definition, axes, min_cell):
 
-        def half(rows, occurred):
+        def half(rows, occurred, combo=combo):
             return [
                 o["yards"]
                 for o in rows
-                if ta <= o["opportunity"] < tb
-                and ra <= o["trend"] < rb
+                if all(lo <= o[f] < hi for f, (lo, hi) in zip(fields, combo))
                 and definition.occurred(o) is occurred
             ]
 
         tr_y, tr_n = half(train, True), half(train, False)
         te_y, te_n = half(test, True), half(test, False)
-        key = site_key(tband, rband)
+        key = site_key(combo)
         if min(len(te_y), len(te_n)) < MIN_OOS_CELL:
             # The late seasons cannot speak to this site either way. None is
             # NOT False: it is the absence of evidence, and site_verdicts()
@@ -239,7 +246,7 @@ def out_of_sample(obs, definition, target_bands, trend_bands, min_cell,
     return {"cells": total, "agree": agree, "sites": by_site}
 
 
-def out_of_sample_threeway(obs, definition, target_bands, trend_bands, min_cell,
+def out_of_sample_threeway(obs, definition, axes, min_cell,
                            resamples=600, seed=BOOTSTRAP_SEED) -> dict:
     """The magnitude-aware out-of-sample test that was tried and REJECTED.
 
@@ -263,14 +270,13 @@ def out_of_sample_threeway(obs, definition, target_bands, trend_bands, min_cell,
     test = [o for o in obs if o["season"] > OOS_SPLIT]
     agree = disagree = uninformative = 0
 
-    for tband, rband, _, _ in cell_pairs(train, definition, target_bands, trend_bands, min_cell):
-        ta, tb = tband
-        ra, rb = rband
+    fields = [f for f, _ in axes]
+    for combo, _, _ in cell_pairs(train, definition, axes, min_cell):
 
-        def half(rows, occurred):
+        def half(rows, occurred, combo=combo):
             return [
                 o for o in rows
-                if ta <= o["opportunity"] < tb and ra <= o["trend"] < rb
+                if all(lo <= o[f] < hi for f, (lo, hi) in zip(fields, combo))
                 and definition.occurred(o) is occurred
             ]
 
@@ -310,13 +316,13 @@ def out_of_sample_threeway(obs, definition, target_bands, trend_bands, min_cell,
     return {"agree": agree, "disagree": disagree, "uninformative": uninformative}
 
 
-def evidence(obs, definition, target_bands, trend_bands, min_cell,
+def evidence(obs, definition, axes, min_cell,
              discrete: bool = False) -> dict:
     """All three tests for one scenario."""
-    pairs = list(cell_pairs(obs, definition, target_bands, trend_bands, min_cell))
+    pairs = list(cell_pairs(obs, definition, axes, min_cell))
     d = direction(pairs, discrete)
     res = resolution(pairs, discrete)
-    oos = out_of_sample(obs, definition, target_bands, trend_bands, min_cell, discrete)
+    oos = out_of_sample(obs, definition, axes, min_cell, discrete)
     return {
         "cells": d["cells"],
         "consistent": d["consistent"],
@@ -358,7 +364,7 @@ def sign_coherence(consistent: int, cells: int) -> float:
 COHERENCE_ALPHA = 0.05
 
 
-def site_verdicts(obs, definition, target_bands, trend_bands, min_cell,
+def site_verdicts(obs, definition, axes, min_cell,
                   discrete: bool = False, require_oos: bool = True) -> dict:
     """THE gate: one verdict per site, each decided on that site's own evidence.
 
@@ -385,10 +391,10 @@ def site_verdicts(obs, definition, target_bands, trend_bands, min_cell,
     pass. A site the late seasons cannot speak to has not been validated out of
     sample, and "we never checked" is not a reason to price something.
     """
-    pairs = list(cell_pairs(obs, definition, target_bands, trend_bands, min_cell))
+    pairs = list(cell_pairs(obs, definition, axes, min_cell))
     d = direction(pairs, discrete)
     res = resolution(pairs, discrete)
-    oos = out_of_sample(obs, definition, target_bands, trend_bands, min_cell, discrete)
+    oos = out_of_sample(obs, definition, axes, min_cell, discrete)
 
     out = {}
     for key, dd in d["sites"].items():
@@ -461,10 +467,8 @@ def _compare_oos() -> int:
             signals_tw = signals_mod.load(seasons[0], seasons[-1])
         obs = fc.build(rows, games, outcome, proe_tw, signals_tw)
         for name, definition in fc.SCENARIOS.items():
-            strict = out_of_sample(obs, definition, outcome.bands,
-                                   outcome.trend_bands, fc.MIN_CELL)
-            three = out_of_sample_threeway(obs, definition, outcome.bands,
-                                           outcome.trend_bands, fc.MIN_CELL)
+            strict = out_of_sample(obs, definition, outcome.axes(), fc.MIN_CELL)
+            three = out_of_sample_threeway(obs, definition, outcome.axes(), fc.MIN_CELL)
             sign = f"{strict['agree']}/{strict['cells']}"
             verdict = "PASS" if three["disagree"] == 0 else "FAIL"
             print(f"  {oname:<16} {name:<18} {sign:>10}   {three['agree']:>6} {three['disagree']:>9} "

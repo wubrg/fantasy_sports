@@ -212,6 +212,12 @@ invisible, and called the defect fixed. It was not: median-space and probability
 `edgectl` consumes the latter. Moving a test away from the failure is worse than leaving it, because
 the failure then looks resolved.
 
+> **Revised 2026-08-23 by the axis change (§11).** The direction survives — 17 of 23 cells negative
+> for receiving yards — but the claim that every positive cell sat in the lowest-volume band does
+> **not**. On the baseline axis two positives appear in the 35–50 yard tier. The confinement was a
+> property of the projected-target cut, not of the effect. What survives is the sign, and it is
+> weak enough that the scenario's dominant direction only just beats chance (p = 0.035).
+
 ## 4. Pass rate over expected separates better than shootout, and is gated anyway
 
 `analysis/proe.py --gate1` · play-by-play 2009–2025, 8,862 team-weeks
@@ -437,6 +443,17 @@ it for receiving yards** — 6–8 targets, +3 to +6 pt trend, where a +14.5-yar
 effect over 2009–2021 goes to −0.5 and −0.02 across 2022–2025 on 65 games. Those are not two
 independent failures: receptions and receiving yards are measured on the same player-games, so it
 is one failure seen twice.
+
+> **The exact-CDF reader was removed on 2026-08-23**, when the grid began storing ratios to the
+> player's own baseline. Three receptions against a 4.2 baseline is 0.714, and pooling across
+> players with different denominators smears the integer lattice into something genuinely
+> continuous — so there was nothing left for an exact reader to be exact about.
+>
+> This is only defensible because the error it was built to fix was **re-measured rather than
+> assumed away**. Against 20,837 held observations the interpolated read is now within
+> **0.14–0.85pp** at every half-integer line from 1.5 to 6.5, against the 1.44pp that motivated the
+> exact path and the 2.38pp vig cushion. The mean-for-discrete location measure in this section is
+> unaffected and still in use.
 
 ## 7. Rushing inverts the sign, and that is the point
 
@@ -723,10 +740,38 @@ no way to attribute the verdict changes to either.
 
 Nothing above is in the artifact. The two quantities are plumbed; the axis change is not made.
 
-> **Unblocked 2026-08-23 by §12**, which replaced the whole-scenario gate with a per-site one.
-> `k` no longer appears in the rule, so re-cutting the grid cannot by itself reject anything. The
-> axis change described here is now free to land on its own evidence, and is the next piece of
-> work rather than a blocked one.
+> **Unblocked by §12** and **shipped the same day.** `k` no longer appears in the gate, so
+> re-cutting the grid cannot by itself reject anything, and the axis change landed on its own
+> evidence.
+>
+> The grid now stores each game as a **ratio to the player's own prior mean**, conditioned on the
+> posted-total band, a baseline tier and the role trend. Projected opportunity is gone as an axis:
+> once the value is a ratio to the player's own baseline, that baseline carries most of what
+> projected opportunity stood in for, at a third of the density cost.
+>
+> Worst-stratum error, held out on 2022–2025, before → after:
+>
+> | outcome | by posted total (C1) | by own baseline (C3) |
+> |---|---|---|
+> | receiving_yards | 3.12 → **2.69**pp | 8.01 → **1.78**pp |
+> | receptions | 5.80 → **2.75**pp | 9.97 → **2.13**pp |
+> | rushing_yards | 2.99 → 6.07pp | 9.37 → **2.18**pp |
+> | passing_yards | 9.47 → **5.81**pp | 5.54 → **2.44**pp |
+>
+> **C3 is fixed everywhere** — every outcome lands under the 2.38pp vig cushion. C1 improves for
+> three of four. Rushing yards does not, and the posted-total split does not rescue it either
+> (6.07pp with one band, 5.94pp with two, while the split costs 11 points of coverage), so rushing
+> keeps one band and **stays miscalibrated across posted totals**. That is the same result §9
+> reached from the other side: a high posted total says a game will be scored in, not how. Passing
+> yards keeps one band too, for density — ~32 quarterbacks cannot fill four baseline tiers crossed
+> with a posted split.
+>
+> The practical consequence is the one C3 predicted. A line at 0.95× a player's baseline now
+> returns `q = 58.9%` where every standard −110 over used to come back `beyond-your-read`.
+>
+> **What it cost.** The override recorded for `pass_heavy`/receptions named a site in the old grid
+> and could not be carried across the re-cut; it is withdrawn rather than re-pointed. And the
+> exact-CDF reader built in §6 was removed — see the note there.
 
 ## 12. The gate was measuring the grid's shape, not the evidence
 

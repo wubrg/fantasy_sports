@@ -77,7 +77,7 @@ have to believe?", which is a single number you can argue with:
 
 ```
 $ edgectl scenario -name shootout -total 49 -threshold 50 \
-      -belief 0.62 -targets 7.5 -trend 0.07 -line 52.5 -price +100
+      -belief 0.62 -baseline 55 -trend 0.07 -line 52.5 -price +100
 
   market says 45.6%   you say 62.0%   (you are +16.4 points apart)
   q = 55.0%  [48.6-61.5]  n=244 (eff 223)  median 59 yds  (scenario occurred)
@@ -99,24 +99,26 @@ each one:
 
 The gate rules on a **site** — one scenario at one (opportunity band, trend band) coordinate —
 rather than on a whole scenario, because that is the unit a price is formed at. So a scenario is
-not on or off for an outcome; some of its cells hold and some do not. 118 of 222 sites are
+not on or off for an outcome; some of its cells hold and some do not. 102 of 311 sites are
 priceable:
 
 | outcome | `shootout` | `blowout_loss` | `pass_heavy` | `efficient_offense` |
 |---|---|---|---|---|
-| passing yards | 6/10 | 5/7 | 5/10 | 6/10 |
-| receiving yards | 12/16 | vetoed | vetoed | 12/17 |
-| receptions | 15/16 | no direction | 16/17\* | 15/17 |
-| rushing yards | no direction | 6/12 | 10/13 | 10/14 |
+| receiving yards | 13/29 | vetoed | vetoed | 12/30 |
+| receptions | 10/30 | no direction | 18/30 | 9/30 |
+| rushing yards | no direction | 8/11 | 8/12 | 9/12 |
+| passing yards | 6/10 | no direction | 5/10 | 4/10 |
 
-\* one on a recorded operator override, announced every time it is used.
+No override is in force. The one that was — `pass_heavy` for receptions — named a site in the
+grid as it was cut before 2026-08-23, and an override cannot be carried across a re-cut: the
+failure it accepted was measured on a cell that no longer exists.
 
 Ask for a site that did not survive and you get told which one and why, not a shrug:
 
 ```
-scenario: receiving_yards/shootout is priceable, but not at 8-11 opportunity, +0.06..+99.00 trend.
-  the bootstrap interval does not clear zero [-6.5, +17]; the seasons after 2021 are too thin
-  here to check it.
+scenario: receiving_yards/shootout is priceable, but not at posted 46-999, baseline 70-999,
+  trend +0.06..+99.00.
+  the bootstrap interval does not clear zero; the seasons after 2021 are too thin here to check it.
 ```
 
 Anything else is refused with the measurement attached. The list is short on purpose — of six
