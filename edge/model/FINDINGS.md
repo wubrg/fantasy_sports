@@ -505,17 +505,32 @@ Four candidates from data already cached, each held to the gates PROE went throu
 |---|---|---|---|---|---|---|
 | `success_rate` | +0.318 | +0.302 | +0.389 | +0.0142 | +0.128 | **fitted** |
 | `chunk_rate` | **+0.141** | +0.274 | +0.257 | +0.0242 | +0.150 | rejected |
-| `tempo` | +0.765 | +0.038 | −0.290 | +0.0005 | +0.020 | rejected |
+| `tempo` (formation) | +0.765 | +0.038 | −0.290 | +0.0005 | +0.020 | rejected |
+| *plays run* (real pace) | **+0.138** | +0.136 | — | +0.0143 | — | rejected |
 
 **`chunk_rate` has the largest effect in the table and fails anyway.** It persists at +0.141 —
 the same range as the defensive pass funnel rejected at +0.124 in §4. Explosiveness is measurable
 after the fact and not forecastable, so there is nothing to condition on before kickoff. Rejecting
 it is the precedent set by that earlier decision, applied to a signal that is more tempting.
 
-**`tempo` is the mirror image and fails for the opposite reason.** It persists at +0.765, the most
-forecastable quantity measured anywhere in this project — teams have stable tempo — and it does
-nothing. Prior form is null on receiving yards (t = −1.34) and top-quartile against bottom
-separates by 2 points. Perfect foreknowledge of a thing that does not matter.
+**`tempo` fails for the opposite reason, and is misnamed.** It persists at +0.765 — the most
+forecastable quantity measured anywhere in this project — and does nothing: prior form null on
+receiving yards (t = −1.34), two points of separation.
+
+> **Correction, 2026-08-23.** What this measures is the shotgun-or-no-huddle rate, which is a
+> **formation choice, not pace**: its correlation with plays actually run is **+0.064**, and shotgun
+> is near-universal now (mean 0.67). The name promised a test of tempo and the metric did not
+> deliver one.
+>
+> Measured properly, **plays run** matters a great deal — ΔR² = **+0.0143** beyond projected
+> targets at t = 21.06, twenty-six times what the formation metric managed, and it survives
+> conditioning on script and success rate. But it **persists at only +0.138**, the same range as
+> `chunk_rate` (+0.141) and the defensive funnel (+0.124). A team's recent play volume barely
+> predicts this week's, and the prior form actually turns negative (t = −5.97).
+>
+> So the rejection stands and the reason changes: the formation metric fails on **signal**, and
+> real pace fails on **persistence**. Two different failures behind one verdict, and the original
+> entry implied a test that had not been run.
 
 **`success_rate` was the one that needed a real test**, because it is far more entangled with game
 script than PROE: r = +0.302 against the shootout indicator and +0.389 against margin, where PROE

@@ -13,10 +13,19 @@ Three signals, all derivable from play-by-play already on disk:
                    substitute for DVOA, which is proprietary to FTN.
     chunk_rate     fraction of plays gaining 20+ yards. Explosiveness, and the
                    thing an alternate-line Over is really betting on.
-    tempo          fraction of plays run from shotgun or no-huddle. The closest
-                   full-window proxy for scheme; FTN's richer charting (motion,
-                   play-action, RPO, blitzers) begins in 2022 and cannot reach
-                   the grid's floor.
+    tempo          fraction of plays from shotgun or no-huddle. NAMED BADLY:
+                   this is a formation choice, not pace. Its correlation with
+                   plays actually run is +0.064, and shotgun is near-universal
+                   now. Kept under the name it shipped with, with the caveat
+                   attached, because renaming it would quietly disconnect it
+                   from FINDINGS section 9.
+
+                   Real pace -- plays run -- was measured after the fact and
+                   rejected too, on persistence rather than signal: it explains
+                   dR2 +0.0143 of receiving yards beyond projected targets but
+                   a team's prior play volume predicts this week's at only
+                   r = +0.138. The `plays` count is returned alongside the rates
+                   so that is reproducible.
 
 Each also comes in a prior-information-only form -- a team's rate COMING INTO a
 game, never including it -- because that is the only form usable to forecast
