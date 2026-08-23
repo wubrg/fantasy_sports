@@ -19,6 +19,7 @@ in this module and none intended.
 | [Campaign: an ordinary week](docs/campaigns/weekly-slate.md) | Board, props, logging, scoring |
 | [Why this tool refuses things](docs/philosophy.md) | The reasoning behind the design |
 | [Capability map](docs/capability-map.md) | What is implemented, and what is not |
+| [Adversarial review, 2026-08](docs/reviews/2026-08-23-adversarial.md) | Two reviewers, the defects they found, and the fix order |
 | [Findings](model/FINDINGS.md) | Every measured claim, with the script that produced it |
 | [Source frameworks](docs/frameworks/README.md) | The transcribed corpus, with its errors annotated |
 | [ADR-001](docs/ADR-001-line-board-tracked-in-git.md) | Why the line board is tracked in git |

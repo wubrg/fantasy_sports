@@ -1,5 +1,15 @@
 # Findings
 
+> **Review notice, 2026-08-23.** An independent reviewer reproduced every published verdict and
+> then found defects these sections do not reflect: §4's `pass_heavy` is 90% a volume identity and
+> its stated defence is the identity's signature; §6's self-service check has since gone stale with
+> three permissive flips; §8's statistic contains its own outcome and manufactures a 3× ratio under
+> a pure null; and the decomposition is miscalibrated because `q` and `r` are pooled over the
+> variable used to form `s`. Two of the author's own worries — multiple comparisons and the
+> clustering choice — were tested and **refuted in his favour**. See
+> [`../docs/reviews/2026-08-23-adversarial.md`](../docs/reviews/2026-08-23-adversarial.md) before
+> relying on any section below.
+
 Measured results from `edge/model/analysis/`. Each is reproducible by running the named script
 against the nflverse cache (`python3 edge/model/ingest/nflverse.py` first).
 

@@ -1,5 +1,10 @@
 # What edgectl computes, and what it does not
 
+> **This document is a version behind and is being corrected.** An adversarial review on
+> 2026-08-23 found it contradicts the README on what is priceable, and found three critical
+> defects in the pricing path that are not yet reflected here. Read
+> [`reviews/2026-08-23-adversarial.md`](reviews/2026-08-23-adversarial.md) alongside it.
+
 A map from the framework documents in [`frameworks/`](./frameworks/) to the code that
 enforces them, written so the *absences* are as legible as the coverage. The math audit in
 [`frameworks/README.md`](./frameworks/README.md#math-audit) checks whether the source
