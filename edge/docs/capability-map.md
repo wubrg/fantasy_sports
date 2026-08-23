@@ -174,6 +174,14 @@ remains a human judgement, but the fit **fails** when the stated rule and the re
 disagree. Doing this surfaced a correction to `FINDINGS.md`: the "direction inverts at ordinary
 lines" disqualifier does not clear sampling error for either scenario.
 
+### The gate is per scenario, and the evidence says it should be per cell
+
+Measured across 141 testable cells: out-of-sample failures concentrate where the fit effect was
+already noise-sized (median 1.0 yard against 5.0 for cells that held). `blowout_loss` is gated for
+receiving yards while all three of its alpha-band cells held out of sample. A scenario-level gate
+therefore blocks wagers whose own evidence is sound. See `FINDINGS.md` §8; the decision on whether
+to regate is open.
+
 ### A gated scenario can be overridden, loudly
 
 `SCENARIO_STATUS` may carry an `accepted_failure` naming the specific cell, what was measured, why
