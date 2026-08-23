@@ -243,7 +243,14 @@ this whole section of the pipeline was built to prevent.
 Opponent-induced PROE persists at only r = +0.124 and its prior form is null on yards (t = 1.49).
 A funnel is measurable after the fact and not forecastable, so there is nothing to condition on.
 
-**What would un-gate `pass_heavy`:** more evidence in that one cell. The other candidate — an
+**Accepted, 2026-08-22.** The operator has accepted this specific failure and `pass_heavy` is
+priceable for receiving yards and receptions. The rule is unchanged and still returns False — the
+artifact records both `rule_says: false` and the override — and `edgectl` prints the failing cell
+whenever the scenario is priced, and states whether *your* wager falls inside it. That is the
+difference between an exception and a softer bar: an exception costs only the scenario it names,
+while a softened rule stops discriminating for everything measured afterwards.
+
+**What would settle it properly:** more evidence in that one cell. The other candidate — an
 out-of-sample test accounting for magnitude rather than sign alone — was tested and rejected. See
 below.
 

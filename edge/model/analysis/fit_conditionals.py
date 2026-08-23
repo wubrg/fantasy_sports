@@ -303,16 +303,28 @@ SCENARIO_STATUS = {
     "receiving_yards": {
         "shootout": {"validated": True},
         "pass_heavy": {
-            "validated": False,
-            "why": "Fails out of sample in one cell of sixteen (6-8 targets, +3 to +6 pt "
-            "trend): +14.5 yards of separation in 2009-2021, -0.5 in 2022-2025 on 65 "
-            "observations. It clears every other criterion, and by wider margins than "
-            "shootout -- consistent in 17/17 cells against 16/16, resolved in 13/17 against "
-            "12/16. The single failure is a half-yard median gap straddling zero, which is "
-            "noise rather than a reversal. It is gated off regardless, because the rule "
-            "requires every out-of-sample cell and was written before this scenario existed. "
-            "Loosening it here would be fitting the bar to the answer -- and the loosening "
-            "was tried and rejected: it makes every scenario pass. See FINDINGS.md 4.",
+            "validated": True,
+            "accepted_failure": {
+                "cell": "6-8 projected targets, +0.03..+0.06 role trend",
+                # Machine-readable bounds so the CLI can tell the operator
+                # whether THIS wager sits in the failing cell, rather than
+                # printing a warning to be cross-referenced by hand.
+                "opportunity_min": 6,
+                "opportunity_max": 8,
+                "trend_min": 0.03,
+                "trend_max": 0.06,
+                "measured": "15/16 out of sample; consistent 17/17; resolved 13/17",
+                "why": "The failing cell shows +14.5 yards and +1.22 receptions of separation "
+                "over 2009-2021 and -0.5 / -0.02 across 2022-2025, on 65 held-out games. Half a "
+                "yard is not a reversal, and the cluster bootstrap cannot distinguish it from "
+                "zero. The rule still says no, and is not being softened: a magnitude-aware "
+                "version was tested and rejected because it makes every scenario pass "
+                "(FINDINGS.md 4). This is an operator accepting one named failure instead. "
+                "Receptions and receiving yards fail the SAME cell on the SAME player-games, so "
+                "this is one failure seen twice, not two. Revisit when the held-out half has "
+                "enough seasons to resolve it -- roughly 15-20 games a year accrue to this cell.",
+                "accepted_by": "operator, 2026-08-22",
+            },
         },
         "blowout_loss": {
             "validated": False,
@@ -327,11 +339,28 @@ SCENARIO_STATUS = {
         # point of gating per outcome.
         "shootout": {"validated": True},
         "pass_heavy": {
-            "validated": False,
-            "why": "Fails out of sample in one cell of sixteen, exactly as it does for "
-            "receiving yards -- and here it is resolved in 17 of 17 cells, the strongest "
-            "bootstrap of any pairing in the grid. Gated on the same rule and for the same "
-            "reason: it was written before the scenario existed.",
+            "validated": True,
+            "accepted_failure": {
+                "cell": "6-8 projected targets, +0.03..+0.06 role trend",
+                # Machine-readable bounds so the CLI can tell the operator
+                # whether THIS wager sits in the failing cell, rather than
+                # printing a warning to be cross-referenced by hand.
+                "opportunity_min": 6,
+                "opportunity_max": 8,
+                "trend_min": 0.03,
+                "trend_max": 0.06,
+                "measured": "15/16 out of sample; consistent 17/17; resolved 17/17 -- the strongest bootstrap of any pairing in the grid",
+                "why": "The failing cell shows +14.5 yards and +1.22 receptions of separation "
+                "over 2009-2021 and -0.5 / -0.02 across 2022-2025, on 65 held-out games. Half a "
+                "yard is not a reversal, and the cluster bootstrap cannot distinguish it from "
+                "zero. The rule still says no, and is not being softened: a magnitude-aware "
+                "version was tested and rejected because it makes every scenario pass "
+                "(FINDINGS.md 4). This is an operator accepting one named failure instead. "
+                "Receptions and receiving yards fail the SAME cell on the SAME player-games, so "
+                "this is one failure seen twice, not two. Revisit when the held-out half has "
+                "enough seasons to resolve it -- roughly 15-20 games a year accrue to this cell.",
+                "accepted_by": "operator, 2026-08-22",
+            },
         },
         "blowout_loss": {
             "validated": False,
@@ -677,23 +706,56 @@ def main(argv):
         for scenario, definition in SCENARIOS.items():
             ev = validate.evidence(obs, definition, outcome.bands,
                                    outcome.trend_bands, MIN_CELL, outcome.discrete)
-            recorded = SCENARIO_STATUS[oname][scenario]["validated"]
+            entry = SCENARIO_STATUS[oname][scenario]
+            recorded = entry["validated"]
             measured = qualifies(ev)
             note = validate.note(ev)
-            if why := SCENARIO_STATUS[oname][scenario].get("why"):
+            if why := entry.get("why"):
                 note = f"{note}. {why}"
+            accepted = entry.get("accepted_failure")
             print(f"  {scenario:14} {note}")
             print(f"  {'':14} rule says {measured}, recorded {recorded}")
+
             if measured != recorded:
-                raise SystemExit(
-                    f"\n{oname}/{scenario}: the evidence and the recorded verdict disagree.\n"
-                    f"  measured: {note}\n"
-                    f"  the stated rule gives validated={measured}, but SCENARIO_STATUS "
-                    f"says {recorded}.\n"
-                    f"  Change the verdict, or change the rule and say why -- do not ship "
-                    f"a flag the data no longer supports."
-                )
-            status[oname][scenario] = {"validated": recorded, "note": note, "evidence": ev}
+                # An operator may accept a SPECIFIC failure, naming it. The rule
+                # is not softened -- qualifies() still returns False and that
+                # False is what gets recorded as `measured` -- but the verdict
+                # can differ from it when the disagreement is written down and
+                # travels with the artifact. Anything less specific is a general
+                # escape hatch, which is how a gate stops meaning anything.
+                if not (recorded and accepted):
+                    raise SystemExit(
+                        f"\n{oname}/{scenario}: the evidence and the recorded verdict disagree.\n"
+                        f"  measured: {note}\n"
+                        f"  the stated rule gives validated={measured}, but SCENARIO_STATUS "
+                        f"says {recorded}.\n"
+                        f"  Change the verdict, record an accepted_failure naming the specific "
+                        f"cell, or change the rule and say why -- do not ship a flag the data "
+                        f"does not support."
+                    )
+                for field in ("cell", "measured", "why", "accepted_by"):
+                    if not accepted.get(field):
+                        raise SystemExit(
+                            f"\n{oname}/{scenario}: accepted_failure is missing {field!r}. "
+                            f"An override that does not say WHICH failure was accepted, by "
+                            f"whom, is indistinguishable from turning the gate off."
+                        )
+                print(f"  {'':14} OVERRIDE: priced despite the rule, on an accepted failure")
+                print(f"  {'':14}   cell     {accepted['cell']}")
+                print(f"  {'':14}   accepted {accepted['accepted_by']}")
+            elif accepted:
+                # The override outlived the failure it was written for.
+                print(f"  {'':14} NOTE: accepted_failure is stale -- this now passes on its "
+                      f"own and the override can be removed")
+
+            status[oname][scenario] = {
+                "validated": recorded,
+                "note": note,
+                "evidence": ev,
+                "rule_says": measured,
+            }
+            if accepted:
+                status[oname][scenario]["accepted_failure"] = accepted
 
         for scenario, definition in SCENARIOS.items():
             for occurred in (True, False):

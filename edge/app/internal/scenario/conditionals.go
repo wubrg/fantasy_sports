@@ -73,6 +73,42 @@ func (c Cell) effectiveN() int {
 type ScenarioStatus struct {
 	Validated bool   `json:"validated"`
 	Note      string `json:"note"`
+
+	// RuleSays is what qualifies() computed, independently of the recorded
+	// verdict. When it disagrees with Validated an operator has accepted a
+	// specific failure, and AcceptedFailure names it.
+	RuleSays        bool             `json:"rule_says"`
+	AcceptedFailure *AcceptedFailure `json:"accepted_failure,omitempty"`
+}
+
+// AcceptedFailure is an operator overriding the gate for one named cell.
+//
+// It exists so that the alternative -- softening the rule -- stays off the
+// table. A rule that bends to admit a scenario stops discriminating for every
+// scenario after it; a recorded exception costs only the scenario it names, and
+// travels with the artifact so it can be argued with later.
+//
+// The cost is that it must never be quiet. Anything priced on an accepted
+// failure says so at the point of use, not only in the fit log.
+type AcceptedFailure struct {
+	Cell       string `json:"cell"`
+	Measured   string `json:"measured"`
+	Why        string `json:"why"`
+	AcceptedBy string `json:"accepted_by"`
+
+	// The failing cell's bounds, so a caller can be told whether its own
+	// wager sits inside it. A warning that has to be cross-referenced by hand
+	// is a warning that gets skipped.
+	OpportunityMin float64 `json:"opportunity_min"`
+	OpportunityMax float64 `json:"opportunity_max"`
+	TrendMin       float64 `json:"trend_min"`
+	TrendMax       float64 `json:"trend_max"`
+}
+
+// Covers reports whether a wager falls inside the failing cell.
+func (a AcceptedFailure) Covers(opportunity, trend float64) bool {
+	return opportunity >= a.OpportunityMin && opportunity < a.OpportunityMax &&
+		trend >= a.TrendMin && trend < a.TrendMax
 }
 
 // Definition is what a scenario name MEANS: the quantity it tests, the
@@ -213,6 +249,16 @@ func (c *Conditionals) OutcomeNames() []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+// AcceptedFailureFor returns the override a scenario is being priced under, if
+// any. Callers must surface it; a wager placed on an overridden gate should
+// never look like one placed on a clean pass.
+func (c *Conditionals) AcceptedFailureFor(outcome, scenario string) *AcceptedFailure {
+	if st, ok := c.ScenarioStatus[outcome][scenario]; ok {
+		return st.AcceptedFailure
+	}
+	return nil
 }
 
 // ValidatedScenarioNames lists only the scenarios that may be priced.
