@@ -460,6 +460,41 @@ tell which. `pass_heavy` measures the how directly, and validates.
 `blowout_loss` misses each criterion by exactly one cell, with the right direction — a team losing
 badly abandons the run. The closest miss in the grid.
 
+## 8. Out-of-sample failures concentrate where the effect was already noise
+
+`fit_conditionals.py` + `validate.py` · 141 testable cells across all four outcomes
+
+The gate is per SCENARIO: if any one cell fails out of sample, nothing in that scenario can be
+priced. That granularity turns out to be wrong, and the evidence is uniform across the grid.
+
+| | held out of sample | median &#124;fit effect&#124; |
+|---|---|---|
+| cells that **failed** | — | **1.0** |
+| cells that **held** | — | **5.0** |
+| low-volume opportunity bands | 82/99 (83%) | 2.0 |
+| high-volume opportunity bands | 38/42 (90%) | 12.5 |
+
+**A cell fails out of sample when its effect was too small to measure in the first place.** The
+failing cells carry a fifth of the effect size of the holding ones.
+
+The consequence is concrete. `blowout_loss` is gated for receiving yards on 12/15 out of sample —
+but **all three of its alpha-band cells held**, at −13.0 → −16.5, −14.0 → −6.0 and −17.5 → −14.0
+yards. Every failure sat in a low-volume band whose fit effect was ±1–2 yards to begin with. A
+wager on an alpha receiver in a blowout script is supported by three cells that all held, and is
+blocked by wobble in slices nobody would bet. `pass_heavy` shows the same shape: one failure in the
+6–8 band, all four alpha cells holding at +6.5 → +25.5, +14.0 → +25.5, +13.0 → +16.5 and
++7.5 → +16.5.
+
+**What is not yet decided** is whether to act on this. Gating per cell would price the alpha-band
+wager with no override at all, and it follows the evidence — but it is also selection on the cells
+that passed, and that is only defensible because failures track tiny effects rather than falling at
+random. That reasoning has to hold for every scenario measured afterwards, not just the ones in
+front of us today.
+
+Three options are on the table: report each cell's own held-out record at pricing time and leave
+the gate alone; gate per cell; or gate per cell with a minimum effect-size floor that encodes the
+pattern above explicitly. Recorded here so the measurement survives the decision being deferred.
+
 ## Data note
 
 `target_share` in nflverse only starts in 2009, but raw `targets` reaches back to 2005, so share is
