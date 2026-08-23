@@ -26,7 +26,7 @@ help: ## Show this help
 	@echo "  vet fmt fmt-check lint clean   also forwarded to app/"
 	@echo
 	@echo "Typical first run:"
-	@echo "  make data     # ~490 MB of open NFL data, once"
+	@echo "  make data     # ~500 MB of open NFL data, once"
 	@echo "  make check    # Go tests"
 	@echo "  make demo     # worked examples, no data needed"
 
@@ -97,7 +97,7 @@ board-serve-status: ## (macOS) Show current tailscale serve mappings
 
 ## --- Data (open nflverse files; network, and it is large) ---
 
-data: ## Fetch the nflverse cache (~490 MB, idempotent, gitignored)
+data: ## Fetch the nflverse cache (~500 MB, idempotent, gitignored)
 	$(PY) $(MODEL)/ingest/nflverse.py
 
 data-status: ## Show what is cached without fetching
