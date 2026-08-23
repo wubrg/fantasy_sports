@@ -101,9 +101,13 @@ func (d Definition) String() string {
 // opportunity is a share of a fixed team pool, a quarterback's is his own
 // attempt volume, and reading one through the other's bands is meaningless.
 type OutcomeDef struct {
-	YardsField  string   `json:"yards_field"`
-	Opportunity string   `json:"opportunity"`
-	ShareBased  bool     `json:"share_based"`
+	YardsField  string `json:"yards_field"`
+	Opportunity string `json:"opportunity"`
+	ShareBased  bool   `json:"share_based"`
+	// Discrete outcomes are counts, not measurements. Their cells store an
+	// exact CDF and a line is read off it without interpolation.
+	Discrete    bool     `json:"discrete"`
+	Unit        string   `json:"unit"`
 	Positions   []string `json:"positions"`
 	MinBaseline float64  `json:"min_baseline"`
 }
@@ -315,6 +319,30 @@ func (c Conditional) Thin() bool { return c.TailN < MinTailN }
 // at the low end -- plenty of player-games produce zero yards -- so the search
 // takes the LAST quantile at or below the line, which keeps a run of equal
 // values from collapsing the estimate.
+// probAboveDiscrete reads P(X > line) off an exact CDF, without interpolating.
+//
+// A count has no probability mass between its values: for receptions, P(X >
+// 3.5) is exactly P(X > 3), and any interpolation toward the next integer
+// invents mass that cannot exist. Measured on the real grid, interpolating a
+// discrete distribution sampled at 2% steps was wrong by up to 1.44 percentage
+// points -- bounded by half a step, and entirely avoidable.
+func probAboveDiscrete(cdf [][]float64, line float64) float64 {
+	if line < cdf[0][1] {
+		return 1
+	}
+	// The cumulative through the largest value at or below the line. Anything
+	// above that value is what clears it.
+	through := 0.0
+	for _, point := range cdf {
+		if point[1] <= line {
+			through = point[0]
+		} else {
+			break
+		}
+	}
+	return 1 - through
+}
+
 func probAbove(quantiles [][]float64, line float64) float64 {
 	n := len(quantiles)
 	if line < quantiles[0][1] {
@@ -411,7 +439,11 @@ func (c *Conditionals) Lookup(outcome, scenario string, occurred bool, opportuni
 			line, outcome, scenario, occurred, opportunity, lo, hi, cell.N)
 	}
 
-	p := clampToSupport(probAbove(cell.Quantiles, line), n)
+	raw := probAbove(cell.Quantiles, line)
+	if def, ok := c.Outcomes[outcome]; ok && def.Discrete {
+		raw = probAboveDiscrete(cell.Quantiles, line)
+	}
+	p := clampToSupport(raw, n)
 
 	// Reuse the interval the hit-rate layer already uses, so a pooled estimate
 	// and an empirical one report uncertainty the same way. Built on the

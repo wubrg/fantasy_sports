@@ -137,7 +137,7 @@ everything, and prefer recency only where dispersion drifts.
 
 ## 3. Pooled conditionals: shootout confirmed, "trash time" reversed
 
-`fit_conditionals.py` · 37,078 receiving + 5,726 passing player-games, 2009–2025 · 165 cells published, 27 dropped for n < 100
+`fit_conditionals.py` · 37,078 receiving + 37,078 reception + 5,726 passing player-games, 2009–2025 · 267 cells published, 45 dropped for n < 100
 
 `q` and `r` were operator guesses. They are now looked up from a grid pooled across player-games
 sharing an opportunity band, a role-trend band, and a game script — cells of hundreds to thousands of
@@ -365,6 +365,52 @@ identical and only the larger grid is big enough to show it wobbling.
 That is a limitation of the rule, recorded rather than tuned away — the same decision taken over
 the magnitude-aware out-of-sample test in §4. Scaling the bar to cell count is a real open
 question and should be settled on its own, not while it would change a verdict.
+
+## 6. Receptions needed a different instrument, not a different bar
+
+`fit_conditionals.py` · same 37,078 player-games as receiving yards · 102 cells
+
+Receptions reuse receiving yards' rows and opportunity axis exactly; only the outcome column
+differs. The verdicts do not match, which is the point of gating per outcome.
+
+**The first fit said the effect was absent, and it was wrong.** `shootout` came out consistent in
+4 of 16 cells and resolved in 0 of 16 — against 16/16 and 12/16 for yards, on identical games.
+
+The cause is that `validate.py` measured location with the **median**, and receptions are a count
+running 0–21 with a cell median of 2 to 5. **Twelve of sixteen cells had a median delta of exactly
+zero** while every one of their means was positive. A real shift of half a reception cannot move a
+median with that little resolution. The instrument was blind, not the effect absent.
+
+Switching to the mean for discrete outcomes was checked for self-service before adoption, the same
+way §4's rejected criterion was:
+
+| | consistent (median → mean) | out of sample (median → mean) |
+|---|---|---|
+| receiving `shootout` | 16/16 → 16/16 | 15/15 → 15/15 |
+| receiving `blowout_loss` | 14/16 → 15/16 | 12/15 → 13/15 |
+| receiving `pass_heavy` | 17/17 → 17/17 | 15/16 → 15/16 |
+| passing (all three) | unchanged | unchanged |
+| receptions `shootout` | 4/16 → **16/16** | 2/15 → **15/15** |
+
+**No settled verdict moves.** Both gated scenarios stay gated, passing is untouched, and receptions
+still fails two of its three scenarios. It fixes a blind instrument rather than lowering a bar. The
+median is kept for yardage, where it is the more robust choice against a long right tail that
+single-digit counts do not have.
+
+**A second discrete correction, smaller and quieter.** Reception lines are half-integers and a count
+has no probability mass between its values: `P(X > 3.5)` is exactly `P(X > 3)`. Sampling that
+distribution at 2% quantile steps and interpolating toward the next integer invented mass that
+cannot exist — measured at up to **1.44 percentage points** of error, bounded by half a step exactly
+as theory predicts. Discrete cells now store an exact CDF (about twelve points) and are read without
+interpolation. Continuous outcomes still interpolate, and a test pins both halves.
+
+**Verdicts.** `shootout` validates. `blowout_loss` fails at 8/16 consistent — conditioning on
+projected targets absorbs most of what a blowout does to a catch *count*, while leaving the yardage
+effect intact. `pass_heavy` fails out of sample in one cell of sixteen, **the same cell that fails
+it for receiving yards** — 6–8 targets, +3 to +6 pt trend, where a +14.5-yard and +1.22-reception
+effect over 2009–2021 goes to −0.5 and −0.02 across 2022–2025 on 65 games. Those are not two
+independent failures: receptions and receiving yards are measured on the same player-games, so it
+is one failure seen twice.
 
 ## Data note
 

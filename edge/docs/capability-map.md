@@ -118,9 +118,9 @@ ranking, parlay construction and line shopping — all of it — operates on gam
 For props the tooling is what it has always been: `hitrate`, `scenario`, and price math on
 operator-supplied numbers. Every input is typed by hand.
 
-### The fitted grid is two stats and one usable scenario each
+### The fitted grid is three stats, with different scenarios usable on each
 
-`conditionals.json` covers **receiving yards and passing yards**, 2009–2025. Of its two scenarios,
+`conditionals.json` covers **receiving yards, receptions and passing yards**, 2009–2025. Of its two scenarios,
 `blowout_loss` is gated off — its direction is consistent in only 14 of 16 cells and it holds
 in 12 of 15 out of sample, and it "needs a play-by-play definition rather than final margin."
 One usable scenario: `shootout`. Anything else requires stated `-q`/`-r`, which is judgement

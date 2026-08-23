@@ -103,7 +103,7 @@ class Outcome:
     """
 
     def __init__(self, name, yards_field, opp_field, positions, share_based,
-                 bands, trend_bands, min_baseline):
+                 bands, trend_bands, min_baseline, discrete=False, unit="yds"):
         self.name = name
         self.yards_field = yards_field
         self.opp_field = opp_field
@@ -112,6 +112,12 @@ class Outcome:
         self.bands = bands
         self.trend_bands = trend_bands
         self.min_baseline = min_baseline
+        # A count rather than a measurement. Changes how the cell's
+        # distribution is stored and how a half-integer line is read off it.
+        self.discrete = discrete
+        # What the cell medians are counted in. Printing receptions as "yds"
+        # is a small lie of exactly the kind this grid keeps finding.
+        self.unit = unit
 
     def as_json(self) -> dict:
         return {
@@ -122,6 +128,8 @@ class Outcome:
             "bands": [list(b) for b in self.bands],
             "trend_bands": [list(b) for b in self.trend_bands],
             "min_baseline": self.min_baseline,
+            "discrete": self.discrete,
+            "unit": self.unit,
         }
 
 MIN_PRIOR_GAMES = 4
@@ -158,6 +166,16 @@ OUTCOMES = {
         "receiving_yards", "receiving_yards", "targets", {"WR", "TE", "RB"},
         share_based=True, bands=TARGET_BANDS, trend_bands=TREND_BANDS,
         min_baseline=MIN_BASELINE_SHARE,
+    ),
+    "receptions": Outcome(
+        "receptions", "receptions", "targets", {"WR", "TE", "RB"},
+        share_based=True, bands=TARGET_BANDS, trend_bands=TREND_BANDS,
+        min_baseline=MIN_BASELINE_SHARE,
+        # The same rows and the same opportunity axis as receiving yards --
+        # only the outcome column differs. What changes is that this one is a
+        # count in single digits, so its distribution is stored exactly.
+        discrete=True,
+        unit="rec",
     ),
     "passing_yards": Outcome(
         "passing_yards", "passing_yards", "attempts", {"QB"},
@@ -301,6 +319,26 @@ SCENARIO_STATUS = {
             "why": "Needs a play-by-play definition (time remaining crossed with score "
             "differential) rather than final margin, which is the measurement this result "
             "argues for.",
+        },
+    },
+    "receptions": {
+        # Same rows and same opportunity axis as receiving yards; only the
+        # outcome column differs. The verdicts do not match, which is the
+        # point of gating per outcome.
+        "shootout": {"validated": True},
+        "pass_heavy": {
+            "validated": False,
+            "why": "Fails out of sample in one cell of sixteen, exactly as it does for "
+            "receiving yards -- and here it is resolved in 17 of 17 cells, the strongest "
+            "bootstrap of any pairing in the grid. Gated on the same rule and for the same "
+            "reason: it was written before the scenario existed.",
+        },
+        "blowout_loss": {
+            "validated": False,
+            "why": "Consistent in only 8 of 16 cells and 8 of 15 out of sample -- a coin "
+            "flip. Conditioning on projected targets absorbs most of what a blowout does "
+            "to a CATCH COUNT, while it leaves the yardage effect intact, which is why "
+            "this fails here and is merely marginal for receiving yards.",
         },
     },
     "passing_yards": {
@@ -521,10 +559,31 @@ def band_index(bands, v):
     return None
 
 
-def quantiles(values: list[float]) -> list[list[float]]:
-    """[[probability, yards], ...] at evenly spaced probabilities."""
+def quantiles(values: list[float], discrete: bool = False) -> list[list[float]]:
+    """[[cumulative probability, value], ...].
+
+    For a CONTINUOUS outcome this samples the quantile function at evenly
+    spaced probabilities, and the lookup interpolates between neighbouring
+    points. Yardage is dense enough that the error is negligible.
+
+    For a DISCRETE outcome it stores the exact CDF at every observed value
+    instead. Receptions live on the integers 0-21 and their lines are
+    half-integers, so P(X > 3.5) is exactly P(X > 3) -- there is no
+    probability mass between 3 and 4 to interpolate across. Sampling that
+    distribution at 2% steps and interpolating produced errors up to 1.44
+    percentage points, bounded by half a step exactly as theory says. Small,
+    but it is method error rather than sampling noise, and it is invisible.
+    Storing the real CDF costs about twenty points per cell and removes it.
+    """
     s = sorted(values)
     n = len(s)
+    if discrete:
+        out = []
+        seen = 0
+        for v in sorted(set(s)):
+            seen += s.count(v)
+            out.append([round(seen / n, 6), round(v, 1)])
+        return out
     out = []
     for i in range(QUANTILE_STEPS):
         p = i / (QUANTILE_STEPS - 1)
@@ -617,7 +676,7 @@ def main(argv):
         status[oname] = {}
         for scenario, definition in SCENARIOS.items():
             ev = validate.evidence(obs, definition, outcome.bands,
-                                   outcome.trend_bands, MIN_CELL)
+                                   outcome.trend_bands, MIN_CELL, outcome.discrete)
             recorded = SCENARIO_STATUS[oname][scenario]["validated"]
             measured = qualifies(ev)
             note = validate.note(ev)
@@ -666,7 +725,7 @@ def main(argv):
                                 "players": len({o["player"] for o in sel}),
                                 "icc": round(icc, 4),
                                 "median": round(st.median(ys), 1),
-                                "quantiles": quantiles(ys),
+                                "quantiles": quantiles(ys, outcome.discrete),
                             }
                         )
 

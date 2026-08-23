@@ -897,3 +897,69 @@ func TestValidationIsPerOutcome(t *testing.T) {
 			"correct, it just is not being exercised")
 	}
 }
+
+// TestDiscreteLookupIsExact pins the reason receptions store a CDF rather than
+// a sampled quantile curve.
+//
+// A count has no probability mass between its values: P(receptions > 3.5) is
+// exactly P(receptions > 3). Sampling that distribution at 2% steps and
+// interpolating toward the next integer invents mass that cannot exist --
+// measured at up to 1.44 percentage points of error on the real grid, bounded
+// by half a step. The stored CDF plus a non-interpolating read removes it.
+func TestDiscreteLookupIsExact(t *testing.T) {
+	c := mustConditionals(t)
+	def, ok := c.Outcomes["receptions"]
+	if !ok {
+		t.Skip("receptions not fitted")
+	}
+	if !def.Discrete {
+		t.Fatal("receptions is not flagged discrete")
+	}
+
+	for _, cell := range c.Cells {
+		if cell.Outcome != "receptions" {
+			continue
+		}
+		// Every stored value must be a whole number, or it is not a count.
+		for _, point := range cell.Quantiles {
+			if point[1] != float64(int(point[1])) {
+				t.Fatalf("receptions cell stores a fractional value %v", point[1])
+			}
+		}
+		// A half-integer line must read exactly the same as the integer below
+		// it: there is nothing in between.
+		for _, line := range []float64{1.5, 2.5, 3.5, 4.5} {
+			half := probAboveDiscrete(cell.Quantiles, line)
+			whole := probAboveDiscrete(cell.Quantiles, line-0.5)
+			if half != whole {
+				t.Errorf("%s: P(>%.1f)=%.6f but P(>%.1f)=%.6f — mass invented between integers",
+					cell.Scenario, line, half, line-0.5, whole)
+			}
+		}
+		// And it must differ from the integer ABOVE, or the read is degenerate.
+		if probAboveDiscrete(cell.Quantiles, 2.5) == probAboveDiscrete(cell.Quantiles, 3.5) {
+			t.Errorf("%s: P(>2.5) equals P(>3.5); the CDF is not being read", cell.Scenario)
+		}
+		return
+	}
+	t.Fatal("no receptions cells found")
+}
+
+// TestContinuousOutcomesStillInterpolate guards the other half: yardage is a
+// measurement, its curve is dense, and interpolating between quantile points
+// is correct there. The discrete path must not have leaked into it.
+func TestContinuousOutcomesStillInterpolate(t *testing.T) {
+	c := mustConditionals(t)
+	for _, cell := range c.Cells {
+		if cell.Outcome != "receiving_yards" || cell.Scenario != "shootout" {
+			continue
+		}
+		a := probAbove(cell.Quantiles, 40.0)
+		b := probAbove(cell.Quantiles, 40.5)
+		if a == b {
+			t.Errorf("receiving yards: P(>40.0) == P(>40.5); the curve is not interpolating")
+		}
+		return
+	}
+	t.Skip("no receiving shootout cell")
+}

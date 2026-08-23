@@ -140,12 +140,19 @@ that opportunity drives yards more than per-target skill), **role trend** (with 
 measured +6-share-point actionability threshold), and **game script** (the axis that separates `q`
 from `r` at all).
 
-The grid fits two outcomes, and the opportunity axis is not shared between them. A pass-catcher
+The grid fits three outcomes — receiving yards, receptions and passing yards — and the opportunity
+axis is not shared between them. A pass-catcher
 competes for a fixed pool of team targets, so his opportunity is a *share* of it and the trend
 axis measures a change in that share. A quarterback takes essentially all his team's attempts —
 there is no share to hold — so his opportunity is his own prior attempt volume and his trend is a
 change in that volume. Passing uses a coarser 4×3 grid because there are about 32 starting
 quarterbacks in a week against 237 pass-catchers, a ceiling no amount of data collection moves.
+
+Receptions reuse receiving yards' rows and axis exactly; only the outcome column differs. But they
+are a *count* in single digits rather than a measurement, which changes two things: the cell's
+distribution is stored as an exact CDF and read without interpolation, because there is no
+probability mass between 3 and 4 receptions; and the validation measures location with the mean,
+because a median of 2 to 5 cannot resolve a shift of half a reception.
 
 ```
 $ edgectl scenario -outcome passing_yards -name shootout -total 49 -threshold 50 \
