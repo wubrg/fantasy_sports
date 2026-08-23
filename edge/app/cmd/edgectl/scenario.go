@@ -16,7 +16,8 @@ func scenarioCmd(args []string) error {
 	fs := flag.NewFlagSet("scenario", flag.ExitOnError)
 	total := fs.Float64("total", 0, "posted game total, to derive the market's scenario probability")
 	spread := fs.Float64("spread", 0, "favourite's spread, e.g. -3 (use with -basis margin)")
-	basis := fs.String("basis", "total", "what the threshold measures: total or margin")
+	basis := fs.String("basis", "total",
+		"what the scenario's threshold measures: "+scenario.BasisNames())
 	threshold := fs.Float64("threshold", 0, "scenario threshold (combined points, or final margin)")
 	sigma := fs.Float64("sigma", 0, "override the dispersion; 0 uses the documented default")
 	sMarket := fs.Float64("smarket", -1, "market scenario probability, overriding the derived one")
@@ -31,7 +32,7 @@ func scenarioCmd(args []string) error {
 	logPath := fs.String("log", "", "append this wager to a bet log at this path")
 	rungs := fs.String("rungs", "", "ladder as line:price:q:r,... (replaces -price/-q/-r)")
 	outcome := fs.String("outcome", "receiving_yards",
-		"what the prop measures: receiving_yards or passing_yards")
+		"what the prop measures: "+outcomeNames())
 	projTargets := fs.Float64("targets", 0,
 		"projected opportunity for the grid lookup: targets for a pass-catcher, "+
 			"attempts for a quarterback")
@@ -420,18 +421,23 @@ func marketScenario(name string, basis scenario.Basis, total, spread, threshold,
 }
 
 func parseBasis(s string) (scenario.Basis, error) {
-	switch strings.ToLower(s) {
-	case "total", "t":
-		return scenario.Total, nil
-	case "margin", "m":
-		return scenario.Margin, nil
-	case "offense_proe", "proe":
-		return scenario.OffensePROE, nil
-	case "success_rate", "success":
-		return scenario.SuccessRate, nil
+	b, err := scenario.ParseBasis(s)
+	if err != nil {
+		return scenario.Total, fmt.Errorf("-basis: %w", err)
 	}
-	return scenario.Total, fmt.Errorf(
-		"-basis must be total, margin, offense_proe or success_rate, got %q", s)
+	return b, nil
+}
+
+// outcomeNames lists what the artifact actually fits, for help text.
+//
+// Read from the grid rather than written beside it. The hardcoded version said
+// "receiving_yards or passing_yards" for as long as it took to add two more.
+func outcomeNames() string {
+	c, err := scenario.LoadConditionals()
+	if err != nil {
+		return "receiving_yards"
+	}
+	return strings.Join(c.OutcomeNames(), ", ")
 }
 
 func parseBankroll(s string) (wager.Bankroll, error) {

@@ -37,6 +37,7 @@ package scenario
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"edge/internal/wager"
 )
@@ -77,15 +78,73 @@ const (
 )
 
 func (b Basis) String() string {
-	switch b {
-	case Margin:
-		return "margin"
-	case OffensePROE:
-		return "offense_proe"
-	case SuccessRate:
-		return "success_rate"
+	for _, e := range basisTable {
+		if e.Basis == b {
+			return e.Name
+		}
 	}
-	return "total"
+	// Naming an unknown value rather than defaulting to "total": a Basis that
+	// fell out of the table should be visible, not disguised as a valid one.
+	return fmt.Sprintf("Basis(%d)", int(b))
+}
+
+// basisTable is the ONE list. Names, order, parsing and help text all read
+// from it, so adding a basis is a single row and nothing can be left behind.
+//
+// This was three separate lists -- a switch in the parser, a switch in String,
+// and a hardcoded help string -- and they drifted exactly as you would expect:
+// the help advertised "total or margin" long after two more existed. A test
+// was written to catch that and could not, because a parser case absent from
+// the advertised list is invisible to a test that iterates the advertised list.
+// Structure beats assertion here: with one table the failure cannot occur.
+var basisTable = []struct {
+	Name  string
+	Basis Basis
+}{
+	{"total", Total},
+	{"margin", Margin},
+	{"offense_proe", OffensePROE},
+	{"success_rate", SuccessRate},
+}
+
+// basisAliases are shorthands accepted on input and never advertised.
+var basisAliases = map[string]string{
+	"t":       "total",
+	"m":       "margin",
+	"proe":    "offense_proe",
+	"success": "success_rate",
+}
+
+// Bases is every basis a scenario may be defined on, in a stable order.
+func Bases() []Basis {
+	out := make([]Basis, 0, len(basisTable))
+	for _, e := range basisTable {
+		out = append(out, e.Basis)
+	}
+	return out
+}
+
+// ParseBasis maps a name to a Basis, accepting shorthands.
+func ParseBasis(s string) (Basis, error) {
+	name := strings.ToLower(strings.TrimSpace(s))
+	if full, ok := basisAliases[name]; ok {
+		name = full
+	}
+	for _, e := range basisTable {
+		if e.Name == name {
+			return e.Basis, nil
+		}
+	}
+	return Total, fmt.Errorf("scenario: %q is not a basis (want one of %s)", s, BasisNames())
+}
+
+// BasisNames is the canonical names, comma-separated, for help text and errors.
+func BasisNames() string {
+	out := make([]string, 0, len(basisTable))
+	for _, e := range basisTable {
+		out = append(out, e.Name)
+	}
+	return strings.Join(out, ", ")
 }
 
 // NeedsStatedProbability reports whether this basis has no fitted residual
