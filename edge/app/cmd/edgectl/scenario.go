@@ -230,10 +230,14 @@ func resolveConditionals(
 	}
 
 	axis := "opportunity"
+	unit := "yds"
 	trendScale := 1.0
 	trendUnit := ""
 	if def, ok := c.Outcomes[outcome]; ok {
 		axis = def.Opportunity
+		if def.Unit != "" {
+			unit = def.Unit
+		}
 		// A share trend is reported in percentage points; a volume trend is
 		// already in the units of the axis and must not be multiplied by 100.
 		if def.ShareBased {
@@ -247,11 +251,11 @@ func resolveConditionals(
 	// n_eff is shown beside n, not instead of it. The interval is built on the
 	// smaller number, and printing only the raw count would overstate the
 	// evidence behind the interval printed next to it.
-	fmt.Printf("    q = %.1f%%  [%.1f-%.1f]  n=%d (eff %d)  median %.0f yds  (scenario occurred)\n",
-		qc.Prob*100, qc.Lower*100, qc.Upper*100, qc.N, qc.NEff, qc.CellMedian)
+	fmt.Printf("    q = %.1f%%  [%.1f-%.1f]  n=%d (eff %d)  median %.0f %s  (scenario occurred)\n",
+		qc.Prob*100, qc.Lower*100, qc.Upper*100, qc.N, qc.NEff, qc.CellMedian, unit)
 	fmt.Printf("      %s\n", support(qc))
-	fmt.Printf("    r = %.1f%%  [%.1f-%.1f]  n=%d (eff %d)  median %.0f yds  (it did not)\n",
-		rc.Prob*100, rc.Lower*100, rc.Upper*100, rc.N, rc.NEff, rc.CellMedian)
+	fmt.Printf("    r = %.1f%%  [%.1f-%.1f]  n=%d (eff %d)  median %.0f %s  (it did not)\n",
+		rc.Prob*100, rc.Lower*100, rc.Upper*100, rc.N, rc.NEff, rc.CellMedian, unit)
 	fmt.Printf("      %s\n", support(rc))
 	if qc.NEff < qc.N || rc.NEff < rc.N {
 		fmt.Printf("    intervals use the effective count: cells pool repeat players,\n")

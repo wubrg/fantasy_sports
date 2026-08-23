@@ -38,6 +38,32 @@ import statistics as st
 # medians look.
 COMMON_LINES = [6.5, 10.5, 14.5, 20.5, 24.5, 30.5, 40.5, 50.5, 60.5, 75.5]
 
+# Reception lines live on a completely different scale from yardage ones.
+COMMON_LINES_DISCRETE = [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5]
+
+
+def location(discrete: bool):
+    """The statistic that measures where a cell's distribution sits.
+
+    Median for a measurement, mean for a count, and the difference is not a
+    preference. Receptions run 0-21 with a cell median of 2 to 5, so the median
+    has almost no resolution: a real shift of half a reception leaves it
+    unmoved, and 12 of 16 shootout cells came out at a delta of EXACTLY zero
+    while every one of their means was positive. The instrument could not see
+    the effect.
+
+    Checked for self-service before adopting, the same way the magnitude-aware
+    out-of-sample test in FINDINGS.md 4 was checked: swapping to the mean moves
+    no settled verdict. Receiving and passing are unchanged or shift by a single
+    cell without flipping, both gated scenarios stay gated, and receptions still
+    fails two of its three scenarios. It fixes a blind instrument rather than
+    lowering a bar.
+
+    The median stays for yardage because it is the more robust choice against a
+    long right tail, which counts in single digits do not have.
+    """
+    return st.mean if discrete else st.median
+
 BOOTSTRAP_RESAMPLES = 1000
 BOOTSTRAP_SEED = 20260822  # fixed so the numbers are reproducible, not merely repeatable
 OOS_SPLIT = 2021  # fit on <= this, evaluate after
@@ -73,7 +99,7 @@ def cell_pairs(obs, definition, target_bands, trend_bands, min_cell):
             yield (ta, tb), (ra, rb), yes, no
 
 
-def direction(pairs) -> dict:
+def direction(pairs, discrete: bool = False) -> dict:
     """Test 1: is the effect's direction CONSISTENT across cells?
 
     Consistency, not positivity. blowout_loss separates negatively -- fewer
@@ -85,11 +111,11 @@ def direction(pairs) -> dict:
     The dominant sign is whichever way most cells lean; the count is how many
     agree with it.
     """
+    loc = location(discrete)
+    lines = COMMON_LINES_DISCRETE if discrete else COMMON_LINES
     deltas = []
     for tband, rband, yes, no in pairs:
-        deltas.append(
-            st.median([o["yards"] for o in yes]) - st.median([o["yards"] for o in no])
-        )
+        deltas.append(loc([o["yards"] for o in yes]) - loc([o["yards"] for o in no]))
     sign = 1 if sum(1 for d in deltas if d > 0) >= sum(1 for d in deltas if d < 0) else -1
     consistent = sum(1 for d in deltas if d * sign > 0)
 
@@ -97,7 +123,7 @@ def direction(pairs) -> dict:
     inversions = []
     for (tband, rband, yes, no), delta in zip(pairs, deltas):
         total += 1
-        for line in COMMON_LINES:
+        for line in lines:
             q, r = _rate_above(yes, line), _rate_above(no, line)
             # An inversion is the hit rates disagreeing with the medians, which
             # is what makes a wager priced at that line carry the wrong belief.
@@ -114,9 +140,11 @@ def direction(pairs) -> dict:
     }
 
 
-def resolution(pairs, resamples=BOOTSTRAP_RESAMPLES, seed=BOOTSTRAP_SEED) -> dict:
-    """Test 2: cluster bootstrap of the median delta, resampling players."""
+def resolution(pairs, discrete: bool = False, resamples=BOOTSTRAP_RESAMPLES,
+               seed=BOOTSTRAP_SEED) -> dict:
+    """Test 2: cluster bootstrap of the location delta, resampling players."""
     rng = random.Random(seed)
+    loc = location(discrete)
     resolved = total = 0
     for tband, rband, yes, no in pairs:
         total += 1
@@ -135,7 +163,7 @@ def resolution(pairs, resamples=BOOTSTRAP_RESAMPLES, seed=BOOTSTRAP_SEED) -> dic
                 ys.extend(a)
                 ns.extend(b)
             if ys and ns:
-                deltas.append(st.median(ys) - st.median(ns))
+                deltas.append(loc(ys) - loc(ns))
         if len(deltas) < resamples // 2:
             continue
         deltas.sort()
@@ -146,7 +174,8 @@ def resolution(pairs, resamples=BOOTSTRAP_RESAMPLES, seed=BOOTSTRAP_SEED) -> dic
     return {"cells": total, "resolved": resolved}
 
 
-def out_of_sample(obs, definition, target_bands, trend_bands, min_cell) -> dict:
+def out_of_sample(obs, definition, target_bands, trend_bands, min_cell,
+                  discrete: bool = False) -> dict:
     """Test 3: does the direction found in the early seasons hold in the late ones?"""
     train = [o for o in obs if o["season"] <= OOS_SPLIT]
     test = [o for o in obs if o["season"] > OOS_SPLIT]
@@ -169,7 +198,8 @@ def out_of_sample(obs, definition, target_bands, trend_bands, min_cell) -> dict:
         if min(len(te_y), len(te_n)) < MIN_OOS_CELL:
             continue  # the late seasons cannot speak to this cell either way
         total += 1
-        if (st.median(tr_y) - st.median(tr_n)) * (st.median(te_y) - st.median(te_n)) > 0:
+        loc = location(discrete)
+        if (loc(tr_y) - loc(tr_n)) * (loc(te_y) - loc(te_n)) > 0:
             agree += 1
     return {"cells": total, "agree": agree}
 
@@ -245,12 +275,13 @@ def out_of_sample_threeway(obs, definition, target_bands, trend_bands, min_cell,
     return {"agree": agree, "disagree": disagree, "uninformative": uninformative}
 
 
-def evidence(obs, definition, target_bands, trend_bands, min_cell) -> dict:
+def evidence(obs, definition, target_bands, trend_bands, min_cell,
+             discrete: bool = False) -> dict:
     """All three tests for one scenario."""
     pairs = list(cell_pairs(obs, definition, target_bands, trend_bands, min_cell))
-    d = direction(pairs)
-    res = resolution(pairs)
-    oos = out_of_sample(obs, definition, target_bands, trend_bands, min_cell)
+    d = direction(pairs, discrete)
+    res = resolution(pairs, discrete)
+    oos = out_of_sample(obs, definition, target_bands, trend_bands, min_cell, discrete)
     return {
         "cells": d["cells"],
         "consistent": d["consistent"],
@@ -263,6 +294,7 @@ def evidence(obs, definition, target_bands, trend_bands, min_cell) -> dict:
         "bootstrap_resamples": BOOTSTRAP_RESAMPLES,
         "bootstrap_seed": BOOTSTRAP_SEED,
         "oos_split": OOS_SPLIT,
+        "location": "mean" if discrete else "median",
     }
 
 
