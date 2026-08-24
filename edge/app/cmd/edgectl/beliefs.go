@@ -220,6 +220,8 @@ func beliefsIngest(args []string) error {
 	}
 
 	now := time.Now()
+	var tally falsifyTally
+	var onlyNarrative int
 	var ready []betlog.Prediction
 	var late []string
 	seen := map[string]bool{}
@@ -267,6 +269,18 @@ func beliefsIngest(args []string) error {
 			Abstained: p.Abstained, Flagged: flagged[key],
 			Rejected: p.Rejected, RejectedReason: p.Reason, Claims: p.Claims,
 		}
+		// Check the reasons against the facts the forecaster was handed. A
+		// self-reported `rejected` is a prompt marking its own homework; this is
+		// the only thing that makes the survivors-versus-all comparison mean
+		// anything.
+		fr := falsifyPrediction(p, g, g.Home, g.Away)
+		tally.add(fr, len(p.Claims))
+		if fr.Reason != "" && !pred.Rejected {
+			pred.Rejected, pred.RejectedReason = true, fr.Reason
+		}
+		if fr.OnlyUnverifiable(len(p.Claims)) {
+			onlyNarrative++
+		}
 		freezeReferences(&pred, pk, g, c, bel)
 
 		if err := pred.Validate(); err != nil {
@@ -290,6 +304,7 @@ func beliefsIngest(args []string) error {
 	fmt.Printf("BELIEFS  %d week %d  from %s\n", pk.Season, pk.Week, ff.Model)
 	fmt.Printf("  pack     %s  (sha %s)\n", *packPath, short(sum))
 	fmt.Printf("  ready    %d\n", len(ready))
+	tally.report(len(ff.Predictions), onlyNarrative)
 	if len(late) > 0 {
 		fmt.Printf("  DROPPED  %d made after kickoff\n", len(late))
 	}

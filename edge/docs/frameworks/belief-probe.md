@@ -149,24 +149,39 @@ Strict JSON. Unknown fields are refused.
 
 ### CLAIM TAXONOMY
 
-Every claim is `"<type>: <subject> — <assertion>"`. These types are checkable, and a claim that
-contradicts the cache **voids its prediction**:
+Every claim is `"<type>: <subject> — <assertion>"`, with an em or en dash separating subject from
+assertion.
 
-| type | example | checked against |
+**Checked today, at ingest, against the pack you were shown.** A claim of these types that
+contradicts a fact you were handed **marks its prediction rejected** — it is still recorded and
+still settled, but it is excluded from the edge score:
+
+| type | example | how |
 |---|---|---|
-| `form` | `form: KC — prior success rate .451` | the pack, `signals`/`proe` prior form |
-| `market` | `market: DEN@KC — total 47.5` | the pack, `games.csv` |
-| `schedule` | `schedule: KC — home, Thursday night` | `games.csv` |
+| `form` | `form: KC — prior success rate .451` | any number you state must match the team's prior form in the pack, allowing for rounding to the precision you chose |
+| `market` | `market: DEN@KC — total 47.5` | must match the posted total or spread, either sign |
+| `schedule` | `schedule: KC — at home` | must agree with which side is hosting |
+
+**Deferred, and explicitly not checked.** These are checkable in principle and the files do not
+exist for a season that has not started. They are counted and reported as unchecked, because a
+checker that passes everything because its data is missing is worse than no checker:
+
+| type | example | will be checked against |
+|---|---|---|
 | `usage` | `usage: KC — 41 pass attempts in week 3` | `stats_player_week`, `snap_counts` |
 | `injury` | `injury: KC — WR1 listed Out` | `injuries_*.csv` `report_status` |
 
-These two are **not checkable** and are recorded rather than verified. A prediction resting only on
-them is flagged, because it cannot be audited either way:
+**Not checkable at all**, recorded rather than verified. A prediction resting *only* on these is
+flagged as unauditable — which is not the same as wrong:
 
 | type | example |
 |---|---|
 | `personnel` | `personnel: KC — new OC, quick game` — there is no depth-chart or coaching table |
 | `narrative` | `narrative: KC — plays up to good opponents` |
+
+The check is deliberately conservative. A claim with no number in it is never falsified, and a
+number is falsified only when it matches **nothing** in the relevant facts. A false accusation would
+void a real prediction and bias the survivor set, so the rule errs toward letting things through.
 
 **Do not restate a pack number as a claim.** It is already known, and getting it wrong is the one
 way a `form` or `market` claim can hurt you.
