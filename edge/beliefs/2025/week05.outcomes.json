@@ -1,0 +1,832 @@
+{
+ "season": 2025,
+ "week": 5,
+ "generated_at": "2026-08-24T11:51:17Z",
+ "generated_by": "edge/model/analysis/beliefpack.py outcomes",
+ "cache": {
+  "games.csv": {
+   "bytes": 2177175,
+   "fetched_at": "2026-08-20T13:07:43Z",
+   "sha256": "b4970da16bba2cc409ea40156516cab2b53f6e5a59553eb4005689d0f4cab6de",
+   "url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
+  },
+  "play_by_play_2025.csv.gz": {
+   "bytes": 19105296,
+   "fetched_at": "2026-08-22T16:39:08Z",
+   "sha256": "2f135887790a013fd004e609e37096bb4816d5cc80b9f19122e1bad478961978",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_2025.csv.gz"
+  }
+ },
+ "definitions": {
+  "shootout": {
+   "basis": "total",
+   "op": ">",
+   "threshold": 50,
+   "unit": "game"
+  },
+  "blowout_loss": {
+   "basis": "margin",
+   "op": "<",
+   "threshold": -7,
+   "unit": "team"
+  },
+  "pass_heavy": {
+   "basis": "offense_proe",
+   "op": ">",
+   "threshold": 3.0,
+   "unit": "team"
+  },
+  "efficient_offense": {
+   "basis": "success_rate",
+   "op": ">",
+   "threshold": 0.46,
+   "unit": "team"
+  }
+ },
+ "rows": [
+  {
+   "game_id": "2025_05_SF_LA",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": false,
+   "value": 49.0
+  },
+  {
+   "game_id": "2025_05_SF_LA",
+   "team": "SF",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 3.0
+  },
+  {
+   "game_id": "2025_05_SF_LA",
+   "team": "LA",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": -3.0
+  },
+  {
+   "game_id": "2025_05_SF_LA",
+   "team": "SF",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 6.3803
+  },
+  {
+   "game_id": "2025_05_SF_LA",
+   "team": "LA",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 11.459
+  },
+  {
+   "game_id": "2025_05_SF_LA",
+   "team": "SF",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.5122
+  },
+  {
+   "game_id": "2025_05_SF_LA",
+   "team": "LA",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.5556
+  },
+  {
+   "game_id": "2025_05_MIN_CLE",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": false,
+   "value": 38.0
+  },
+  {
+   "game_id": "2025_05_MIN_CLE",
+   "team": "MIN",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 4.0
+  },
+  {
+   "game_id": "2025_05_MIN_CLE",
+   "team": "CLE",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": -4.0
+  },
+  {
+   "game_id": "2025_05_MIN_CLE",
+   "team": "MIN",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 5.2672
+  },
+  {
+   "game_id": "2025_05_MIN_CLE",
+   "team": "CLE",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": -10.63
+  },
+  {
+   "game_id": "2025_05_MIN_CLE",
+   "team": "MIN",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.4833
+  },
+  {
+   "game_id": "2025_05_MIN_CLE",
+   "team": "CLE",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": false,
+   "value": 0.3939
+  },
+  {
+   "game_id": "2025_05_HOU_BAL",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": true,
+   "value": 54.0
+  },
+  {
+   "game_id": "2025_05_HOU_BAL",
+   "team": "HOU",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 34.0
+  },
+  {
+   "game_id": "2025_05_HOU_BAL",
+   "team": "BAL",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": true,
+   "value": -34.0
+  },
+  {
+   "game_id": "2025_05_HOU_BAL",
+   "team": "HOU",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 5.994
+  },
+  {
+   "game_id": "2025_05_HOU_BAL",
+   "team": "BAL",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": -15.5818
+  },
+  {
+   "game_id": "2025_05_HOU_BAL",
+   "team": "HOU",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.6094
+  },
+  {
+   "game_id": "2025_05_HOU_BAL",
+   "team": "BAL",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": false,
+   "value": 0.375
+  },
+  {
+   "game_id": "2025_05_MIA_CAR",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": true,
+   "value": 51.0
+  },
+  {
+   "game_id": "2025_05_MIA_CAR",
+   "team": "MIA",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": -3.0
+  },
+  {
+   "game_id": "2025_05_MIA_CAR",
+   "team": "CAR",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 3.0
+  },
+  {
+   "game_id": "2025_05_MIA_CAR",
+   "team": "MIA",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 9.8347
+  },
+  {
+   "game_id": "2025_05_MIA_CAR",
+   "team": "CAR",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": -9.9509
+  },
+  {
+   "game_id": "2025_05_MIA_CAR",
+   "team": "MIA",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": false,
+   "value": 0.3585
+  },
+  {
+   "game_id": "2025_05_MIA_CAR",
+   "team": "CAR",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.4677
+  },
+  {
+   "game_id": "2025_05_LV_IND",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": false,
+   "value": 46.0
+  },
+  {
+   "game_id": "2025_05_LV_IND",
+   "team": "LV",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": true,
+   "value": -34.0
+  },
+  {
+   "game_id": "2025_05_LV_IND",
+   "team": "IND",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 34.0
+  },
+  {
+   "game_id": "2025_05_LV_IND",
+   "team": "LV",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": -1.9163
+  },
+  {
+   "game_id": "2025_05_LV_IND",
+   "team": "IND",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": -2.4473
+  },
+  {
+   "game_id": "2025_05_LV_IND",
+   "team": "LV",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.4923
+  },
+  {
+   "game_id": "2025_05_LV_IND",
+   "team": "IND",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.5082
+  },
+  {
+   "game_id": "2025_05_NYG_NO",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": false,
+   "value": 40.0
+  },
+  {
+   "game_id": "2025_05_NYG_NO",
+   "team": "NYG",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": true,
+   "value": -12.0
+  },
+  {
+   "game_id": "2025_05_NYG_NO",
+   "team": "NO",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 12.0
+  },
+  {
+   "game_id": "2025_05_NYG_NO",
+   "team": "NYG",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": -2.1735
+  },
+  {
+   "game_id": "2025_05_NYG_NO",
+   "team": "NO",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": -8.4451
+  },
+  {
+   "game_id": "2025_05_NYG_NO",
+   "team": "NYG",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.4638
+  },
+  {
+   "game_id": "2025_05_NYG_NO",
+   "team": "NO",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": false,
+   "value": 0.459
+  },
+  {
+   "game_id": "2025_05_DAL_NYJ",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": true,
+   "value": 59.0
+  },
+  {
+   "game_id": "2025_05_DAL_NYJ",
+   "team": "DAL",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 15.0
+  },
+  {
+   "game_id": "2025_05_DAL_NYJ",
+   "team": "NYJ",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": true,
+   "value": -15.0
+  },
+  {
+   "game_id": "2025_05_DAL_NYJ",
+   "team": "DAL",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 3.072
+  },
+  {
+   "game_id": "2025_05_DAL_NYJ",
+   "team": "NYJ",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 5.674
+  },
+  {
+   "game_id": "2025_05_DAL_NYJ",
+   "team": "DAL",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.4821
+  },
+  {
+   "game_id": "2025_05_DAL_NYJ",
+   "team": "NYJ",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.4932
+  },
+  {
+   "game_id": "2025_05_DEN_PHI",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": false,
+   "value": 38.0
+  },
+  {
+   "game_id": "2025_05_DEN_PHI",
+   "team": "DEN",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 4.0
+  },
+  {
+   "game_id": "2025_05_DEN_PHI",
+   "team": "PHI",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": -4.0
+  },
+  {
+   "game_id": "2025_05_DEN_PHI",
+   "team": "DEN",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": -1.4233
+  },
+  {
+   "game_id": "2025_05_DEN_PHI",
+   "team": "PHI",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 18.8708
+  },
+  {
+   "game_id": "2025_05_DEN_PHI",
+   "team": "DEN",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.493
+  },
+  {
+   "game_id": "2025_05_DEN_PHI",
+   "team": "PHI",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": false,
+   "value": 0.3889
+  },
+  {
+   "game_id": "2025_05_TEN_ARI",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": false,
+   "value": 43.0
+  },
+  {
+   "game_id": "2025_05_TEN_ARI",
+   "team": "TEN",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 1.0
+  },
+  {
+   "game_id": "2025_05_TEN_ARI",
+   "team": "ARI",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": -1.0
+  },
+  {
+   "game_id": "2025_05_TEN_ARI",
+   "team": "TEN",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": -1.9363
+  },
+  {
+   "game_id": "2025_05_TEN_ARI",
+   "team": "ARI",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": -1.1384
+  },
+  {
+   "game_id": "2025_05_TEN_ARI",
+   "team": "TEN",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": false,
+   "value": 0.4426
+  },
+  {
+   "game_id": "2025_05_TEN_ARI",
+   "team": "ARI",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": false,
+   "value": 0.375
+  },
+  {
+   "game_id": "2025_05_TB_SEA",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": true,
+   "value": 73.0
+  },
+  {
+   "game_id": "2025_05_TB_SEA",
+   "team": "TB",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 3.0
+  },
+  {
+   "game_id": "2025_05_TB_SEA",
+   "team": "SEA",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": -3.0
+  },
+  {
+   "game_id": "2025_05_TB_SEA",
+   "team": "TB",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 6.6199
+  },
+  {
+   "game_id": "2025_05_TB_SEA",
+   "team": "SEA",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": -0.3726
+  },
+  {
+   "game_id": "2025_05_TB_SEA",
+   "team": "TB",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.5172
+  },
+  {
+   "game_id": "2025_05_TB_SEA",
+   "team": "SEA",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.6111
+  },
+  {
+   "game_id": "2025_05_DET_CIN",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": true,
+   "value": 61.0
+  },
+  {
+   "game_id": "2025_05_DET_CIN",
+   "team": "DET",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 13.0
+  },
+  {
+   "game_id": "2025_05_DET_CIN",
+   "team": "CIN",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": true,
+   "value": -13.0
+  },
+  {
+   "game_id": "2025_05_DET_CIN",
+   "team": "DET",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": -3.8311
+  },
+  {
+   "game_id": "2025_05_DET_CIN",
+   "team": "CIN",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 7.1352
+  },
+  {
+   "game_id": "2025_05_DET_CIN",
+   "team": "DET",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.5254
+  },
+  {
+   "game_id": "2025_05_DET_CIN",
+   "team": "CIN",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": false,
+   "value": 0.4138
+  },
+  {
+   "game_id": "2025_05_WAS_LAC",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": false,
+   "value": 37.0
+  },
+  {
+   "game_id": "2025_05_WAS_LAC",
+   "team": "WAS",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 17.0
+  },
+  {
+   "game_id": "2025_05_WAS_LAC",
+   "team": "LAC",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": true,
+   "value": -17.0
+  },
+  {
+   "game_id": "2025_05_WAS_LAC",
+   "team": "WAS",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 12.4474
+  },
+  {
+   "game_id": "2025_05_WAS_LAC",
+   "team": "LAC",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": -5.6209
+  },
+  {
+   "game_id": "2025_05_WAS_LAC",
+   "team": "WAS",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.5741
+  },
+  {
+   "game_id": "2025_05_WAS_LAC",
+   "team": "LAC",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": false,
+   "value": 0.3968
+  },
+  {
+   "game_id": "2025_05_NE_BUF",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": false,
+   "value": 43.0
+  },
+  {
+   "game_id": "2025_05_NE_BUF",
+   "team": "NE",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 3.0
+  },
+  {
+   "game_id": "2025_05_NE_BUF",
+   "team": "BUF",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": -3.0
+  },
+  {
+   "game_id": "2025_05_NE_BUF",
+   "team": "NE",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": false,
+   "value": 1.678
+  },
+  {
+   "game_id": "2025_05_NE_BUF",
+   "team": "BUF",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 3.8377
+  },
+  {
+   "game_id": "2025_05_NE_BUF",
+   "team": "NE",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.4643
+  },
+  {
+   "game_id": "2025_05_NE_BUF",
+   "team": "BUF",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.5082
+  },
+  {
+   "game_id": "2025_05_KC_JAX",
+   "team": null,
+   "scenario": "shootout",
+   "status": "settled",
+   "occurred": true,
+   "value": 59.0
+  },
+  {
+   "game_id": "2025_05_KC_JAX",
+   "team": "KC",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": -3.0
+  },
+  {
+   "game_id": "2025_05_KC_JAX",
+   "team": "JAX",
+   "scenario": "blowout_loss",
+   "status": "settled",
+   "occurred": false,
+   "value": 3.0
+  },
+  {
+   "game_id": "2025_05_KC_JAX",
+   "team": "KC",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 14.4603
+  },
+  {
+   "game_id": "2025_05_KC_JAX",
+   "team": "JAX",
+   "scenario": "pass_heavy",
+   "status": "settled",
+   "occurred": true,
+   "value": 4.1646
+  },
+  {
+   "game_id": "2025_05_KC_JAX",
+   "team": "KC",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.6508
+  },
+  {
+   "game_id": "2025_05_KC_JAX",
+   "team": "JAX",
+   "scenario": "efficient_offense",
+   "status": "settled",
+   "occurred": true,
+   "value": 0.4815
+  }
+ ]
+}

@@ -148,6 +148,15 @@ backtest-tails: ## What a tail costs to chase, and whether the belief model can 
 	@cd $(MODEL)/analysis && $(PY) backtest.py --grid $(BACKTEST_DIR)/grid.json \
 		--belief $(BACKTEST_DIR)/belief.json --from 2025 --tails
 
+## --- Belief probe (see docs/plans/prompt-then-validate.md) ---
+
+BELIEF_DIR := beliefs
+
+belief-outcomes: ## Did each scenario occur? make belief-outcomes SEASON=2025 WEEK=5
+	@cd $(MODEL)/analysis && $(PY) beliefpack.py outcomes \
+		--season $(SEASON) --week $(WEEK) \
+		--out ../../$(BELIEF_DIR)/$(SEASON)/week$(shell printf %02d $(WEEK)).outcomes.json
+
 backtest-oracle: ## The ceiling: what a PERFECT belief would earn, to bound the rest
 	@cd $(MODEL)/analysis && $(PY) backtest.py --grid $(BACKTEST_DIR)/grid.json \
 		--belief $(BACKTEST_DIR)/belief.json --from 2025 --tails --oracle
