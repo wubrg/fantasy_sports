@@ -161,6 +161,19 @@ belief-outcomes: ## Did each scenario occur? make belief-outcomes SEASON=2025 WE
 		--season $(SEASON) --week $(WEEK) \
 		--out ../../$(BELIEF_DIR)/$(SEASON)/week$(shell printf %02d $(WEEK)).outcomes.json
 
+belief-ingest: ## Ingest a week's forecasts. make belief-ingest SEASON=2026 WEEK=1 FILE=...
+	@cd $(APP) && ./edgectl beliefs ingest -file ../$(FILE) \
+		-pack ../$(BELIEF_DIR)/$(SEASON)/week$(shell printf %02d $(WEEK)).input.json \
+		-log ../$(BELIEF_DIR)/log.jsonl
+
+belief-settle: ## Settle a week from its outcome pack. make belief-settle SEASON=2026 WEEK=1
+	@cd $(APP) && ./edgectl beliefs settle \
+		-outcomes ../$(BELIEF_DIR)/$(SEASON)/week$(shell printf %02d $(WEEK)).outcomes.json \
+		-log ../$(BELIEF_DIR)/log.jsonl
+
+belief-score: ## Score every recorded belief
+	@cd $(APP) && ./edgectl beliefs score -log ../$(BELIEF_DIR)/log.jsonl
+
 backtest-oracle: ## The ceiling: what a PERFECT belief would earn, to bound the rest
 	@cd $(MODEL)/analysis && $(PY) backtest.py --grid $(BACKTEST_DIR)/grid.json \
 		--belief $(BACKTEST_DIR)/belief.json --from 2025 --tails --oracle
