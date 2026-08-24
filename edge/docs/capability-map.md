@@ -220,6 +220,25 @@ nothing — this alone removes receptions/`blowout_loss` and rushing/`shootout`.
 was tested against a permutation null: it passes **1.6%** of site-tests when the scenario label is
 shuffled across games, against 38–75% for the real thing. See `FINDINGS.md` §12.
 
+### The belief probe: `s` from a forecaster, scored forward
+
+`P(hit) = q·s + r·(1−s)`. [FINDINGS §16](../model/FINDINGS.md) bounded the whole belief side —
+a perfect `s` earns +7% to +18% at a 6% hold where the fitted model loses 10–25% — so the only
+question left is whether any better source of `s` exists.
+
+`edgectl beliefs ingest|settle|list|score`, with `beliefpack.py` on the Python side. A week's
+forecasts are ingested before kickoff, settled from the data afterwards, and scored on whether they
+beat the base rate. **No price, no stake, no prop** — which is why it can start before this
+repository collects prop prices, and why it starts at all.
+
+Reliability and resolution are reported separately, always: a forecaster that returns the base rate
+everywhere is perfectly calibrated and worth nothing. The primary endpoint is pre-registered.
+
+The test is **forward-only**: a model has seen every historical season, so a backtest of a prompt is
+uninterpretable. See [`belief-probe.md`](frameworks/belief-probe.md) for the prompt itself,
+[ADR-002](ADR-002-belief-log-tracked-in-git.md) for why the log is in git and what that does and
+does not prove.
+
 ### The two typed coordinates can be read from the cache
 
 `model/analysis/player.py --player <name> --season <n> --week <n> [--total <n>]` computes

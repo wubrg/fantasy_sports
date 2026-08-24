@@ -71,14 +71,9 @@ regardless of how good the belief gets.
 
 **Input:** the shape list, this week's schedule, posted totals from the board.
 
-**Output:** structured, one record per candidate —
-
-| field | |
-|---|---|
-| `game`, `team`, `scenario` | which shape it is claiming |
-| `belief` | P(scenario occurs), as a number |
-| `claims` | the reasons, each a checkable assertion |
-| `confidence` | how sure, so overconfidence can be scored separately |
+The contract is written out in full, with its output schema and claim taxonomy, in
+[`docs/frameworks/belief-probe.md`](../frameworks/belief-probe.md) — the document you actually
+paste. It is not restated here.
 
 **Never requested:** player baselines, trends, target shares, historical rates, prices, or the
 identity of which player to bet. The tool knows all of those.
@@ -93,9 +88,29 @@ Every claim is checked against the cache *before* the belief is used:
 | team form | `signals.prior_form`, `proe.prior_form` |
 | which week, which season | supplied by the tool, so it cannot be wrong |
 
-A candidate with a false claim is **rejected and logged as a prompt error**. The rejection rate is
-itself a measurement: a prompt that invents a quarter of its evidence is not usable however good
-its beliefs look on the ones that survive.
+**These are two separate tests and must not be run together.**
+
+| | question | population |
+|---|---|---|
+| **A — reliability** | does it state things that are false? | every prediction |
+| **B — edge** | given a forecast that is not false, does `s` beat the base rate? | predictions that survive |
+
+Test B is conditional on passing the falsifier, and **that is correct rather than a bias**: the
+falsifier is part of the strategy, not a diagnostic beside it. In deployment a forecast caught
+inventing evidence is discarded before any wager, so the quantity worth estimating is the edge of
+the forecasts that survive. Conditioning on a filter you actually apply is evaluating the real
+pipeline.
+
+The falsifier is incomplete, and that is recorded rather than assumed away: `personnel` and
+`narrative` claims have nothing to check against, so "survived" means *no falsehood was detected*.
+Test B's population is therefore slightly generous.
+
+Test A's rate matters on its own terms. A prompt that is sharp when honest but invents a third of
+the time yields few usable candidates a week, which is a **coverage** problem — it shrinks the
+sample Test B can draw on, and the power table below shows how little slack there is.
+
+Rejected predictions are **logged and settled anyway**, so survivors can be scored against the whole
+set on identical outcomes. That measures what the falsifier is worth; a bare rejection count cannot.
 
 ## Phase 4 — validate the wager
 
@@ -177,6 +192,30 @@ the incumbent starts at week 4. Weeks 1–3 are also when the prompt has least t
 market is weakest, which makes them the most interesting weeks and the least conclusive ones.
 
 ## Phase 6 — the decision
+
+### Pre-registered, before any data exists
+
+Four scenarios, several statistics and eighteen weekly looks is a garden of forking paths, and this
+project has already been misled three times by pooling alone. So the endpoint is fixed here, on
+2026-08-24, with the log empty:
+
+> **Primary endpoint.** The paired Brier gain of the prompt's `s` against the frozen reference,
+> pooled over all scenarios, one-sided, evaluated at **week 8** — the first point the power table
+> puts above 80% for the +0.10 edge that matters. Reported with a bootstrap interval clustered by
+> game.
+>
+> **Everything else is descriptive.** Reliability, resolution, slope, AUC, per-scenario splits,
+> confidence weighting and the survivors-versus-all comparison are all worth looking at and none of
+> them is the verdict.
+>
+> **Interim looks are permitted and do not stop the trial.** They are for catching a broken harness,
+> not for calling a result early.
+>
+> **The decision weights `shootout` and `efficient_offense`.** `blowout_loss` fails validation
+> everywhere it is fitted, and `pass_heavy` is vetoed for receiving yards, so a good belief on
+> either cannot be spent. They are still scored, because they inform Test A for free.
+
+
 
 If the prompt's `s` beats the base rate by more than the requirement on a real sample, it is a
 strategy and the wagering follows. If it does not, it joins the six other belief signals this
