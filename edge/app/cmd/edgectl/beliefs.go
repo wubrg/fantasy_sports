@@ -212,6 +212,13 @@ func beliefsIngest(args []string) error {
 		return err
 	}
 
+	// The flagged set, resolved before the loop so a prediction knows whether it
+	// was one of the candidates the forecaster would actually have bet.
+	flagged := map[string]bool{}
+	for _, f := range ff.Flagged {
+		flagged[f] = true
+	}
+
 	now := time.Now()
 	var ready []betlog.Prediction
 	var late []string
@@ -257,9 +264,10 @@ func beliefsIngest(args []string) error {
 			Source: "prompt", Model: ff.Model, Prompt: ff.Prompt,
 			InputPack: *packPath, InputPackSHA: sum,
 			Kickoff: g.Kickoff, GeneratedAt: ff.GeneratedAt,
+			Abstained: p.Abstained, Flagged: flagged[key],
 			Rejected: p.Rejected, RejectedReason: p.Reason, Claims: p.Claims,
 		}
-		freezeReferences(&pred, pk, g, c, bel, p.Abstained)
+		freezeReferences(&pred, pk, g, c, bel)
 
 		if err := pred.Validate(); err != nil {
 			return err
@@ -305,7 +313,7 @@ func beliefsIngest(args []string) error {
 // belief.json: a reference derived later would let a mid-season refit change
 // the opponent retroactively, with nothing to show it had happened.
 func freezeReferences(p *betlog.Prediction, pk inputPack, g packGame,
-	c *scenario.Conditionals, bel *scenario.Belief, abstained bool) {
+	c *scenario.Conditionals, bel *scenario.Belief) {
 	if br, ok := pk.BaseRates[p.Scenario]; ok {
 		p.SBaseRate = &br
 	}
@@ -356,11 +364,6 @@ func freezeReferences(p *betlog.Prediction, pk inputPack, g packGame,
 				p.SIncumbent = &v
 			}
 		}
-	}
-	if abstained {
-		// Recorded in the claims rather than as a field, so the log's shape does
-		// not depend on a scoring concept.
-		p.Claims = append(p.Claims, "abstained: no read")
 	}
 }
 

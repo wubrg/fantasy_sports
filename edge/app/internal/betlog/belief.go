@@ -67,6 +67,26 @@ type Prediction struct {
 	Kickoff     time.Time `json:"kickoff"`
 	GeneratedAt time.Time `json:"generated_at"`
 
+	// Abstained is the forecaster declining to take a position.
+	//
+	// A real field rather than a marker inside Claims. It was briefly encoded as
+	// the string "abstained: no read" appended to the claims and prefix-matched
+	// back, which is fragile in both directions: a forecaster writing a genuine
+	// claim beginning that way would be misread, and the JSON already carried a
+	// boolean that was being thrown away.
+	//
+	// It matters because a source required to forecast every game -- so its
+	// scored set cannot be cherry-picked -- will abstain on most of them, and
+	// pooling those hides an edge on the rows where it committed.
+	Abstained bool `json:"abstained,omitempty"`
+
+	// Flagged marks a prediction the forecaster would actually bet.
+	//
+	// It has no effect on scoring, deliberately: the point is to keep the
+	// candidate list and the scored set connected without letting the first
+	// filter the second.
+	Flagged bool `json:"flagged,omitempty"`
+
 	// Rejected marks a prediction whose supporting claims were falsified.
 	//
 	// It is recorded and settled ANYWAY. Scoring survivors against the whole

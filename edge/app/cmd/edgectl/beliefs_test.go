@@ -370,20 +370,35 @@ func TestScoreReadsOutTheWholeMeasurement(t *testing.T) {
 				belief, happened = 0.28, false
 			}
 		}
+		// Alternate scenario, confidence and flag so the splits have something
+		// to split on.
+		scen := "efficient_offense"
+		if i%2 == 1 {
+			scen = "shootout"
+		}
+		conf := 0.2
+		if informed {
+			conf = 0.8
+		}
 		p := betlog.Prediction{
+			// All in week 1: the outcome pack is one week, and settle filters by
+			// week. Varying it here silently left two thirds of the log open,
+			// which made every survivor share one confidence band and hid the
+			// split entirely.
 			Season: 2026, Week: 1, GameID: gid, Team: "KC",
-			Scenario: "efficient_offense", Belief: belief,
+			Scenario: scen, Belief: belief, Confidence: conf,
 			Source: "prompt", Kickoff: kick, GeneratedAt: time.Now(),
 			SBaseRate: f64(0.3243),
+			Abstained: abstain, Flagged: informed && i%9 == 0,
 		}
-		if abstain {
-			p.Claims = []string{"abstained: no read"}
+		if scen == "shootout" {
+			p.Team = ""
 		}
 		if _, err := betlog.Record(log, p, time.Now()); err != nil {
 			t.Fatal(err)
 		}
-		rows = append(rows, outcomeRow{GameID: gid, Team: "KC",
-			Scenario: "efficient_offense", Status: "settled", Occurred: happened})
+		rows = append(rows, outcomeRow{GameID: gid, Team: p.Team,
+			Scenario: scen, Status: "settled", Occurred: happened})
 	}
 	outPath := writeTestJSON(t, dir, "week01.outcomes.json", outcomePack{
 		Season: 2026, Week: 1, Definitions: gridDefinitions(), Rows: rows,

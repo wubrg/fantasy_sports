@@ -70,9 +70,6 @@ type Point struct {
 	// Cluster is the unit of dependence: the game. Bootstrap resamples these,
 	// not rows.
 	Cluster string
-
-	// Weight is optional, for weighting by stated confidence. Zero means one.
-	Weight float64
 }
 
 func (p Point) y() float64 {

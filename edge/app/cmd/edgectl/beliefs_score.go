@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -40,6 +41,9 @@ func beliefsScore(args []string) error {
 	logPath := fs.String("log", "beliefs/log.jsonl", "the belief log")
 	only := fs.String("scenario", "", "score one scenario only")
 	fromWeek := fs.Int("from-week", 0, "ignore weeks before this")
+	toWeek := fs.Int("to-week", 0,
+		"ignore weeks after this. With -from-week this expresses the pre-registered "+
+			"window exactly, e.g. -from-week 1 -to-week 8")
 	vs := fs.String("vs", refAuto,
 		"what to measure against: auto, base-rate, belief-json or market")
 	bar := fs.Float64("bar", 0.10,
@@ -60,8 +64,8 @@ func beliefsScore(args []string) error {
 		return nil
 	}
 
-	all := points(preds, *only, *fromWeek, *vs, true)
-	survivors := points(preds, *only, *fromWeek, *vs, false)
+	all := points(preds, *only, *fromWeek, *toWeek, *vs, true)
+	survivors := points(preds, *only, *fromWeek, *toWeek, *vs, false)
 	use := survivors
 	label := "survivors"
 	if *includeRejected {
@@ -73,7 +77,8 @@ func beliefsScore(args []string) error {
 		return nil
 	}
 
-	r, err := calib.Score(use, *bar)
+	pts := onlyPoints(use)
+	r, err := calib.Score(pts, *bar)
 	if err != nil {
 		return err
 	}
@@ -86,7 +91,7 @@ func beliefsScore(args []string) error {
 
 	// The interval must cover the same population as the estimate: positions,
 	// not positions plus abstentions.
-	scored := calib.Positions(use)
+	scored := calib.Positions(pts)
 	lo, hi := calib.BootstrapCI(scored, calib.Brier, 800, 20260824, 0.05)
 	fmt.Printf("\n  RELIABILITY and RESOLUTION are different things, and one good number\n")
 	fmt.Printf("  for the first proves nothing about the second.\n")
@@ -137,7 +142,7 @@ func beliefsScore(args []string) error {
 	// Survivors against everything, on identical outcomes. This is what the
 	// falsifier is worth; a bare rejection count cannot say.
 	if !*includeRejected && len(all) > len(survivors) {
-		if ra, err := calib.Score(all, *bar); err == nil {
+		if ra, err := calib.Score(onlyPoints(all), *bar); err == nil {
 			fmt.Printf("\n  THE FALSIFIER  %d of %d predictions had a claim falsified\n",
 				len(all)-len(survivors), len(all))
 			fmt.Printf("    survivors Brier %.4f   all %.4f   (lower is better)\n", r.Brier, ra.Brier)
@@ -146,8 +151,104 @@ func beliefsScore(args []string) error {
 		}
 	}
 
+	groupReport("BY SCENARIO", use, *bar, func(r scoredRow) string { return r.scenario })
+	groupReport("BY STATED CONFIDENCE", use, *bar, confidenceBand)
+	flaggedReport(use, *bar)
 	powerNote(r.Positions)
 	return nil
+}
+
+// confidenceBand buckets a forecaster's own confidence.
+//
+// Reported rather than used as a weight. The question is whether it KNOWS when
+// it is guessing -- if the high-confidence calls are not more accurate, the
+// confidence is noise, and weighting by noise would hide that rather than show
+// it.
+func confidenceBand(r scoredRow) string {
+	switch {
+	case r.confidence <= 0:
+		return "unstated"
+	case r.confidence < 0.34:
+		return "low"
+	case r.confidence < 0.67:
+		return "medium"
+	}
+	return "high"
+}
+
+func groupReport(title string, rows []scoredRow, bar float64, key func(scoredRow) string) {
+	groups := map[string][]scoredRow{}
+	var order []string
+	for _, r := range rows {
+		k := key(r)
+		if _, seen := groups[k]; !seen {
+			order = append(order, k)
+		}
+		groups[k] = append(groups[k], r)
+	}
+	if len(order) < 2 {
+		return // a split into one group says nothing
+	}
+	sort.Strings(order)
+	fmt.Printf("\n  %s\n", title)
+	fmt.Printf("    %-20s %6s %8s %9s %9s %11s\n",
+		"", "n", "Brier", "resol.", "gain", "informed")
+	for _, k := range order {
+		pts := onlyPoints(groups[k])
+		g, err := calib.Score(pts, bar)
+		if err != nil {
+			fmt.Printf("    %-20s %6d   %s\n", k, len(pts), "all abstentions")
+			continue
+		}
+		gain := calib.PairedBrierGain(calib.Positions(pts))
+		inf := "—"
+		if g.OverBar > 0 {
+			inf = fmt.Sprintf("%.0f%% of %d", g.InformedFraction*100, g.OverBar)
+		}
+		gs := "—"
+		if !math.IsNaN(gain) {
+			gs = fmt.Sprintf("%+.5f", gain)
+		}
+		fmt.Printf("    %-20s %6d %8.4f %9.4f %9s %11s\n",
+			k, g.Positions, g.Brier, g.Resolution, gs, inf)
+	}
+}
+
+// flaggedReport compares the candidates the forecaster would actually have bet
+// against everything else it said.
+//
+// It does not filter the score -- flagging is the forecaster's own choice, and
+// letting it select its own scored set is the cherry-picking the contract
+// exists to stop. It is reported because a source whose FLAGGED calls are no
+// better than its others has no candidate-selection skill, which is a different
+// finding from having no forecasting skill.
+func flaggedReport(rows []scoredRow, bar float64) {
+	var yes, no []calib.Point
+	for _, r := range rows {
+		if r.flagged {
+			yes = append(yes, r.pt)
+		} else {
+			no = append(no, r.pt)
+		}
+	}
+	if len(yes) == 0 {
+		return
+	}
+	fmt.Printf("\n  FLAGGED CANDIDATES  %d of %d\n", len(yes), len(rows))
+	for _, tc := range []struct {
+		name string
+		pts  []calib.Point
+	}{{"flagged", yes}, {"the rest", no}} {
+		g, err := calib.Score(tc.pts, bar)
+		if err != nil {
+			continue
+		}
+		fmt.Printf("    %-10s n=%-4d Brier %.4f   gain %+.5f\n",
+			tc.name, g.Positions, g.Brier, calib.PairedBrierGain(calib.Positions(tc.pts)))
+	}
+	fmt.Printf("    Flagging does not filter the score. If these are no better than the\n")
+	fmt.Printf("    rest, the forecaster cannot pick its own spots — a different finding\n")
+	fmt.Printf("    from being unable to forecast.\n")
 }
 
 // slopeFailure names why the logistic fit did not converge.
@@ -169,16 +270,40 @@ func slopeFailure(r calib.Report) string {
 	return "the fit did not converge; treat it as unmeasured rather than as a number"
 }
 
+// scoredRow is a point with enough of its prediction to group by.
+//
+// Grouping is not decoration: the decision weights shootout and
+// efficient_offense, and "does it know when it is guessing" cannot be answered
+// from a pooled number.
+type scoredRow struct {
+	pt         calib.Point
+	scenario   string
+	week       int
+	confidence float64
+	flagged    bool
+}
+
+func onlyPoints(rows []scoredRow) []calib.Point {
+	out := make([]calib.Point, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, r.pt)
+	}
+	return out
+}
+
 // points turns settled predictions into scored points.
-func points(preds []betlog.SettledPrediction, only string, fromWeek int,
-	mode string, includeRejected bool) []calib.Point {
-	var out []calib.Point
+func points(preds []betlog.SettledPrediction, only string, fromWeek, toWeek int,
+	mode string, includeRejected bool) []scoredRow {
+	var out []scoredRow
 	for _, sp := range preds {
 		p := sp.Prediction
 		if only != "" && p.Scenario != only {
 			continue
 		}
 		if p.Week < fromWeek {
+			continue
+		}
+		if toWeek > 0 && p.Week > toWeek {
 			continue
 		}
 		if p.Rejected && !includeRejected {
@@ -192,23 +317,15 @@ func points(preds []betlog.SettledPrediction, only string, fromWeek int,
 			P:         p.Belief,
 			Y:         happened,
 			Cluster:   p.GameID,
-			Abstained: abstained(p),
+			Abstained: p.Abstained,
 		}
 		if ref, ok := reference(p, mode); ok {
 			pt.Ref, pt.HasRef = ref, true
 		}
-		out = append(out, pt)
+		out = append(out, scoredRow{pt: pt, scenario: p.Scenario, week: p.Week,
+			confidence: p.Confidence, flagged: p.Flagged})
 	}
 	return out
-}
-
-func abstained(p betlog.Prediction) bool {
-	for _, c := range p.Claims {
-		if strings.HasPrefix(c, "abstained:") {
-			return true
-		}
-	}
-	return false
 }
 
 // reference resolves what this prediction is measured against.
