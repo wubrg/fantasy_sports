@@ -152,6 +152,10 @@ backtest-tails: ## What a tail costs to chase, and whether the belief model can 
 
 BELIEF_DIR := beliefs
 
+belief-pack: ## What a forecaster is shown. make belief-pack SEASON=2026 WEEK=1
+	@cd $(MODEL)/analysis && $(PY) beliefpack.py pack \
+		--season $(SEASON) --week $(WEEK) --out-dir ../../$(BELIEF_DIR)/$(SEASON)
+
 belief-outcomes: ## Did each scenario occur? make belief-outcomes SEASON=2025 WEEK=5
 	@cd $(MODEL)/analysis && $(PY) beliefpack.py outcomes \
 		--season $(SEASON) --week $(WEEK) \

@@ -20,7 +20,9 @@ import hashlib
 import json
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -32,6 +34,32 @@ import signals as signals_mod
 # team's own afternoon. Derived from the basis rather than listed, so a new
 # scenario cannot arrive with the wrong unit.
 GAME_LEVEL_BASES = {"total"}
+
+# nflverse writes gameday and gametime as US Eastern wall-clock with no zone on
+# either. Concatenating them into a naive string -- which is what the line board
+# does for display -- and comparing it against a real instant is wrong by hours
+# or a day depending on the reader's own zone, AND IT FAILS PERMISSIVELY: the
+# error direction is accepting a forecast made after kickoff, which is the one
+# thing the gate exists to prevent. January games are -05:00 and September games
+# -04:00, so a fixed offset is not good enough either.
+EASTERN = ZoneInfo("America/New_York")
+
+BELIEF_ARTIFACT = F.ARTIFACT.parent / "belief.json"
+
+
+def kickoff_instant(row: dict) -> datetime:
+    """The resolved moment a game starts, as an aware datetime.
+
+    Fails hard on a missing time rather than defaulting to midnight. A game
+    silently starting at 00:00 would make every forecast for it look late.
+    """
+    day, tm = row["gameday"].strip(), row["gametime"].strip()
+    if not day or not tm:
+        raise SystemExit(
+            f"{row.get('game_id', '?')}: games.csv has gameday={day!r} gametime={tm!r}. "
+            f"A kickoff cannot be resolved, and guessing one would decide whether a "
+            f"forecast counts as made before the game.")
+    return datetime.fromisoformat(f"{day}T{tm}").replace(tzinfo=EASTERN)
 
 
 def unit_of(definition) -> str:
@@ -96,6 +124,181 @@ def cache_provenance(names: list[str]) -> dict:
         return {}
     m = json.loads(F.MANIFEST.read_text())
     return {n: m[n] for n in names if n in m}
+
+
+def base_rates() -> dict:
+    """How often each scenario happens to anyone, the number a forecast must beat.
+
+    The two PROE/success-rate scenarios are read from the fitted belief artifact
+    rather than recomputed -- recomputing would mean a second pass over every
+    season's play-by-play to reproduce a number that is already committed. The
+    two market-derived ones come straight from games.csv, which is cheap.
+    """
+    out = {}
+    if BELIEF_ARTIFACT.exists():
+        b = json.loads(BELIEF_ARTIFACT.read_text())
+        for name, m in b.get("scenarios", {}).items():
+            out[name] = m["base_rate"]
+
+    tot = {"shootout": [0, 0], "blowout_loss": [0, 0]}
+    for r in csv.DictReader((F.CACHE / "games.csv").open()):
+        if r["game_type"] != "REG" or not (r["result"].strip() and r["total"].strip()):
+            continue
+        season = int(F.num(r["season"]))
+        if not (F.FIRST <= season <= F.LAST):
+            continue
+        total, result = F.num(r["total"]), F.num(r["result"])
+        tot["shootout"][1] += 1
+        if F.SCENARIOS["shootout"].occurred({"game_total": total}):
+            tot["shootout"][0] += 1
+        # Both sides of every game, because blowout_loss is a team property.
+        for margin in (result, -result):
+            tot["blowout_loss"][1] += 1
+            if F.SCENARIOS["blowout_loss"].occurred({"margin": margin}):
+                tot["blowout_loss"][0] += 1
+    for k, (hit, n) in tot.items():
+        if n:
+            out[k] = round(hit / n, 4)
+    return out
+
+
+def prior_form(season: int, week: int) -> tuple[dict, str]:
+    """Each team's form coming into this week, or why there is none.
+
+    Returns ({} , reason) rather than zeros. A team with no measured form and a
+    team measured at zero are different states, and emitting the second for the
+    first would be handing a forecaster a fact that is not true.
+    """
+    if week <= F.MIN_PRIOR_GAMES - 1:
+        return {}, (f"week {week}: prior form needs {proe.MIN_PRIOR if hasattr(proe, 'MIN_PRIOR') else 3} "
+                    f"earlier games, so none exists before week 4")
+    pbp = F.CACHE / f"play_by_play_{season}.csv.gz"
+    if not pbp.exists():
+        return {}, f"play_by_play_{season} is not in the cache yet"
+
+    pf_p = proe.prior_form(proe.team_weeks(season))
+    pf_s = signals_mod.prior_form(signals_mod.team_weeks(season))
+    out = {}
+    for (s, w, team), v in pf_s.items():
+        if s != season or w != week:
+            continue
+        p = pf_p.get((s, w, team))
+        if p is None:
+            continue
+        out[team] = {
+            "success_rate_prior": round(v["success_rate_prior"], 4),
+            "offense_prior": round(p["offense_prior"], 4),
+            "prior_games": v["prior_games"],
+        }
+    return out, "" if out else "no team has enough prior games yet"
+
+
+def pack(season: int, week: int) -> dict:
+    """What a forecaster is shown before kickoff. Facts only.
+
+    Three things are deliberately absent.
+
+    The incumbent model's own s. Showing a forecaster the answer it is being
+    measured against tests anchoring rather than judgement, and destroys the
+    head-to-head the exercise exists for. It sees the same FACTS the model sees,
+    never the model's inference.
+
+    Any derived probability. The posted total and spread are here because they
+    are public and hiding them would make the exercise artificial -- "can you
+    beat a number you can see" is the real question -- but converting a line
+    into P(scenario) is the tool's job, done once, in Go, by the same code the
+    CLI uses.
+
+    Any player, line or price. This asks for a game script and nothing else.
+    """
+    games = schedule(season, week)
+    form, form_reason = prior_form(season, week)
+
+    out_games = []
+    for g in games:
+        away, home = g["away_team"], g["home_team"]
+        gid = game_id(season, week, away, home)
+        entry = {
+            "game_id": gid,
+            "away": away,
+            "home": home,
+            "kickoff": kickoff_instant(g).isoformat(),
+            # spread_line is the HOME team's expected margin: positive means the
+            # home side is favoured. Passed through raw, with the convention
+            # named, so the one place that converts it can be checked.
+            "total_line": F.num(g["total_line"]) if g["total_line"].strip() else None,
+            "spread_line": F.num(g["spread_line"]) if g["spread_line"].strip() else None,
+            "teams": {},
+        }
+        for team in (away, home):
+            t = {}
+            if team in form:
+                t["prior_form"] = form[team]
+            entry["teams"][team] = t
+        out_games.append(entry)
+
+    return {
+        "season": season,
+        "week": week,
+        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "generated_by": "edge/model/analysis/beliefpack.py pack",
+        "cache": cache_provenance(["games.csv", f"play_by_play_{season}.csv.gz"]),
+        "definitions": definitions_block(),
+        "base_rates": base_rates(),
+        "spread_convention": "spread_line is the home team's expected margin; "
+                             "positive means the home side is favoured",
+        "form_available": bool(form),
+        "form_absent_because": form_reason,
+        "games": out_games,
+    }
+
+
+def render(p: dict, sha: str) -> str:
+    """The pack as text to paste into a model."""
+    L = [f"# BELIEF PACK — {p['season']} week {p['week']}", ""]
+    L.append(f"pack_sha256: {sha}")
+    L.append("Echo this sha back in your output. It binds your forecast to exactly "
+             "these facts.")
+    L.append("")
+    L.append("## BASE — how often each scenario happens to anyone")
+    L.append("")
+    L.append("| scenario | definition | base rate |")
+    L.append("|---|---|---|")
+    for name, d in p["definitions"].items():
+        br = p["base_rates"].get(name)
+        L.append(f"| {name} | {d['basis']} {d['op']} {d['threshold']:g} (per {d['unit']}) | "
+                 f"{br if br is not None else '—'} |")
+    L.append("")
+    L.append("## SLATE and MARKET")
+    L.append("")
+    L.append(f"{p['spread_convention']}.")
+    L.append("")
+    L.append("| game | away | home | kickoff | total | spread |")
+    L.append("|---|---|---|---|---|---|")
+    for g in p["games"]:
+        L.append(f"| {g['game_id']} | {g['away']} | {g['home']} | {g['kickoff']} | "
+                 f"{g['total_line'] if g['total_line'] is not None else '—'} | "
+                 f"{g['spread_line'] if g['spread_line'] is not None else '—'} |")
+    L.append("")
+    L.append("## FORM — each team coming into this week, from earlier games only")
+    L.append("")
+    if not p["form_available"]:
+        L.append(f"**No prior form this week:** {p['form_absent_because']}.")
+        L.append("")
+        L.append("This is not a gap you should fill by guessing. It is a real absence, and "
+                 "the weeks it happens in are the ones where nobody — you, the model, or "
+                 "the market — has much to go on.")
+    else:
+        L.append("| team | success rate | offence PROE | games |")
+        L.append("|---|---|---|---|")
+        for g in p["games"]:
+            for team, t in g["teams"].items():
+                f = t.get("prior_form")
+                if f:
+                    L.append(f"| {team} | {f['success_rate_prior']:.4f} | "
+                             f"{f['offense_prior']:+.4f} | {f['prior_games']} |")
+    L.append("")
+    return "\n".join(L)
 
 
 def outcomes(season: int, week: int) -> dict:
@@ -192,11 +395,34 @@ def main(argv) -> int:
     o.add_argument("--week", type=int, required=True)
     o.add_argument("--out", type=Path, help="write here instead of stdout")
 
+    k = sub.add_parser("pack", help="what a forecaster is shown before kickoff")
+    k.add_argument("--season", type=int, required=True)
+    k.add_argument("--week", type=int, required=True)
+    k.add_argument("--out-dir", type=Path, required=True)
+
     args = ap.parse_args(argv)
 
+    if args.cmd == "pack":
+        p = pack(args.season, args.week)
+        blob = json.dumps(p, indent=1) + "\n"
+        sha = hashlib.sha256(blob.encode()).hexdigest()
+        args.out_dir.mkdir(parents=True, exist_ok=True)
+        stem = f"week{args.week:02d}"
+        (args.out_dir / f"{stem}.input.json").write_text(blob)
+        # The prompt-facing text is DERIVED from the json and bound to the
+        # json's sha rather than its own -- a file cannot contain its own hash,
+        # and binding to the source of truth is what matters anyway.
+        (args.out_dir / f"{stem}.prompt.md").write_text(render(p, sha))
+        print(f"wrote {args.out_dir / (stem + '.input.json')}")
+        print(f"wrote {args.out_dir / (stem + '.prompt.md')}   <- paste this")
+        print(f"pack_sha256 {sha}")
+        if not p["form_available"]:
+            print(f"NOTE no prior form: {p['form_absent_because']}", file=sys.stderr)
+        return 0
+
     if args.cmd == "outcomes":
-        pack = outcomes(args.season, args.week)
-        blob = json.dumps(pack, indent=1) + "\n"
+        result = outcomes(args.season, args.week)
+        blob = json.dumps(result, indent=1) + "\n"
         if args.out:
             args.out.parent.mkdir(parents=True, exist_ok=True)
             args.out.write_text(blob)
@@ -205,14 +431,14 @@ def main(argv) -> int:
             sys.stdout.write(blob)
 
         counts: dict = {}
-        for r in pack["rows"]:
+        for r in result["rows"]:
             counts[r["status"]] = counts.get(r["status"], 0) + 1
-        print(f"\n{len(pack['rows'])} rows: "
+        print(f"\n{len(result['rows'])} rows: "
               + ", ".join(f"{v} {k}" for k, v in sorted(counts.items())), file=sys.stderr)
         # The void rate is per scenario because the games it happens to are not
         # a random sample of games.
         by = {}
-        for r in pack["rows"]:
+        for r in result["rows"]:
             if r["status"] == "unavailable":
                 by[r["scenario"]] = by.get(r["scenario"], 0) + 1
         if by:
