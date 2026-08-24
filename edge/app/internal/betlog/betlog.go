@@ -30,11 +30,16 @@ import (
 	"edge/internal/wager"
 )
 
-// Kind discriminates the two event types in the stream.
+// Kind discriminates the event types in the stream.
 type Kind string
 
 const (
-	KindBet    Kind = "bet"
+	KindBet Kind = "bet"
+	// KindBelief is a claim about a game script with no money on it. It shares
+	// this stream because the integrity rules it needs -- append-only, and
+	// nothing settled twice -- are the same ones, and a second implementation
+	// of them would drift.
+	KindBelief Kind = "belief"
 	KindSettle Kind = "settle"
 )
 
@@ -114,12 +119,14 @@ type Bet struct {
 
 // Entry is one line of the log.
 type Entry struct {
-	Kind   Kind      `json:"kind"`
-	ID     string    `json:"id"`
-	Time   time.Time `json:"time"`
-	Bet    *Bet      `json:"bet,omitempty"`
-	Result Result    `json:"result,omitempty"`
-	Note   string    `json:"note,omitempty"`
+	Kind Kind      `json:"kind"`
+	ID   string    `json:"id"`
+	Time time.Time `json:"time"`
+	Bet  *Bet      `json:"bet,omitempty"`
+	// Prediction is set on a KindBelief entry, never alongside Bet.
+	Prediction *Prediction `json:"prediction,omitempty"`
+	Result     Result      `json:"result,omitempty"`
+	Note       string      `json:"note,omitempty"`
 }
 
 // Settled is a bet joined to its outcome.
@@ -231,23 +238,42 @@ func Settle(path, id string, r Result, note string) error {
 	return Append(path, Entry{Kind: KindSettle, ID: id, Time: time.Now(), Result: r, Note: note})
 }
 
-// Load reads the stream and folds settlements onto their bets.
+// record is one folded entry of the stream, before it is projected into a
+// typed view. It is deliberately kind-agnostic: the integrity rules below --
+// unique ids, a settlement must find its subject, and nothing may be settled
+// twice -- are properties of the STREAM, not of what a record happens to mean.
+// There is exactly one implementation of them, and both projections share it.
+type record struct {
+	ID       string
+	Kind     Kind
+	Time     time.Time
+	Bet      *Bet
+	Pred     *Prediction
+	Result   Result
+	SettleAt time.Time
+	Note     string
+}
+
+// scan folds the event stream and enforces its integrity, without knowing what
+// any record means.
 //
-// A settlement with no matching bet is an error rather than a silent skip: it
-// means the log has been edited or an id was mistyped, and quietly dropping it
-// would hide the problem from the calibration it exists to feed.
-func Load(path string) ([]Settled, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
+// Unrecognised kinds are skipped and counted rather than treated as corruption.
+// A log written by a newer binary should still be readable by an older one --
+// the alternative is that adding a third event type is another migration -- but
+// silence would hide real corruption, so the count is returned for the caller
+// to report.
+func scan(path string) (recs []record, order []string, skipped map[Kind]int, err error) {
+	f, e := os.Open(path)
+	if e != nil {
+		if os.IsNotExist(e) {
+			return nil, nil, nil, nil
 		}
-		return nil, fmt.Errorf("betlog: opening %s: %w", path, err)
+		return nil, nil, nil, fmt.Errorf("betlog: opening %s: %w", path, e)
 	}
 	defer f.Close()
 
-	bets := map[string]*Settled{}
-	var order []string
+	byID := map[string]*record{}
+	skipped = map[Kind]int{}
 
 	sc := bufio.NewScanner(f)
 	sc.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
@@ -256,25 +282,29 @@ func Load(path string) ([]Settled, error) {
 		if text == "" {
 			continue
 		}
-		var e Entry
-		if err := json.Unmarshal([]byte(text), &e); err != nil {
-			return nil, fmt.Errorf("betlog: %s line %d: %w", path, line, err)
+		var en Entry
+		if err := json.Unmarshal([]byte(text), &en); err != nil {
+			return nil, nil, nil, fmt.Errorf("betlog: %s line %d: %w", path, line, err)
 		}
-		switch e.Kind {
-		case KindBet:
-			if e.Bet == nil {
-				return nil, fmt.Errorf("betlog: %s line %d: bet entry with no bet", path, line)
+		switch en.Kind {
+		case KindBet, KindBelief:
+			if en.Kind == KindBet && en.Bet == nil {
+				return nil, nil, nil, fmt.Errorf("betlog: %s line %d: bet entry with no bet", path, line)
 			}
-			if _, dup := bets[e.ID]; dup {
-				return nil, fmt.Errorf("betlog: %s line %d: duplicate bet id %q", path, line, e.ID)
+			if en.Kind == KindBelief && en.Prediction == nil {
+				return nil, nil, nil, fmt.Errorf("betlog: %s line %d: belief entry with no prediction", path, line)
 			}
-			bets[e.ID] = &Settled{ID: e.ID, Placed: e.Time, Bet: *e.Bet, Result: Open}
-			order = append(order, e.ID)
+			if _, dup := byID[en.ID]; dup {
+				return nil, nil, nil, fmt.Errorf("betlog: %s line %d: duplicate id %q", path, line, en.ID)
+			}
+			byID[en.ID] = &record{ID: en.ID, Kind: en.Kind, Time: en.Time,
+				Bet: en.Bet, Pred: en.Prediction, Result: Open}
+			order = append(order, en.ID)
 		case KindSettle:
-			b, ok := bets[e.ID]
+			r, ok := byID[en.ID]
 			if !ok {
-				return nil, fmt.Errorf("betlog: %s line %d: settlement for unknown bet %q",
-					path, line, e.ID)
+				return nil, nil, nil, fmt.Errorf("betlog: %s line %d: settlement for unknown id %q",
+					path, line, en.ID)
 			}
 			// Append-only bytes are not the same as append-only meaning. Taking
 			// the last write here would let a second settlement silently rewrite
@@ -282,30 +312,70 @@ func Load(path string) ([]Settled, error) {
 			// that way, with three valid lines on disk and no error. Hindsight is
 			// exactly what this log exists to prevent, so a double settlement is
 			// a corrupt log.
-			if b.Result != Open {
-				return nil, fmt.Errorf(
-					"betlog: %s line %d: bet %q was already settled as %q and cannot be "+
-						"re-settled as %q — correcting a mis-settled wager means voiding it "+
+			if r.Result != Open {
+				return nil, nil, nil, fmt.Errorf(
+					"betlog: %s line %d: %q was already settled as %q and cannot be "+
+						"re-settled as %q — correcting a mis-settled record means voiding it "+
 						"and recording a new one, not editing history",
-					path, line, e.ID, b.Result, e.Result)
+					path, line, en.ID, r.Result, en.Result)
 			}
-			if !e.Result.settleable() {
-				return nil, fmt.Errorf("betlog: %s line %d: %q is not a valid result",
-					path, line, e.Result)
+			if !en.Result.settleable() {
+				return nil, nil, nil, fmt.Errorf("betlog: %s line %d: %q is not a valid result",
+					path, line, en.Result)
 			}
-			b.Result = e.Result
-			b.SettleAt = e.Time
+			r.Result = en.Result
+			r.SettleAt = en.Time
+			r.Note = en.Note
 		default:
-			return nil, fmt.Errorf("betlog: %s line %d: unknown kind %q", path, line, e.Kind)
+			skipped[en.Kind]++
 		}
 	}
 	if err := sc.Err(); err != nil {
-		return nil, fmt.Errorf("betlog: reading %s: %w", path, err)
+		return nil, nil, nil, fmt.Errorf("betlog: reading %s: %w", path, err)
 	}
 
-	out := make([]Settled, 0, len(order))
+	recs = make([]record, 0, len(order))
 	for _, id := range order {
-		out = append(out, *bets[id])
+		recs = append(recs, *byID[id])
+	}
+	return recs, order, skipped, nil
+}
+
+// warnSkipped reports unrecognised event kinds once, rather than dropping them
+// in silence.
+func warnSkipped(path string, skipped map[Kind]int) {
+	for k, n := range skipped {
+		fmt.Fprintf(os.Stderr,
+			"betlog: %s: skipped %d entries of unknown kind %q — written by a newer "+
+				"edgectl than this one\n", path, n, k)
+	}
+}
+
+// Load reads the stream and folds settlements onto their bets.
+//
+// A settlement with no matching bet is an error rather than a silent skip: it
+// means the log has been edited or an id was mistyped, and quietly dropping it
+// would hide the problem from the calibration it exists to feed.
+//
+// Beliefs are refused rather than ignored. A belief carries no price and no
+// stake, so folding one in here would put a stake-less row into ROI -- the
+// exact bug PlaceBet's validation exists to prevent, arriving by another door.
+func Load(path string) ([]Settled, error) {
+	recs, _, skipped, err := scan(path)
+	if err != nil {
+		return nil, err
+	}
+	warnSkipped(path, skipped)
+
+	out := make([]Settled, 0, len(recs))
+	for _, r := range recs {
+		if r.Kind == KindBelief {
+			return nil, fmt.Errorf(
+				"betlog: %s holds belief predictions, which have no price or stake and "+
+					"cannot be scored as wagers — read it with `edgectl beliefs score`", path)
+		}
+		out = append(out, Settled{ID: r.ID, Placed: r.Time, Bet: *r.Bet,
+			Result: r.Result, SettleAt: r.SettleAt})
 	}
 	return out, nil
 }
