@@ -108,6 +108,8 @@ def main(argv) -> int:
     ap.add_argument("--from", dest="first_eval", type=int, required=True,
                     help="first season to SCORE (must be after the grid's fit window)")
     ap.add_argument("--since", default=None, help="only games on/after this date, e.g. 2026-01-01")
+    ap.add_argument("--oracle", action="store_true",
+                    help="replace s with the truth, to bound what ANY belief could earn")
     ap.add_argument("--tails", action="store_true",
                     help="test the tail thesis: does a belief-derived s beat a base-rate "
                          "blend by more than the vig, and does the gap widen with depth?")
@@ -182,6 +184,11 @@ def main(argv) -> int:
                     continue
                 qc, rc = (c, other) if occurred else (other, c)
                 s_base = belief[sname]["base_rate"]
+                # The oracle: s is what actually happened. No prompt, model or
+                # human read can beat knowing the answer, so this bounds the
+                # whole belief side of the problem.
+                if args.oracle:
+                    s_hat = 1.0 if occurred else 0.0
                 for m in (TAIL_MULTS if args.tails else mults):
                     q = prob_above(qc["quantiles"], m)
                     r = prob_above(rc["quantiles"], m)
@@ -193,6 +200,8 @@ def main(argv) -> int:
                                    # this team's own.
                                    q * s_base + r * (1 - s_base), q, r, s_hat))
 
+    if args.oracle:
+        print("\n   s REPLACED BY THE TRUTH -- this is a ceiling, not a strategy.\n")
     if args.tails:
         globals()["_BASES"] = {k: v["base_rate"] for k, v in belief.items()}
         _report_tails(rows_C, args.hold)

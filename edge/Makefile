@@ -148,6 +148,10 @@ backtest-tails: ## What a tail costs to chase, and whether the belief model can 
 	@cd $(MODEL)/analysis && $(PY) backtest.py --grid $(BACKTEST_DIR)/grid.json \
 		--belief $(BACKTEST_DIR)/belief.json --from 2025 --tails
 
+backtest-oracle: ## The ceiling: what a PERFECT belief would earn, to bound the rest
+	@cd $(MODEL)/analysis && $(PY) backtest.py --grid $(BACKTEST_DIR)/grid.json \
+		--belief $(BACKTEST_DIR)/belief.json --from 2025 --tails --oracle
+
 backtest-slate: ## The same, restricted to the January 2026 slate
 	@cd $(MODEL)/analysis && $(PY) backtest.py --grid $(BACKTEST_DIR)/grid.json \
 		--belief $(BACKTEST_DIR)/belief.json --from 2025 --since 2026-01-01

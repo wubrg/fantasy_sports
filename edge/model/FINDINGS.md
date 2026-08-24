@@ -1166,22 +1166,50 @@ project — §11's 1.78pp, §15's +0.74pp — is in absolute points, and absolut
 line. The tool has been reporting its accuracy in the units that make it look best, by accident.
 `make backtest` prints relative error beside absolute now.
 
+### The ceiling, which I should have measured first
+
+> **Correction.** The paragraph that stood here blamed `q`, on the strength of a 17.7% relative
+> error at 2× the line. That number is **pooled across outcomes** and does not describe the sites
+> a wager would actually be placed on. Broken out at the same depth: `receiving_yards` is
+> calibrated to −1.2pp, `receptions` to about +11% relative, and `rushing_yards`'s `r` to +26%.
+> Pooling misled me three separate times in this section alone — first a flat −110, then median
+> `q` and `r` taken independently, then this. **The pattern is the finding: every time an average
+> is taken across sites, the thing being measured disappears into it.**
+
+Replace `s` with the truth — 1 if the scenario occurred, 0 if not — and run the same screened
+strategy. No prompt, model or human read can beat knowing the answer, so this bounds the entire
+belief side of the problem. `make backtest-oracle`:
+
+| line | bets | offered | actual | ROI |
+|---|---|---|---|---|
+| 1.00× | 1520 | 0.449 | 0.500 | **+11.3%** |
+| 1.30× | 1520 | 0.296 | 0.332 | **+12.0%** |
+| 1.75× | 1584 | 0.178 | 0.210 | **+18.1%** |
+| 2.00× | 1572 | 0.135 | 0.144 | +7.1% |
+
+**The money is real, and `q` is good enough to collect it.** A perfect belief earns 7–18% at a 6%
+hold. That disposes of the correction above: if `q` were the blocker, the oracle would lose too.
+
 ### So: can we do this?
 
-**Yes, but not yet, and the blocker is now specific.** The requirement is `+0.03` to `+0.16` at
-depth on a good site, which is well within reach of a real read on a game. What is not within
-reach is a `q` whose relative error at 2× the line is under the hold. Today it is 17.7% against a
-6% hold — the model must get roughly **three times more accurate in the tail**, or the wager must
-be found at a hold small enough to absorb it.
+**Yes, and the gap is entirely in the belief.** The fitted belief model loses 10–25% on the same
+wagers the oracle wins 7–18% on. Everything between those two numbers is what a better estimate of
+`s` is worth, and it is the only thing worth working on.
 
-Two things follow for how to look for candidates, and both are screens this project can now apply:
+The requirement is `+0.03` to `+0.16` at depth on a good site. The fitted model's bands deviate
+±0.16 from the base rate with a level drift of ±0.08 — so it is operating at roughly the noise
+scale of its own input, and screening on it selects estimation error rather than edge. A read that
+genuinely knows a game is 15 points likelier than its base rate to be a shootout would clear the
+bar. Whether any such read exists is not a question this repository can answer about itself.
+
+Two screens fall out, and both are things this project can now apply to a named candidate:
 
 1. **Screen on `q − r` first, not on the story.** A site where the scenario barely moves the
    distribution can never pay, however confident the belief. The best sites separate 3–6× in
    relative terms at depth; the median separates by almost nothing.
-2. **Prefer depth, but only where the cell is thick.** The requirement improves with depth and the
-   relative error worsens with it. Those pull opposite ways, and the crossing point is a property
-   of the site's `n`, not of the line.
+2. **Screen on the site's own calibration, not the grid's average.** `receiving_yards` is
+   trustworthy at 2× the line and `rushing_yards`'s baseline half is not, and no pooled number
+   will tell you which one you are standing on.
 
 ## Data note
 

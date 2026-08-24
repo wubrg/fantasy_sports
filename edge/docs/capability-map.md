@@ -243,10 +243,13 @@ not an edge. What the backtest produces is the price you would need — +137 at 
 average, +185 at 1.15× it.
 
 `make backtest-tails` answers the follow-on. The requirement for a tail to pay is
-`s_edge > P_book × hold / (q − r)`, it **falls with depth** as the thesis predicts (median +0.290
-at the line, +0.159 at 2×), and it is blocked by something else: the grid's **relative** error
-reaches 17.7% at 2× the line against a 6% hold, while its absolute error never exceeds 1.6pp.
-Absolute calibration flatters a deep line. See `FINDINGS.md` §15 and §16.
+`s_edge > P_book × hold / (q − r)`, and it **falls with depth** as the thesis predicts — median
++0.290 at the line, +0.159 at 2×, with the best sites needing only +0.03.
+
+`make backtest-oracle` bounds it. Replace `s` with the truth and the same screened strategy earns
+**+7% to +18%** at a 6% hold. So the money is real and `q` is good enough to collect it; the entire
+gap is the belief. The fitted model loses 10–25% on the wagers the oracle wins on, because its own
+level drift (±0.08) is the same size as the edge it is trying to detect. See `FINDINGS.md` §15–16.
 
 ### `s` is measured for every scenario now
 
