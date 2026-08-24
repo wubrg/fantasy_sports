@@ -213,6 +213,23 @@ func meanOf(pts []Point, f func(Point) float64) float64 {
 	return s / float64(len(pts))
 }
 
+// Positions drops abstentions.
+//
+// Exported because every statistic and every interval must be computed over the
+// SAME population, and the population is positions. Mixing them produced a
+// bootstrap interval that did not contain its own point estimate -- the
+// estimate over 20 positions, the interval over 60 rows including 40
+// abstentions sitting on the reference.
+func Positions(pts []Point) []Point {
+	out := make([]Point, 0, len(pts))
+	for _, p := range pts {
+		if !p.Abstained {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
 func withRef(pts []Point) []Point {
 	var out []Point
 	for _, p := range pts {
@@ -518,7 +535,7 @@ func BootstrapCI(pts []Point, stat func([]Point) float64, iters int, seed int64,
 // what stops four scenarios times several statistics times eighteen weekly
 // looks from manufacturing a winner.
 func PairedBrierGain(pts []Point) float64 {
-	ref := withRef(pts)
+	ref := withRef(Positions(pts))
 	if len(ref) == 0 {
 		return math.NaN()
 	}

@@ -84,7 +84,10 @@ func beliefsScore(args []string) error {
 	fmt.Printf("  predicted         %.3f\n  happened          %.3f\n  bias              %+.2fpp\n",
 		r.Mean, r.Base, r.Bias*100)
 
-	lo, hi := calib.BootstrapCI(use, calib.Brier, 800, 20260824, 0.05)
+	// The interval must cover the same population as the estimate: positions,
+	// not positions plus abstentions.
+	scored := calib.Positions(use)
+	lo, hi := calib.BootstrapCI(scored, calib.Brier, 800, 20260824, 0.05)
 	fmt.Printf("\n  RELIABILITY and RESOLUTION are different things, and one good number\n")
 	fmt.Printf("  for the first proves nothing about the second.\n")
 	fmt.Printf("    Brier           %.4f  [%.4f, %.4f]  (clustered by game)\n", r.Brier, lo, hi)
@@ -97,20 +100,22 @@ func beliefsScore(args []string) error {
 		fmt.Printf("         every game. That can be perfectly calibrated and still worthless.\n")
 	}
 
-	fmt.Printf("\n  CALIBRATION SLOPE  %.3f", r.Slope)
 	if r.Converged {
-		fmt.Printf("  (se %.3f, intercept %+.3f)\n", r.SlopeSE, r.Intercept)
+		fmt.Printf("\n  CALIBRATION SLOPE  %.3f  (se %.3f, intercept %+.3f)\n",
+			r.Slope, r.SlopeSE, r.Intercept)
+		fmt.Printf("    1.0 is honest; below 1 means its confident calls are over-confident.\n")
 	} else {
-		fmt.Printf("  DID NOT CONVERGE — treat as unmeasured\n")
+		// No number, rather than a number to be misread -- and the RIGHT reason,
+		// because the two causes mean opposite things about the forecaster.
+		fmt.Printf("\n  CALIBRATION SLOPE  unmeasurable — %s\n", slopeFailure(r))
 	}
-	fmt.Printf("    1.0 is honest; below 1 means its confident calls are over-confident.\n")
 	fmt.Printf("  DISCRIMINATION     AUC %.3f, separation %+.3f\n", r.AUC, r.Separation)
 
 	if r.HasRef {
 		fmt.Printf("\n  AGAINST THE REFERENCE  (%d of %d rows had one)\n", r.RefN, r.Positions)
 		fmt.Printf("    reference Brier %.4f   skill %+.3f\n", r.RefBrier, r.Skill)
-		gain := calib.PairedBrierGain(use)
-		glo, ghi := calib.BootstrapCI(use, calib.PairedBrierGain, 800, 20260824, 0.05)
+		gain := calib.PairedBrierGain(scored)
+		glo, ghi := calib.BootstrapCI(scored, calib.PairedBrierGain, 800, 20260824, 0.05)
 		fmt.Printf("    paired gain     %+.5f  [%+.5f, %+.5f]   <- the pre-registered endpoint\n",
 			gain, glo, ghi)
 		fmt.Printf("\n    Calibration is not an edge. These two are what the wager needs:\n")
@@ -143,6 +148,25 @@ func beliefsScore(args []string) error {
 
 	powerNote(r.Positions)
 	return nil
+}
+
+// slopeFailure names why the logistic fit did not converge.
+//
+// The two causes are opposite findings and must not share a message. A
+// forecaster whose calls never vary has nothing to fit; one whose calls were
+// ALL correct has a maximum likelihood at infinity. Reporting the first when
+// the second happened would tell someone their forecaster is flat when it was
+// in fact perfect on the sample.
+func slopeFailure(r calib.Report) string {
+	switch {
+	case r.AUC >= 0.999 || r.AUC <= 0.001:
+		return fmt.Sprintf(
+			"every call separated the outcome perfectly (AUC %.3f), so the fit runs to "+
+				"infinity. That is a small-sample artefact, not a slope of zero", r.AUC)
+	case r.Resolution < 1e-6:
+		return "the forecasts barely vary, so there is no slope to fit"
+	}
+	return "the fit did not converge; treat it as unmeasured rather than as a number"
 }
 
 // points turns settled predictions into scored points.

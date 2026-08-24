@@ -335,3 +335,63 @@ func TestSettleRefusesAMovedThreshold(t *testing.T) {
 	mustFail(t, beliefsSettle([]string{"-outcomes", outPath,
 		"-log", filepath.Join(dir, "log.jsonl")}), "different definition")
 }
+
+// TestScoreReadsOutTheWholeMeasurement drives score end to end on a synthetic
+// week whose forecaster has a real, known edge. It checks the command runs and
+// exists mainly so the output is exercised — the numbers it prints are the
+// thing a person will act on, and an unexercised report is one that breaks
+// silently the first week it matters.
+func TestScoreReadsOutTheWholeMeasurement(t *testing.T) {
+	dir := t.TempDir()
+	log := filepath.Join(dir, "log.jsonl")
+	kick := time.Now().Add(48 * time.Hour)
+
+	// 60 games. The forecaster leans the right way on a third of them and
+	// abstains on the rest, which is the shape the contract actually produces.
+	var rows []outcomeRow
+	for i := 0; i < 60; i++ {
+		gid := "2026_01_G" + string(rune('A'+i/26)) + string(rune('A'+i%26))
+		// A forecaster with genuine but imperfect resolution: it spreads its
+		// calls, is right more often than not on the confident ones, and
+		// abstains on two thirds of the slate. A single repeated belief would
+		// exercise none of the report -- Brier is exactly 0.25 at p=0.5 whatever
+		// happens, so the interval collapses and the slope has nothing to fit.
+		informed := i%3 == 0
+		belief, abstain := 0.3243, true
+		happened := i%5 == 0
+		if informed {
+			abstain = false
+			switch i % 9 {
+			case 0:
+				belief, happened = 0.62, true
+			case 3:
+				belief, happened = 0.55, true
+			default:
+				belief, happened = 0.28, false
+			}
+		}
+		p := betlog.Prediction{
+			Season: 2026, Week: 1, GameID: gid, Team: "KC",
+			Scenario: "efficient_offense", Belief: belief,
+			Source: "prompt", Kickoff: kick, GeneratedAt: time.Now(),
+			SBaseRate: f64(0.3243),
+		}
+		if abstain {
+			p.Claims = []string{"abstained: no read"}
+		}
+		if _, err := betlog.Record(log, p, time.Now()); err != nil {
+			t.Fatal(err)
+		}
+		rows = append(rows, outcomeRow{GameID: gid, Team: "KC",
+			Scenario: "efficient_offense", Status: "settled", Occurred: happened})
+	}
+	outPath := writeTestJSON(t, dir, "week01.outcomes.json", outcomePack{
+		Season: 2026, Week: 1, Definitions: gridDefinitions(), Rows: rows,
+	})
+	if err := beliefsSettle([]string{"-outcomes", outPath, "-log", log}); err != nil {
+		t.Fatal(err)
+	}
+	if err := beliefsScore([]string{"-log", log, "-bar", "0.10"}); err != nil {
+		t.Fatal(err)
+	}
+}
