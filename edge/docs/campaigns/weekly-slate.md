@@ -145,6 +145,13 @@ against a 2.38-point vig cushion. See [FINDINGS §11](../../model/FINDINGS.md).
 probability — and now also selects the posted-total band the grid is conditioned on. `-trend` is the
 role change: share points for the share-based outcomes, raw volume for passing.
 
+**Where `s` comes from.** For `shootout` the tool derives it from the posted total, as above. For
+`pass_heavy` and `efficient_offense` there is no market line to read, and you used to have to
+invent the number. `edgectl belief -name efficient_offense -prior 0.48` reads it off the team's own
+prior form instead, and `edgectl scenario -prior 0.48` uses it directly. Treat it as a **rank**
+rather than a probability: the bands hold their order out of sample and drift in level by up to
+8 points, and the command says so.
+
 **Unders.** `-side under` prices the other direction off the same cell. It matters more than it
 sounds: the grid stores a player's output as a ratio to his own baseline, and the median of that
 ratio is below 1.0 because yardage is right-skewed — a player clears his own average rather less

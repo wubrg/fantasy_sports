@@ -167,6 +167,18 @@ make findings       # reproduce every claim in model/FINDINGS.md
 make fit            # REWRITES the committed artifacts
 ```
 
+Scoring, which is separate from fitting and never writes to the committed artifacts:
+
+```
+make backtest        # fit a 2009-2024 grid, score it on 2025
+make backtest-tails  # what a tail costs to chase, and whether the belief model pays it
+make backtest-slate  # the same, restricted to the January 2026 slate
+```
+
+The backtest reads the artifact rather than rebuilding the grid in memory. A measurement that
+reconstructs what it scores cannot see anything the serialisation does — which is how a
+one-decimal rounding survived every calibration check here.
+
 `make fit` changes what `edgectl` prices. Read the diff — a half-yard shift in one cell median once
 moved a documented belief requirement by 4.2 points.
 

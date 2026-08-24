@@ -232,6 +232,22 @@ It stays on the Python side of the boundary deliberately: `edgectl` has no runti
 and giving it one to save a copy-paste would trade the project's clearest invariant for a
 convenience.
 
+### The whole thing has been scored, once, on a season it never saw
+
+`make backtest` fits a 2009–2024 grid and a belief model to match, then runs them against 2025.
+It reads the artifact rather than rebuilding the grid, for the reason above.
+
+Result: **predicted 0.430, actual 0.423 — +0.74pp over 16,512 wagers.** The tool works. And every
+one of those wagers loses at −110, which is the finding rather than a contradiction: calibration is
+not an edge. What the backtest produces is the price you would need — +137 at a line on a player's
+average, +185 at 1.15× it.
+
+`make backtest-tails` answers the follow-on. The requirement for a tail to pay is
+`s_edge > P_book × hold / (q − r)`, it **falls with depth** as the thesis predicts (median +0.290
+at the line, +0.159 at 2×), and it is blocked by something else: the grid's **relative** error
+reaches 17.7% at 2× the line against a 6% hold, while its absolute error never exceeds 1.6pp.
+Absolute calibration flatters a deep line. See `FINDINGS.md` §15 and §16.
+
 ### `s` is measured for every scenario now
 
 `P(hit) = q·s + r·(1−s)`. The grid fits `q` and `r`; `s` came off the posted total for `shootout`
