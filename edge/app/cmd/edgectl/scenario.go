@@ -21,6 +21,9 @@ func scenarioCmd(args []string) error {
 	threshold := fs.Float64("threshold", 0, "scenario threshold (combined points, or final margin)")
 	sigma := fs.Float64("sigma", 0, "override the dispersion; 0 uses the documented default")
 	sMarket := fs.Float64("smarket", -1, "market scenario probability, overriding the derived one")
+	priorForm := fs.Float64("prior", 0,
+		"the team's prior-form value, to derive s from the fitted belief model instead "+
+			"of stating it. Only for the bases with no market line (see `edgectl belief`)")
 	belief := fs.Float64("belief", -1, "your scenario probability (required)")
 	q := fs.Float64("q", -1, "P(hit | scenario) (required)")
 	r := fs.Float64("r", -1, "P(hit | no scenario) (required)")
@@ -33,11 +36,16 @@ func scenarioCmd(args []string) error {
 	rungs := fs.String("rungs", "", "ladder as line:price:q:r,... (replaces -price/-q/-r)")
 	outcome := fs.String("outcome", "receiving_yards",
 		"what the prop measures: "+outcomeNames())
-	projTargets := fs.Float64("targets", 0,
-		"projected opportunity for the grid lookup: targets for a pass-catcher, "+
-			"attempts for a quarterback")
+	baseline := fs.Float64("baseline", 0,
+		"what this player NORMALLY does: his prior mean in the outcome's own units "+
+			"(e.g. 52 for a 52-yards-a-game receiver). The grid prices the line as a "+
+			"ratio to this, because that is what a book sets it near")
 	trend := fs.Float64("trend", 0, "two-game target-share trend, e.g. 0.06 for +6 points")
 	line := fs.Float64("line", 0, "the prop line in yards, required when looking up q and r")
+	side := fs.String("side", "over",
+		"over or under. The grid fits one direction and reads the other off the same "+
+			"cell; -q/-r, if you state them, are taken as already describing the side "+
+			"you are pricing")
 	confidence := fs.Float64("confidence", 0.95, "confidence level for looked-up intervals")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -73,6 +81,18 @@ func scenarioCmd(args []string) error {
 	if basisVal == scenario.Total && !supplied["total"] && *sMarket < 0 {
 		return fmt.Errorf("-basis total needs an explicit -total (or -smarket)")
 	}
+	// A prior-form value derives s where the operator would otherwise invent
+	// it. Resolved before the "you must state it" check below, so supplying
+	// -prior satisfies that requirement.
+	if supplied["prior"] && *sMarket < 0 {
+		p, err := beliefFor(*name, *priorForm)
+		if err != nil {
+			return err
+		}
+		*sMarket = p
+		fmt.Printf("  s = %.3f derived from the belief model (prior form %g)\n\n",
+			p, *priorForm)
+	}
 	if basisVal.NeedsStatedProbability() && *sMarket < 0 {
 		return fmt.Errorf(
 			"-basis %s has no fitted residual distribution, so its probability cannot be "+
@@ -87,17 +107,26 @@ func scenarioCmd(args []string) error {
 	//
 	// Only when the grid will actually be consulted: stated -q/-r and -rungs
 	// carry the operator's own conditionals, and they own what those mean.
+	// The direction the scenario occurs in comes from the grid, not from a
+	// flag: it is a property of the fit, and asking the operator to restate it
+	// would be one more place for the two to disagree.
+	below := false
+	if c, err := scenario.LoadConditionals(); err == nil {
+		below = c.OccursBelow(*name)
+	}
+
 	if *rungs == "" && *q < 0 && *r < 0 {
 		c, err := scenario.LoadConditionals()
 		if err != nil {
 			return err
 		}
-		if err := c.CheckDefinition(*outcome, *name, basisVal.String(), *threshold); err != nil {
+		if err := c.CheckDefinition(*outcome, *name, basisVal.String(), *threshold, below); err != nil {
 			return err
 		}
 	}
 
-	sc, err := marketScenario(*name, basisVal, *total, *spread, *threshold, *sigma, *sMarket)
+	sc, err := marketScenario(*name, basisVal, *total, *spread, *threshold, *sigma, *sMarket,
+		below, supplied["prior"])
 	if err != nil {
 		return err
 	}
@@ -127,8 +156,9 @@ func scenarioCmd(args []string) error {
 	}
 
 	qv, rv, condSource, err := resolveConditionals(
-		*outcome, *name, *q, *r, *projTargets, *trend, *line, *confidence,
-		basisVal.String(), *threshold)
+		*outcome, *name, *q, *r,
+		scenario.Site{Posted: *total, Baseline: *baseline, Trend: *trend},
+		*line, *confidence, basisVal.String(), *threshold, *side)
 	if err != nil {
 		return err
 	}
@@ -199,9 +229,12 @@ func scenarioCmd(args []string) error {
 // The two sources are reported separately into the bet log so they can be
 // scored separately later.
 func resolveConditionals(
-	outcome, name string, q, r, projTargets, trend, line, confidence float64,
-	basis string, threshold float64,
+	outcome, name string, q, r float64, at scenario.Site, line, confidence float64,
+	basis string, threshold float64, side string,
 ) (float64, float64, string, error) {
+	if side != "over" && side != "under" {
+		return 0, 0, "", fmt.Errorf("-side must be over or under, got %q", side)
+	}
 	if q >= 0 && r >= 0 {
 		return q, r, "stated", nil
 	}
@@ -210,9 +243,17 @@ func resolveConditionals(
 			"-q and -r must be supplied together: one alone would be silently dropped in " +
 				"favour of the fitted grid, and you would never be told")
 	}
-	if projTargets <= 0 || line <= 0 {
+	if at.Baseline <= 0 || line <= 0 {
 		return 0, 0, "", fmt.Errorf(
-			"supply both -q and -r, or -targets and -line to look them up from the fitted grid")
+			"supply both -q and -r, or -baseline and -line to look them up from the fitted grid")
+	}
+	// The grid is conditioned on the POSTED total as well, so a lookup without
+	// one would silently land in whichever band contains zero. Refused: the
+	// number is on the board next to the price.
+	if at.Posted <= 0 {
+		return 0, 0, "", fmt.Errorf(
+			"-total is required for a grid lookup: q and r are fitted per posted-total band, " +
+				"so without it the lookup lands in whichever band contains zero")
 	}
 
 	c, err := scenario.LoadConditionals()
@@ -222,10 +263,10 @@ func resolveConditionals(
 	// Before anything is looked up: the grid's q and r answer a fixed question,
 	// and s answers whatever -threshold was passed. If those differ, no amount
 	// of correct arithmetic downstream produces a meaningful number.
-	if err := c.CheckDefinition(outcome, name, basis, threshold); err != nil {
+	if err := c.CheckDefinition(outcome, name, basis, threshold, c.OccursBelow(name)); err != nil {
 		return 0, 0, "", err
 	}
-	qc, rc, err := c.QR(outcome, name, projTargets, trend, line, confidence)
+	qc, rc, err := c.QR(outcome, name, at, line, confidence)
 	if err != nil {
 		// Only list the alternatives when the SCENARIO is what failed. A line
 		// outside the observed range is a different problem, and answering it
@@ -236,13 +277,18 @@ func resolveConditionals(
 		}
 		return 0, 0, "", err
 	}
+	// The grid fits P(output > line) only. An under is the same cell read from
+	// the other end -- and it is where this grid's value tends to sit, because
+	// a line set near a player's own median is one he clears rather less often
+	// than half the time.
+	if side == "under" {
+		qc, rc = qc.Complement(), rc.Complement()
+	}
 
-	axis := "opportunity"
 	unit := "yds"
 	trendScale := 1.0
 	trendUnit := ""
 	if def, ok := c.Outcomes[outcome]; ok {
-		axis = def.Opportunity
 		if def.Unit != "" {
 			unit = def.Unit
 		}
@@ -252,23 +298,34 @@ func resolveConditionals(
 			trendScale, trendUnit = 100.0, " pt"
 		}
 	}
-	if af := c.AcceptedFailureFor(outcome, name); af != nil {
-		fmt.Printf("  OVERRIDDEN GATE — this scenario does NOT pass validation and is\n")
-		fmt.Printf("  being priced on a failure the operator accepted.\n")
+	// An override now names one SITE, and this lookup is keyed by the site the
+	// wager falls in -- so a non-nil result already means "this wager is the
+	// overridden one". The old call took no coordinates and fired on every
+	// wager anywhere in the scenario, which made the warning something to read
+	// past rather than something to act on.
+	if af := c.AcceptedFailureFor(outcome, name, at); af != nil {
+		fmt.Printf("  OVERRIDDEN GATE — THIS CELL does not pass validation and is being\n")
+		fmt.Printf("  priced on a failure the operator accepted by name.\n")
 		fmt.Printf("    failing cell   %s\n", af.Cell)
 		fmt.Printf("    measured       %s\n", af.Measured)
 		fmt.Printf("    accepted by    %s\n", af.AcceptedBy)
-		if af.Covers(projTargets, trend) {
-			fmt.Printf("  THIS WAGER IS IN THAT CELL. You are betting the part that failed\n")
-			fmt.Printf("  out of sample, not the fifteen cells that held.\n\n")
-		} else {
-			fmt.Printf("  This wager is outside that cell.\n\n")
-		}
+		fmt.Printf("  You are betting the part that failed, not the sites that held.\n\n")
 	}
 	fmt.Printf("  CONDITIONALS from the fitted grid (%s, %d-%d)\n",
 		outcome, c.Seasons[0], c.Seasons[1])
-	fmt.Printf("    %.1f projected %s, %+.1f%s trend, line %.1f\n",
-		projTargets, axis, trend*trendScale, trendUnit, line)
+	// The line is stated as a multiple of the player's own baseline as well as
+	// in its own units, because the multiple is what the grid actually reads
+	// and a reader should be able to see the number being looked up.
+	fmt.Printf("    %.1f %s baseline, posted total %.1f, %+.1f%s trend\n",
+		at.Baseline, unit, at.Posted, at.Trend*trendScale, trendUnit)
+	fmt.Printf("    line %.1f = %.2fx his baseline, pricing the %s\n",
+		line, line/at.Baseline, side)
+	// The gate's own dependence on its two constants, stated where the number
+	// is used. A verdict that moves when MIN_CELL moves is still a verdict,
+	// but the operator should not have to run a sweep to find that out.
+	if note := qc.Cell.StabilityNote(); note != "" {
+		fmt.Printf("    CAVEAT: %s\n", note)
+	}
 	// n_eff is shown beside n, not instead of it. The interval is built on the
 	// smaller number, and printing only the raw count would overstate the
 	// evidence behind the interval printed next to it.
@@ -310,10 +367,18 @@ func resolveConditionals(
 // the number that decides whether the estimate means anything, and appending it
 // to an already-long row buries it exactly where it would be skimmed past.
 func support(c scenario.Conditional) string {
-	if c.Thin() {
-		return fmt.Sprintf("THIN — only ~%.0f effective observations past the line", c.TailN)
+	switch {
+	case c.Thin():
+		return fmt.Sprintf("THIN — only ~%.0f effective observations past the line (±%.0f%%)",
+			c.TailN, c.RelativeError()*100)
+	case c.Sparse():
+		// The middle band exists because one threshold made 13 observations and
+		// 400 print the same word, at ±28% and ±5% respectively.
+		return fmt.Sprintf("SPARSE — ~%.0f effective observations past the line (±%.0f%%)",
+			c.TailN, c.RelativeError()*100)
 	}
-	return fmt.Sprintf("MEASURED — ~%.0f effective observations past the line", c.TailN)
+	return fmt.Sprintf("MEASURED — ~%.0f effective observations past the line (±%.0f%%)",
+		c.TailN, c.RelativeError()*100)
 }
 
 // thinSide names which of q and r is short, since the remedy differs: a thin q
@@ -404,9 +469,15 @@ func ladderReport(spec string, sMarket, belief float64, b wager.Bankroll, stake 
 	return nil
 }
 
-func marketScenario(name string, basis scenario.Basis, total, spread, threshold, sigma, override float64) (scenario.Scenario, error) {
+func marketScenario(name string, basis scenario.Basis, total, spread, threshold, sigma, override float64, below, fromSignals bool) (scenario.Scenario, error) {
 	if override >= 0 {
-		return scenario.StateProb(name, basis, threshold, override)
+		// Provenance, not decoration: a probability the belief model produced
+		// must not be logged as one a person asserted, or the log cannot score
+		// them apart later.
+		if fromSignals {
+			return scenario.FromSignals(name, basis, threshold, override, below)
+		}
+		return scenario.StateProb(name, basis, threshold, override, below)
 	}
 	switch basis {
 	case scenario.Total:
@@ -414,9 +485,9 @@ func marketScenario(name string, basis scenario.Basis, total, spread, threshold,
 			return scenario.Scenario{}, fmt.Errorf(
 				"need -total to derive a total-based scenario (or pass -smarket)")
 		}
-		return scenario.FromTotal(name, total, threshold, sigma)
+		return scenario.FromTotal(name, total, threshold, sigma, below)
 	default:
-		return scenario.FromSpread(name, spread, threshold, sigma)
+		return scenario.FromSpread(name, spread, threshold, sigma, below)
 	}
 }
 

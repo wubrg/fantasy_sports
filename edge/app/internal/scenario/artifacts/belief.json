@@ -1,0 +1,117 @@
+{
+ "generated_at": "2026-08-23T21:39:10Z",
+ "generated_by": "edge/model/analysis/fit_belief.py",
+ "seasons": [
+  2009,
+  2025
+ ],
+ "note": "P(scenario occurs) from the team's own prior form, for the scenarios with no market line to read it off. shootout and blowout_loss are derived from the posted total and the spread instead.",
+ "scenarios": {
+  "efficient_offense": {
+   "field": "success_rate",
+   "prior_field": "success_rate_prior",
+   "threshold": 0.46,
+   "bands": [
+    {
+     "min": null,
+     "max": 0.3954147491434449,
+     "p": 0.1691,
+     "n": 1088,
+     "held_p": 0.2211,
+     "held_n": 294
+    },
+    {
+     "min": 0.3954147491434449,
+     "max": 0.4194083909120834,
+     "p": 0.2371,
+     "n": 1088,
+     "held_p": 0.2474,
+     "held_n": 388
+    },
+    {
+     "min": 0.4194083909120834,
+     "max": 0.44032998946982504,
+     "p": 0.329,
+     "n": 1088,
+     "held_p": 0.3356,
+     "held_n": 298
+    },
+    {
+     "min": 0.44032998946982504,
+     "max": 0.46319664766636337,
+     "p": 0.3989,
+     "n": 1088,
+     "held_p": 0.4454,
+     "held_n": 366
+    },
+    {
+     "min": 0.46319664766636337,
+     "max": null,
+     "p": 0.4871,
+     "n": 1088,
+     "held_p": 0.545,
+     "held_n": 444
+    }
+   ],
+   "spread": 0.318,
+   "monotone": true,
+   "base_rate": 0.3243,
+   "base_rate_held_out": 0.3721,
+   "worst_band_shift": 0.0579,
+   "split": 2021
+  },
+  "pass_heavy": {
+   "field": "offense_proe",
+   "prior_field": "offense_prior",
+   "threshold": 3.0,
+   "bands": [
+    {
+     "min": null,
+     "max": -3.364380400107634,
+     "p": 0.1268,
+     "n": 1088,
+     "held_p": 0.1209,
+     "held_n": 554
+    },
+    {
+     "min": -3.364380400107634,
+     "max": -0.7400139955451552,
+     "p": 0.25,
+     "n": 1088,
+     "held_p": 0.2168,
+     "held_n": 489
+    },
+    {
+     "min": -0.7400139955451552,
+     "max": 1.4020392242321278,
+     "p": 0.3272,
+     "n": 1088,
+     "held_p": 0.2456,
+     "held_n": 285
+    },
+    {
+     "min": 1.4020392242321278,
+     "max": 3.864377144695454,
+     "p": 0.3998,
+     "n": 1088,
+     "held_p": 0.4322,
+     "held_n": 236
+    },
+    {
+     "min": 3.864377144695454,
+     "max": null,
+     "p": 0.5726,
+     "n": 1088,
+     "held_p": 0.5708,
+     "held_n": 226
+    }
+   ],
+   "spread": 0.4458,
+   "monotone": true,
+   "base_rate": 0.3353,
+   "base_rate_held_out": 0.2648,
+   "worst_band_shift": 0.0816,
+   "split": 2021
+  }
+ }
+}

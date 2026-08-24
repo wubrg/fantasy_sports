@@ -81,15 +81,45 @@ func TestParseBankrollAndBasis(t *testing.T) {
 // TestMarketScenarioRequiresInput guards the case where neither a game line nor
 // an override is supplied: the tool must not invent a market view.
 func TestMarketScenarioRequiresInput(t *testing.T) {
-	if _, err := marketScenario("s", scenario.Total, 0, 0, 50, 0, -1); err == nil {
+	if _, err := marketScenario("s", scenario.Total, 0, 0, 50, 0, -1, false, false); err == nil {
 		t.Error("a total-based scenario with no total and no override must fail")
 	}
 	// An explicit override is enough on its own.
-	s, err := marketScenario("s", scenario.Total, 0, 0, 50, 0, 0.3)
+	s, err := marketScenario("s", scenario.Total, 0, 0, 50, 0, 0.3, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if s.Source != scenario.Stated || s.Prob != 0.3 {
 		t.Errorf("override should produce a stated 0.3, got %v", s)
+	}
+}
+
+// TestBeliefModelProbabilityIsNotLoggedAsStated: the bet log scores stated
+// scenarios separately from derived ones to find out which is better
+// calibrated, so a probability the belief model produced must not arrive
+// wearing an operator's label.
+func TestBeliefModelProbabilityIsNotLoggedAsStated(t *testing.T) {
+	const p = 0.487
+	stated, err := marketScenario("efficient_offense", scenario.SuccessRate,
+		0, 0, 0.46, 0, p, false, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	derived, err := marketScenario("efficient_offense", scenario.SuccessRate,
+		0, 0, 0.46, 0, p, false, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stated.Source != scenario.Stated {
+		t.Errorf("an operator-supplied probability recorded %v, want stated", stated.Source)
+	}
+	if derived.Source != scenario.DerivedFromSignals {
+		t.Errorf("a belief-model probability recorded %v, want derived-from-signals",
+			derived.Source)
+	}
+	// Same number, different provenance — which is the whole point.
+	if stated.Prob != derived.Prob {
+		t.Errorf("the two paths disagree on the probability: %v vs %v",
+			stated.Prob, derived.Prob)
 	}
 }

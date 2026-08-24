@@ -120,7 +120,7 @@ verify-model: ## Re-run both fits read-only and print calibration (writes nothin
 	@echo "== conditionals: scenario separation =="
 	@$(PY) $(MODEL)/analysis/fit_conditionals.py --report
 
-fit: fit-residuals fit-conditionals ## Regenerate BOTH artifacts (rewrites committed files)
+fit: fit-residuals fit-conditionals fit-belief ## Regenerate ALL artifacts (rewrites committed files)
 
 fit-residuals: ## Refit the game-line residual distribution
 	$(PY) $(MODEL)/analysis/fit_residuals.py
@@ -128,13 +128,56 @@ fit-residuals: ## Refit the game-line residual distribution
 fit-conditionals: ## Refit the pooled q/r grid
 	$(PY) $(MODEL)/analysis/fit_conditionals.py
 
+fit-belief: ## Refit P(scenario occurs) from team prior form -- the `s` half
+	$(PY) $(MODEL)/analysis/fit_belief.py
+
+# A backtest must score an ARTIFACT, not a reconstruction of one: a measurement
+# that rebuilds the grid in memory cannot see anything the serialisation does,
+# which is how a one-decimal rounding survived every calibration check here.
+# So this fits a real grid through 2024 into a scratch file, then reads it.
+BACKTEST_DIR := /tmp/edge-backtest
+
+backtest: ## Score the tool on a season it never saw (slow: fits a 2009-2024 grid first)
+	@mkdir -p $(BACKTEST_DIR)
+	$(PY) $(MODEL)/analysis/fit_conditionals.py --through 2024 --out $(BACKTEST_DIR)/grid.json
+	$(PY) $(MODEL)/analysis/fit_belief.py --through 2024 --out $(BACKTEST_DIR)/belief.json
+	@cd $(MODEL)/analysis && $(PY) backtest.py --grid $(BACKTEST_DIR)/grid.json \
+		--belief $(BACKTEST_DIR)/belief.json --from 2025
+
+backtest-tails: ## What a tail costs to chase, and whether the belief model can pay it
+	@cd $(MODEL)/analysis && $(PY) backtest.py --grid $(BACKTEST_DIR)/grid.json \
+		--belief $(BACKTEST_DIR)/belief.json --from 2025 --tails
+
+backtest-oracle: ## The ceiling: what a PERFECT belief would earn, to bound the rest
+	@cd $(MODEL)/analysis && $(PY) backtest.py --grid $(BACKTEST_DIR)/grid.json \
+		--belief $(BACKTEST_DIR)/belief.json --from 2025 --tails --oracle
+
+backtest-slate: ## The same, restricted to the January 2026 slate
+	@cd $(MODEL)/analysis && $(PY) backtest.py --grid $(BACKTEST_DIR)/grid.json \
+		--belief $(BACKTEST_DIR)/belief.json --from 2025 --since 2026-01-01
+
 lag: ## Run the utilization-lag test (~10s)
 	$(PY) $(MODEL)/analysis/utilization_lag.py
 
 compare-oos: ## Reproduce the rejected magnitude-aware out-of-sample table (FINDINGS.md 4)
 	@cd $(MODEL)/analysis && $(PY) validate.py --compare-oos
 
-findings: verify-model lag compare-oos ## Reproduce every measured claim in model/FINDINGS.md
+calibration: ## Stratified calibration error, by posted total and by own baseline (FINDINGS.md 11)
+	@cd $(MODEL)/analysis && $(PY) calibration.py --strata
+
+calibration-search: ## The full axis-set search behind FINDINGS.md 11 (slow)
+	@cd $(MODEL)/analysis && $(PY) calibration.py
+
+constants: ## What MIN_CELL and OOS_SPLIT buy at each setting (FINDINGS.md 13)
+	@cd $(MODEL)/analysis && $(PY) validate.py --sweep
+
+recheck: ## Re-run the two checks that went stale (FINDINGS.md 6 and 8; slow)
+	@cd $(MODEL)/analysis && $(PY) recheck.py
+
+permutation: ## Permutation null for the per-site gate, FINDINGS.md 12 (VERY slow, ~30 min)
+	@cd $(MODEL)/analysis && $(PY) permutation.py
+
+findings: verify-model lag compare-oos calibration constants recheck ## Reproduce every measured claim in model/FINDINGS.md
 
 ## --- Examples ---
 
@@ -153,15 +196,23 @@ demo: build demo-clean ## Walk through every command with real numbers
 	@echo " The same wager as a belief, priced off the game line"
 	@echo "================================================================"
 	@./$(APP)/edgectl scenario -name shootout -total 49 -threshold 50 \
-		-belief 0.55 -targets 7.5 -trend 0.07 -line 52.5 \
+		-belief 0.55 -baseline 55 -trend 0.07 -line 52.5 \
 		-price 100 -stake 3 -label "Player A over 52.5 rec yds" -log $(DEMO_LOG)
 	@echo
 	@echo "================================================================"
 	@echo " An alternate-line ladder: which rung needs the smallest leap"
 	@echo "================================================================"
+	@echo " -rungs takes YOUR conditionals, not the grid's. The q and r below"
+	@echo " are the fitted values for this cell at each line, so the demo shows"
+	@echo " what the tool measures rather than a number chosen to look good."
+	@echo ""
+	@echo " Every rung comes back beyond-your-read, and that is the honest"
+	@echo " result: the grid pools every player in the band, so a line set at"
+	@echo " one player's own median sits above the cohort's. See"
+	@echo " docs/reviews/2026-08-23-adversarial.md, finding C3."
 	@./$(APP)/edgectl scenario -name shootout -total 49 -threshold 50 -belief 0.55 \
 		-bankroll bonus -stake 10 \
-		-rungs "52.5:-110:0.72:0.48,75.5:145:0.55:0.26,100.5:450:0.40:0.08"
+		-rungs "52.5:-110:0.550:0.435,75.5:145:0.342:0.226,100.5:450:0.192:0.090"
 	@echo
 	@echo "================================================================"
 	@echo " Settle it, then score your calibration"

@@ -1,7 +1,9 @@
 package scenario
 
 import (
+	"errors"
 	"math"
+	"strings"
 	"testing"
 
 	"edge/internal/wager"
@@ -18,7 +20,7 @@ func closeTo(a, b, eps float64) bool { return math.Abs(a-b) <= eps }
 // normal model says 58.8%. Agreement to within half a point is the reason to
 // trust the default at all.
 func TestSpreadMatchesMoneyline(t *testing.T) {
-	s, err := FromSpread("favourite wins", -3, 0, DefaultSigmaMargin)
+	s, err := FromSpread("favourite wins", -3, 0, DefaultSigmaMargin, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +54,7 @@ func TestSpreadCurveShape(t *testing.T) {
 	}
 	var prev float64
 	for i, c := range cases {
-		s, err := FromSpread("fav wins", c.spread, 0, DefaultSigmaMargin)
+		s, err := FromSpread("fav wins", c.spread, 0, DefaultSigmaMargin, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -66,7 +68,7 @@ func TestSpreadCurveShape(t *testing.T) {
 	}
 
 	// A pick'em is a coin flip.
-	s, err := FromSpread("fav wins", 0, 0, DefaultSigmaMargin)
+	s, err := FromSpread("fav wins", 0, 0, DefaultSigmaMargin, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,7 +88,7 @@ func TestFromTotal(t *testing.T) {
 		{52.5, 55, 0.401},
 	}
 	for _, c := range cases {
-		s, err := FromTotal("shootout", c.total, c.threshold, DefaultSigmaTotal)
+		s, err := FromTotal("shootout", c.total, c.threshold, DefaultSigmaTotal, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -103,7 +105,7 @@ func TestFromTotal(t *testing.T) {
 	}
 
 	// The threshold equalling the total is a coin flip by construction.
-	s, err := FromTotal("shootout", 47, 47, DefaultSigmaTotal)
+	s, err := FromTotal("shootout", 47, 47, DefaultSigmaTotal, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,7 +118,7 @@ func TestFromTotal(t *testing.T) {
 // back the win probability the default sigma produces must return that sigma.
 func TestCalibrateSigmaRecoversTheDefault(t *testing.T) {
 	for _, spread := range []float64{-3, -7, -10, -14} {
-		s, err := FromSpread("fav wins", spread, 0, DefaultSigmaMargin)
+		s, err := FromSpread("fav wins", spread, 0, DefaultSigmaMargin, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -178,7 +180,7 @@ func TestCalibrationDisagreesAcrossSpreads(t *testing.T) {
 
 // TestStateProbRecordsProvenance covers the operator-supplied path.
 func TestStateProbRecordsProvenance(t *testing.T) {
-	s, err := StateProb("shootout", Total, 50, 0.45)
+	s, err := StateProb("shootout", Total, 50, 0.45, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,24 +191,24 @@ func TestStateProbRecordsProvenance(t *testing.T) {
 		t.Errorf("probability = %v, want 0.45", s.Prob)
 	}
 	for _, bad := range []float64{-0.1, 1.1} {
-		if _, err := StateProb("x", Total, 50, bad); err == nil {
+		if _, err := StateProb("x", Total, 50, bad, false); err == nil {
 			t.Errorf("probability %v must be rejected", bad)
 		}
 	}
-	if _, err := StateProb("", Total, 50, 0.5); err == nil {
+	if _, err := StateProb("", Total, 50, 0.5, false); err == nil {
 		t.Error("an unnamed scenario must be rejected")
 	}
 }
 
 // TestRejectsNonsense keeps the fail-loudly contract.
 func TestRejectsNonsense(t *testing.T) {
-	if _, err := FromTotal("x", 0, 50, 0); err == nil {
+	if _, err := FromTotal("x", 0, 50, 0, false); err == nil {
 		t.Error("a zero game total must be rejected")
 	}
-	if _, err := FromTotal("x", 45, 50, -1); err == nil {
+	if _, err := FromTotal("x", 45, 50, -1, false); err == nil {
 		t.Error("a negative sigma must be rejected")
 	}
-	if _, err := FromSpread("x", -3, 0, -1); err == nil {
+	if _, err := FromSpread("x", -3, 0, -1, false); err == nil {
 		t.Error("a negative sigma must be rejected")
 	}
 	if _, err := normalQuantile(0); err == nil {
@@ -214,5 +216,77 @@ func TestRejectsNonsense(t *testing.T) {
 	}
 	if _, err := normalQuantile(1); err == nil {
 		t.Error("quantile at 1 must be rejected")
+	}
+}
+
+// TestBelowThresholdScenarioIsNotComplemented pins a bug that shipped.
+//
+// Every constructor derives P(X > threshold). blowout_loss occurs BELOW its
+// threshold (margin < -7), so it was handed the complement of its own
+// probability: 77.5% for an event the market put at 22.5%. The blend
+// q*s + r*(1-s) then weighted the wrong side, on a scenario that is validated
+// and priceable for passing yards.
+//
+// CheckDefinition compared basis and threshold and never the operator, so the
+// one mismatch it could not see is the one that reached production.
+func TestBelowThresholdScenarioIsNotComplemented(t *testing.T) {
+	above, err := FromSpread("x", -3, -7, 0, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	below, err := FromSpread("x", -3, -7, 0, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !closeTo(above.Prob+below.Prob, 1.0, 1e-9) {
+		t.Errorf("above %.4f and below %.4f should be complements", above.Prob, below.Prob)
+	}
+	if below.Prob >= above.Prob {
+		t.Errorf("losing by more than 7 from a -3 spread should be the UNLIKELY side; "+
+			"got below=%.3f above=%.3f", below.Prob, above.Prob)
+	}
+	// The header must not claim the wrong direction either.
+	if !strings.Contains(below.String(), "< -7") {
+		t.Errorf("a below-threshold scenario printed as %q", below.String())
+	}
+	if !strings.Contains(above.String(), "> -7") {
+		t.Errorf("an above-threshold scenario printed as %q", above.String())
+	}
+	// A stated probability is the probability the scenario OCCURS, so it must
+	// pass through untouched in either direction.
+	st, err := StateProb("x", Margin, -7, 0.30, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !closeTo(st.Prob, 0.30, 1e-9) {
+		t.Errorf("a stated -smarket was complemented: %.4f", st.Prob)
+	}
+}
+
+// TestCheckDefinitionComparesTheOperator guards the gap that allowed it.
+func TestCheckDefinitionComparesTheOperator(t *testing.T) {
+	c, err := LoadConditionals()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !c.OccursBelow("blowout_loss") {
+		t.Fatal("blowout_loss should be a below-threshold scenario")
+	}
+	if c.OccursBelow("shootout") {
+		t.Fatal("shootout should be an above-threshold scenario")
+	}
+	// Right basis, right threshold, wrong direction: must be refused.
+	// rushing_yards, because passing_yards/blowout_loss no longer has a
+	// priceable site and checkValidated would refuse it before the operator is
+	// ever compared -- which would leave this test passing for the wrong reason.
+	err = c.CheckDefinition("rushing_yards", "blowout_loss", "margin", -7, false)
+	if err == nil {
+		t.Fatal("a direction mismatch was accepted")
+	}
+	if !errors.Is(err, ErrDefinitionMismatch) {
+		t.Errorf("got %v, want ErrDefinitionMismatch", err)
+	}
+	if err := c.CheckDefinition("rushing_yards", "blowout_loss", "margin", -7, true); err != nil {
+		t.Errorf("the correct direction was refused: %v", err)
 	}
 }

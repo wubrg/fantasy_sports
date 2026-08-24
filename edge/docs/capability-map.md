@@ -125,15 +125,31 @@ operator-supplied numbers. Every input is typed by hand.
 
 ### The fitted grid is four stats, with different scenarios usable on each
 
-`conditionals.json` covers **receiving yards, receptions, rushing yards and passing yards**, 2009–2025. Of its two scenarios,
-`blowout_loss` is gated off — its direction is consistent in only 14 of 16 cells and it holds
-in 12 of 15 out of sample, and it "needs a play-by-play definition rather than final margin."
-One usable scenario: `shootout`. Anything else requires stated `-q`/`-r`, which is judgement
-wearing a number's clothes.
+`conditionals.json` covers **receiving yards, receptions, rushing yards and passing yards**,
+2009–2025, with a different set of scenarios validated on each:
 
-A third scenario, `pass_heavy` (offense PROE > 3.0), is **fitted and gated off**. It separates
-better than `shootout` on every measure except one out-of-sample cell, which the rule requires.
-See `FINDINGS.md` §4.
+Since 2026-08-23 the gate rules on a **site** — one (opportunity band, trend band) coordinate of
+one scenario — rather than on a whole scenario, so "priceable" is a count rather than a flag.
+102 of 311 sites are priceable:
+
+| outcome | `shootout` | `blowout_loss` | `pass_heavy` | `efficient_offense` |
+|---|---|---|---|---|
+| receiving yards | 13/29 | vetoed | vetoed | 12/30 |
+| receptions | 10/30 | no direction | 18/30 | 9/30 |
+| rushing yards | no direction | 8/11 | 8/12 | 9/12 |
+| passing yards | 6/10 | no direction | 5/10 | 4/10 |
+
+No override is currently in force; see below.
+
+So a scenario is not simply on or off for an outcome. Asking for a site that did not survive is
+refused by name and reason — "`receiving_yards/shootout` is priceable, but not at posted 46-999,
+baseline 70-999, trend +0.06..+99.00: the bootstrap interval does not clear zero". Anything else is
+refused with the measurement attached. Stated `-q`/`-r` always win over the grid.
+
+`pass_heavy` is **vetoed for receiving yards**: holding realised targets fixed its coefficient
+collapses from t = 14.25 to t = 1.97, so 90% of the separation is volume the projection failed to
+anticipate rather than a market inefficiency. It survives that test elsewhere and is kept there.
+See `FINDINGS.md` §11.
 
 **The Tier 3 case is now priceable** (closed 2026-08-22). `8–11` projected targets with a
 rising role — the corpus's "usage vacuum", high volume meeting climbing usage — held 97
@@ -187,21 +203,111 @@ remains a human judgement, but the fit **fails** when the stated rule and the re
 disagree. Doing this surfaced a correction to `FINDINGS.md`: the "direction inverts at ordinary
 lines" disqualifier does not clear sampling error for either scenario.
 
-### The gate is per scenario, and the evidence says it should be per cell
+### ~~The gate is per scenario, and the evidence says it should be per cell~~ — done 2026-08-23
 
-Measured across 141 testable cells: out-of-sample failures concentrate where the fit effect was
-already noise-sized (median 1.0 yard against 5.0 for cells that held). `blowout_loss` is gated for
-receiving yards while all three of its alpha-band cells held out of sample. A scenario-level gate
-therefore blocks wagers whose own evidence is sound. See `FINDINGS.md` §8; the decision on whether
-to regate is open.
+The old rule required the direction to hold in *every* cell, which passes with probability
+`(1−e)^k` for `k` cells: it grew stricter the more finely the grid was cut, so re-cutting the same
+data rejected findings it had previously accepted. Cell count is a choice about axes, not evidence.
 
-### A gated scenario can be overridden, loudly
+Each site is now judged on its own — direction, bootstrap resolution, and out-of-sample
+persistence, all three, at that site. `k` does not appear. This also made the bootstrap gateable
+for the first time: it was measured but never gated on precisely because requiring it in every cell
+would have rejected real effects.
 
-`SCENARIO_STATUS` may carry an `accepted_failure` naming the specific cell, what was measured, why
-it was accepted and by whom. `qualifies()` is unchanged and the artifact records what the rule said
-alongside the verdict; `edgectl scenario` prints the override at the point of pricing and reports
-whether the wager falls inside the failing cell. Currently used once: `pass_heavy` for receiving
-yards and receptions.
+Two guards come with it. A scenario's dominant sign must first beat chance (two-sided binomial,
+α = 0.05), because a site is judged by agreeing with that sign and agreeing with a coin flip means
+nothing — this alone removes receptions/`blowout_loss` and rushing/`shootout`. And the conjunction
+was tested against a permutation null: it passes **1.6%** of site-tests when the scenario label is
+shuffled across games, against 38–75% for the real thing. See `FINDINGS.md` §12.
+
+### The two typed coordinates can be read from the cache
+
+`model/analysis/player.py --player <name> --season <n> --week <n> [--total <n>]` computes
+`-baseline` and `-trend` for an **upcoming** week using only prior games, reports the cell they
+land in and its verdict, and prints the command. It shares `prior_stats()` with the fit rather than
+reimplementing it, because two copies of that arithmetic would eventually disagree and the
+disagreement would be silent — which is the whole failure mode it exists to remove.
+
+It stays on the Python side of the boundary deliberately: `edgectl` has no runtime data dependency,
+and giving it one to save a copy-paste would trade the project's clearest invariant for a
+convenience.
+
+### The whole thing has been scored, once, on a season it never saw
+
+`make backtest` fits a 2009–2024 grid and a belief model to match, then runs them against 2025.
+It reads the artifact rather than rebuilding the grid, for the reason above.
+
+Result: **predicted 0.430, actual 0.423 — +0.74pp over 16,512 wagers.** The tool works. And every
+one of those wagers loses at −110, which is the finding rather than a contradiction: calibration is
+not an edge. What the backtest produces is the price you would need — +137 at a line on a player's
+average, +185 at 1.15× it.
+
+`make backtest-tails` answers the follow-on. The requirement for a tail to pay is
+`s_edge > P_book × hold / (q − r)`, and it **falls with depth** as the thesis predicts — median
++0.290 at the line, +0.159 at 2×, with the best sites needing only +0.03.
+
+`make backtest-oracle` bounds it. Replace `s` with the truth and the same screened strategy earns
+**+7% to +18%** at a 6% hold. So the money is real and `q` is good enough to collect it; the entire
+gap is the belief. The fitted model loses 10–25% on the wagers the oracle wins on, because its own
+level drift (±0.08) is the same size as the edge it is trying to detect. See `FINDINGS.md` §15–16.
+
+### `s` is measured for every scenario now
+
+`P(hit) = q·s + r·(1−s)`. The grid fits `q` and `r`; `s` came off the posted total for `shootout`
+and the spread for `blowout_loss`, and for `pass_heavy` and `efficient_offense` it was **stated by
+the operator** — a project built to reduce unfalsifiable judgement, relocating it into a number
+someone invents. That was the review's S-problem.
+
+`fit_belief.py` fits it from the team's own prior form, in the same shape the grid uses: band the
+predictor, read the empirical rate off each band, check the bands hold out of sample. Both are
+monotone with real spread — `efficient_offense` runs 0.169→0.487 across its bands, `pass_heavy`
+0.127→0.573.
+
+The **order** holds out of sample; the **level** drifts, by up to 5.8pp and 8.2pp. `edgectl belief`
+reports the drift and says to treat `s` as a rank rather than a precise probability. A probability
+derived this way is recorded as `derived-from-signals`, never as `stated`, so the bet log can score
+the two apart.
+
+### Both directions are priceable
+
+`edgectl scenario -side over|under`. The grid fits `P(output > line)` only and reads the under off
+the same cell, mirroring the interval rather than recomputing it. This is safe now and would not
+have been on the old count grid, where `P(X > 3)` and `P(X < 4)` differ by the mass sitting exactly
+on 3; ratios to a player's own baseline land on a stored quantile point essentially never.
+
+### Every verdict says how much of it is the two constants
+
+`MIN_CELL = 100` and `OOS_SPLIT = 2021` decide which cells exist and what "out of sample" means,
+and both were chosen after the rule they feed. Rather than argue for one setting — any single
+choice is arguable — every cell carries the share of the 25 `MIN_CELL` × `OOS_SPLIT` combinations
+that reach its verdict. Of 103 priceable sites, **86 are firm at every setting and 17 are not**, and
+the 17 announce themselves where the price is formed:
+
+```
+CAVEAT: this verdict holds at 80% of the swept MIN_CELL x OOS_SPLIT settings, not all
+of them — it depends partly on where those two constants were set
+```
+
+`make constants` shows what each setting buys. The short version: at `MIN_CELL = 100` a cell's own
+Wilson half-width is 9.4pp against a typical q−r separation of 8–14pp, so the threshold resolves
+the larger separations and not the smaller — which is why it is not the gate. Publishing a cell
+only makes it eligible for the bootstrap, and the bootstrap refuses plenty that clear n = 100.
+See `FINDINGS.md` §13.
+
+### A refused site can be overridden, loudly
+
+`ACCEPTED_FAILURES` is keyed by the **site** — outcome, scenario and the four coordinates — and is
+checked against that site's measured verdict, so an override cannot quietly cover a scenario. It
+must record what was measured, why it was accepted and by whom, and an override on a site that has
+started passing is reported stale. `edgectl scenario` prints it at the point of pricing; because
+the lookup is now keyed by site, it fires only on the wager it actually applies to. Previously it
+attached to the whole scenario and warned on every wager in it, including the cells that passed
+cleanly. **None is currently in force.** The one that was — `pass_heavy` for receptions at 6–8 projected
+targets — named a site in the grid as it was cut before the 2026-08-23 axis change, and the grid is
+no longer cut on projected targets at all. An override cannot be carried across a re-cut: the
+failure it accepted was measured on a cell that does not exist any more, and quietly re-pointing it
+at the nearest new cell would be accepting a failure nobody measured. The fit enforces this — an
+override naming a site the grid lacks is a hard error, not a warning.
 
 ### The out-of-sample gate has limited power, and no better version was found
 

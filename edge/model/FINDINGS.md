@@ -212,6 +212,12 @@ invisible, and called the defect fixed. It was not: median-space and probability
 `edgectl` consumes the latter. Moving a test away from the failure is worse than leaving it, because
 the failure then looks resolved.
 
+> **Revised 2026-08-23 by the axis change (§11).** The direction survives — 17 of 23 cells negative
+> for receiving yards — but the claim that every positive cell sat in the lowest-volume band does
+> **not**. On the baseline axis two positives appear in the 35–50 yard tier. The confinement was a
+> property of the projected-target cut, not of the effect. What survives is the sign, and it is
+> weak enough that the scenario's dominant direction only just beats chance (p = 0.035).
+
 ## 4. Pass rate over expected separates better than shootout, and is gated anyway
 
 `analysis/proe.py --gate1` · play-by-play 2009–2025, 8,862 team-weeks
@@ -347,6 +353,15 @@ Two corrections from the audit, both now in effect:
 
 ---
 
+> **`pass_heavy` was withdrawn for receiving yards on 2026-08-23.** Holding *realised* targets
+> fixed, its coefficient collapses from t = 14.25 to **t = 1.97** — 90% of the separation is
+> volume the projection failed to anticipate, so it measures the inadequacy of this project's own
+> projected targets rather than a market inefficiency. The defence recorded above — that separation
+> holds within projected-target bands and *widens* with volume — is the identity's signature, not a
+> refutation. It survives volume conditioning for receptions (t = 9.17), rushing (t = −9.80) and
+> passing (t = 5.05) and is kept there; receiving yards is targets × catch rate × yards-per-catch
+> and this scenario acts only on the first term. The override granted for it is withdrawn with it.
+
 ## 5. Passing yards fits, and its gate is weaker than the receiving one
 
 `fit_conditionals.py` · 5,726 usable QB game-weeks, 2009–2025 · 63 cells
@@ -429,6 +444,31 @@ effect over 2009–2021 goes to −0.5 and −0.02 across 2022–2025 on 65 game
 independent failures: receptions and receiving yards are measured on the same player-games, so it
 is one failure seen twice.
 
+> **The check recorded in this section had gone stale, and the switch it cleared was never
+> neutral.** It was true when written: the median→mean change was tested against the verdicts that
+> existed then and moved none. Rushing yards, `efficient_offense` and a full re-cut of the grid all
+> arrived afterwards, and nothing re-ran it. Re-run now (`make recheck`), the choice of location
+> moves **33 site verdicts across the grid, every one of them permissive** — 21 priceable sites
+> against 13 for `receiving`/`shootout` alone. A check that clears a decision has to be re-run when
+> the thing it cleared moves, or it is a fact about a moment.
+>
+> **The reason for the switch is also gone.** The mean was adopted because receptions on the
+> integers 0–21 had 12 of 16 cells with a median delta of *exactly zero*. On the ratio grid that is
+> **0 of 30**: dividing by each player's own baseline turns a count back into something a median
+> can resolve. So the grid uses the **median for every outcome** — the conservative estimator, now
+> a measured choice rather than an inherited one, and 33 sites narrower than the alternative.
+>
+> **The exact-CDF reader was removed on 2026-08-23**, when the grid began storing ratios to the
+> player's own baseline. Three receptions against a 4.2 baseline is 0.714, and pooling across
+> players with different denominators smears the integer lattice into something genuinely
+> continuous — so there was nothing left for an exact reader to be exact about.
+>
+> This is only defensible because the error it was built to fix was **re-measured rather than
+> assumed away**. Against 20,837 held observations the interpolated read is now within
+> **0.14–0.85pp** at every half-integer line from 1.5 to 6.5, against the 1.44pp that motivated the
+> exact path and the 2.38pp vig cushion. The mean-for-discrete location measure in this section is
+> unaffected and still in use.
+
 ## 7. Rushing inverts the sign, and that is the point
 
 `fit_conditionals.py` · 13,388 RB game-weeks, 2009–2025 · 84 cells
@@ -463,9 +503,15 @@ helps a quarterback, and hurts a back — the carries went somewhere. That sign 
 the fit and measured after it, rather than assumed either way. At 14 projected carries with a
 rising role, a 74.5-yard line runs `q` = 12.3% against `r` = 34.3%.
 
-`shootout` failing is informative rather than disappointing: a high posted total says a game will be
-*scored in*, not *how*. It can arrive through the air or on the ground and the total alone cannot
-tell which. `pass_heavy` measures the how directly, and validates.
+`shootout` failing is informative rather than disappointing: a high-scoring game says points *were*
+scored, not *how*. They can arrive through the air or on the ground and the total alone cannot tell
+which. `pass_heavy` measures the how directly, and validates.
+
+> **Correction, 2026-08-23.** This paragraph said "a high **posted** total". `shootout` is defined
+> on the **realized** final total (`games.csv` `total`, not `total_line`), so the wording named the
+> wrong quantity. The reasoning survives; the sentence did not. Related and worth stating: because
+> a receiver's own yards feed his team's points, `shootout` is mildly self-referential — splitting
+> it, own-team points over 27 is worth +7.52 yards while opponent points over 27 is worth +3.44.
 
 `blowout_loss` misses each criterion by exactly one cell, with the right direction — a team losing
 badly abandons the run. The closest miss in the grid.
@@ -504,6 +550,28 @@ front of us today.
 Three options are on the table: report each cell's own held-out record at pricing time and leave
 the gate alone; gate per cell; or gate per cell with a minimum effect-size floor that encodes the
 pattern above explicitly. Recorded here so the measurement survives the decision being deferred.
+
+> **Re-derived 2026-08-23 on a clean statistic, and it survives — smaller.** The statistic above
+> compares a **full-sample** effect size against **train-vs-test** agreement, so the half being
+> predicted sits inside the predictor. Under a pure null that manufactures a gap by itself, which
+> makes the 5× reported here weak evidence for anything.
+>
+> On `|train-only effect|`, pooled over all sixteen outcome × scenario pairings (`make recheck`):
+>
+> | | agreed out of sample | disagreed | ratio |
+> |---|---|---|---|
+> | real | n=180, median 0.1549 | n=62, median 0.0654 | **2.37×** |
+> | null | n=360, median 0.0464 | n=372, median 0.0446 | 1.04× |
+>
+> Sites that fail out of sample did have smaller effects in the training half, and the permutation
+> null confirms the statistic invents no such gap on its own. But it is **2.37×, not 5×**, and it
+> is a *pooled* effect — `receiving`/`shootout` alone gives 1.07× on four disagreeing sites, which
+> is to say nothing at all.
+>
+> This section was the corpus's argument for per-cell gating. **It is not the argument that was
+> used.** §12 rests on the gate's scale-dependence, which is arithmetic rather than a measurement,
+> and on a permutation null of its own. Had per-cell gating been decided on the number above, it
+> would have been decided on a statistic containing its own outcome.
 
 ## 9. Four belief signals gated; one survived, and the best one is not a scenario
 
@@ -621,6 +689,527 @@ the vacuum are not available.
 The injuries table is kept in the ingest regardless. It is small, and it is the only source here
 for who did not play — which is a fact worth being able to check independently of whether it
 predicts anything.
+
+## 11. The cohort mismatch is the larger defect, and fixing it breaks the gate
+
+Findings C1 and C3 of the [adversarial review](../docs/reviews/2026-08-23-adversarial.md) were
+triaged as one item: `q` and `r` are pooled over the posted total that `s` is derived from (C1),
+and `q` is a cohort probability judged against a player-specific line (C3). Measured, they are not
+equally serious, and the review's proposed fix addresses the smaller one.
+
+**Both reproduce.** Held out on 2022–2025, fitting on 2014–2021, with the line placed at each
+player's own prior mean. Error is predicted minus actual, so negative means the grid *underrates*
+the over:
+
+| stratified by posted total | error | | stratified by the player's own baseline | error |
+|---|---|---|---|---|
+| 0–42 | +1.93pp | | under 35 yds | +2.75pp |
+| 42–45 | −0.23pp | | 35–50 | −2.15pp |
+| 45–48 | −0.96pp | | 50–70 | −5.84pp |
+| 48–51 | −1.15pp | | 70+ | **−8.01pp** |
+| 51+ | **−3.12pp** | | | |
+
+The vig cushion at −110 is 2.38pp. **C3 is four times it**, and it is monotone: the grid overrates
+small players and badly underrates big ones. That is the trap the review described — a line set
+near a 70-yard player's median sits far out in a cohort whose median is 43, so `q` collapses and
+the tool returns `beyond-your-read` on exactly the wagers a person actually places.
+
+**Aggregate calibration hides all of it.** Pooled over every stratum the grid is accurate to
+−0.00pp. Averaging over the strata cancels the errors, and a first pass at this measurement
+reported the grid as well-calibrated for that reason. Calibration has to be measured *within* the
+variable suspected of carrying the error or it cannot find it.
+
+**The fix is normalization, not the proposed axis.** Storing the distribution of yards relative to
+the player's own prior mean, and conditioning on a baseline tier:
+
+| | cells | worst by posted total | worst by own baseline |
+|---|---|---|---|
+| today | 33 | 3.12pp | 8.01pp |
+| + posted-total axis (the review's proposal) | 58 | **1.47pp** | 8.33pp |
+| ratio to own mean + baseline tier | 8 | 2.68pp | **1.78pp** |
+
+The posted-total axis fixes C1 and leaves C3 untouched. The normalization fixes C3 and *also*
+takes C1 from 3.12 to 2.68 without an axis at all — because part of what looked like posted-total
+miscalibration was the cohort mismatch showing up correlated with game totals. C1 and C3 were
+correctly triaged as one defect; the review named the weaker half as the cure.
+
+**The result generalizes.** Worst-stratum error by own baseline, before → after, on a temporal
+split and a random one:
+
+| outcome | today (time) | today (random) | proposed (time) | proposed (random) |
+|---|---|---|---|---|
+| receiving_yards | 8.01pp | 10.48pp | 1.78pp | 4.67pp |
+| receptions | 9.97pp | 9.78pp | 2.13pp | 2.59pp |
+| rushing_yards | 9.37pp | 10.39pp | 2.53pp | 4.35pp |
+| passing_yards | 4.70pp | 11.19pp | 4.68pp | 4.92pp |
+
+### The part that stops this from shipping
+
+**Cell count is the gate's strength, and the axis set sets the cell count.** Collapsing to 8 cells
+made five scenarios pass that fail today — including `pass_heavy` for receiving yards, withdrawn
+one commit earlier as a volume identity. A rule reading "the direction holds in every cell" is
+easier to satisfy the fewer cells there are, so an axis design chosen for calibration silently
+re-tunes the gate.
+
+Requiring the baseline tier and then taking the axis set with the *most* cells subject to a
+coverage floor avoids that, and yields more cells than today for every outcome — 58, 52, 29 and 21
+against 33, 33, 28 and 19. The gate gets stricter. And then:
+
+```
+receiving_yards  shootout   today     positive in 16/16 cells; 12/16 bootstrap-resolved; 15/15 out of sample
+                            proposed  positive in 29/29 cells; 15/29 bootstrap-resolved; 20/24 out of sample
+```
+
+**`shootout` for receiving yards — the only thing the tool can price today — fails the corrected
+grid.** Not on direction, which is now 29/29 rather than 16/16. On the out-of-sample test, which
+demands the direction hold in *every* held-out cell: 15/15 becomes 20/24.
+
+The effect did not weaken. The gate did. `qualifies()` is **not scale-invariant**: for a real
+effect with per-cell error probability `e`, an all-cells rule passes with probability
+`(1−e)^k`, which falls as `k` rises. Re-cutting the same data into more cells therefore rejects
+findings it previously accepted, and the number of cells is a design choice, not evidence.
+
+This is [task #9](../docs/reviews/2026-08-23-adversarial.md), per-cell gating, arriving as a
+blocker rather than an improvement. **The calibration fix cannot land until the gate is
+scale-invariant**, because shipping both at once would change two methods in one step and leave
+no way to attribute the verdict changes to either.
+
+Nothing above is in the artifact. The two quantities are plumbed; the axis change is not made.
+
+> **Unblocked by §12** and **shipped the same day.** `k` no longer appears in the gate, so
+> re-cutting the grid cannot by itself reject anything, and the axis change landed on its own
+> evidence.
+>
+> The grid now stores each game as a **ratio to the player's own prior mean**, conditioned on the
+> posted-total band, a baseline tier and the role trend. Projected opportunity is gone as an axis:
+> once the value is a ratio to the player's own baseline, that baseline carries most of what
+> projected opportunity stood in for, at a third of the density cost.
+>
+> Worst-stratum error, held out on 2022–2025, before → after:
+>
+> | outcome | by posted total (C1) | by own baseline (C3) |
+> |---|---|---|
+> | receiving_yards | 3.12 → **2.69**pp | 8.01 → **1.78**pp |
+> | receptions | 5.80 → **2.75**pp | 9.97 → **2.13**pp |
+> | rushing_yards | 2.99 → 6.07pp | 9.37 → **2.18**pp |
+> | passing_yards | 9.47 → **5.81**pp | 5.54 → **2.44**pp |
+>
+> **C3 is fixed everywhere** — every outcome lands under the 2.38pp vig cushion. C1 improves for
+> three of four. Rushing yards does not, and the posted-total split does not rescue it either
+> (6.07pp with one band, 5.94pp with two, while the split costs 11 points of coverage), so rushing
+> keeps one band and **stays miscalibrated across posted totals**. That is the same result §9
+> reached from the other side: a high posted total says a game will be scored in, not how. Passing
+> yards keeps one band too, for density — ~32 quarterbacks cannot fill four baseline tiers crossed
+> with a posted split.
+>
+> The practical consequence is the one C3 predicted. A line at 0.95× a player's baseline now
+> returns `q = 58.9%` where every standard −110 over used to come back `beyond-your-read`.
+>
+> **A defect the ratio change introduced, found later.** Quantile *values* were stored rounded to
+> one decimal, which was right for yards — 0.1 against a 0–200 range is nothing — and wrong for
+> ratios, which span about 0–3.5. It left 0.95, 1.00 and 1.04 collapsing to the same stored number
+> on a table the lookup then interpolates across, with only **45% of each cell's 51 points
+> distinct**. Fixed at four decimals. Measured over 1,648 reads on validated cells, the shipped
+> probabilities move by a median of 0.59pp, **6.0pp at the 99th percentile and 8.2pp at worst**,
+> and 7.8% of reads shift by more than the vig cushion — the same order as the C3 defect this
+> section is about.
+>
+> It survived because **the calibration measurements never saw it.** `calibration.py` builds its
+> grid from the unrounded values, so the number that was measured and the number that shipped were
+> not the same number. The lesson is narrower than "test more": a measurement that reconstructs the
+> artifact instead of reading it cannot see anything the serialisation does.
+>
+> **What it cost.** The override recorded for `pass_heavy`/receptions named a site in the old grid
+> and could not be carried across the re-cut; it is withdrawn rather than re-pointed. And the
+> exact-CDF reader built in §6 was removed — see the note there.
+
+## 12. The gate was measuring the grid's shape, not the evidence
+
+Section 11 could not ship because fixing the calibration re-cut the grid into more cells, and the
+gate rejected `shootout` for receiving yards as a result — while its direction *improved* from
+16/16 to 29/29. That is not a close call about one scenario. It is a defect in the rule.
+
+**The old rule was not scale-invariant.** `qualifies()` required the direction to hold in *every*
+cell and *every* out-of-sample cell. For a real effect with per-cell error probability `e`, an
+all-cells rule passes with probability `(1−e)^k`. As `k` grows that falls to zero — so re-cutting
+the same data more finely rejects findings it previously accepted, and `k` is a design choice about
+axes rather than anything the data said.
+
+The same flaw is why the bootstrap was *reported but never gated on*. §3 recorded the reason
+plainly: "requiring all of them would reject a real effect." That was correct, and it was the
+scale-dependence talking. The test was sound; the conjunction over `k` cells was not.
+
+### The gate now rules on a site
+
+A **site** is one (opportunity band, trend band) coordinate of one scenario — the q cell and the r
+cell together. It is the unit a price is actually formed at, so it is the unit to gate. A site is
+priceable only if, **at that site**:
+
+| test | requirement |
+|---|---|
+| direction | its delta agrees with the scenario's dominant sign |
+| resolution | the player-clustered bootstrap interval clears zero |
+| out of sample | that sign holds in the seasons after 2021 |
+
+`k` does not appear. Adding axes no longer changes any surviving site's verdict, and the bootstrap
+becomes gateable for the first time — per site, requiring resolution is just "this effect is
+separated from zero here", with nothing to compound.
+
+Absence of held-out evidence is a **refusal, not a pass**. 21 sites are refused on that alone,
+15 of them in passing yards, where there are ~32 quarterbacks to fill cells. "We never checked" is
+not a reason to price something.
+
+### A scenario must have a direction before its sites can agree with one
+
+A site is judged by agreement with the scenario's dominant sign, so where that sign is a coin flip
+the agreeing sites are simply the lucky half. Receptions under `blowout_loss` leans one way in
+**8 of 16** cells; rushing under `shootout` in **10 of 14**. Both would otherwise have contributed
+2 priceable sites each.
+
+So the dominant sign must first beat chance — a two-sided binomial test at α = 0.05. This is not
+the old rule returning in disguise: the all-cells rule asked whether *every* cell agreed and got
+harder to satisfy as the grid was cut finer, while this asks whether the agreement *rate* beats
+chance and gets **easier** with more cells, which is how evidence is supposed to behave.
+
+### Is this multiple comparisons with better manners?
+
+It is the obvious charge — one 95% interval across ~30 sites resolves about 1.5 by luck — so it was
+measured rather than argued. The scenario label was shuffled across games, preserving its marginal
+rate, the player clustering and the season structure, and destroying only its link to production.
+12 permutations per scenario, receiving yards:
+
+| scenario | real | under the null |
+|---|---|---|
+| shootout | 12/16 = 75% | 1.6% |
+| blowout_loss | 6/16 = 38% | 1.6% |
+| pass_heavy | 12/17 = 71% | 0.5% |
+| efficient_offense | 12/17 = 71% | 2.6% |
+
+**The three-test conjunction passes 12 of 774 site-tests under the null — 1.6%.** That is below the
+5% a single 95% interval would give, and 20–45× below the real pass rates. The conjunction, not the
+granularity, is what does the work.
+
+### What it publishes
+
+118 of 222 sites, against 82 sites inside the four scenarios the old whole-scenario gate passed:
+
+| outcome | shootout | blowout_loss | pass_heavy | efficient_offense |
+|---|---|---|---|---|
+| receiving_yards | 12/16 | 0/16 vetoed | 0/17 vetoed | **12/17** |
+| receptions | 15/16 | 0/16 no direction | 16/17 | **15/17** |
+| rushing_yards | 0/14 no direction | **6/12** | 10/13 | **10/14** |
+| passing_yards | 6/10 | 5/7 | 5/10 | 6/10 |
+
+It is both more permissive and more demanding, which is the point. `efficient_offense` was gated
+everywhere for missing by a cell or two; 12, 15 and 10 of its sites hold on their own evidence.
+Passing yards passed all four scenarios wholesale and now loses 4–5 sites in each, having never
+been checked out of sample where the held-out seasons are thin.
+
+### What an operator can still do
+
+The statistical gate is measured, so there is nothing recorded for it to drift from. Two human
+levers remain, and both are narrower than before:
+
+- A **veto** removes a pairing for a reason no test can see. `receiving_yards`/`pass_heavy` (a
+  volume identity, §11) and `receiving_yards`/`blowout_loss` (needs a play-by-play definition, not
+  final margin). It can only ever subtract.
+- An **accepted failure** now names *one site* by its four coordinates, and is checked against that
+  site's measured verdict. It previously attached to a whole scenario, so the warning fired on
+  every wager anywhere in it — including the fifteen cells that passed cleanly. A warning that
+  appears when it does not apply is one a reader learns to skip.
+
+The purely statistical verdicts that used to be recorded by hand — "holds in only 13 of 16 out of
+sample", "misses each criterion by a single cell" — are gone, because that is exactly the judgement
+the per-site gate now makes, at the granularity a wager is priced at.
+
+## 13. The two constants, and how much of each verdict is really about them
+
+`MIN_CELL = 100` and `OOS_SPLIT = 2021` decide which cells exist and what
+"out of sample" means, and both were chosen *after* the rule they feed. The
+[review](../docs/reviews/2026-08-23-adversarial.md) found them justified nowhere, and found verdicts
+that turned on them — the flagship `shootout`/receiving case failing at 2 of 5 plausible splits.
+
+Reproduce with `make constants`.
+
+### What `MIN_CELL` buys
+
+A cell's own Wilson half-width at the widest point of the curve:
+
+| n | 95% half-width | |
+|---|---|---|
+| 25 | 17.0pp | wider than any separation we look for |
+| 50 | 12.9pp | wider than most |
+| **100** | **9.4pp** | resolves the larger separations, not the smaller |
+| 150 | 7.8pp | comfortable |
+| 400 | 4.9pp | comfortable |
+
+The typical q−r separation this grid finds is 8–14pp, so at 100 a cell's interval sits *inside*
+that range. **That is the honest reading, and it is why the threshold is not the gate.** Publishing
+a cell only makes it eligible for the bootstrap; the per-site bootstrap is what decides whether its
+own separation clears zero, and it refuses plenty of cells that clear n = 100. Raising the
+threshold to 150 buys a narrower half-width by discarding sites the bootstrap already judges
+correctly — paying in coverage for a job already done.
+
+The exception is the thin outcome. Passing yards publishes 6 priceable sites at 100, **2 at 150 and
+0 at 200**: with ~32 quarterbacks the threshold stops being a quality control and becomes an on/off
+switch for the whole outcome.
+
+### What `OOS_SPLIT` buys
+
+| split | seasons held out | | 
+|---|---|---|
+| 2018 | 7 | most held-out evidence, least to fit on |
+| **2021** | **4** | |
+| 2022 | 3 | too few to see a regime |
+
+There is no measurement that picks one. Four seasons is a judgement: enough to contain a regime
+change, few enough to leave twelve to fit on. It is worth noting the shipped choice is **not** the
+most generous — passing yards resolves 8 sites at 2020 against 6 at 2021.
+
+### So the verdicts carry their own sensitivity
+
+Arguing for one setting was never going to answer the charge, because any single choice is
+arguable. What answers it is telling the operator which kind of verdict they are looking at, where
+they are looking at it.
+
+Every cell now carries the share of the 25 `MIN_CELL` × `OOS_SPLIT` combinations that reach its
+verdict. Of 103 priceable sites, **86 are firm at every setting and 17 are not** — and the 17 say
+so at the point of pricing:
+
+```
+CAVEAT: this verdict holds at 80% of the swept MIN_CELL x OOS_SPLIT settings, not all
+of them — it depends partly on where those two constants were set
+```
+
+The sweep is nearly free despite being a product of two knobs. The expensive test does not depend
+on either: a site's player-clustered bootstrap does not change when a threshold elsewhere in the
+grid moves, and it never sees the split at all. It is computed once per site at the loosest
+threshold and shared, leaving only medians to recompute.
+
+Two related fixes fell out of building it. The bootstrap is now **seeded per site**, from the site's
+own coordinates, rather than drawing from one stream consumed across the grid — under which a
+cell's resamples depended on how many sites happened to precede it, so the same cell resolved
+differently depending on where `MIN_CELL` sat or how the axes were cut. And `cell_pairs` buckets
+observations in a single pass instead of scanning them once per site, which is what made a
+25-setting sweep affordable at all: it is the difference between a six-minute fit and an hour.
+
+## 14. `shootout` is partly caused by the player it is used to predict
+
+A receiver's yards feed his team's points, so "the game went over 50" is partly "this player had a
+big day". Conditioning on it is then partly conditioning on the outcome — the same circularity that
+withdrew `pass_heavy` (§11), and the review noted it in passing without measuring it.
+
+The clean test is the **opponent's** points: the half of the total the player cannot cause.
+Reproduce with `make recheck`.
+
+| definition | sites | priceable | median delta |
+|---|---|---|---|
+| `shootout`: total > 50 (shipped) | 29 | 13 | **+0.1520** |
+| own team > 27 (self-referential) | 27 | 7 | +0.1120 |
+| **opponent > 27 (exogenous)** | 27 | **7** | **+0.0860** |
+| own team > 24 | 30 | 10 | +0.1265 |
+| opponent > 24 | 30 | 7 | +0.0675 |
+
+**It does not collapse.** The opponent's scoring alone moves a receiver's ratio by +0.086 — 8.6% of
+his own baseline — and 7 sites clear the full three-test gate on that definition. This is not
+`pass_heavy`, which fell from t = 14.25 to 1.97 once its volume was controlled for. The mechanism is
+real: a defence that concedes points forces the other offence to keep throwing, and that is
+exogenous to any one receiver.
+
+**But the shipped definition overstates it by about 1.8×.** Combining both halves credits the
+scenario with production the player himself supplied. Anyone reading `q = 58.9%` under `shootout`
+should understand that some part of that number is "in games where this player did well, this
+player did well".
+
+**Not acted on.** Redefining `shootout` on opponent points alone would remove the circularity and
+cut receiving yards from 13 priceable sites to 7 — halving the tool's coverage of its main outcome
+to correct a bias of known sign and roughly known size. That is a judgement about how much
+capability to trade for cleanliness, and it is the operator's, not the fit's. Recorded here with
+the numbers so it can be made deliberately.
+
+## 15. The tool is calibrated, and calibration is not an edge
+
+The first end-to-end score of the whole apparatus. A grid fitted 2009–2024 and a belief model
+fitted the same way, against the 2025 season neither of them saw. Reproduce with `make backtest`.
+
+It reads the **artifact**, not a rebuilt copy of it. A backtest that reconstructs what it is scoring
+cannot see anything the serialisation does — which is how a one-decimal rounding survived every
+calibration check this project had (§11).
+
+`P(hit) = q·s + r·(1−s)` can be wrong in two unrelated ways, so the halves are scored apart.
+
+### A. q and r, with `s` removed
+
+Each read scored against games where the scenario did or did not actually occur.
+
+| | worst \|error\| |
+|---|---|
+| rows with n ≥ 200 | **2.31pp** |
+| thinner rows | 13.55pp |
+
+Where there is data the grid is calibrated to about the vig cushion. Every large miss is passing
+yards, where one held-out season is ~32 quarterbacks — `blowout_loss` at 13.55pp rests on **39
+reads**, which is thirteen games.
+
+### B. the belief model
+
+The bands hold their **order** out of sample and drift in **level** — up to 5.8pp for
+`efficient_offense` and 8.2pp for `pass_heavy`. `edgectl belief` says so at the point of use and
+tells the reader to treat `s` as a rank rather than a probability.
+
+### C. the product, against a −110 line
+
+There are no historical prop prices here, so each line sits at a multiple of the player's own
+baseline. 16,512 simulated wagers:
+
+| scenario | line | n | predicted | actual | error | at −110 | price needed |
+|---|---|---|---|---|---|---|---|
+| efficient_offense | 0.85× | 3131 | 0.502 | 0.503 | −0.09pp | −2.08pp | −101 |
+| efficient_offense | 1.00× | 3131 | 0.425 | 0.422 | +0.29pp | −10.19pp | +137 |
+| efficient_offense | 1.15× | 3131 | 0.354 | 0.350 | +0.41pp | −17.34pp | +185 |
+| pass_heavy | 0.85× | 2373 | 0.519 | 0.505 | +1.33pp | −1.85pp | −102 |
+| pass_heavy | 1.00× | 2373 | 0.435 | 0.415 | +1.96pp | −10.87pp | +141 |
+| pass_heavy | 1.15× | 2373 | 0.351 | 0.341 | +1.04pp | −18.29pp | +193 |
+
+**Overall: predicted 0.430, actual 0.423 — an error of +0.74pp on 16,512 wagers.**
+
+### What that means, and what it does not
+
+The tool works. On a season it never saw, its probabilities are right to within a point.
+
+**And every one of those wagers loses money at −110.** That is not a contradiction, it is the
+result: *calibration is not an edge*. A perfectly calibrated model priced at the market's number
+returns exactly the vig, negatively. The only thing that pays is a price better than your own
+probability by more than the hold, and no amount of internal accuracy produces one.
+
+So the `price needed` column is the actual output of this project. At a line on a player's own
+average you need **+137 or better**; at 1.15× his average, **+185**. Whether a book ever offers
+that is a question about *prices*, and this repository does not collect prop prices — the board
+holds moneylines, spreads and totals only. **The apparatus is finished and the input it exists to
+consume is missing.**
+
+That also disposes of "chase the tails" as stated. The deeper lines are not better — they are
+calibrated too, and lose more at a flat −110. Tails only pay if the book misprices them, which is
+again a claim about prices.
+
+### The January slate
+
+`make backtest-slate` restricts the same run to games on or after 2026-01-01: one week of football,
+1,227 wagers, overall error **+0.36pp**. Consistent with the season and far too small to add
+anything — 32 team-weeks put most of its rows under n = 200. It is reported because it was asked
+for, and it should not be read as confirmation of anything.
+
+## 16. Chasing a tail: the arithmetic, and what actually blocks it
+
+The thesis, stated properly: a book sets its line near the median and takes the vig. Your edge is
+not a better `q` — it is a better **`s`**. If the market prices a prop off the unconditional
+distribution and you know the game script is likelier than its base rate, your conditional blend
+beats the offered price. And it should get *easier* with depth, because that is where the
+conditional and unconditional distributions separate most.
+
+Both halves of that are testable. Reproduce with `make backtest-tails`.
+
+### The price of admission
+
+Both sides use the same `q` and `r`; only `s` differs. So
+
+```
+P_you − P_book = (q − r) · (s_you − s_book)
+```
+
+and beating a proportional hold needs `P_you > P_book · (1 + hold)`, giving
+
+```
+s_you − s_book  >  P_book · hold / (q − r)
+```
+
+**That threshold falls with depth, exactly as the thesis predicts.** Over every validated site,
+at a 6% hold:
+
+| line | best site | p25 | median | share of sites needing < +0.10 |
+|---|---|---|---|---|
+| 1.00× | +0.089 | +0.191 | +0.290 | 2.4% |
+| 1.30× | +0.042 | +0.149 | +0.261 | 8.2% |
+| 1.50× | +0.032 | +0.108 | +0.224 | 23.2% |
+| 2.00× | +0.040 | +0.094 | +0.159 | **29.9%** |
+
+At the line you need to be 29 points better than the market to make it pay. At twice the line,
+the median site needs 16 and nearly a third need under 10. `passing_yards`/`pass_heavy` at 1.30×
+runs q = 0.187 against r = 0.051 — a **3.7× relative** separation, needing only **+0.042**.
+
+**The structural claim is correct.** Tails are more chaseable, and the formula above is the screen.
+
+### And it still loses. Not for the reason it looks like.
+
+Screening on each site's own requirement, held out on 2025:
+
+| line | bets | offered | actual | ROI |
+|---|---|---|---|---|
+| 1.00× | 301 | 0.420 | 0.422 | +0.5% |
+| 1.50× | 523 | 0.120 | 0.090 | −25.4% |
+| 2.00× | 662 | 0.077 | 0.059 | −23.1% |
+
+The cause is not the thesis and not the belief model. It is `q` itself:
+
+| line | predicted | actual | absolute error | **relative error** |
+|---|---|---|---|---|
+| 1.00× | 0.435 | 0.415 | +1.96pp | +4.7% |
+| 1.50× | 0.214 | 0.203 | +1.18pp | +5.8% |
+| 2.00× | 0.108 | 0.091 | +1.62pp | **+17.7%** |
+
+The grid is beautifully calibrated in **absolute points** all the way into the tail — never worse
+than 1.6pp. But a 1.6-point overstatement of a 10.8% probability is a **17.7% overstatement**, and
+a book holding 6% swallows that without noticing.
+
+**Absolute calibration is the wrong metric at plus money.** Every calibration number in this
+project — §11's 1.78pp, §15's +0.74pp — is in absolute points, and absolute points flatter a deep
+line. The tool has been reporting its accuracy in the units that make it look best, by accident.
+`make backtest` prints relative error beside absolute now.
+
+### The ceiling, which I should have measured first
+
+> **Correction.** The paragraph that stood here blamed `q`, on the strength of a 17.7% relative
+> error at 2× the line. That number is **pooled across outcomes** and does not describe the sites
+> a wager would actually be placed on. Broken out at the same depth: `receiving_yards` is
+> calibrated to −1.2pp, `receptions` to about +11% relative, and `rushing_yards`'s `r` to +26%.
+> Pooling misled me three separate times in this section alone — first a flat −110, then median
+> `q` and `r` taken independently, then this. **The pattern is the finding: every time an average
+> is taken across sites, the thing being measured disappears into it.**
+
+Replace `s` with the truth — 1 if the scenario occurred, 0 if not — and run the same screened
+strategy. No prompt, model or human read can beat knowing the answer, so this bounds the entire
+belief side of the problem. `make backtest-oracle`:
+
+| line | bets | offered | actual | ROI |
+|---|---|---|---|---|
+| 1.00× | 1520 | 0.449 | 0.500 | **+11.3%** |
+| 1.30× | 1520 | 0.296 | 0.332 | **+12.0%** |
+| 1.75× | 1584 | 0.178 | 0.210 | **+18.1%** |
+| 2.00× | 1572 | 0.135 | 0.144 | +7.1% |
+
+**The money is real, and `q` is good enough to collect it.** A perfect belief earns 7–18% at a 6%
+hold. That disposes of the correction above: if `q` were the blocker, the oracle would lose too.
+
+### So: can we do this?
+
+**Yes, and the gap is entirely in the belief.** The fitted belief model loses 10–25% on the same
+wagers the oracle wins 7–18% on. Everything between those two numbers is what a better estimate of
+`s` is worth, and it is the only thing worth working on.
+
+The requirement is `+0.03` to `+0.16` at depth on a good site. The fitted model's bands deviate
+±0.16 from the base rate with a level drift of ±0.08 — so it is operating at roughly the noise
+scale of its own input, and screening on it selects estimation error rather than edge. A read that
+genuinely knows a game is 15 points likelier than its base rate to be a shootout would clear the
+bar. Whether any such read exists is not a question this repository can answer about itself.
+
+Two screens fall out, and both are things this project can now apply to a named candidate:
+
+1. **Screen on `q − r` first, not on the story.** A site where the scenario barely moves the
+   distribution can never pay, however confident the belief. The best sites separate 3–6× in
+   relative terms at depth; the median separates by almost nothing.
+2. **Screen on the site's own calibration, not the grid's average.** `receiving_yards` is
+   trustworthy at 2× the line and `rushing_yards`'s baseline half is not, and no pooled number
+   will tell you which one you are standing on.
 
 ## Data note
 

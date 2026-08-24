@@ -168,11 +168,11 @@ const (
 	Stated Source = iota
 	// DerivedFromLine: computed from the game total or spread.
 	DerivedFromLine
-	// DerivedFromSignals is reserved. Signals (target funnel meeting a funnel
-	// defense, a snap-share trend implying a role change) can both estimate
-	// the probability of a named scenario and identify which scenario is in
-	// play at all. Not implemented; declared so the type does not change when
-	// it is.
+	// DerivedFromSignals: read off the fitted belief model from a team's own
+	// prior form. This was the reserved seam and is now in use for the two
+	// scenarios with no market line -- the probability that used to be an
+	// operator's invention. Recorded separately from Stated precisely so the
+	// bet log can score the two apart and find out which is better calibrated.
 	DerivedFromSignals
 )
 
@@ -194,11 +194,39 @@ type Scenario struct {
 	Threshold float64 // combined points, or favourite's final margin
 	Prob      float64
 	Source    Source
+
+	// Below is true when the scenario occurs BELOW the threshold, as
+	// blowout_loss does (margin < -7).
+	//
+	// It exists because its absence was a live bug. The constructors all
+	// derive P(X > threshold), so a below-threshold scenario received the
+	// complement of its own probability: blowout_loss reported s = 77.5%
+	// for an event the market put at 22.5%, and the blend q*s + r*(1-s) then
+	// weighted the wrong side. CheckDefinition compared basis and threshold
+	// and never the operator, so the one mismatch it could not see is the one
+	// that shipped.
+	Below bool
+}
+
+// applyOp turns P(X > threshold) into the probability the scenario OCCURS,
+// which for a below-threshold scenario is the complement.
+func (s Scenario) applyOp() Scenario {
+	if s.Below {
+		s.Prob = 1 - s.Prob
+	}
+	return s
 }
 
 func (s Scenario) String() string {
-	return fmt.Sprintf("%s (%s > %.1f) p=%.3f [%s]",
-		s.Name, s.Basis, s.Threshold, s.Prob, s.Source)
+	// %g for the threshold: a success rate of 0.46 printed as "0.5" here for
+	// the same reason it did in Definition.String, and a header that disagrees
+	// with the flag the caller just typed is its own small lie.
+	op := ">"
+	if s.Below {
+		op = "<"
+	}
+	return fmt.Sprintf("%s (%s %s %g) p=%.3f [%s]",
+		s.Name, s.Basis, op, s.Threshold, s.Prob, s.Source)
 }
 
 // Validate reports whether the scenario is usable.
@@ -233,9 +261,23 @@ func normalQuantile(p float64) (float64, error) {
 	return math.Sqrt2 * math.Erfinv(2*p-1), nil
 }
 
+// FromSignals builds a scenario whose probability came from the fitted belief
+// model rather than from a person or a game line.
+func FromSignals(name string, basis Basis, threshold, prob float64, below bool) (Scenario, error) {
+	s := Scenario{Name: name, Basis: basis, Threshold: threshold, Prob: prob,
+		Source: DerivedFromSignals, Below: below}
+	if err := s.Validate(); err != nil {
+		return Scenario{}, err
+	}
+	return s, nil
+}
+
 // StateProb builds a scenario from a probability the operator supplies.
-func StateProb(name string, basis Basis, threshold, prob float64) (Scenario, error) {
-	s := Scenario{Name: name, Basis: basis, Threshold: threshold, Prob: prob, Source: Stated}
+func StateProb(name string, basis Basis, threshold, prob float64, below bool) (Scenario, error) {
+	// No complement here: an operator supplying -smarket is stating the
+	// probability the scenario OCCURS, not P(X > threshold).
+	s := Scenario{Name: name, Basis: basis, Threshold: threshold, Prob: prob,
+		Source: Stated, Below: below}
 	if err := s.Validate(); err != nil {
 		return Scenario{}, err
 	}
@@ -251,7 +293,7 @@ func StateProb(name string, basis Basis, threshold, prob float64) (Scenario, err
 //
 // This is the "shootout" construction: a 52.5 total against a 50-point
 // threshold gives about 57%, a 41 total about 22%.
-func FromTotal(name string, total, threshold, sigma float64) (Scenario, error) {
+func FromTotal(name string, total, threshold, sigma float64, below bool) (Scenario, error) {
 	if !isFinite(total) || !isFinite(threshold) || !isFinite(sigma) {
 		return Scenario{}, fmt.Errorf(
 			"scenario: total %v / threshold %v / sigma %v must be real numbers", total, threshold, sigma)
@@ -281,7 +323,8 @@ func FromTotal(name string, total, threshold, sigma float64) (Scenario, error) {
 		Threshold: threshold,
 		Prob:      prob,
 		Source:    DerivedFromLine,
-	}, nil
+		Below:     below,
+	}.applyOp(), nil
 }
 
 // FromSpread derives P(favourite's final margin > threshold) from a posted
@@ -294,7 +337,7 @@ func FromTotal(name string, total, threshold, sigma float64) (Scenario, error) {
 //
 // Pass sigma = 0 for the fitted empirical distribution; a positive sigma
 // selects the normal approximation, as with FromTotal.
-func FromSpread(name string, spread, threshold, sigma float64) (Scenario, error) {
+func FromSpread(name string, spread, threshold, sigma float64, below bool) (Scenario, error) {
 	if !isFinite(spread) || !isFinite(threshold) || !isFinite(sigma) {
 		return Scenario{}, fmt.Errorf(
 			"scenario: spread %v / threshold %v / sigma %v must be real numbers", spread, threshold, sigma)
@@ -324,7 +367,8 @@ func FromSpread(name string, spread, threshold, sigma float64) (Scenario, error)
 		Threshold: threshold,
 		Prob:      prob,
 		Source:    DerivedFromLine,
-	}, nil
+		Below:     below,
+	}.applyOp(), nil
 }
 
 // minCalibrationSpread is the shortest spread that can calibrate sigma.

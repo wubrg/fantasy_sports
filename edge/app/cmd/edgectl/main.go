@@ -33,6 +33,8 @@ func main() {
 		err = cardCmd(os.Args[2:])
 	case "hitrate":
 		err = hitrateCmd(os.Args[2:])
+	case "belief":
+		err = beliefCmd(os.Args[2:])
 	case "scenario":
 		err = scenarioCmd(os.Args[2:])
 	case "log":
@@ -85,8 +87,16 @@ func usage() {
                    -belief <p> -q <p> -r <p> -price <american>
         What you would have to believe for a wager to be +EV, against what the
         game line already implies. Add -rungs line:price:q:r,... for a ladder,
-        or -log <path> to record the prediction. -targets is the projected
-        opportunity: targets for a pass-catcher, attempts for a quarterback.
+        or -log <path> to record the prediction. -side over|under picks the
+        direction. -baseline is what the player
+        NORMALLY does in the outcome's own units; the grid prices the line as
+        a ratio to it, because that is what a book sets it near.
+
+  edgectl belief [-name <scenario> -prior <value>]
+        P(the scenario occurs) from the team's own prior form, for the two
+        scenarios with no market line to read it off. With no arguments,
+        lists the models. This is the s in q*s + r*(1-s), which for these two
+        scenarios used to be a number the operator invented.
 
   edgectl hedge -face <amount> -back <american> -against <american>
         Convert a bonus bet to guaranteed cash by backing the other side at a

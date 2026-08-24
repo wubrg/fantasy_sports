@@ -22,6 +22,7 @@ in this module and none intended.
 | [Adversarial review, 2026-08](docs/reviews/2026-08-23-adversarial.md) | Two reviewers, the defects they found, and the fix order |
 | [Findings](model/FINDINGS.md) | Every measured claim, with the script that produced it |
 | [Source frameworks](docs/frameworks/README.md) | The transcribed corpus, with its errors annotated |
+| [Plan: prompt to find, tool to validate](docs/plans/prompt-then-validate.md) | Testing whether a read on a game beats the base rate |
 | [ADR-001](docs/ADR-001-line-board-tracked-in-git.md) | Why the line board is tracked in git |
 
 `edgectl help` is the map of commands; **every command documents its own flags** — `edgectl
@@ -77,7 +78,7 @@ have to believe?", which is a single number you can argue with:
 
 ```
 $ edgectl scenario -name shootout -total 49 -threshold 50 \
-      -belief 0.62 -targets 7.5 -trend 0.07 -line 52.5 -price +100
+      -belief 0.62 -baseline 55 -trend 0.07 -line 52.5 -price +100
 
   market says 45.6%   you say 62.0%   (you are +16.4 points apart)
   q = 55.0%  [48.6-61.5]  n=244 (eff 223)  median 59 yds  (scenario occurred)
@@ -97,16 +98,54 @@ worth anything.
 The grid fits four prop outcomes, and a different set of scenarios has earned the right to price
 each one:
 
-| outcome | usable scenarios |
-|---|---|
-| passing yards | `shootout`, `pass_heavy`, `blowout_loss`, `efficient_offense` |
-| receiving yards | `shootout`, `pass_heavy`\* |
-| receptions | `shootout`, `pass_heavy`\* |
-| rushing yards | `pass_heavy` |
+The gate rules on a **site** — one scenario at one (opportunity band, trend band) coordinate —
+rather than on a whole scenario, because that is the unit a price is formed at. So a scenario is
+not on or off for an outcome; some of its cells hold and some do not. 102 of 311 sites are
+priceable:
 
-\* on a recorded operator override, announced every time it is used.
+| outcome | `shootout` | `blowout_loss` | `pass_heavy` | `efficient_offense` |
+|---|---|---|---|---|
+| receiving yards | 13/29 | vetoed | vetoed | 12/30 |
+| receptions | 10/30 | no direction | 18/30 | 9/30 |
+| rushing yards | no direction | 8/11 | 8/12 | 9/12 |
+| passing yards | 6/10 | no direction | 5/10 | 4/10 |
 
-Anything else is refused with the measurement attached. The list is short on purpose — of six
+No override is in force. The one that was — `pass_heavy` for receptions — named a site in the
+grid as it was cut before 2026-08-23, and an override cannot be carried across a re-cut: the
+failure it accepted was measured on a cell that no longer exists.
+
+### What it is worth, measured
+
+Scored on a season the grid never saw — fitted 2009–2024, run against 2025 — the tool's
+probabilities are right to within **0.74pp on 16,512 wagers**. And every one of those wagers loses
+at −110. That is the finding, not a contradiction: **calibration is not an edge.** A perfectly
+calibrated number priced at the market's own line returns the vig, negatively.
+
+What the backtest actually produces is the price you would need: **+137** on a line at a player's
+average, **+185** at 1.15× it. Whether a book offers that is a question about prices, and this
+repository does not collect prop prices. See [Findings §15](model/FINDINGS.md).
+
+`model/analysis/player.py` reads `-baseline` and `-trend` off the cache for a given player and
+upcoming week, tells you which cell they land in and whether it is priceable, and prints the
+`edgectl` command. Typing those two numbers from memory is the one mistake here that fails
+silently — a wrong baseline prices a different population and says nothing.
+
+Ask for a site that did not survive and you get told which one and why, not a shrug:
+
+```
+scenario: receiving_yards/shootout is priceable, but not at posted 46-999, baseline 70-999,
+  trend +0.06..+99.00.
+  the bootstrap interval does not clear zero; the seasons after 2021 are too thin here to check it.
+```
+
+Anything else is refused with the measurement attached.
+
+`edgectl belief` supplies the other half. `P(hit) = q·s + r·(1−s)`: the grid fits `q` and `r`, and
+`s` — how likely the scenario is — came off the posted total for `shootout` and off the spread for
+`blowout_loss`. For the other two there was no market to read, so the operator invented it. A
+team's own prior form predicts it, and now does: `edgectl belief -name efficient_offense -prior
+0.48` returns `s = 0.487`, and `edgectl scenario -prior 0.48` uses it directly. The bands hold
+their *order* out of sample and drift in *level*, so the command says to treat `s` as a rank. The list is short on purpose — of six
 candidate signals tested, one survived, and the corpus's strongest claimed edge measured *backwards*.
 See [Findings](model/FINDINGS.md).
 
@@ -129,8 +168,24 @@ make findings       # reproduce every claim in model/FINDINGS.md
 make fit            # REWRITES the committed artifacts
 ```
 
+Scoring, which is separate from fitting and never writes to the committed artifacts:
+
+```
+make backtest        # fit a 2009-2024 grid, score it on 2025
+make backtest-tails  # what a tail costs to chase, and whether the belief model pays it
+make backtest-slate  # the same, restricted to the January 2026 slate
+```
+
+The backtest reads the artifact rather than rebuilding the grid in memory. A measurement that
+reconstructs what it scores cannot see anything the serialisation does — which is how a
+one-decimal rounding survived every calibration check here.
+
 `make fit` changes what `edgectl` prices. Read the diff — a half-yard shift in one cell median once
 moved a documented belief requirement by 4.2 points.
+
+**Rebuild after fitting.** The grid is embedded into the binary at build time, so `edgectl` keeps
+serving the old artifact until `make build` runs. A refit that appears to have done nothing has
+usually done exactly this.
 
 ## Layout
 

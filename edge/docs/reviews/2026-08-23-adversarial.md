@@ -96,6 +96,16 @@ for; `shootout` is the cleaner effect and deserved that confidence instead.
 **It is not worthless — it is filed under the wrong outcome.** A signal that predicts realized
 targets above projection is a signal about *opportunity*. That is task #7, targets as an outcome.
 
+> **Measured 2026-08-23. C1 and C3 were correctly triaged as one defect, and this review named
+> the weaker half as the cure.** C3 is the larger error by a factor of four (8.01pp against C1's
+> 3.12pp, on a 2.38pp vig cushion) and the posted-total axis does not touch it. Normalizing to the
+> player's own prior mean fixes C3 *and* takes C1 from 3.12pp to 2.68pp with no axis added.
+> The fix is blocked, not by its own measurement, but because it re-cuts the grid into more cells
+> and `qualifies()` is not scale-invariant — `shootout` for receiving yards then fails a gate it
+> passes today, on 20/24 out-of-sample cells rather than 15/15, with its direction *improving*
+> from 16/16 to 29/29. Per-cell gating is now a blocker for this item rather than an improvement.
+> See [FINDINGS.md §11](../../model/FINDINGS.md) and `make calibration`.
+
 ### C3 — the grid judges a player-specific line against a cohort median · critical · verified
 
 `scenario` takes no player identity. `q` is `P(any player in this band clears L)`; the book sets `L`
@@ -128,6 +138,12 @@ set afterwards.
 
 ### S2 — §6's self-service check has gone stale · serious · reviewer-verified
 
+> **Confirmed and fixed 2026-08-23.** Re-run across the current grid the location choice moves
+> **33 site verdicts, all permissive**. The shipped grid uses the median everywhere. The reason the
+> mean was adopted has also gone: receptions now have 0 of 30 cells at a median delta of exactly
+> zero, against 12 of 16 on the raw-count grid. `make recheck`; FINDINGS §6.
+
+
 The median→mean switch was checked against settled verdicts and moved none — true when written.
 Re-run across the whole grid now, **three verdicts flip FAIL→PASS, all permissive**:
 `receiving`/`efficient_offense`, `rushing`/`blowout_loss`, `rushing`/`efficient_offense`. Both
@@ -138,6 +154,12 @@ not the effect. It passes under the mean.
 
 ### S3 — §8's statistic contains its own outcome · serious · reviewer-verified
 
+> **Confirmed; the finding survives re-derivation, smaller.** On `|train-only effect|` pooled over
+> all sixteen pairings: real 2.37×, null 1.04×. Not the 5× reported, and not present in every
+> pairing. Per-cell gating (§12) was decided on the gate's scale-dependence and its own permutation
+> null, not on this statistic. `make recheck`; FINDINGS §8.
+
+
 The "median |fit effect|" is a full-sample delta while agreement is train-vs-test, so the test half
 is inside the predictor. Under a **pure null** this manufactures a 3.0× ratio by itself; the
 reported 5× is therefore weak evidence.
@@ -147,6 +169,11 @@ reported 5× is therefore weak evidence.
 per-cell gating (task #9), it must be re-derived before anyone acts on it.
 
 ### S4 — §8 is not reproducible · serious
+
+> **Fixed 2026-08-23.** `_compare_oos` had been raising `TypeError` since the grid went to four
+> outcomes. Stated per-outcome now, and the claim survives stronger: 16 of 16 pairings pass the
+> magnitude-aware criterion, where §8 reported 4 of 4.
+
 
 No script in `analysis/` computes its table, and the cell count could not be reproduced (192 vs the
 reported 141). `FINDINGS.md` promises every claim comes with the script that produced it.
@@ -165,6 +192,10 @@ by reading the JSON artifact.
 
 ### S6 — `scenario` cannot price an under · serious · verified
 
+> **Fixed 2026-08-23.** `-side over|under`. The grid fits one direction and reads the other off the
+> same cell, mirroring the interval rather than recomputing it.
+
+
 There is no `-side`. `hitrate` has one. Given C3 pushes every estimate below the line, unders are
 where this grid's implied value actually sits, and it cannot express one.
 
@@ -181,6 +212,18 @@ substituting the tool's own measurement — in a repo whose founding grievance i
 from a wrong formula.
 
 ### M1–M4 — minor
+
+> **All four addressed 2026-08-23.** M1: the capability map is rewritten against the current grid.
+> M2: `THIN`/`MEASURED` was one threshold, so 13 effective observations and 400 printed the same
+> word at ±28% and ±5%; there is a `SPARSE` band between them now and every estimate prints its
+> relative error. M3 and M4's wording fix landed in the first commit.
+>
+> **M4's second half was not minor and is now §14.** `shootout` measured on the opponent's points
+> alone — the half of the total the player cannot cause — still separates (+0.086 median delta,
+> 7 sites priceable), so it does not collapse the way `pass_heavy` did. But the shipped definition
+> reads about **1.8× the exogenous effect**. Recorded rather than acted on: removing the
+> circularity would cut receiving yards from 13 priceable sites to 7.
+
 
 - `capability-map.md` is a version behind and contradicts the README on what is priceable.
 - `THIN` fires at 7 effective observations; 13 still prints `MEASURED`.

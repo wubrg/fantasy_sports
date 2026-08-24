@@ -89,24 +89,74 @@ size that is unanswerable — but **"what would I have to believe?"**:
 
 ```
 $ edgectl scenario -name shootout -total 49 -threshold 50 -belief 0.62 \
-      -targets 7.5 -trend 0.07 -line 52.5 -price 100
+      -baseline 55 -trend 0.07 -line 52.5 -price 100
 
   market says 45.6%   you say 62.0%   (you are +16.4 points apart)
 
   CONDITIONALS from the fitted grid (receiving_yards, 2009-2025)
-    q = 55.0%  [48.6-61.5]  n=244 (eff 223)  median 59 yds  (scenario occurred)
-      MEASURED — ~100 effective observations past the line
-    r = 43.5%  [39.3-47.8]  n=522 (eff 522)  median 49 yds  (it did not)
-      MEASURED — ~227 effective observations past the line
+    55.0 yds baseline, posted total 49.0, +7.0 pt trend
+    line 52.5 = 0.95x his baseline
+    q = 58.9%  [50.6-67.1]  n=132 (eff 132)  median 62 yds  (scenario occurred)
+      MEASURED — ~54 effective observations past the line
+    r = 40.9%  [33.8-48.2]  n=174 (eff 174)  median 48 yds  (it did not)
+      MEASURED — ~71 effective observations past the line
+    note: these cells are thin; treat s* as indicative
 
-  REQUIRES  believing the scenario is at least 56.5% likely
+  price +100   hurdle 50.0%   q 58.9%   r 40.9%
+
+  REQUIRES  believing the scenario is at least 50.5% likely
+  your blended P(hit) ... 52.1%
+  EV (real money, stake 1.00) ... +0.0414
+
   VERDICT   DISAGREEMENT-REQUIRED
-  your read is what carries this. Margin over the requirement: +5.5 pts
 ```
 
-`-targets` is the **projected opportunity**, and it means different things per outcome: targets for
-a pass-catcher, attempts for a quarterback, carries for a back. `-trend` is the role change — share
-points for the share-based outcomes, raw volume for passing.
+**Do not type these from memory.** A wrong `-baseline` does not fail — it lands in a neighbouring
+cell and prices a different population, with nothing to show that it happened. Read them off the
+same data the grid was fitted on:
+
+```
+$ python3 model/analysis/player.py --player "Ja'Marr Chase" --season 2024 --week 12 --total 49.5
+
+Ja'Marr Chase (CIN)  2024 week 12, from 11 prior games
+  -baseline  96.0 yds
+  -trend     +0.0481  (share points)
+
+  cell       posted 46-999, baseline 70-999, trend +0.03..+0.06
+             n=133  median 79.0 yds
+  PRICEABLE  holds at 80% of knob settings
+
+edgectl scenario -outcome receiving_yards -name shootout \
+  -total 49.5 -threshold 50 \
+  -baseline 96.0 -trend 0.0481 \
+  -line <LINE> -price <PRICE> -belief <YOUR P(scenario)> [-side under]
+```
+
+It refuses rather than guesses: fewer than four prior games in the season, an ambiguous name, or
+coordinates that fall outside every published cell all stop with a reason.
+
+`-baseline` is **what this player normally does**, in the outcome's own units — his prior mean, off
+the game log. The grid prices the line as a ratio to it (`52.5 = 0.95x his baseline`), because that
+is what a book sets a line near. A grid holding raw yards answers "what does the cohort do at this
+line" when the question was "what does *he* do", and that mismatch measured 8 points at the top tier
+against a 2.38-point vig cushion. See [FINDINGS §11](../../model/FINDINGS.md).
+
+`-total` is required for the same reason it always was — it derives the market's scenario
+probability — and now also selects the posted-total band the grid is conditioned on. `-trend` is the
+role change: share points for the share-based outcomes, raw volume for passing.
+
+**Where `s` comes from.** For `shootout` the tool derives it from the posted total, as above. For
+`pass_heavy` and `efficient_offense` there is no market line to read, and you used to have to
+invent the number. `edgectl belief -name efficient_offense -prior 0.48` reads it off the team's own
+prior form instead, and `edgectl scenario -prior 0.48` uses it directly. Treat it as a **rank**
+rather than a probability: the bands hold their order out of sample and drift in level by up to
+8 points, and the command says so.
+
+**Unders.** `-side under` prices the other direction off the same cell. It matters more than it
+sounds: the grid stores a player's output as a ratio to his own baseline, and the median of that
+ratio is below 1.0 because yardage is right-skewed — a player clears his own average rather less
+than half the time. So an under at a line near his average is frequently where the grid's value
+sits, and until 2026-08-23 the tool could not express one at all.
 
 The three verdicts mean different things. `disagreement-required` is the normal case for a narrative
 bet. `market-alone` means the game line already justifies it — a real edge, and also the likeliest

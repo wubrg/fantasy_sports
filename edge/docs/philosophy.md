@@ -52,9 +52,52 @@ which is a single number, is arguable, and can be checked against what the game 
 comments. Nothing recomputed them, so they rode into every artifact unverified while the data
 beneath them changed (§4).
 
-Now the evidence is measured on every fit and **the fit fails if the recorded verdict and the rule
-disagree**. The verdict remains a human judgement — two scenarios is not enough to calibrate a
-threshold on — but the rule it is held to is written down.
+Then the evidence was measured on every fit, and the fit failed if the recorded verdict and the
+rule disagreed. **Now there is no recorded statistical verdict at all**, because the gate is
+computed per site on every fit and there is nothing left for the data to drift away from. What a
+human still records is a *veto* — a reason to refuse that no test can see — and it can only ever
+subtract from what was measured.
+
+## Why the gate rules on a cell and not a scenario
+
+The rule used to be "the direction holds in every cell". That reads like rigour and is actually a
+bug: for `k` cells with per-cell error rate `e` it passes with probability `(1−e)^k`, so it gets
+stricter the more finely you cut the same data. Cell count is a decision about axes. A gate that
+reads it as evidence rejects a finding when the grid is redrawn and nothing about the world
+changed — which is exactly what happened when a calibration fix cut the grid finer and the one
+priceable scenario failed while its direction *improved* from 16/16 to 29/29 (§11).
+
+A site — one scenario at one (opportunity, trend) coordinate — is what a price is actually formed
+from, so it is what gets judged: direction, bootstrap resolution and out-of-sample persistence, all
+three, on that site's own evidence. `k` is not in the rule.
+
+This also **rescued a test that had been measured but never enforced**. The bootstrap was reported
+and deliberately not gated on, for the stated reason that requiring it in every cell would reject
+real effects. That reason was the scale-dependence talking. Per site, requiring resolution is just
+"this effect is separated from zero here", and it now gates.
+
+The obvious objection is that thirty sites against a 95% interval will resolve one or two by luck,
+so this is multiple comparisons with better manners. That was measured rather than argued: shuffle
+the scenario label across games and the three-test conjunction passes **1.6%** of site-tests,
+against 38–75% for the real scenarios (§12). The conjunction does the work, not the granularity.
+
+## Why a verdict reports its own sensitivity
+
+Two constants decide what the gate sees: `MIN_CELL`, which sets what counts as a cell, and
+`OOS_SPLIT`, which sets what counts as out of sample. Both were chosen after the rule they feed —
+and an adversarial review found verdicts that turned on them rather than on the data.
+
+The tempting response is to defend the settings. That does not work: every plausible setting is
+defensible, which is the whole problem. Arguing 100 over 150 produces a better-argued arbitrary
+choice.
+
+So each cell is re-decided under all 25 combinations and carries the share that agree. A verdict
+holding at every setting is a fact about the data. One holding at 80% is partly a fact about where
+someone put a constant, and it says so at the point of pricing rather than in a sweep nobody runs.
+Of 103 priceable sites, 86 are firm and 17 are not.
+
+This is the same move as recording a verdict against a stated rule, one level down. The rule was
+written where a reader could see it; now the rule's *inputs* are too.
 
 ## Why an override is by name, and never by softening the rule
 
@@ -65,9 +108,16 @@ It was tried, tested against the two verdicts already settled, and **rejected**:
 scenario pass, including both that are gated. A gate that cannot fail is not a gate (§4).
 
 The cost of softening a rule is paid by every scenario measured afterwards. An exception costs only
-the scenario it names. So `accepted_failure` records which cell failed, what was measured, why it
-was accepted and by whom — and it is loud: the fit prints it, the artifact carries it, and
-`edgectl` prints it before the numbers and says whether *your* wager falls inside the failing cell.
+the cell it names. So an accepted failure is **keyed by the site** — outcome, scenario and the four
+coordinates — records what was measured, why it was accepted and by whom, and is checked against
+that site's measured verdict, so it can neither cover a scenario nor name a cell the grid lacks. An
+override on a site that has started passing is reported stale.
+
+It is loud, and now loud in the right place: the fit prints it, the artifact carries it, and
+`edgectl` prints it before the numbers. Because the lookup is keyed by site, it fires only on the
+wager it actually applies to. It used to attach to the whole scenario and announce itself on every
+wager in it — including the fifteen cells that passed cleanly, which is how a warning becomes
+something a reader learns to skip.
 
 ## Why the instrument gets checked before the result
 
