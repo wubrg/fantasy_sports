@@ -137,7 +137,7 @@ func main() {
 		}
 	case "board":
 		if err := runBoard(*leagueID, *draftID, orBuiltin(*configDir, builtinConfigDir), orBuiltin(*dataDir, builtinDataDir),
-			*me, draft.Baseline(*baseline), *limit, draft.SetNames(*leans)); err != nil {
+			*me, draft.Baseline(*baseline), *limit, draft.SetNames(*leans), *keepers); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}
@@ -460,7 +460,7 @@ func ownerNames(c *sleeper.Client, seasons []draft.SeasonData, owners draft.Owne
 //
 // Delegates to the same loader and builder the server uses, so the printed
 // board and the web board cannot disagree about anything.
-func buildSnapshot(leagueID, draftID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string) (draft.Snapshot, error) {
+func buildSnapshot(leagueID, draftID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string, keeperScenario string) (draft.Snapshot, error) {
 	static, err := loadStatic(leagueID, draftID, configDir, dataDir, ownerID, baseline, leanSets)
 	if err != nil {
 		return draft.Snapshot{}, err
@@ -478,14 +478,28 @@ func buildSnapshot(leagueID, draftID, configDir, dataDir, ownerID string, baseli
 			}
 		}
 	}
-	// The terminal board is the live view; keeper scenarios are a research-mode
-	// feature of the web board only.
-	return static.Build(taken, nil, "")
+	return static.Build(taken, nil, keeperScenario)
 }
 
 // runBoard prints the draft board.
-func runBoard(leagueID, draftID, configDir, dataDir, ownerID string, baseline draft.Baseline, limit int, leanSets []string) error {
-	snap, err := buildSnapshot(leagueID, draftID, configDir, dataDir, ownerID, baseline, leanSets)
+// keeperScenarioNote says what each research scenario actually assumes, since
+// the name alone does not: "none" removes nobody and opens on the full pool,
+// which is the opposite of what it sounds like. Draft night has no entry
+// because it is the live view and gets no badge.
+var keeperScenarioNote = map[string]string{
+	"none":     "hypothetical pool — no keepers assumed, the full budget and every roster spot open",
+	"locks":    "hypothetical pool — near-certain keepers off the board, their money out of the pool",
+	"expected": "hypothetical pool — projected keepers off the board, their money out of the pool",
+}
+
+func runBoard(leagueID, draftID, configDir, dataDir, ownerID string, baseline draft.Baseline, limit int, leanSets []string, keeperScenario string) error {
+	// Refused here rather than passed on, because Build reads an unrecognised
+	// name as draft night: a typo would otherwise print a board that looks
+	// entirely normal and is priced against the wrong pool.
+	if !validKeeperScenario(keeperScenario) {
+		return fmt.Errorf("unknown keeper scenario %q: use none, locks, expected, or leave it empty for draft night", keeperScenario)
+	}
+	snap, err := buildSnapshot(leagueID, draftID, configDir, dataDir, ownerID, baseline, leanSets, keeperScenario)
 	if err != nil {
 		return err
 	}
@@ -493,6 +507,12 @@ func runBoard(leagueID, draftID, configDir, dataDir, ownerID string, baseline dr
 		fmt.Fprintf(os.Stderr, "note: %s\n", w)
 	}
 
+	// The web board shows a RESEARCH badge whenever a scenario is on. The
+	// terminal needs the same tell: these numbers are a hypothetical pool, and
+	// nothing else in the output says so.
+	if note := keeperScenarioNote[keeperScenario]; note != "" {
+		fmt.Printf("RESEARCH — %s\n", note)
+	}
 	fmt.Printf("BOARD — %s baseline, $%d over %d slots\n", snap.Baseline, snap.Dollars, snap.Slots)
 	fmt.Printf("max on one player before the rest of your roster suffers: $%d (%s)\n\n",
 		snap.Recommended, snap.Risk.Describe())

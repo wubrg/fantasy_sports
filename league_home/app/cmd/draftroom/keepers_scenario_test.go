@@ -186,3 +186,30 @@ func TestForcedKeeperLockedRegardlessOfSurplus(t *testing.T) {
 		t.Errorf("want two keepers, got %v", locks)
 	}
 }
+
+// TestEveryResearchScenarioCarriesABadge: the terminal board's only tell that
+// its numbers are hypothetical is the RESEARCH line, which is driven off this
+// map rather than off validKeeperScenario. Adding a scenario to one and not the
+// other would print a research pool that reads exactly like the live board —
+// the same class of silent-wrong-pool failure validKeeperScenario exists to
+// prevent, just moved one step later.
+func TestEveryResearchScenarioCarriesABadge(t *testing.T) {
+	for name := range keeperScenarios {
+		if name == "" {
+			continue // draft night is the live view and gets no badge
+		}
+		if keeperScenarioNote[name] == "" {
+			t.Errorf("scenario %q is valid but has no RESEARCH note", name)
+		}
+	}
+	for name := range keeperScenarioNote {
+		if !validKeeperScenario(name) {
+			t.Errorf("note for %q, which is not a valid scenario", name)
+		}
+	}
+	// Draft night must stay unbadged: a RESEARCH line on the live board would
+	// be worse than none on a research one.
+	if keeperScenarioNote[""] != "" {
+		t.Error(`draft night ("") must carry no RESEARCH note`)
+	}
+}
