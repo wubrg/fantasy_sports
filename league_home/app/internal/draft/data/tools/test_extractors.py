@@ -8,12 +8,15 @@ arrows — real signal — are lost. Both must be handled, in the right order.
 """
 
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import csv  # noqa: E402
+import extract_borischen as bc  # noqa: E402
+import extract_draftsheets as ds  # noqa: E402
 import extract_fantasypoints as fp  # noqa: E402
 import extract_fantasypros as fpx  # noqa: E402
 import extract_subvertadown as sv  # noqa: E402
@@ -412,6 +415,240 @@ class ExtractFantasyProsTest(unittest.TestCase):
         self.assertEqual(con['Jahmyr Gibbs']['notes'], 'Workhorse back.')
         top10 = [r for r in rows if r['baseline'] == 'top10']
         self.assertTrue(all(r['notes'] == '' for r in top10))
+
+
+# --- FantasyPros, current export naming ------------------------------------
+#
+# FantasyPros renamed every export mid-2026. The extractor resolves both
+# namings, and the only test that really matters is that it does not care
+# which it got: the same data under either set of filenames has to produce
+# byte-identical parsed output. Asserting on specific values here would just
+# duplicate the legacy tests above and would not catch a resolver that quietly
+# picked the wrong file.
+
+NEW_VIEW_HEADERS = {
+    "Rankings": ['RK', 'TIERS', 'PLAYER NAME', 'TEAM', 'POS', 'BYE WEEK',
+                 'UPSIDE ', 'BUST ', 'SOS SEASON', 'ECR VS. ADP'],
+    "Ranks": ['RK', 'TIERS', 'PLAYER NAME', 'TEAM', 'POS', 'BEST', 'WORST',
+              'AVG.', 'STD.DEV', 'ECR VS. ADP'],
+    "Notes": ['RK', 'TIERS', 'PLAYER NAME', 'TEAM', 'POS', 'BYE WEEK', 'NOTES'],
+}
+
+
+def fpx_variant_new(raw_dir, variant, players):
+    """The same four views fpx_variant writes, under the current names."""
+    def w(view, header, rows):
+        fpx_write(os.path.join(
+            raw_dir, f'FantasyPros_2026_Draft_{variant}_{view}.csv'), header, rows)
+    w("Rankings", NEW_VIEW_HEADERS["Rankings"],
+      [[p['rank'], p['tier'], p['name'], p['team'], p['pos'], p['bye'],
+        '5 out of 5', '2 out of 5', '3 out of 5 stars', p.get('adp', '-')] for p in players])
+    w("Ranks", NEW_VIEW_HEADERS["Ranks"],
+      [[p['rank'], p['tier'], p['name'], p['team'], p['pos'],
+        p['rank'], p['rank'] + 4, float(p['rank']) + 0.5, 0.8, p.get('adp', '-')] for p in players])
+    w("Notes", NEW_VIEW_HEADERS["Notes"],
+      [[p['rank'], p['tier'], p['name'], p['team'], p['pos'], p['bye'],
+        p.get('note', '')] for p in players])
+    # Stats-Totals is the season total the old stats view carried. Stats-Avg is
+    # the same season per game; it is written here precisely because the
+    # extractor must ignore it -- reading it would divide every number by games.
+    st = [[p['rank'], p['tier'], p['name'], p['team'], *p['stats']] for p in players]
+    w("Stats-Totals", FPX_STATS_HEADER, st)
+    w("Stats-Avg", FPX_STATS_HEADER,
+      [[r[0], r[1], r[2], r[3]] + [round(v / 17.0, 1) for v in r[4:]] for r in st])
+
+
+FPX_RB_PROJ_HEADER = ['Player', 'Team', 'ATT', 'YDS', 'TDS', 'REC', 'YDS',
+                      'TDS', 'FL', 'FPTS']
+
+
+def fpx_projections_new(raw_dir, players):
+    """The current per-position projection exports, all four banded.
+
+    Only QB and RB are written because those are the positions the fixtures
+    project; a missing per-position file is not an error, which is itself part
+    of what this exercises.
+    """
+    qb, rb = [], []
+    for p in players:
+        if 'proj' not in p:
+            continue
+        bucket = qb if p['pos'].startswith('QB') else rb
+        bucket.append([p['name'], p['team'], *p['proj']])
+        bucket.append(['', 'high', *p['proj_high']])
+        bucket.append(['', 'low', *p['proj_low']])
+    fpx_write(os.path.join(raw_dir, 'FantasyPros_Fantasy_Football_Projections_QB.csv'),
+              FPX_QB_PROJ_HEADER, [[' ', '', '', '']] + qb)
+    fpx_write(os.path.join(raw_dir, 'FantasyPros_Fantasy_Football_Projections_RB.csv'),
+              FPX_RB_PROJ_HEADER, [[' ', '', '', '']] + rb)
+
+
+class ExtractFantasyProsNewNamingTest(unittest.TestCase):
+    def build_new(self):
+        d = tempfile.mkdtemp()
+        everyone = [GIBBS, BIJAN, ALLEN, KICKER, JAGS, DEEP]
+        fpx_variant_new(d, 'ALL', everyone)
+        b1, g2 = dict(BIJAN, rank=1), dict(GIBBS, rank=2)
+        fpx_variant_new(d, '2025-top10', [b1, g2, dict(ALLEN, rank=24)])
+        fpx_variant_new(d, '2025-top20', [b1, g2, dict(ALLEN, rank=25)])
+        fpx_projections_new(d, everyone)
+        return d
+
+    def build_legacy(self):
+        d = tempfile.mkdtemp()
+        everyone = [GIBBS, BIJAN, ALLEN, KICKER, JAGS, DEEP]
+        fpx_variant(d, 'fantasypros', everyone)
+        b1, g2 = dict(BIJAN, rank=1), dict(GIBBS, rank=2)
+        fpx_variant(d, 'fantasypros-2025-top10', [b1, g2, dict(ALLEN, rank=24)])
+        fpx_variant(d, 'fantasypros-2025-top20', [b1, g2, dict(ALLEN, rank=25)])
+        fpx_projections(d, everyone)
+        return d
+
+    def parse(self, d):
+        return fpx.parse_variant(d, 'fantasypros', fpx.parse_projections(d))
+
+    def test_both_namings_produce_the_same_parse(self):
+        self.assertEqual(self.parse(self.build_new()), self.parse(self.build_legacy()))
+
+    def test_new_naming_resolves_every_view(self):
+        p = self.parse(self.build_new())['Jahmyr Gibbs']
+        self.assertEqual(p['pos_rank'], 1)           # Rankings
+        self.assertEqual(p['best'], 1)               # Ranks
+        self.assertEqual(p['receptions'], 77.0)      # Projections_RB
+        self.assertAlmostEqual(p['league_points'], 330.4, places=1)
+
+    def test_stats_avg_is_not_read_in_place_of_totals(self):
+        """Stats-Avg holds the per-game figure. Reading it would leave a DST,
+        which has no projection to fall back on, at a seventeenth of its
+        season."""
+        d = self.build_new()
+        rows = self.parse(d)
+        self.assertAlmostEqual(rows['Jacksonville Jaguars']['league_points'], 120.0, places=1)
+
+    def test_a_missing_view_names_both_paths_it_tried(self):
+        d = self.build_new()
+        os.remove(os.path.join(d, 'FantasyPros_2026_Draft_ALL_Ranks.csv'))
+        with self.assertRaises(SystemExit) as cm:
+            self.parse(d)
+        msg = str(cm.exception)
+        self.assertIn('FantasyPros_2026_Draft_ALL_Ranks.csv', msg)
+        self.assertIn('fantasypros-ecr-ranks-for-2026.csv', msg)
+
+    def test_no_banded_projection_export_is_fatal(self):
+        """A run with no banded export would finish clean with every band
+        empty, and the board would show a bare number where it means a range."""
+        d = self.build_new()
+        for f in os.listdir(d):
+            if 'Projections' in f:
+                os.remove(os.path.join(d, f))
+        with self.assertRaises(SystemExit) as cm:
+            fpx.parse_projections(d)
+        self.assertIn('no banded projections export', str(cm.exception))
+
+
+# --- Boris Chen -------------------------------------------------------------
+#
+# Two capture paths reach this extractor: `make refresh` fetches bare text
+# files from S3, and an operator sometimes saves the pages by hand, which also
+# yields weekly-ALL.csv. The fetched path is the one that runs unattended, so
+# the test that matters most is that it still works with no CSV anywhere.
+
+BC_QB = "Tier 1: Josh Allen, Lamar Jackson\nTier 2: Drake Maye\n"
+BC_DST = "Tier 1: Houston Texans, Denver Broncos\nTier 2: Philadelphia Eagles\n"
+BC_K = "Tier 1: Brandon Aubrey, Cameron Dicker\n"
+
+
+def bc_dir(with_csv):
+    d = tempfile.mkdtemp()
+    for name, body in (("text_QB.txt", BC_QB), ("text_DST.txt", BC_DST),
+                       ("text_K.txt", BC_K)):
+        with open(os.path.join(d, name), "w", encoding="utf-8") as f:
+            f.write(body)
+    if with_csv:
+        os.makedirs(os.path.join(d, "as-provided"), exist_ok=True)
+        with open(os.path.join(d, "as-provided", "weekly-ALL.csv"), "w",
+                  newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["Rank", "Player.Name", "Tier", "Position",
+                        "Best.Rank", "Worst.Rank", "Avg.Rank", "Std.Dev"])
+            w.writerow([12, "Josh Allen", 2, "QB", 10, 18, 12.4, 1.9])
+            w.writerow([180, "Houston Texans", 17, "DST", 170, 190, 179.0, 4.1])
+    return d
+
+
+class ExtractBorisChenTest(unittest.TestCase):
+    def run_it(self, d):
+        out = os.path.join(tempfile.mkdtemp(), "bc.csv")
+        subprocess.run([sys.executable,
+                        os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     "extract_borischen.py"), d, out],
+                       check=True, capture_output=True)
+        with open(out, newline="", encoding="utf-8") as f:
+            return {(r["position"], r["player"]): r for r in csv.DictReader(f)}
+
+    def test_kickers_and_defenses_need_no_special_casing(self):
+        self.assertEqual(bc.position_of("text_K.txt"), "K")
+        self.assertEqual(bc.position_of("text_DST.txt"), "DST")
+        self.assertEqual(bc.position_of("text_RB-HALF.txt"), "RB")
+
+    def test_fetched_path_works_with_no_csv(self):
+        """The unattended `make refresh` shape. A regression here breaks the
+        nightly path silently, since the tiers would still be written."""
+        d = bc_dir(with_csv=False)
+        self.assertIsNone(bc.find_weekly_csv(d))
+        rows = self.run_it(d)
+        self.assertEqual(rows[("QB", "Josh Allen")]["tier"], "1")
+        self.assertEqual(rows[("QB", "Josh Allen")]["avg_rank"], "")
+        self.assertIn(("DST", "Houston Texans"), rows)
+
+    def test_saved_path_joins_the_dispersion(self):
+        rows = self.run_it(bc_dir(with_csv=True))
+        allen = rows[("QB", "Josh Allen")]
+        self.assertEqual(allen["best"], "10")
+        self.assertEqual(allen["worst"], "18")
+        self.assertEqual(allen["avg_rank"], "12.4")
+        self.assertEqual(allen["stddev"], "1.9")
+
+    def test_the_tier_files_win_over_the_csv_tier(self):
+        """The CSV's tier is from Chen's combined ALL board and spans every
+        position at once -- Houston is tier 1 among defenses and tier 17
+        overall. They are different quantities, so the per-position tier stands
+        and the overall one rides along beside it."""
+        rows = self.run_it(bc_dir(with_csv=True))
+        houston = rows[("DST", "Houston Texans")]
+        self.assertEqual(houston["tier"], "1")
+        self.assertEqual(houston["overall_tier"], "17")
+
+
+# --- DraftSheets ------------------------------------------------------------
+
+
+class ExtractDraftSheetsScoringTest(unittest.TestCase):
+    """The workbook publishes FPTS at full PPR while its own Scoring sheet says
+    half, so the recompute from components -- not the published column -- is
+    what the board must end up with."""
+
+    def test_half_ppr_recompute(self):
+        chase = {"receptions": 121.2, "recv_yards": 1511.3, "recv_td": 10.6,
+                 "rush_yards": 17.0, "rush_td": 0.0}
+        # 60.6 + 151.13 + 63.6 + 1.7 = 277.03
+        self.assertAlmostEqual(ds.league_points(chase), 277.03, places=2)
+
+    def test_interceptions_score_at_the_league_rate(self):
+        """The workbook prices an interception at -1 like this league does, so
+        a QB should need no correction on that term."""
+        self.assertAlmostEqual(ds.SCORING["interceptions"], -1.0)
+        allen = {"pass_yards": 3816.8, "pass_td": 27.4, "interceptions": 11.2,
+                 "rush_yards": 586.0, "rush_td": 11.8}
+        self.assertAlmostEqual(ds.league_points(allen), 380.47, places=2)
+
+    def test_fumbles_are_not_scored(self):
+        """This league has no fumble term. A stats dict carrying one must not
+        move the total, or every fumble-prone back is quietly marked down."""
+        base = {"rush_yards": 1000.0, "rush_td": 10.0}
+        self.assertAlmostEqual(ds.league_points(base),
+                               ds.league_points(dict(base, fumbles_lost=3.0)))
+
 
 
 if __name__ == "__main__":

@@ -7,10 +7,16 @@ raw/fantasypros/<date>/. See internal/draft/data/README.md for the policy.
 
 Each ranking VARIANT is exported as several views that must be merged:
 
-  overview  (…-ecr-for-…)    POS, BYE, UPSIDE/BUST stars, SOS, ECR-vs-ADP
-  ranks     (…-ecr-ranks-…)  BEST, WORST, AVG, STD.DEV of the expert ranks
-  notes     (…-ecr-notes-…)  a per-player prose writeup
-  stats     (…-ecr-stats-…)  LAST SEASON's actual production — see below
+  overview  (…_Rankings)      POS, BYE, UPSIDE/BUST stars, SOS, ECR-vs-ADP
+  ranks     (…_Ranks)         BEST, WORST, AVG, STD.DEV of the expert ranks
+  notes     (…_Notes)         a per-player prose writeup
+  stats     (…_Stats-Totals)  LAST SEASON's actual production — see below
+
+FantasyPros renamed every one of these mid-2026 (…-ecr-<view>-for-2026.csv
+became FantasyPros_2026_Draft_<variant>_<View>.csv) and split the stats view in
+two. Both namings resolve here: the board is refreshed repeatedly before the
+draft, so nineteen files cannot be renamed by hand each time, and the older
+dated snapshots have to stay re-extractable.
 
 Three variants are ingested and packed into one file, distinguished by a
 `baseline` column the way Subvertadown packs its three baselines:
@@ -32,13 +38,14 @@ ACTUALS, not a 2026 projection. Scoring it produced a column that floored every
 underpriced everyone who missed time, while reading as a second projection. The
 projections exports replace it:
 
-  …-projections-qb-hilo-…   QB, with a high and a low beside each projection
-  …-projections-flx-hilo-…  RB/WR/TE, ditto, with a POS column
-  …-projections-{qb,rb,wr,te}-…  the same numbers without the band
+  …_Projections_{QB,RB,WR,TE}  each with a high and a low beside the projection
+  …-projections-qb-hilo-…      the older QB export, same shape
+  …-projections-flx-hilo-…     the older RB/WR/TE one, ditto, with a POS column
+  …-projections-{qb,rb,wr,te}-…  older still, the same numbers without a band
 
-The Hi/Low pair is primary — between them they cover every position and carry
-every stat component. The per-position exports are read only to pick up a
-player the Hi/Low exports missed. In the Hi/Low files each player is three
+Banded exports are primary — between them they cover every position and carry
+every stat component. The unbanded per-position exports are read only to pick up
+a player the banded ones missed. In a banded file each player is three
 consecutive rows: the named row, then an unnamed "high" row, then a "low" one.
 
 Scoring — recomputed under the league's own rules like extract_ciely.py, so
@@ -106,6 +113,32 @@ VARIANTS = {
     "top20": "fantasypros-2025-top20",
 }
 
+# FantasyPros renamed its exports mid-season, so every view is looked up under
+# the current naming first and the older hand-named one second. Old dated
+# snapshots have to stay re-extractable — they are the record of what the board
+# was built from — and this is re-run at every refresh before the draft, so the
+# new names cannot become a rename-nineteen-files-by-hand step.
+#
+#   FantasyPros_2026_Draft_<variant>_<View>.csv
+NEW_VARIANT = {
+    "fantasypros": "ALL",
+    "fantasypros-2025-top10": "2025-top10",
+    "fantasypros-2025-top20": "2025-top20",
+}
+
+# Our view name -> the word the current export uses, established by comparing
+# headers rather than by reading filenames. Stats-Totals, not Stats-Avg: Totals
+# carries the same season totals the old stats view did (FANTASYPTS matches
+# player for player), while Avg is that season per game — new data with no
+# consumer here, and wiring it in would quietly divide every DST's number by the
+# games it played.
+NEW_VIEWS = {
+    "overview": "Rankings",
+    "ranks": "Ranks",
+    "notes": "Notes",
+    "stats": "Stats-Totals",
+}
+
 # Projections exports: filename -> component/index map. The exports carry
 # repeated YDS/TDS headers, so columns are taken positionally. Indexes not
 # listed are columns the league does not score (pass attempts, completions,
@@ -128,8 +161,19 @@ TE_COLS = {"receptions": 2, "recv_yards": 3, "recv_td": 4,
            "fumbles_lost": 5, "points": 6}
 
 # Primary first, then the per-position fills. Order matters: the first file to
-# name a player wins, so the banded exports are read before the flat ones.
+# name a player wins, so the banded exports are read before the flat ones, and
+# the current exports before the legacy ones.
+#
+# The current per-position exports each carry the high/low rows the Hi/Low pair
+# used to hold alone, so all four are banded. Between them they also replace
+# flx-hilo, which has no current equivalent: RB/WR/TE across the three files is
+# 441 players against flx-hilo's 439, and QB is 82 either way. The legacy entries
+# stay so an older snapshot still resolves.
 PROJECTION_SOURCES = [
+    ("FantasyPros_Fantasy_Football_Projections_QB.csv", QB_COLS, True),
+    ("FantasyPros_Fantasy_Football_Projections_RB.csv", RB_COLS, True),
+    ("FantasyPros_Fantasy_Football_Projections_WR.csv", WR_COLS, True),
+    ("FantasyPros_Fantasy_Football_Projections_TE.csv", TE_COLS, True),
     ("fantasypros-projections-qb-hilo-for-2026.csv", QB_COLS, True),
     ("fantasypros-projections-flx-hilo-for-2026.csv", FLX_COLS, True),
     ("fantasypros-projections-qb-for-2026.csv", QB_COLS, False),
@@ -150,18 +194,27 @@ POS_RE = re.compile(r"^([A-Za-z]+)(\d+)$")
 TEAM_FIXES = {"JAC": "JAX"}
 
 
-def view_path(raw_dir, prefix, view):
-    """The ECR views share a stem. Exports are named "…-for-2026.csv"; the
-    overview drops the view word, so it reads "…-ecr-for-2026.csv" and the
-    rest "…-ecr-<view>-for-2026.csv"."""
-    stem = f"{prefix}-ecr-for-2026.csv" if view == "overview" else f"{prefix}-ecr-{view}-for-2026.csv"
-    return os.path.join(raw_dir, stem)
+def view_paths(raw_dir, prefix, view):
+    """Every filename one ECR view could be under, current naming first.
+
+    A list rather than a single path so a miss can name everything that was
+    tried — FantasyPros has renamed these once and will again, and a rename is
+    only diagnosable if the error says what it looked for.
+
+    Legacy stems share "…-for-2026.csv"; the overview drops the view word, so it
+    reads "…-ecr-for-2026.csv" and the rest "…-ecr-<view>-for-2026.csv"."""
+    legacy = (f"{prefix}-ecr-for-2026.csv" if view == "overview"
+              else f"{prefix}-ecr-{view}-for-2026.csv")
+    new = f"FantasyPros_2026_Draft_{NEW_VARIANT[prefix]}_{NEW_VIEWS[view]}.csv"
+    return [os.path.join(raw_dir, new), os.path.join(raw_dir, legacy)]
 
 
-def read_view(path):
-    """Return (rows, header) with header cells lowercased and stripped."""
-    if not os.path.exists(path):
-        sys.exit(f"extract_fantasypros: missing {path}")
+def read_view(paths):
+    """Return (rows, header) from the first candidate path that exists, with
+    header cells lowercased and stripped."""
+    path = next((p for p in paths if os.path.exists(p)), None)
+    if path is None:
+        sys.exit("extract_fantasypros: missing " + ", or ".join(paths))
     with open(path, encoding="utf-8", errors="replace", newline="") as f:
         rows = list(csv.reader(f))
     if not rows:
@@ -235,13 +288,12 @@ def parse_projections(raw_dir):
     since it names nobody.
     """
     out = {}
+    found_banded = False
     for fname, cols, banded in PROJECTION_SOURCES:
         path = os.path.join(raw_dir, fname)
         if not os.path.exists(path):
-            # The per-position fills are optional; the banded pair is not.
-            if banded:
-                sys.exit(f"extract_fantasypros: missing {path}")
             continue
+        found_banded = found_banded or banded
         with open(path, encoding="utf-8", errors="replace", newline="") as f:
             rows = list(csv.reader(f))[1:]
         current = None
@@ -264,14 +316,22 @@ def parse_projections(raw_dir):
             elif banded and tag in ("high", "low") and current in out:
                 _, _, _, pts = score_row(row, cols)
                 out[current]["points_" + tag] = pts
+    # No single banded export is required, since the current and legacy sets name
+    # different files. Having none of them is still fatal: the run would
+    # otherwise finish clean with every band empty, and the board would show a
+    # bare number where it means to show a range.
+    if not found_banded:
+        wanted = [f for f, _, banded in PROJECTION_SOURCES if banded]
+        sys.exit(f"extract_fantasypros: no banded projections export in {raw_dir}; "
+                 f"expected one of {', '.join(wanted)}")
     return out
 
 
 def parse_variant(raw_dir, prefix, projections):
     """Merge one variant's ECR views with the projections into player dicts."""
-    ov_rows, ov = read_view(view_path(raw_dir, prefix, "overview"))
-    rk_rows, rk = read_view(view_path(raw_dir, prefix, "ranks"))
-    st_rows, st = read_view(view_path(raw_dir, prefix, "stats"))
+    ov_rows, ov = read_view(view_paths(raw_dir, prefix, "overview"))
+    rk_rows, rk = read_view(view_paths(raw_dir, prefix, "ranks"))
+    st_rows, st = read_view(view_paths(raw_dir, prefix, "stats"))
 
     ov_name = col(ov, "player name", "player", "name")
     ranks = index_by_name(rk_rows, rk, col(rk, "player name", "player", "name"))
@@ -413,7 +473,7 @@ def main():
 
     # Attach notes (consensus view carries the writeups we keep).
     notes_by_name = {}
-    ov_rows, ov = read_view(view_path(raw_dir, VARIANTS["consensus"], "notes"))
+    ov_rows, ov = read_view(view_paths(raw_dir, VARIANTS["consensus"], "notes"))
     nname = col(ov, "player name", "player", "name")
     nnotes = col(ov, "notes")
     for r in ov_rows:

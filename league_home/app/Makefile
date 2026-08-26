@@ -113,17 +113,41 @@ refresh: ## Re-extract every source from the private data repo and rebuild gener
 	@python3 $(TOOLS)/extract_fantasypros.py \
 		$$(ls -d $(DATA)/raw/fantasypros/*/ | tail -1) \
 		$(DATA)/normalized/fantasypros-2026.csv
+	@echo "==> Chris Dell (expert rankings)"
+	@python3 $(TOOLS)/extract_chrisdell.py \
+		$$(ls -d $(DATA)/raw/chrisdell/*/ | tail -1) \
+		$(DATA)/normalized/chrisdell-2026.csv
+	@echo "==> DraftSheets"
+	@python3 $(TOOLS)/extract_draftsheets.py \
+		$$(ls -d $(DATA)/raw/draftsheets/*/ | tail -1)DraftSheets_2026.xlsx \
+		$(DATA)/normalized/draftsheets-2026.csv
 	@echo "==> Boris Chen (half-PPR tiers)"
+# Never overwrite a file already in today's snapshot. Chen's pages are sometimes
+# saved by hand instead of fetched, because the saved bundle carries
+# weekly-ALL.csv — the rank dispersion, and K and DST — none of which the S3
+# text files have. Re-fetching over that would replace the four skill files with
+# a copy taken at a different moment, leaving them out of step with the CSV
+# beside them, and the extractor's staleness check would start firing on a
+# snapshot that was fine when it was saved.
 	@mkdir -p $(DATA)/raw/borischen/$$(date +%F)
 	@for f in text_QB.txt text_RB-HALF.txt text_WR-HALF.txt text_TE-HALF.txt; do \
-		curl -fsS "https://s3-us-west-1.amazonaws.com/fftiers/out/$$f" \
-			-o $(DATA)/raw/borischen/$$(date +%F)/$$f || echo "  WARN: $$f fetch failed"; \
+		if [ -e $(DATA)/raw/borischen/$$(date +%F)/$$f ]; then \
+			echo "  keeping $$f (already in today's snapshot)"; \
+		else \
+			curl -fsS "https://s3-us-west-1.amazonaws.com/fftiers/out/$$f" \
+				-o $(DATA)/raw/borischen/$$(date +%F)/$$f || echo "  WARN: $$f fetch failed"; \
+		fi; \
 	done
 	@python3 $(TOOLS)/extract_borischen.py \
 		$$(ls -d $(DATA)/raw/borischen/*/ | tail -1) \
 		$(DATA)/normalized/borischen-2026.csv
 	@echo "==> generated lean sets"
 	@$(MAKE) --no-print-directory leans-generate
+# Last, so the manifest describes what the run just produced rather than what
+# was there before it. Provenance that lags the data is worse than none: it
+# reads as authoritative while pointing at the previous snapshot.
+	@echo "==> provenance manifest"
+	@python3 $(TOOLS)/build_manifest.py $(DATA)
 
 data-status: ## Show how stale each source snapshot is
 	@echo "private data root: $$(cd $(DATA) 2>/dev/null && pwd || echo 'NOT FOUND')"
