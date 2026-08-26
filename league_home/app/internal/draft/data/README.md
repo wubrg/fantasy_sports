@@ -40,6 +40,41 @@ draftroom notes.
 
 Anyone cloning this re-runs the extractors against their own copies.
 
+### keeper-locks.csv, and the week keepers lock
+
+This file carries two things at once, which is what lets the board follow the
+league from "nobody has decided" to "keepers are final" without a switch to
+flip on the day:
+
+| | |
+|---|---|
+| a row | this player is kept |
+| an owner appearing at all | **this owner has finished deciding** |
+
+An owner in the file is declared: his listed players are his whole keeper set,
+the surplus heuristic stops guessing for him, and on draft night his keepers
+come **off the board** rather than staying biddable — a declaration is a fact
+and cannot be drafted, where a projection is a guess and can.
+
+An owner absent has **not entered yet** and is still projected. Absence is a
+gap, never a claim that he keeps nobody. A team really keeping nobody says so:
+
+```csv
+owner,player
+Sam,Rome Odunze
+Sam,Zay Flowers
+Bob,none          # declared, keeping nobody — his whole $200 stays in the pool
+```
+
+`none`, `-` and `nobody` all work. Such a row must name its owner, since there
+is no player to read the roster from; the loader refuses a blank one rather
+than record a declaration against nobody.
+
+The board reports how far along this is on every load — *"keepers declared for
+1 of 12 teams — still projected for Adam, Ben, …"* — because a half-filled
+file prices a board that is part fact and part guess, and nothing on the page
+would otherwise say which.
+
 ## Layout
 
 ```
