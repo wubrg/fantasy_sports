@@ -524,6 +524,62 @@ func BootstrapCI(pts []Point, stat func([]Point) float64, iters int, seed int64,
 	return vals[loIdx], vals[hiIdx]
 }
 
+// RealisedEdge is what the wagers this forecast would actually place returned,
+// per unit staked, against the price the reference implies.
+//
+// This is the money question, and no calibration statistic answers it. A
+// forecaster can be more accurate than the reference everywhere by a hair --
+// a healthy paired Brier gain -- and never disagree by enough to place a single
+// bet. The two endpoints are different claims and both have to hold.
+//
+// Only rows over the bar count, because those are the only ones that become
+// wagers. The side taken follows the direction of the disagreement:
+//
+//	p > ref   bet the scenario happens;     breakeven ref*(1+hold),      realised y
+//	p < ref   bet it does not;              breakeven (1-ref)*(1+hold),  realised 1-y
+//
+// Positive means the wagers won more than the price required.
+func RealisedEdge(pts []Point, bar, hold float64) float64 {
+	var sum float64
+	var n int
+	for _, p := range Positions(pts) {
+		if !p.HasRef {
+			continue
+		}
+		d := p.P - p.Ref
+		if math.Abs(d) <= bar {
+			continue
+		}
+		var breakeven, realised float64
+		if d > 0 {
+			breakeven, realised = p.Ref*(1+hold), p.y()
+		} else {
+			breakeven, realised = (1-p.Ref)*(1+hold), 1-p.y()
+		}
+		sum += realised - breakeven
+		n++
+	}
+	if n == 0 {
+		return math.NaN()
+	}
+	return sum / float64(n)
+}
+
+// OverBarCount is how many rows the realised-edge statistic actually rests on.
+//
+// Reported beside it because it is a small fraction of the sample: the bar is
+// what makes a row a wager, and a forecaster that abstains freely -- as the
+// contract asks it to -- will put few rows over it.
+func OverBarCount(pts []Point, bar float64) int {
+	var n int
+	for _, p := range Positions(pts) {
+		if p.HasRef && math.Abs(p.P-p.Ref) > bar {
+			n++
+		}
+	}
+	return n
+}
+
 // PairedBrierGain is how much better the forecast is than its reference, per
 // row. Positive means the forecast beat the reference.
 //
