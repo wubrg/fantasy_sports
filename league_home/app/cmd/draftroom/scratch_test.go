@@ -235,3 +235,29 @@ func TestScratchScoresLikeAnArchetype(t *testing.T) {
 			view.Metrics.StartingPoints, direct.StartingPoints)
 	}
 }
+
+// TestBenchSlotsFollowsTheShape: the bench is the roster less its starting
+// lineup, and both are drawn from the same shape. A bench sized by hand would
+// drift from the lineup beside it and the panel would show a roster of the
+// wrong length.
+func TestBenchSlotsFollowsTheShape(t *testing.T) {
+	league := draft.HitOrMissPool() // QB1 RB2 WR3 TE1 + 1 flex = 8 starting
+	if got := benchSlots(league); got != rosterSize-8 {
+		t.Errorf("benchSlots(league) = %d, want %d", got, rosterSize-8)
+	}
+
+	// Derived, not constant: widen the lineup and the bench must give way.
+	wider := draft.HitOrMissPool()
+	wider.FlexSlots = 3
+	if got := benchSlots(wider); got != rosterSize-10 {
+		t.Errorf("two extra flex slots should cost the bench two: got %d, want %d", got, rosterSize-10)
+	}
+
+	// A lineup bigger than the roster leaves no bench rather than a negative
+	// one, which would ask the panel to draw a negative number of rows.
+	huge := draft.HitOrMissPool()
+	huge.Starters = map[string]int{"QB": 20}
+	if got := benchSlots(huge); got != 0 {
+		t.Errorf("benchSlots(oversized lineup) = %d, want 0", got)
+	}
+}

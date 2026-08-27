@@ -82,6 +82,13 @@ type ScratchSpot struct {
 	Kept   bool    `json:"kept"`
 	Points float64 `json:"points"`
 	Cost   int     `json:"cost"`
+	// Value is what the board says he is worth.
+	//
+	// Carried on the spot rather than looked up by the page, because a keeper
+	// is not on the board to look up — he is already yours. Joining to the
+	// board for it would leave exactly the players whose surplus matters most
+	// showing no value at all.
+	Value int `json:"value"`
 }
 
 // ScratchView is the hypothetical roster and how it reads.
@@ -92,6 +99,14 @@ type ScratchView struct {
 	// BudgetLeft and SlotsLeft are what would remain after these buys.
 	BudgetLeft int `json:"budgetLeft"`
 	SlotsLeft  int `json:"slotsLeft"`
+	// BenchSlots is how many bench spots the roster has, filled or not.
+	//
+	// Sent because an empty bench spot is not a player and so cannot be
+	// inferred from Bench — without a count the panel can only draw the
+	// bench it already has, which reads as a finished roster while two
+	// spots are still open. Derived from the shape rather than fixed, so a
+	// league that changes its lineup does not need this changed with it.
+	BenchSlots int `json:"benchSlots"`
 	// MaxBid is the most that could still go on one more player.
 	MaxBid int `json:"maxBid"`
 	// Unfilled names the starting slots this roster cannot yet cover.
@@ -155,6 +170,8 @@ func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 		view.Bench = append(view.Bench, toScratchSpot(spot))
 	}
 
+	view.BenchSlots = benchSlots(s.static.shape)
+
 	// Budget and slots are already net of the keepers, so only the players
 	// actually bought here count against them.
 	bought := view.Metrics.Spend - heldSpend(r)
@@ -166,6 +183,23 @@ func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 		}
 	}
 	return view
+}
+
+// benchSlots is the roster less its starting lineup.
+//
+// Counted off the shape — every starting position plus the flex — rather
+// than written down, because the two numbers have to agree: a bench sized by
+// hand would quietly stop matching the lineup the same shape draws above it,
+// and the panel would show a roster of the wrong length.
+func benchSlots(shape draft.PoolState) int {
+	starting := shape.FlexSlots
+	for _, n := range shape.Starters {
+		starting += n
+	}
+	if n := rosterSize - starting; n > 0 {
+		return n
+	}
+	return 0
 }
 
 func heldSpend(r *draft.Roster) int {
@@ -198,6 +232,7 @@ func toScratchSpot(s draft.RosterSpot) ScratchSpot {
 		Kept:     s.Held,
 		Points:   s.Player.CielyPoints,
 		Cost:     s.Player.Cost,
+		Value:    s.Player.Value,
 	}
 }
 
