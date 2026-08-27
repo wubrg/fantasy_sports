@@ -82,13 +82,6 @@ type ScratchSpot struct {
 	Kept   bool    `json:"kept"`
 	Points float64 `json:"points"`
 	Cost   int     `json:"cost"`
-	// Value is what the board says he is worth.
-	//
-	// Carried on the spot rather than looked up by the page, because a keeper
-	// is not on the board to look up — he is already yours. Joining to the
-	// board for it would leave exactly the players whose surplus matters most
-	// showing no value at all.
-	Value int `json:"value"`
 }
 
 // ScratchView is the hypothetical roster and how it reads.
@@ -232,7 +225,6 @@ func toScratchSpot(s draft.RosterSpot) ScratchSpot {
 		Kept:     s.Held,
 		Points:   s.Player.CielyPoints,
 		Cost:     s.Player.Cost,
-		Value:    s.Player.Value,
 	}
 }
 

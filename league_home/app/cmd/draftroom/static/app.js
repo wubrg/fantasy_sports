@@ -866,16 +866,17 @@ function scratchMarkdown() {
   const line = (slot, spot) => {
     if (!spot) return `| ${slot} | — | | | | | |`;
     const p = board.get(spot.playerId);
-    // Value comes off the spot, not the board row: a keeper is already yours
-    // and so is not on the board to join to, and he is precisely the player
-    // whose surplus is worth reading. The board join stays for the flags,
-    // which only a live row carries.
+    // A keeper has no value column and cannot have one: Value is what the
+    // solve prices an available player at, and a keeper is not in the pool
+    // being solved — heldRoster builds him with points, cost and traits and
+    // no value, because there is none to give. He shows his price and his
+    // "kept" tag, which is exactly what the panel shows for him too.
     //
     // Edge is against the price you are paying rather than the market's. The
-    // board asks what he costs; the panel asks what you said you would pay,
-    // and for a keeper the gap between those is the whole reason he is one.
-    const value = spot.value;
-    const edge = value ? signedPlain(value - spot.price) : "";
+    // board asks what a player costs; the panel asks what you said you would
+    // pay for him.
+    const value = p ? p.Value : null;
+    const edge = value === null ? "" : signedPlain(value - spot.price);
     const flags = [];
     if (spot.kept) flags.push("kept");
     if (p) { const f = flagText(p); if (f) flags.push(f); }
