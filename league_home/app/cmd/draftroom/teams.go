@@ -228,22 +228,30 @@ func writeSavedTeams(path string, teams []SavedTeam) error {
 // board fetches on load. One file would put your bid plan on a leaguemate's
 // screen, and let him overwrite it. The owner id is already what makes a board
 // someone's, so it is what separates the files.
-func savedTeamsPath(configDir, ownerID string) string {
-	tag := ownerFileTag(ownerID)
-	if tag == "" {
-		return filepath.Join(configDir, savedTeamsFile)
+//
+// draftID scopes it a second time, and is set only for a draft outside this
+// league -- a mock. A rehearsal board has to run under your real owner id or
+// picks never register as yours and the budget it exists to exercise stays
+// still, which would otherwise aim it at the same file as the live board and
+// let a throwaway team overwrite the plan you drafted from. Empty for the
+// league's own draft, so the live board keeps the path it has always had.
+func savedTeamsPath(configDir, ownerID, draftID string) string {
+	name := strings.TrimSuffix(savedTeamsFile, filepath.Ext(savedTeamsFile))
+	for _, part := range []string{ownerID, draftID} {
+		if tag := fileTag(part); tag != "" {
+			name += "-" + tag
+		}
 	}
-	ext := filepath.Ext(savedTeamsFile)
-	return filepath.Join(configDir, strings.TrimSuffix(savedTeamsFile, ext)+"-"+tag+ext)
+	return filepath.Join(configDir, name+filepath.Ext(savedTeamsFile))
 }
 
-// ownerFileTag reduces an owner id to what is safe in a filename. Sleeper ids
-// are digits, but this one arrives from the environment and is joined onto a
-// path, so anything that could climb out of the config directory is dropped
-// rather than trusted.
-func ownerFileTag(ownerID string) string {
+// fileTag reduces an owner or draft id to what is safe in a filename. Sleeper
+// ids are digits, but these arrive from the environment and the command line
+// and are joined onto a path, so anything that could climb out of the config
+// directory is dropped rather than trusted.
+func fileTag(id string) string {
 	var b strings.Builder
-	for _, r := range ownerID {
+	for _, r := range id {
 		switch {
 		case r >= '0' && r <= '9', r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r == '-', r == '_':
 			b.WriteRune(r)

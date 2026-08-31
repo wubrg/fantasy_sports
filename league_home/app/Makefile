@@ -1,7 +1,7 @@
 BINS := leaguectl leaguebot leagueweb draftroom
 
 .PHONY: build test vet fmt fmt-check lint clean check list \
-	draftroom keepers board serve install refresh data-status extractor-test \
+	draftroom keepers board serve serve-mock rehearsal-leans install refresh data-status extractor-test \
 	leagueweb-install leagueweb-load leagueweb-unload leagueweb-restart leagueweb-status \
 	leagueweb-serve-mount leagueweb-serve-unmount leagueweb-serve-status \
 	draftroom-install draftroom-load draftroom-unload draftroom-restart draftroom-status \
@@ -77,6 +77,43 @@ board: draftroom ## The draft board (BASELINE=beer|beerplus|vols, ME=<owner id>,
 
 serve: draftroom ## Serve the board as a web page (ME=<owner id>, ADDR=:8083, LEANS=mine,menton)
 	./draftroom serve $(if $(ME),-me $(ME),) $(if $(ADDR),-addr $(ADDR),) $(if $(BASELINE),-baseline $(BASELINE),) -leans $(LEANS)
+
+## --- Rehearsing against a Sleeper mock ---
+##
+## The board is used once a year, which is a bad time to find a wiring fault.
+## MOCK_DRAFT is the Sleeper draft id to follow: mocks are not returned by
+## /league/<id>/drafts, so the board has to be told. Override it for the next
+## one. Check the mock is an auction before trusting anything it shows -- a
+## snake mock leaves every bid empty and sells the whole pool for nothing.
+
+MOCK_DRAFT ?= 1389736537410785280
+MOCK_ADDR  ?= :8087
+MOCK_ME    ?= $(if $(ME),$(ME),243501760939814912)
+REHEARSAL  := internal/draft/data/leans/rehearsal.yaml
+
+serve-mock: draftroom rehearsal-leans ## Rehearse the board against a Sleeper mock (MOCK_DRAFT=<id>, MOCK_ADDR=:8087)
+	./draftroom serve -addr $(MOCK_ADDR) -draft $(MOCK_DRAFT) -me $(MOCK_ME) \
+		-leans rehearsal -keepers none
+
+# `-keepers none` because a *league* mock is not the standalone kind the README
+# was written for: it hangs off the real league, so owners.csv and rulings.csv
+# resolve and the draft-night default would deduct keeper money Sleeper has not
+# deducted. The mock gives all twelve teams a flat $200 and the whole pool, and
+# the board has to agree with the screen or the rehearsal teaches you nothing.
+#
+# `-leans rehearsal` because reads set on the board are written straight back
+# to whichever set it opened with, and the default set is a symlink into a
+# notes vault. The copy exercises the entire lean path on your real reads
+# without putting a rehearsal edit into the file you will draft from.
+
+rehearsal-leans: ## Seed leans/rehearsal.yaml from your real reads, without clobbering it
+	@if [ -e $(REHEARSAL) ]; then \
+		echo "$(REHEARSAL) already exists, left alone (delete it to reseed)"; \
+	else \
+		cp -L internal/draft/data/leans/wubrg-lean.yaml $(REHEARSAL) && \
+		chmod u+w $(REHEARSAL) && \
+		echo "seeded $(REHEARSAL) from wubrg-lean.yaml"; \
+	fi
 
 leans: draftroom ## Show the merged lean sets and what they disagree about (LEANS=mine,menton)
 	./draftroom leans -leans $(LEANS)

@@ -19,14 +19,21 @@ func TestWatchedDraft(t *testing.T) {
 		explicit string
 		drafts   []sleeper.Draft
 		want     string
+		wantOff  bool
 	}{
-		{"explicit id wins over the league's own", "mock-1", league, "mock-1"},
-		{"explicit id works when the league has none", "mock-1", nil, "mock-1"},
-		{"discovery takes the newest, which Sleeper returns first", "", league, "newest"},
-		{"no draft anywhere is not an error", "", nil, ""},
+		{"explicit id wins over the league's own", "mock-1", league, "mock-1", true},
+		{"explicit id works when the league has none", "mock-1", nil, "mock-1", true},
+		{"discovery takes the newest, which Sleeper returns first", "", league, "newest", false},
+		{"no draft anywhere is not an error", "", nil, "", false},
+		{"naming the league's own draft is not a rehearsal", "newest", league, "newest", false},
+		{"naming an older draft of this league is not one either", "older", league, "older", false},
 	} {
-		if got := watchedDraft(tc.explicit, tc.drafts); got != tc.want {
+		got, off := watchedDraft(tc.explicit, tc.drafts)
+		if got != tc.want {
 			t.Errorf("%s: got %q, want %q", tc.name, got, tc.want)
+		}
+		if off != tc.wantOff {
+			t.Errorf("%s: off-league %v, want %v", tc.name, off, tc.wantOff)
 		}
 	}
 }
