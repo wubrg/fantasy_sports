@@ -25,14 +25,36 @@ var staticFS embed.FS
 // commissioner starting without pretending anything is happening.
 const idleInterval = 60 * time.Second
 
-// pollInterval is how often the live draft is checked while it is running.
+// defaultPollInterval is how often the live draft is checked while it is
+// running, and the default for -poll.
 //
-// One request, about 130ms. Sleeper asks callers to stay under 1000 calls a
-// minute, so at 2s this uses 30 — three percent of the budget. The earlier
-// design rebuilt everything on a timer, which cost 115 calls and three
-// seconds each time; splitting the immutable history out (see static.go) is
-// what makes a tight interval both safe and useful.
-const pollInterval = 2 * time.Second
+// The board polls Sleeper on this cadence and the browser polls the board on
+// its own (POLL_MS in static/app.js), so the two compound: a pick is on
+// screen within one interval of each, not one in total.
+//
+// Sleeper asks callers to stay under 1000 calls a minute. At one second this
+// costs 60 for the picks, plus 6 for the status check below — 66 a minute per
+// board. Two boards run on draft night, yours and Sam's, so the number that
+// matters is 132: thirteen percent of the budget. The earlier design rebuilt
+// everything on a timer, which cost 115 calls and three seconds each time;
+// splitting the immutable history out (see static.go) is what makes an
+// interval this tight both safe and useful.
+const defaultPollInterval = time.Second
+
+// minPollInterval is the floor -poll will accept. Below this the board buys
+// no perceptible speed — the browser is still on its own cadence — and starts
+// spending real budget for it, so a typo'd flag is refused rather than
+// quietly pointed at Sleeper.
+const minPollInterval = 250 * time.Millisecond
+
+// statusInterval is how often the draft's status is re-read while polling.
+//
+// Status is a second request, and it was being made on every tick — which is
+// why the arithmetic above is per two calls rather than one. It answers "has
+// the commissioner started or ended the draft", which changes twice in an
+// evening, so asking ten times less often costs nothing anyone can perceive
+// and buys back the whole cost of polling picks twice as fast.
+const statusInterval = 10 * time.Second
 
 // server holds the immutable draft data and the live picks on top of it.
 type server struct {
@@ -128,19 +150,30 @@ func (s *server) rebuildLocked() error {
 
 // poll reads the live draft and folds any new picks into the board.
 // pollForever watches the draft, quickly while it runs and sparingly
-// otherwise. The cadence is re-decided on every tick, so a draft opening
-// while the board sits idle is picked up within the minute and everything
-// after it lands in two seconds.
-func (s *server) pollForever() {
+// otherwise. The cadence is re-decided from the draft's status, so a draft
+// opening while the board sits idle is picked up within the minute and
+// everything after it lands within one interval.
+//
+// The status itself is re-read on statusInterval rather than every tick.
+// Picks are what the board is actually watching; status only decides how hard
+// to watch them, and holding a ten-second-old answer to that costs nothing —
+// an idle board still re-checks every tick, because its tick is longer than
+// statusInterval anyway.
+func (s *server) pollForever(every time.Duration) {
+	drafting := s.static.Drafting()
+	checked := time.Now()
 	for {
-		if s.static.Drafting() {
-			s.poll()
-			time.Sleep(pollInterval)
+		if time.Since(checked) >= statusInterval {
+			drafting = s.static.Drafting()
+			checked = time.Now()
+		}
+		// Poll on both cadences: picks can be entered before the status
+		// flips, and a stale board is worse than a slow one.
+		s.poll()
+		if drafting {
+			time.Sleep(every)
 			continue
 		}
-		// Still poll once on the slow cadence: picks can be entered before
-		// the status flips, and a stale board is worse than a slow one.
-		s.poll()
 		time.Sleep(idleInterval)
 	}
 }
@@ -169,7 +202,7 @@ func (s *server) poll() {
 		}
 		s.taken[p.PlayerID] = gone{
 			price: p.Metadata.Dollars(),
-			mine:  p.PickedBy != "" && p.PickedBy == s.static.ownerID,
+			mine:  s.static.isMine(p),
 		}
 		changed = true
 	}
@@ -302,9 +335,12 @@ func writeJSON(w http.ResponseWriter, v interface{}) {
 }
 
 // runServe serves the draft board over HTTP.
-func runServe(addr, leagueID, draftID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string, keeperScenario string) error {
+func runServe(addr, leagueID, draftID, configDir, dataDir, ownerID string, baseline draft.Baseline, leanSets []string, keeperScenario string, pollEvery time.Duration) error {
 	if !validKeeperScenario(keeperScenario) {
 		return fmt.Errorf("unknown keeper scenario %q: use none, locks, expected, or leave it empty for draft night", keeperScenario)
+	}
+	if pollEvery < minPollInterval {
+		return fmt.Errorf("poll interval %s is below the %s floor: the browser polls on its own cadence too, so a shorter one buys no speed and spends Sleeper's budget for it", pollEvery, minPollInterval)
 	}
 	log.Printf("loading draft history and sources...")
 	static, err := loadStatic(leagueID, draftID, configDir, dataDir, ownerID, baseline, leanSets)
@@ -323,7 +359,7 @@ func runServe(addr, leagueID, draftID, configDir, dataDir, ownerID string, basel
 		log.Printf("note: %s", warning)
 	}
 
-	go srv.pollForever()
+	go srv.pollForever(pollEvery)
 
 	content, err := fs.Sub(staticFS, "static")
 	if err != nil {
@@ -359,7 +395,7 @@ func runServe(addr, leagueID, draftID, configDir, dataDir, ownerID string, basel
 	snap := srv.snapshot()
 	cadence := idleInterval
 	if static.Drafting() {
-		cadence = pollInterval
+		cadence = pollEvery
 	}
 	log.Printf("draft board on http://localhost%s  (%d available, $%d pool, polling every %s)",
 		addr, len(snap.Players), snap.Dollars, cadence)

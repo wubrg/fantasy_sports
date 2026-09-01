@@ -101,6 +101,7 @@ func main() {
 	me := fs.String("me", envOr("DRAFTROOM_OWNER_ID", ""), "your Sleeper owner ID, so the board knows your budget")
 	leans := fs.String("leans", defaultLeanSets, "lean sets to apply, in precedence order: the first to name a player owns him")
 	keepers := fs.String("keepers", "", "keeper scenario the board opens on: none, locks, or expected (default: draft night, which deducts this league's keeper money)")
+	poll := fs.Duration("poll", defaultPollInterval, "serve: how often to ask Sleeper for new picks while the draft is running")
 	generate := fs.Bool("generate", false, "leans: rebuild the generated sets from source data")
 	convert := fs.Bool("convert", false, "leans: rewrite the named sets as YAML, leaving the originals in place")
 	unmatched := fs.Bool("unmatched", false, "sources: show only the rows that reach no Sleeper player")
@@ -170,7 +171,7 @@ func main() {
 		}
 	case "serve":
 		if err := runServe(*addr, *leagueID, *draftID, orBuiltin(*configDir, builtinConfigDir),
-			orBuiltin(*dataDir, builtinDataDir), *me, draft.Baseline(*baseline), draft.SetNames(*leans), *keepers); err != nil {
+			orBuiltin(*dataDir, builtinDataDir), *me, draft.Baseline(*baseline), draft.SetNames(*leans), *keepers, *poll); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}
@@ -474,7 +475,7 @@ func buildSnapshot(leagueID, draftID, configDir, dataDir, ownerID string, baseli
 			}
 			taken[p.PlayerID] = gone{
 				price: p.Metadata.Dollars(),
-				mine:  p.PickedBy != "" && p.PickedBy == ownerID,
+				mine:  static.isMine(p),
 			}
 		}
 	}
