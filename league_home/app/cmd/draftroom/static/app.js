@@ -425,6 +425,7 @@ function draw() {
     `$${snap.dollars} over ${snap.slots} slots · ${snap.baseline}`;
 
   drawResearch();
+  drawNomination();
   drawPivot();
   drawMustHaves();
   // Before the rows: the pill counts come off the same snapshot, and a player
@@ -459,6 +460,26 @@ function draw() {
   document.getElementById("status").textContent =
     `${snap.players.length} available · updated ${new Date().toLocaleTimeString()}` +
     (snap.warnings && snap.warnings.length ? ` · ${snap.warnings.join("; ")}` : "");
+}
+
+// drawNomination names the player the room is bidding on right now.
+//
+// Identity only, deliberately: his board row carries value, cost, max bid and
+// the read, and is highlighted below. The banner exists to point at that row
+// while a ten-second timer runs, not to restate it.
+function drawNomination() {
+  const el = document.getElementById("nomination");
+  const nom = snap.nomination;
+  if (!nom) { el.classList.add("hidden"); return; }
+  el.classList.remove("hidden");
+
+  // He may not be on the board at all — a keeper, or already sold elsewhere.
+  // The server carries his position and team for exactly this case, so the
+  // banner can still say who he is.
+  const where = [nom.position, nom.team].filter(Boolean).join(" ");
+  el.innerHTML = `<span class="tag">nominated</span>` +
+    `<span class="name">${esc(nom.name)}</span>` +
+    (where ? `<span class="where">${esc(where)}</span>` : "");
 }
 
 function drawPivot() {
@@ -688,7 +709,12 @@ function drawRows() {
 
   // Filter first, cap second. The cap is a repaint budget, so it has to
   // land on what you asked for rather than on the first 120 of everything.
+  const nominated = (snap.nomination && snap.nomination.playerId) || "";
   const matched = snap.players.filter(p => {
+    // The player being bid on is never filtered out. A filter set thirty
+    // seconds ago must not hide the one row that matters right now, and
+    // noticing that it had would cost more than the filter ever saved.
+    if (p.PlayerID === nominated) return true;
     if (positions.size && !positions.has(p.Position)) return false;
     // Name only: the position toggles are the discoverable way to do what
     // typing "RB" used to, and they can express two positions at once.
@@ -706,6 +732,13 @@ function drawRows() {
   // you asked for rather than the top of the server's.
   if (sortKey) matched.sort(compareBy(SORT_COLS[sortKey], sortDir));
   const rows = matched.slice(0, ROW_CAP);
+  // The cap is a repaint budget, and it must not spend itself on everyone
+  // except the player under the hammer. If he survived the filters but fell
+  // outside the cap, he is drawn anyway.
+  if (nominated && !rows.some(p => p.PlayerID === nominated)) {
+    const p = matched.find(x => x.PlayerID === nominated);
+    if (p) rows.unshift(p);
+  }
   drawCounts(matched, rows.length);
 
   const inScratch = scratchIDs();
@@ -718,7 +751,7 @@ function drawRows() {
     else myMax = `<span class="mymax${p.BidRule === "must-have" ? " must" : ""}">$${p.MyMaxBid}</span>`;
 
     const trying = inScratch.has(p.PlayerID);
-    return `<tr class="${tooRich ? "unaffordable" : ""} ${trying ? "in-scratch" : ""} ${p.BlockedReason ? "blocked" : ""}">
+    return `<tr class="${tooRich ? "unaffordable" : ""} ${trying ? "in-scratch" : ""} ${p.BlockedReason ? "blocked" : ""} ${p.PlayerID === nominated ? "nominated" : ""}">
       <td>${esc(p.Name)}</td>
       <td class="pos pos-${esc(p.Position)}">${esc(p.Position)}</td>
       <td class="num ecr" title="FantasyPros expert-consensus positional rank">${p.ECRRank ? esc(p.Position) + p.ECRRank : "—"}</td>

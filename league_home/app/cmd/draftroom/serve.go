@@ -47,14 +47,13 @@ const defaultPollInterval = time.Second
 // quietly pointed at Sleeper.
 const minPollInterval = 250 * time.Millisecond
 
-// statusInterval is how often the draft's status is re-read while polling.
-//
-// Status is a second request, and it was being made on every tick — which is
-// why the arithmetic above is per two calls rather than one. It answers "has
-// the commissioner started or ended the draft", which changes twice in an
-// evening, so asking ten times less often costs nothing anyone can perceive
-// and buys back the whole cost of polling picks twice as fast.
-const statusInterval = 10 * time.Second
+// The draft object used to be read only every ten seconds, because status —
+// "has the commissioner started or ended the draft" — changes twice in an
+// evening and staling it bought back the cost of polling picks twice as fast.
+// That trade is off. The same object carries the current nomination, which
+// lives inside a ten-second timer, so reading it a tick late means missing most
+// nominations outright. It is now read every tick, and the status comes along
+// for free rather than the other way round.
 
 // server holds the immutable draft data and the live picks on top of it.
 type server struct {
@@ -88,6 +87,10 @@ type server struct {
 	// exploring the pool the league's keepers would leave. Guarded by mu with
 	// the rest of the live state, since changing it rebuilds the board.
 	keeperScenario string
+
+	// nomination is the player currently up for auction, nil when none is.
+	// Live state like taken and manual, written by the poll and guarded by mu.
+	nomination *draft.Nomination
 
 	// saved is the durable shortlist of sampled teams, persisted to savedPath.
 	// Its own lock: it does not touch the board and changes on its own rhythm.
@@ -144,6 +147,14 @@ func (s *server) rebuildLocked() error {
 	if s.pollEr != "" {
 		snap.Warnings = append(snap.Warnings, s.pollEr)
 	}
+	// Live state, layered on after the pure computation — and dropped if the
+	// player has since been sold, so the banner cannot outlive the bidding by
+	// the length of one poll.
+	if s.nomination != nil {
+		if _, sold := combined[s.nomination.PlayerID]; !sold {
+			snap.Nomination = s.nomination
+		}
+	}
 	s.cached = snap
 	return nil
 }
@@ -154,19 +165,13 @@ func (s *server) rebuildLocked() error {
 // opening while the board sits idle is picked up within the minute and
 // everything after it lands within one interval.
 //
-// The status itself is re-read on statusInterval rather than every tick.
-// Picks are what the board is actually watching; status only decides how hard
-// to watch them, and holding a ten-second-old answer to that costs nothing —
-// an idle board still re-checks every tick, because its tick is longer than
-// statusInterval anyway.
+// Two requests a tick, and exactly two: the draft object, which says both
+// whether the draft is live and who is up for auction, and the picks. An idle
+// board makes the same two calls a minute apart rather than a second apart.
 func (s *server) pollForever(every time.Duration) {
-	drafting := s.static.Drafting()
-	checked := time.Now()
 	for {
-		if time.Since(checked) >= statusInterval {
-			drafting = s.static.Drafting()
-			checked = time.Now()
-		}
+		drafting, nom := s.static.DraftState()
+		s.setNomination(nom)
 		// Poll on both cadences: picks can be entered before the status
 		// flips, and a stale board is worse than a slow one.
 		s.poll()
@@ -176,6 +181,32 @@ func (s *server) pollForever(every time.Duration) {
 		}
 		time.Sleep(idleInterval)
 	}
+}
+
+// setNomination records who is up, and repaints only when that changed.
+//
+// Guarded with the rest of the live state because the poll writes it while
+// requests read it. Rebuilding unconditionally would re-solve the whole board
+// every second for a field that changes every ten.
+func (s *server) setNomination(nom *draft.Nomination) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if samePlayer(s.nomination, nom) {
+		return
+	}
+	s.nomination = nom
+	if err := s.rebuildLocked(); err != nil {
+		log.Printf("draftroom: rebuilding after a nomination: %v", err)
+	}
+}
+
+// samePlayer compares two nominations by who is up, which is all the board
+// draws. Two nominations of the same player are the same banner.
+func samePlayer(a, b *draft.Nomination) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	return a.PlayerID == b.PlayerID
 }
 
 func (s *server) poll() {
