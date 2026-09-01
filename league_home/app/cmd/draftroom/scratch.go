@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"sync"
 
 	"leaguehome/internal/draft"
@@ -79,7 +80,11 @@ type ScratchSpot struct {
 	Slot     string `json:"slot"`
 	Price    int    `json:"price"`
 	// Kept marks a keeper: already yours, not something you are trying on.
-	Kept   bool    `json:"kept"`
+	Kept bool `json:"kept"`
+	// Won marks a player you bought at auction. Also already yours, and so
+	// also not a try — but the panel prints what you paid for him where a
+	// keeper only says that he is kept.
+	Won    bool    `json:"won"`
 	Points float64 `json:"points"`
 	Cost   int     `json:"cost"`
 }
@@ -111,7 +116,56 @@ type ScratchView struct {
 	Traits map[string]int `json:"traits"`
 	// Dropped names players who left the real board while sitting here.
 	Dropped []string `json:"dropped"`
-	Empty   bool     `json:"empty"`
+	// Empty means there is nothing to *clear* — no players being tried on.
+	// Deliberately not "the panel has no rows": keepers and players you have
+	// won are rows, and neither is cleared by the button this drives, so a
+	// live button on a roster full of them would visibly do nothing.
+	Empty bool `json:"empty"`
+}
+
+// ownedPicks are the players you have actually won, at what you paid.
+//
+// Read under the board's lock because the live feed writes them, and returned
+// sorted so the panel does not reshuffle itself between polls: taken is a map,
+// and ranging one twice gives two different orders.
+func (s *server) ownedPicks() []struct {
+	ID    string
+	Price int
+} {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var out []struct {
+		ID    string
+		Price int
+	}
+	// Combined exactly as rebuildLocked combines them, manual overwriting the
+	// feed, because hand-entered sales win — you knew before the API did. Any
+	// other precedence here would print a price the board's own budget
+	// disagrees with.
+	combined := make(map[string]gone, len(s.taken)+len(s.manual))
+	for id, g := range s.taken {
+		combined[id] = g
+	}
+	for id, g := range s.manual {
+		combined[id] = g
+	}
+	for id, g := range combined {
+		if !g.mine {
+			continue
+		}
+		out = append(out, struct {
+			ID    string
+			Price int
+		}{id, g.price})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Price != out[j].Price {
+			return out[i].Price > out[j].Price
+		}
+		return out[i].ID < out[j].ID
+	})
+	return out
 }
 
 // scratchView scores the scratchpad against a board.
@@ -136,12 +190,36 @@ func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 		h.Held = true
 		r.Players = append(r.Players, h)
 	}
+	// Then the players you have actually won, for the same reason and with
+	// the same standing. A keeper and a player bought an hour ago are both
+	// simply yours; the panel that shows what your roster feels like is wrong
+	// about every number on it if it knows only about the first kind.
+	//
+	// Held rather than a third state, because Held is the question the
+	// arithmetic below asks — "is this already mine, or something I am trying
+	// on" — and the budget is already net of these picks. Only Won separates
+	// the two for the panel, which prints a price for one and "kept" for the
+	// other.
+	won := map[string]bool{}
+	for _, o := range s.ownedPicks() {
+		spot := s.static.wonSpot(o.ID, o.Price)
+		spot.Held = true
+		r.Players = append(r.Players, spot)
+		won[o.ID] = true
+	}
 	for _, id := range order {
+		if won[id] {
+			// Penciled in, then actually won. He is on the roster above at
+			// what he really cost, so counting the guess as well would put
+			// him on it twice.
+			continue
+		}
 		p, still := onBoard[id]
 		if !still {
-			// He has been drafted for real since being added. Keeping him
-			// would have the panel plan around a player who is gone, which
-			// is worse than losing the note.
+			// He has been drafted for real since being added — by someone
+			// else, since the won set is handled above. Keeping him would
+			// have the panel plan around a player who is gone, which is
+			// worse than losing the note.
 			view.Dropped = append(view.Dropped, s.static.nameOf(id))
 			continue
 		}
@@ -156,11 +234,20 @@ func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 		view.Traits[string(t)] = n
 	}
 
+	// Which of the two kinds of owned row this is. Held says a player is
+	// already yours; won says you bought him rather than kept him, and it is
+	// what stops a player you paid $83 for being labelled a keeper.
+	owned := func(spot draft.RosterSpot) ScratchSpot {
+		out := toScratchSpot(spot)
+		out.Won = won[spot.Player.PlayerID]
+		out.Kept = spot.Held && !out.Won
+		return out
+	}
 	for _, spot := range r.Starters() {
-		view.Starters = append(view.Starters, toScratchSpot(spot))
+		view.Starters = append(view.Starters, owned(spot))
 	}
 	for _, spot := range r.Bench() {
-		view.Bench = append(view.Bench, toScratchSpot(spot))
+		view.Bench = append(view.Bench, owned(spot))
 	}
 
 	view.BenchSlots = benchSlots(s.static.shape)

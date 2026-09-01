@@ -69,10 +69,29 @@ func TestRecordedSalesStillWorkAlongsideAScratchRoster(t *testing.T) {
 	if snap.Me.Budget != 160 {
 		t.Errorf("live budget = $%d, want $160 after a real $40 buy", snap.Me.Budget)
 	}
-	// The scratch pick is untouched and still scores.
+	// The scratch pick is untouched and still scores — and the player you
+	// actually bought is on the roster beside it, because the panel shows
+	// what your team is, not only what you are imagining for it.
 	view := srv.scratchView(snap)
-	if len(view.Starters)+len(view.Bench) != 1 {
-		t.Errorf("scratch roster lost its pick: %+v", view)
+	rows := append(append([]ScratchSpot(nil), view.Starters...), view.Bench...)
+	if len(rows) != 2 {
+		t.Fatalf("want the try and the real buy, got %d rows: %+v", len(rows), rows)
+	}
+	byID := map[string]ScratchSpot{}
+	for _, r := range rows {
+		byID[r.PlayerID] = r
+	}
+	if try := byID["1"]; try.Won || try.Kept || try.Price != 45 {
+		t.Errorf("the scratch pick should still read as a try at $45: %+v", try)
+	}
+	if bought := byID["2"]; !bought.Won || bought.Kept || bought.Price != 40 {
+		t.Errorf("the real buy should read as won at $40, not kept: %+v", bought)
+	}
+	// Only the try comes off the panel's remaining budget. The live budget is
+	// already net of the real buy, so counting it here would spend it twice.
+	if view.BudgetLeft != snap.Me.Budget-45 {
+		t.Errorf("BudgetLeft = $%d, want $%d — the real buy was counted twice",
+			view.BudgetLeft, snap.Me.Budget-45)
 	}
 }
 
