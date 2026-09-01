@@ -83,26 +83,39 @@ function nextLean(current) {
   return LEAN_CYCLE[(i < 0 ? 0 : i + 1) % LEAN_CYCLE.length];
 }
 
-function flagHTML(p) {
+// flagList is the flags a row carries, as data rather than markup.
+//
+// Split out from the rendering because the board is no longer the only thing
+// that shows them: the scratch panel copies a roster out as markdown, and two
+// functions each deciding what counts as a flag is how a pasted table ends up
+// disagreeing with the board it was copied from — a disagreement that would
+// only surface in someone else's chat window.
+//
+// The lean pill carries its read back out on `lean`, because it is the one
+// flag that is also a control and the renderer has to wire a click to it.
+function flagList(p) {
   const out = [];
   const lean = (p.Lean && p.Lean.Lean) || "";
-  // Always rendered, even when unset, so every row has the same control in
+  // Always present, even when unset, so every row has the same control in
   // the same place. An empty one is a dot you can click rather than a gap
   // you have to know about.
-  const label = { must: "MUST", dnd: "DND", up: "+", down: "-" }[lean] || "·";
-  const cls = { must: "flag must", dnd: "flag dnd" }[lean] || "flag";
-  out.push(`<span class="${cls} lean-set" data-lean="${esc(p.Name)}"` +
-    ` data-next="${nextLean(lean)}" title="click: ${nextLean(lean) || "no read"}">${label}</span>`);
+  out.push({
+    label: { must: "MUST", dnd: "DND", up: "+", down: "-" }[lean] || "\u00b7",
+    cls: { must: "flag must", dnd: "flag dnd" }[lean] || "flag",
+    title: `click: ${nextLean(lean) || "no read"}`,
+    lean,
+  });
 
   // Blocked leads the info flags: he is off your board because your own
   // roster already spent that offense, which changes the decision more than
   // anything else here.
   if (p.BlockedReason) {
-    out.push(`<span class="flag blocked" title="off your board — ${esc(p.BlockedReason)}">blocked: ${esc(p.BlockedReason)}</span>`);
+    out.push({ label: `blocked: ${p.BlockedReason}`, cls: "flag blocked",
+      title: `off your board \u2014 ${p.BlockedReason}` });
   }
 
   for (const t of p.Traits || []) {
-    out.push(`<span class="flag trait trait-${esc(t)}">${esc(t)}</span>`);
+    out.push({ label: t, cls: `flag trait trait-${t}` });
   }
 
   // Signals start here, after the traits. A lean set disagreeing with your read
@@ -111,31 +124,35 @@ function flagHTML(p) {
   // traits, which made it look like one of your own reads rather than an
   // outside opinion.
   for (const by of (p.Lean && p.Lean.contestedBy) || []) {
-    out.push(`<span class="flag vs" title="${esc(by)}">vs ${esc(by.split(" ")[0])}</span>`);
+    out.push({ label: `vs ${by.split(" ")[0]}`, cls: "flag vs", title: by });
   }
 
-  if (p.ECR === "contested") out.push(`<span class="flag split">split</span>`);
-  else if (p.ECR === "upside") out.push(`<span class="flag">ecr+</span>`);
-  else if (p.ECR === "downside") out.push(`<span class="flag">ecr-</span>`);
+  if (p.ECR === "contested") out.push({ label: "split", cls: "flag split" });
+  else if (p.ECR === "upside") out.push({ label: "ecr+", cls: "flag" });
+  else if (p.ECR === "downside") out.push({ label: "ecr-", cls: "flag" });
 
   // Sharp-expert divergence: the most-accurate-expert subset against the full
-  // field. Distinct from ecr± above, which is the wider industry. Threshold
+  // field. Distinct from ecr\u00b1 above, which is the wider industry. Threshold
   // mirrors sharpRankThreshold in signals.go.
   const sharp = p.SharpRankDelta || 0;
-  if (sharp >= 15) out.push(`<span class="flag sharp-up" title="the most-accurate experts rank him ${sharp} spots higher than consensus">sharp+</span>`);
-  else if (sharp <= -15) out.push(`<span class="flag sharp-down" title="the most-accurate experts rank him ${-sharp} spots lower than consensus">sharp-</span>`);
+  if (sharp >= 15) out.push({ label: "sharp+", cls: "flag sharp-up",
+    title: `the most-accurate experts rank him ${sharp} spots higher than consensus` });
+  else if (sharp <= -15) out.push({ label: "sharp-", cls: "flag sharp-down",
+    title: `the most-accurate experts rank him ${-sharp} spots lower than consensus` });
 
   // Chris Dell's own read, one trusted expert kept apart from the sharp
   // subset above. Threshold mirrors dellSharpThreshold in leangen.go.
   const dell = p.DellDelta || 0;
-  if (dell >= 12) out.push(`<span class="flag sharp-up" title="Chris Dell ranks him ${dell} spots higher than consensus">dell+</span>`);
-  else if (dell <= -12) out.push(`<span class="flag sharp-down" title="Chris Dell ranks him ${-dell} spots lower than consensus">dell-</span>`);
+  if (dell >= 12) out.push({ label: "dell+", cls: "flag sharp-up",
+    title: `Chris Dell ranks him ${dell} spots higher than consensus` });
+  else if (dell <= -12) out.push({ label: "dell-", cls: "flag sharp-down",
+    title: `Chris Dell ranks him ${-dell} spots lower than consensus` });
 
   if (p.Availability) {
-    out.push(`<span class="flag hurt">${esc(p.Availability.toLowerCase())}</span>`);
+    out.push({ label: p.Availability.toLowerCase(), cls: "flag hurt" });
   }
   const spread = baselineSpread(p);
-  if (spread >= 10) out.push(`<span class="flag">swing $${spread.toFixed(0)}</span>`);
+  if (spread >= 10) out.push({ label: `swing $${spread.toFixed(0)}`, cls: "flag" });
 
   // FantasyPros is the one source that publishes a high and a low rather than
   // a single number, so it is the only place the board can show what a
@@ -143,11 +160,30 @@ function flagHTML(p) {
   // price moves with where replacement is drawn, this is how little the
   // projection itself commits to.
   if (wideBand(p)) {
-    out.push(`<span class="flag range" title="FantasyPros' own high and low for him come out $${p.FPLow}–$${p.FPHigh}` +
-      ` against an FP value of $${p.FPValue} — a range wider than the number itself. The projection is not committing.">` +
-      `range $${p.FPLow}–$${p.FPHigh}</span>`);
+    out.push({ label: `range $${p.FPLow}\u2013$${p.FPHigh}`, cls: "flag range",
+      title: `FantasyPros' own high and low for him come out $${p.FPLow}\u2013$${p.FPHigh}` +
+        ` against an FP value of $${p.FPValue} \u2014 a range wider than the number itself.` +
+        ` The projection is not committing.` });
   }
-  return out.join("");
+  return out;
+}
+
+function flagHTML(p) {
+  return flagList(p).map(f => {
+    const title = f.title ? ` title="${esc(f.title)}"` : "";
+    if (f.lean !== undefined) {
+      return `<span class="${f.cls} lean-set" data-lean="${esc(p.Name)}"` +
+        ` data-next="${nextLean(f.lean)}"${title}>${esc(f.label)}</span>`;
+    }
+    return `<span class="${esc(f.cls)}"${title}>${esc(f.label)}</span>`;
+  }).join("");
+}
+
+// flagText is the same flags for somewhere markup cannot go. The unset-read
+// dot is dropped: on the board it is a control worth clicking, in a pasted
+// table it is a character that means nothing.
+function flagText(p) {
+  return flagList(p).filter(f => f.label !== "\u00b7").map(f => f.label).join(" ");
 }
 
 function baselineSpread(p) {
@@ -812,6 +848,93 @@ function lineupSlate(scratch) {
   return out;
 }
 
+// scratchMarkdown renders the panel as a markdown table.
+//
+// Built from the same lineupSlate() the panel draws, so the paste and the
+// screen cannot disagree about the roster's shape, and joined to the board by
+// player id for the columns the panel has no room for. Empty slots are emitted
+// rather than skipped: a roster two players short should read as two players
+// short wherever it is read.
+function scratchMarkdown() {
+  if (!scratch) return "";
+  const board = new Map((snap && snap.players || []).map(p => [p.PlayerID, p]));
+  const out = [
+    "| Slot | Player | Pos | Price | Value | Edge | Flags |",
+    "|---|---|---|---|---|---|---|",
+  ];
+
+  const line = (slot, spot) => {
+    if (!spot) return `| ${slot} | — | | | | | |`;
+    const p = board.get(spot.playerId);
+    // A keeper has no value column and cannot have one: Value is what the
+    // solve prices an available player at, and a keeper is not in the pool
+    // being solved — heldRoster builds him with points, cost and traits and
+    // no value, because there is none to give. He shows his price and his
+    // "kept" tag, which is exactly what the panel shows for him too.
+    //
+    // Edge is against the price you are paying rather than the market's. The
+    // board asks what a player costs; the panel asks what you said you would
+    // pay for him.
+    const value = p ? p.Value : null;
+    const edge = value === null ? "" : signedPlain(value - spot.price);
+    const flags = [];
+    if (spot.kept) flags.push("kept");
+    if (p) { const f = flagText(p); if (f) flags.push(f); }
+    return `| ${slot} | ${spot.name} | ${spot.position} | $${spot.price} | ` +
+      `${value === null ? "" : "$" + value} | ${edge} | ${flags.join(" ")} |`;
+  };
+
+  for (const { slot, spot } of lineupSlate(scratch)) out.push(line(slot, spot));
+  const bench = scratch.bench || [];
+  for (const s of bench) out.push(line("BN", s));
+  for (let i = bench.length; i < (scratch.benchSlots || 0); i++) out.push(line("BN", null));
+
+  const m = scratch.metrics || {};
+  out.push("");
+  out.push(`**$${m.Spend || 0} spent · $${scratch.budgetLeft} left · ` +
+    `${scratch.slotsLeft} slots · POPR ${Math.round(m.POPR || 0)}**`);
+  const mix = Object.entries(scratch.traits || {}).map(([t, n]) => `${n} ${t}`);
+  if (mix.length) out.push(mix.join(" · "));
+  return out.join("\n") + "\n";
+}
+
+// signedPlain is signed() without the markup, for text destinations.
+function signedPlain(n) { return n > 0 ? `+${n}` : `${n}`; }
+
+// copyScratch puts the table on the clipboard, falling back to the old
+// selection trick.
+//
+// The async clipboard API needs a secure context. localhost and the tailnet's
+// https mounts are both fine, but a second monitor pointed at http://<host>:8083
+// is not one — and a draft-night second monitor is exactly where this button
+// would be pressed.
+async function copyScratch(button) {
+  const text = scratchMarkdown();
+  let ok = false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    }
+  } catch { /* fall through to the textarea */ }
+  if (!ok) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { ok = document.execCommand("copy"); } catch { ok = false; }
+    document.body.removeChild(ta);
+  }
+  // A clipboard write leaves nothing on screen, so a silent success and a
+  // silent failure look identical.
+  const was = button.textContent;
+  button.textContent = ok ? "copied" : "copy failed";
+  setTimeout(() => { button.textContent = was; }, 1200);
+}
+
 function drawScratch() {
   if (!scratch) return;
   const m = scratch.metrics || {};
@@ -842,10 +965,19 @@ function drawScratch() {
       `<td class="price" data-reprice="${esc(spot.name)}" title="click to change the price">$${spot.price}</td>` +
       `<td class="drop" data-drop="${esc(spot.name)}" title="remove">&times;</td></tr>`);
   }
-  for (const s of scratch.bench || []) {
+  const bench = scratch.bench || [];
+  for (const s of bench) {
     rows.push(`<tr class="bench"><td class="slot">BN</td><td>${esc(s.name)}</td>` +
       `<td class="price" data-reprice="${esc(s.name)}" title="click to change the price">$${s.price}</td>` +
       `<td class="drop" data-drop="${esc(s.name)}" title="remove">&times;</td></tr>`);
+  }
+  // The bench spots you have not used yet, drawn the same way an unfilled
+  // starting slot is. Without them the panel ends where the players end, so a
+  // roster two short of full looks finished — and "how many spots do I have
+  // left" becomes something you work out from a number instead of something
+  // you see.
+  for (let i = bench.length; i < (scratch.benchSlots || 0); i++) {
+    rows.push(`<tr class="hole"><td class="slot">BN</td><td colspan="3">empty</td></tr>`);
   }
   document.getElementById("s-lineup").innerHTML = rows.join("");
 
@@ -995,6 +1127,12 @@ document.addEventListener("click", async ev => {
   }
   if (ev.target.id === "s-clear") {
     await scratchAction("clear", "");
+    return;
+  }
+  // Never disabled, unlike "clear tries": a panel holding only your keepers
+  // has nothing to clear but still has a roster worth copying.
+  if (ev.target.id === "s-copy") {
+    await copyScratch(ev.target);
     return;
   }
   if (ev.target.id === "reloadleans") {

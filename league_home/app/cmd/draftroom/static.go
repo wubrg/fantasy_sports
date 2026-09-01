@@ -41,6 +41,17 @@ type staticData struct {
 	// keyed by player ID. The research keeper scenarios treat them as locks
 	// regardless of surplus, for keepers the value math would not guess.
 	forcedKeepers map[string]bool
+	// declaredOwners are the owners who have finished deciding, keyed by
+	// owner id. Their keeper sets are taken as final: the surplus heuristic
+	// stops guessing for them, and on draft night their keepers come off the
+	// board rather than staying biddable. An owner absent here has not filed
+	// yet and is still projected.
+	declaredOwners map[string]bool
+	// ownerNameByID and ownerIDByName carry the league's managers both ways:
+	// the first to name who has not declared yet, the second to resolve a
+	// "keeps nobody" row, which has no player to read a roster from.
+	ownerNameByID map[string]string
+	ownerIDByName map[string]string
 
 	projections []draft.Projection
 	market      []draft.MarketPrice
@@ -234,6 +245,25 @@ func loadStatic(leagueID, draftID, configDir, dataDir, ownerID string, baseline 
 	s.leans = matchAndMerge(sets, s.matcher)
 	s.refreshLeanWarnings()
 
+	// The league's managers, both ways round. Needed to resolve a "keeps
+	// nobody" declaration, which names an owner and no player, and to say who
+	// has not declared yet. Neither is fatal: without the mapping the file
+	// still works for every owner who declares an actual player, since a
+	// player's roster settles his owner on its own.
+	s.ownerNameByID, s.ownerIDByName = map[string]string{}, map[string]string{}
+	if owners, err := draft.LoadOwners(filepath.Join(cfg, ownersFile)); err == nil {
+		if users, err := c.Users(leagueID); err == nil {
+			for _, u := range users {
+				name := owners[strings.ToLower(u.DisplayName)]
+				if name == "" {
+					name = u.DisplayName
+				}
+				s.ownerNameByID[u.UserID] = name
+				s.ownerIDByName[strings.ToLower(name)] = u.UserID
+			}
+		}
+	}
+
 	// Resolve hand-declared keeper locks against the pool now the matcher
 	// exists. A name that reaches no rostered player is surfaced rather than
 	// dropped — a keeper you think is locked and is not would quietly leave
@@ -243,13 +273,69 @@ func loadStatic(leagueID, draftID, configDir, dataDir, ownerID string, baseline 
 		return nil, err
 	}
 	s.forcedKeepers = map[string]bool{}
+	s.declaredOwners = map[string]bool{}
+	ownerOf := map[string]string{} // player id -> owner id, from the rosters
+	for _, e := range s.projected {
+		ownerOf[e.PlayerID] = e.OwnerID
+	}
 	for _, lk := range locks {
+		// A `none` row declares an owner with no keepers. There is no player
+		// to read the roster from, so the owner column is the only handle on
+		// it and has to resolve.
+		if lk.Declared() {
+			id := s.ownerIDByName[strings.ToLower(lk.Owner)]
+			if id == "" {
+				s.warnings = append(s.warnings, fmt.Sprintf(
+					"keeper locks: %q keeps nobody, but no such owner — check the spelling against owners.csv", lk.Owner))
+				continue
+			}
+			s.declaredOwners[id] = true
+			continue
+		}
 		id := s.playerIDByName(lk.Player)
 		if id == "" {
 			s.warnings = append(s.warnings, fmt.Sprintf("keeper lock %q reaches no rostered player", lk.Player))
 			continue
 		}
 		s.forcedKeepers[id] = true
+		// Appearing in the file is the declaration. Taken from the roster
+		// rather than the owner column, which is documentation and can be
+		// wrong; a player sits on exactly one roster and that settles it.
+		if owner := ownerOf[id]; owner != "" {
+			s.declaredOwners[owner] = true
+		}
+	}
+	// Say who is still outstanding. A half-filled file prices a board that is
+	// part fact and part guess, and the difference is invisible on the page.
+	if len(s.declaredOwners) > 0 {
+		// Only owners who actually hold a roster. A league's Sleeper user list
+		// can carry more accounts than teams — a co-manager, or someone who
+		// left and was never removed — and counting those would report more
+		// teams than the league has and ask for declarations that can never
+		// come.
+		rostered := map[string]bool{}
+		for _, e := range s.projected {
+			if e.OwnerID != "" {
+				rostered[e.OwnerID] = true
+			}
+		}
+		var pending []string
+		for id := range rostered {
+			if s.declaredOwners[id] {
+				continue
+			}
+			name := s.ownerNameByID[id]
+			if name == "" {
+				name = id
+			}
+			pending = append(pending, name)
+		}
+		sort.Strings(pending)
+		if len(pending) > 0 {
+			s.warnings = append(s.warnings, fmt.Sprintf(
+				"keepers declared for %d of %d teams — still projected for %s",
+				len(rostered)-len(pending), len(rostered), strings.Join(pending, ", ")))
+		}
 	}
 
 	// Chris Dell's rankings drive the dell+/dell- flag, resolved through the
@@ -358,9 +444,9 @@ type gone struct {
 func (s *staticData) keeperScenarioSet(scenario string, aav map[string]float64) []draft.Entry {
 	switch scenario {
 	case "locks":
-		return leagueKeepers(s.projected, aav, lockThreshold, s.forcedKeepers)
+		return leagueKeepers(s.projected, aav, lockThreshold, s.forcedKeepers, s.declaredOwners)
 	case "expected":
-		return leagueKeepers(s.projected, aav, 0, s.forcedKeepers)
+		return leagueKeepers(s.projected, aav, 0, s.forcedKeepers, s.declaredOwners)
 	}
 	return nil
 }
@@ -393,13 +479,29 @@ func (s *staticData) Build(taken map[string]gone, edits boardEdits, keeperScenar
 		}
 		me = myStateFrom(mine, s.budget)
 	} else {
-		dollars, slots, filled = poolAfterKeepers(s.projected, aav, s.teams, s.budget, s.forcedKeepers)
-		me = myState(s.projected, aav, s.ownerID, s.budget, s.forcedKeepers)
+		dollars, slots, filled = poolAfterKeepers(s.projected, aav, s.teams, s.budget, s.forcedKeepers, s.declaredOwners)
+		me = myState(s.projected, aav, s.ownerID, s.budget, s.forcedKeepers, s.declaredOwners)
 	}
 
 	keeperIDs := make(map[string]bool, len(keeperSet))
 	for _, e := range keeperSet {
 		keeperIDs[e.PlayerID] = true
+	}
+	// A declared keeper leaves the live board too, not only a research one.
+	// Draft night deliberately keeps *projected* keepers biddable, because a
+	// projection is a guess and the team may yet let him go — but once his
+	// owner has filed, he is a fact, and leaving him priced would solve the
+	// pool against players nobody can buy. His money is already out either
+	// way, deducted by poolAfterKeepers above, and the taken loop below skips
+	// anyone in here, so nothing is counted twice.
+	//
+	// Every forced keeper's owner is declared by construction (that is what
+	// putting him in the file means), so the forced set is exactly the set of
+	// declared keepers.
+	if !scenarioActive {
+		for id := range s.forcedKeepers {
+			keeperIDs[id] = true
+		}
 	}
 	// A player off the board for either reason. Keepers are money-accounted in
 	// the pool setup above, so the taken loop skips them to avoid deducting
@@ -575,7 +677,7 @@ func (s *staticData) ownedRoster(taken map[string]gone) []draft.PlayerSignals {
 	for _, m := range s.market {
 		aav[m.PlayerID] = m.AAV
 	}
-	for _, e := range projectedKeepers(s.projected, aav, s.ownerID, s.forcedKeepers) {
+	for _, e := range projectedKeepers(s.projected, aav, s.ownerID, s.forcedKeepers, s.declaredOwners) {
 		add(e.PlayerID, e.Position)
 	}
 	for id, g := range taken {
@@ -674,7 +776,7 @@ func (s *staticData) heldRoster(ownerID string) []draft.RosterSpot {
 		aav[m.PlayerID] = m.AAV
 	}
 	var out []draft.RosterSpot
-	for _, e := range projectedKeepers(s.projected, aav, ownerID, s.forcedKeepers) {
+	for _, e := range projectedKeepers(s.projected, aav, ownerID, s.forcedKeepers, s.declaredOwners) {
 		out = append(out, draft.RosterSpot{
 			Player: draft.PlayerSignals{
 				PlayerID:    e.PlayerID,

@@ -64,16 +64,48 @@ type ProjectionSource struct {
 // Subvertadown source is deliberately not one of them: it publishes VBD
 // baselines and a market AAV, a different shape a shared registry would only
 // distort (see the note on the schema block in sources.go).
+// The board solves against FantasyPros' expert consensus rather than any one
+// analyst. Two things decided it. Consensus is the thing the room is actually
+// bidding against, so an edge measured from it is an edge over the table
+// rather than a disagreement between two analysts. And FantasyPros publishes a
+// high and a low for every player it projects, where Ciely publishes a median
+// alone — the primary is the only source whose band the board can show, so a
+// primary without one leaves every price a bare number.
+//
+// Ciely keeps his vote as a second opinion, now beside the two sharp subsets.
+// Three of them re-solved against the same pool is a wider read on where the
+// consensus is soft than one analyst could give.
 var ProjectionSources = []ProjectionSource{
 	{
-		Name: "ciely", Label: "Ciely", File: "ciely-2026.csv",
-		Schema: CielyColumns, Required: true, Role: RolePrimary,
+		Name: "fantasypros", Label: "FantasyPros", File: "fantasypros-2026.csv",
+		Schema: FantasyProsColumns, Required: true, Role: RolePrimary,
+		Include: func(r SourceRow) bool { return strings.EqualFold(r.Baseline, "consensus") },
+		// FantasyPros ranks roughly twice as deep as it projects. Without this
+		// the unprojected half enters the solve at zero; see the note in
+		// loadProjections.
+		RequirePoints: true,
 	},
 	{
-		Name: "fantasypros", Label: "FantasyPros", File: "fantasypros-2026.csv",
+		Name: "ciely", Label: "Ciely", File: "ciely-2026.csv",
+		Schema: CielyColumns, Required: false,
+		AbsentNote: "Ciely column off", Role: RoleSecondOpinion,
+	},
+	// The sharp subsets are the same file under a different Include: the top-10
+	// and top-20 experts by past accuracy. Where they part from consensus is
+	// the divergence the board already flags, and re-solving them gives that
+	// disagreement a dollar value instead of only a rank delta.
+	{
+		Name: "fantasypros-top10", Label: "FantasyPros top-10", File: "fantasypros-2026.csv",
 		Schema: FantasyProsColumns, Required: false,
-		AbsentNote: "FP column and sharp flags off", Role: RoleSecondOpinion,
-		Include:       func(r SourceRow) bool { return strings.EqualFold(r.Baseline, "consensus") },
+		AbsentNote: "top-10 sharp column off", Role: RoleSecondOpinion,
+		Include:       func(r SourceRow) bool { return strings.EqualFold(r.Baseline, "top10") },
+		RequirePoints: true,
+	},
+	{
+		Name: "fantasypros-top20", Label: "FantasyPros top-20", File: "fantasypros-2026.csv",
+		Schema: FantasyProsColumns, Required: false,
+		AbsentNote: "top-20 sharp column off", Role: RoleSecondOpinion,
+		Include:       func(r SourceRow) bool { return strings.EqualFold(r.Baseline, "top20") },
 		RequirePoints: true,
 	},
 }
@@ -149,9 +181,26 @@ func loadProjections(sources []ProjectionSource, normalized func(string) string,
 				if src.Include != nil && !src.Include(r) {
 					continue
 				}
+				// A source that ranks further than it projects must not seed the
+				// solve with the difference. FantasyPros lists several hundred
+				// more players than it projects; each would enter at zero points,
+				// leave at the dollar floor, and read as a considered opinion
+				// that he is worth a dollar rather than as an absence. Ciely
+				// never exposed this — he projects everyone he lists — so the
+				// check lived only on the second-opinion branch until a source
+				// that needed it became primary.
+				if src.RequirePoints && r.Points <= 0 {
+					continue
+				}
 				pd.Points[r.PlayerID] = r.Points
+				// The band comes with him. Carrying it only on the second-opinion
+				// branch was harmless while the primary published no range, but a
+				// primary that does would have had it dropped here — and the band
+				// is what PriceBand turns into the spread the board shows instead
+				// of a bare number.
 				pd.Projections = append(pd.Projections, Projection{
-					PlayerID: r.PlayerID, Name: r.Player, Position: r.Position, Points: r.Points,
+					PlayerID: r.PlayerID, Name: r.Player, Position: r.Position,
+					Points: r.Points, PointsLow: r.PointsLow, PointsHigh: r.PointsHigh,
 				})
 			}
 		case RoleSecondOpinion:
@@ -177,6 +226,17 @@ func loadProjections(sources []ProjectionSource, normalized func(string) string,
 					PlayerID: r.PlayerID, Name: r.Player, Position: r.Position,
 					Points: r.Points, PointsLow: r.PointsLow, PointsHigh: r.PointsHigh,
 				})
+			}
+			// A source can be present as a file and still say nothing. The two
+			// sharp subsets share one file with consensus and are selected by a
+			// baseline column, so an export taken without them leaves this loop
+			// having matched no rows at all. Emitting that as a second opinion
+			// would put an empty column on the board, which reads as "the sharps
+			// have no view on anyone" rather than "the sharps were not exported".
+			if len(so.Projections) == 0 && len(so.Rank) == 0 {
+				pd.SecondWarnings = append(pd.SecondWarnings,
+					fmt.Sprintf("%s source absent — %s", src.Label, src.AbsentNote))
+				continue
 			}
 			pd.SecondOpinions = append(pd.SecondOpinions, so)
 		}

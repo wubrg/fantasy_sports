@@ -258,10 +258,25 @@ func convertLeanSets(cfg string, names []string) error {
 	return nil
 }
 
-// projectionSource is the normalized CSV whose spellings a lean has to
-// match, because the board names players from it — see the Projection built
-// in loadStatic.
-const projectionSource = "ciely-2026.csv"
+// primarySource is the normalized CSV whose spellings a lean has to match,
+// because the board names players from it — see the Projection built in
+// loadStatic.
+//
+// Read off the registry rather than named here. It was a constant reading
+// "ciely-2026.csv" until the board's primary became FantasyPros, at which
+// point every name the new pool carries and Ciely's 447 rows do not was
+// reported as reaching no player: Kenny Gainwell, the Chiefs defence and a
+// rookie QB were all called typos while sitting on the board. A check that
+// invents misses is worse than no check, because the fix it invites is
+// deleting a read that works.
+func primarySource() (string, draft.SourceSchema) {
+	for _, src := range draft.ProjectionSources {
+		if src.Role == draft.RolePrimary {
+			return src.File, src.Schema
+		}
+	}
+	return "", draft.SourceSchema{}
+}
 
 // reportUnmatched names the reads that can never fire, per set.
 //
@@ -280,7 +295,12 @@ func reportUnmatched(sets []draft.LeanSet, cfg, dataDir string) {
 		fmt.Printf("\nskipped the name check: %v\n", err)
 		return
 	}
-	rows, err := draft.LoadSourceCSV(root.Normalized(projectionSource), draft.CielyColumns)
+	source, schema := primarySource()
+	if source == "" {
+		fmt.Printf("\nskipped the name check: no primary projection source is registered\n")
+		return
+	}
+	rows, err := draft.LoadSourceCSV(root.Normalized(source), schema)
 	if err != nil {
 		fmt.Printf("\nskipped the name check: %v\n", err)
 		return
@@ -300,7 +320,7 @@ func reportUnmatched(sets []draft.LeanSet, cfg, dataDir string) {
 	// bill of health it cannot actually give is how a check earns distrust.
 	fmt.Printf("\nnames checked against %s (%d rows). The board drops rows with no Sleeper\n"+
 		"match, so its warnings are the last word on what a read reaches.\n",
-		projectionSource, len(pool))
+		source, len(pool))
 
 	for _, set := range sets {
 		bad := set.Leans.Unmatched(pool, matcher)
@@ -308,7 +328,7 @@ func reportUnmatched(sets []draft.LeanSet, cfg, dataDir string) {
 			continue
 		}
 		fmt.Printf("\n%s: %d of %d name no player in %s\n",
-			set.Name, len(bad), len(set.Leans), projectionSource)
+			set.Name, len(bad), len(set.Leans), source)
 		for _, u := range bad {
 			fix := "no close match — check the spelling"
 			if u.Suggestion != "" {
