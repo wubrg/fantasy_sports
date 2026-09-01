@@ -25,21 +25,26 @@ var staticFS embed.FS
 // commissioner starting without pretending anything is happening.
 const idleInterval = 60 * time.Second
 
-// defaultPollInterval is how often the live draft is checked while it is
-// running, and the default for -poll.
+// defaultPollInterval is how often the live draft is read while it is running,
+// and the default for -poll.
 //
-// The board polls Sleeper on this cadence and the browser polls the board on
-// its own (POLL_MS in static/app.js), so the two compound: a pick is on
-// screen within one interval of each, not one in total.
+// Three seconds, and the reasoning behind that number changed completely once
+// the cache was understood. Sleeper serves the draft object and its picks
+// through Cloudflare at s-maxage=30, so a one-second poll re-read the same
+// cached bytes thirty times and left the board up to half a minute behind the
+// room — the freshness was never bounded by this interval at all, it was
+// bounded by the edge. See Client.getFresh.
 //
-// Sleeper asks callers to stay under 1000 calls a minute. At one second this
-// costs 60 for the picks, plus 6 for the status check below — 66 a minute per
-// board. Two boards run on draft night, yours and Sam's, so the number that
-// matters is 132: thirteen percent of the budget. The earlier design rebuilt
-// everything on a timer, which cost 115 calls and three seconds each time;
-// splitting the immutable history out (see static.go) is what makes an
-// interval this tight both safe and useful.
-const defaultPollInterval = time.Second
+// Those two requests now reach origin every time, which makes the interval
+// mean what it says and makes it the only thing keeping the volume sane. At
+// three seconds each board spends 40 calls a minute across both endpoints;
+// two boards on draft night is 80, eight percent of the 1000 a minute Sleeper
+// asks callers to stay under. Faster buys little against a ten-second
+// nomination timer and costs origin load on the one night it matters.
+//
+// The browser polls this server on its own cadence (POLL_MS in
+// static/app.js), which is local and free.
+const defaultPollInterval = 3 * time.Second
 
 // minPollInterval is the floor -poll will accept. Below this the board buys
 // no perceptible speed — the browser is still on its own cadence — and starts

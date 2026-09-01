@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -111,6 +112,31 @@ type NFLState struct {
 	SeasonType  string `json:"season_type"`
 	Week        int    `json:"week"`
 	DisplayWeek int    `json:"display_week"`
+}
+
+// getFresh is get, for the two endpoints whose whole value is being current.
+//
+// Sleeper serves the draft object and its picks through Cloudflare with
+// `cache-control: public, s-maxage=30, stale-while-revalidate=300`, so a plain
+// request can hand back a response half a minute old — measured on a live
+// draft, `cf-cache-status: HIT` with the `age` header climbing toward thirty.
+// Polling such an endpoint every second re-reads identical bytes thirty times
+// and learns nothing; the board sat up to half a minute behind the room while
+// spending its whole call budget to do it.
+//
+// The unique parameter makes each request its own cache key, so it reaches
+// origin. Used deliberately and only here: everything else this client fetches
+// — the player dictionary, rosters, season stats — is either immutable or
+// changes on the scale of days, and is far better served from the edge.
+//
+// The cost is that these two now miss the cache every time, so the poll
+// interval is what keeps the volume reasonable. See defaultPollInterval.
+func (c *Client) getFresh(path string, out interface{}) error {
+	sep := "?"
+	if strings.Contains(path, "?") {
+		sep = "&"
+	}
+	return c.get(fmt.Sprintf("%s%s_=%d", path, sep, time.Now().UnixNano()), out)
 }
 
 func (c *Client) get(path string, out interface{}) error {
