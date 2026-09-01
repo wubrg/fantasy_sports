@@ -12,6 +12,8 @@ import (
 )
 
 // nominatingBoard stands up a draft whose metadata says what the caller wants.
+// timerEnd is still written into the stub even though nothing reads it, so a
+// test can prove that a long-expired timer does not hide a live nomination.
 func nominatingBoard(t *testing.T, status, playerID, timerEnd string) *staticData {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -50,32 +52,27 @@ func TestNominationNamesThePlayerBeingBidOn(t *testing.T) {
 	}
 }
 
-// TestAnExpiredNominationIsNotReported is the sharp edge.
+// TestAnExpiredTimerDoesNotHideALiveNomination is the regression.
 //
-// Sleeper never clears nominated_player_id: it holds the last nomination for
-// as long as the draft object exists. A board that reads the id alone would
-// pin a player the room finished bidding on to the top of the screen, and
-// naming the wrong player mid-auction is worse than naming none.
-func TestAnExpiredNominationIsNotReported(t *testing.T) {
-	s := nominatingBoard(t, "drafting", "1", past())
-
-	live, nom := s.DraftState()
-	if !live {
-		t.Fatal("an expired timer should not end the draft")
-	}
-	if nom != nil {
-		t.Errorf("reported %q as up for auction after his timer ran out", nom.Name)
-	}
-}
-
-// An unparseable timer is treated as expired: fall silent on a format we do
-// not understand rather than pin a name up forever.
-func TestAnUnreadableTimerIsTreatedAsExpired(t *testing.T) {
-	if _, nom := nominatingBoard(t, "drafting", "1", "not-a-time").DraftState(); nom != nil {
-		t.Errorf("reported a nomination on an unparseable timer: %+v", nom)
-	}
-	if _, nom := nominatingBoard(t, "drafting", "1", "").DraftState(); nom != nil {
-		t.Errorf("reported a nomination with no timer at all: %+v", nom)
+// timer_end_at looks like the way to tell a live nomination from the stale
+// field Sleeper leaves behind, and it is not: Sleeper stamps it once and never
+// advances it. Bidding routinely outlasts it. Measured against the live mock,
+// one player held the block for twenty seconds while his timer drifted from
+// +0.1s to -18.7s — so an expiry check blanked the banner about a second into
+// every nomination, which reads from the outside as a banner that will not
+// update.
+//
+// Every timer below is long past, and every one of them must still name the
+// player. What ends a nomination is the sale, not the clock.
+func TestAnExpiredTimerDoesNotHideALiveNomination(t *testing.T) {
+	for _, timer := range []string{past(), "", "not-a-time"} {
+		live, nom := nominatingBoard(t, "drafting", "1", timer).DraftState()
+		if !live {
+			t.Fatalf("timer %q: draft not in session", timer)
+		}
+		if nom == nil {
+			t.Errorf("timer %q: the banner went blank on a live nomination", timer)
+		}
 	}
 }
 
@@ -99,14 +96,10 @@ func TestADraftNotInSessionHasNoNomination(t *testing.T) {
 	}
 }
 
-// TestAPausedDraftKeepsItsNomination — and note the empty timer, which is the
-// whole point.
-//
-// Sleeper drops timer_end_at while a draft is paused, because the clock is not
-// running. An earlier version of this test passed a future timer and so proved
-// nothing: it asserted a state that cannot occur. Against the real paused mock
-// the banner went blank, because "no timer" was being read as "expired" — but
-// a pause is exactly when the nominated player is still the nominated player.
+// A pause is a break in the bidding, not the end of it, so the player on the
+// block stays on the block. Sleeper drops timer_end_at entirely while paused,
+// which is one of the several shapes that field takes and one more reason
+// nothing reads it.
 func TestAPausedDraftKeepsItsNomination(t *testing.T) {
 	live, nom := nominatingBoard(t, "paused", "1", "").DraftState()
 	if !live {
