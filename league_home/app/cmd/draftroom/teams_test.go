@@ -61,12 +61,16 @@ func TestSavedTeamsDoNotCrossOwners(t *testing.T) {
 // than trusted.
 func TestSavedTeamsPathStaysInsideConfigDir(t *testing.T) {
 	for _, id := range []string{"../../etc/passwd", "a/b", ".."} {
-		got := savedTeamsPath("/cfg", id)
-		if dir := filepath.Dir(got); dir != "/cfg" {
-			t.Errorf("owner %q escaped to %s", id, got)
-		}
-		if strings.Contains(filepath.Base(got), "/") {
-			t.Errorf("owner %q left a separator in the name: %s", id, got)
+		for _, got := range []string{
+			savedTeamsPath("/cfg", id, ""),
+			savedTeamsPath("/cfg", "243501760939814912", id),
+		} {
+			if dir := filepath.Dir(got); dir != "/cfg" {
+				t.Errorf("id %q escaped to %s", id, got)
+			}
+			if strings.Contains(filepath.Base(got), "/") {
+				t.Errorf("id %q left a separator in the name: %s", id, got)
+			}
 		}
 	}
 }
@@ -74,7 +78,32 @@ func TestSavedTeamsPathStaysInsideConfigDir(t *testing.T) {
 // Without an owner id there is only one board, so it keeps the plain name the
 // file has always had rather than stranding an existing shortlist.
 func TestSavedTeamsPathWithoutOwnerKeepsLegacyName(t *testing.T) {
-	if got, want := savedTeamsPath("/cfg", ""), filepath.Join("/cfg", savedTeamsFile); got != want {
-		t.Errorf("savedTeamsPath(\"/cfg\", \"\") = %s, want %s", got, want)
+	if got, want := savedTeamsPath("/cfg", "", ""), filepath.Join("/cfg", savedTeamsFile); got != want {
+		t.Errorf("savedTeamsPath(\"/cfg\", \"\", \"\") = %s, want %s", got, want)
+	}
+}
+
+// A rehearsal against a mock runs under your real owner id -- it has to, or
+// picks never register as yours and the budget it exists to exercise never
+// moves. That is exactly what would aim it at the live board's file, so the
+// draft has to separate them too.
+func TestSavedTeamsPathSeparatesARehearsalFromTheLiveBoard(t *testing.T) {
+	const me = "243501760939814912"
+
+	live := savedTeamsPath("/cfg", me, "")
+	mock := savedTeamsPath("/cfg", me, "1389736537410785280")
+	if live == mock {
+		t.Fatalf("rehearsal and live board share one shortlist: %s", live)
+	}
+
+	// The live board's path is what it has always been. A rename here would
+	// strand a shortlist that took a season to build.
+	if want := filepath.Join("/cfg", "saved-teams-"+me+".json"); live != want {
+		t.Errorf("live shortlist moved to %s, want %s", live, want)
+	}
+
+	// Two mocks are two rehearsals, and neither inherits the other's teams.
+	if other := savedTeamsPath("/cfg", me, "9999999999999999999"); other == mock {
+		t.Errorf("two different mocks share one shortlist: %s", other)
 	}
 }

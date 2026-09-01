@@ -26,6 +26,11 @@ import (
 type staticData struct {
 	client  *sleeper.Client
 	draftID string
+	// offLeagueDraft is set when draftID is a draft this league does not own
+	// -- a mock, followed by an explicit -draft. The board works the same
+	// either way; what changes is that state written during a rehearsal must
+	// not land where the live board would read it.
+	offLeagueDraft bool
 
 	// Roster shape and pool size before anything is drafted.
 	shape       draft.PoolState
@@ -390,7 +395,7 @@ func loadStatic(leagueID, draftID, configDir, dataDir, ownerID string, baseline 
 	if err != nil {
 		drafts = nil
 	}
-	s.draftID = watchedDraft(draftID, drafts)
+	s.draftID, s.offLeagueDraft = watchedDraft(draftID, drafts)
 	return s, nil
 }
 
@@ -898,12 +903,24 @@ func (s *staticData) refreshLeanWarnings() {
 // way to follow it is to be told. Discovery stays the default because a real
 // league has exactly one draft that matters, and Sleeper returns them newest
 // first, so the current season's is the one in front.
-func watchedDraft(explicit string, drafts []sleeper.Draft) string {
-	if explicit != "" {
-		return explicit
+//
+// The second return says the draft is not one of the league's own. That is
+// what makes a board a rehearsal rather than the real thing, and the runtime
+// state it keeps has to be kept apart from the state the live board depends
+// on. A league mock reports true as readily as a standalone one: it hangs off
+// the league in Sleeper's metadata, but /league/<id>/drafts does not return
+// it, and nothing about it is the draft you will actually play.
+func watchedDraft(explicit string, drafts []sleeper.Draft) (string, bool) {
+	if explicit == "" {
+		if len(drafts) > 0 {
+			return drafts[0].DraftID, false
+		}
+		return "", false
 	}
-	if len(drafts) > 0 {
-		return drafts[0].DraftID
+	for _, d := range drafts {
+		if d.DraftID == explicit {
+			return explicit, false
+		}
 	}
-	return ""
+	return explicit, true
 }

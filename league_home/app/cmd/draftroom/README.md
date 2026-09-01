@@ -501,12 +501,20 @@ The board is a draft-night tool that gets used once a year, which is a bad
 time to discover a wiring fault. `-draft` points it at any Sleeper draft by id:
 
 ```sh
-draftroom serve -addr :8085 -draft <mock-draft-id> -me <your-sleeper-id> -leans rehearsal
+make serve-mock                            # the current mock, on :8087
+make serve-mock MOCK_DRAFT=<mock-draft-id> # any other one
 ```
 
-Discovery normally finds the draft through the league, and Sleeper's standalone
-mock drafts belong to no league — so without the flag there is nothing to find,
-and the board would sit watching the real league instead.
+which is the raw command below, with the two safety flags already set:
+
+```sh
+draftroom serve -addr :8087 -draft <mock-draft-id> -me <your-sleeper-id> \
+    -leans rehearsal -keepers none
+```
+
+Discovery normally finds the draft through the league, and Sleeper's mock
+drafts are not returned by `/league/<id>/drafts` — so without the flag there is
+nothing to find, and the board would sit watching the real league instead.
 
 **Check the mock is an auction first.** Sleeper's mocks default to snake, and
 `Metadata.Amount` is empty for anything that is not an auction, so `Dollars()`
@@ -514,13 +522,22 @@ returns 0 and every pick sells for nothing. The board will look like it is
 working. A rehearsal that never exercised the money is worse than none, because
 you will trust it.
 
-Two things to set up so the rehearsal cannot cost you anything:
+What keeps the rehearsal from costing you anything:
 
 - **Point `-leans` at a copy.** The default set is often a symlink into a notes
   vault, and reads set on the board are written straight through to it. Copy it
   to `leans/rehearsal.yaml` first; that still exercises the whole lean path on
-  your real reads without editing the ones you will draft from.
-- **Use a spare port.** `:8083` is the live board and `:8084` is the second one.
+  your real reads without editing the ones you will draft from. `make
+  rehearsal-leans` does the copy and refuses to overwrite one that already
+  exists, so re-running it mid-rehearsal cannot wipe what you set.
+- **Use a spare port.** `:8083` is the live board, `:8084` and `:8086` are the
+  guest boards, and `:8085` is the edge line board. `:8087` is free.
+- **The shortlist takes care of itself.** A rehearsal has to run under your real
+  owner id — otherwise picks never register as yours and the budget it exists to
+  exercise never moves — which would aim it at the live board's saved teams. So
+  when `-draft` names a draft this league does not own, the shortlist is scoped
+  to that draft as well: `saved-teams-<owner>-<draft>.json`. Saving a throwaway
+  team during a mock cannot reach the plan you drafted from.
 
 What to actually watch, since a mock is only useful if you know what would
 count as a failure:
@@ -531,10 +548,20 @@ count as a failure:
 | Money tracks | The winning bid appears as the sale price. When the pick is yours, budget, slots, max bid and safe ceiling all move together, and the risk band changes as you spend. |
 | Reads survive | Leans set before the draft still show at the end; one set mid-draft is in `rehearsal.yaml` on disk; `reload leans` does not drop board edits; the scratch roster and recorded sales survive the whole thing. |
 
-Expect the **Kept panel and the keeper scenarios to be empty or meaningless**.
-`owners.csv`, `keeper-locks.csv` and `rulings.csv` are keyed to the real
-league, and a mock shares none of it. That is correct rather than broken, and
-it gives you a clean full pool to rehearse against.
+**A standalone mock and a league mock differ here, and it matters.** For a
+standalone mock, expect the Kept panel and the keeper scenarios to be empty or
+meaningless: `owners.csv`, `keeper-locks.csv` and `rulings.csv` are keyed to
+the real league, and a standalone mock shares none of it. That is correct
+rather than broken, and it gives you a clean full pool to rehearse against.
+
+A **league mock** — one started from inside the league, carrying
+`metadata.league_id` — is the trap. Those files all resolve, so the draft-night
+default would deduct real keeper money and pull projected keepers off the
+board, while Sleeper hands all twelve teams a flat $200 and leaves the whole
+pool biddable. The board would look right and disagree with the screen on every
+budget, which is precisely the failure a rehearsal is supposed to catch rather
+than introduce. **Pass `-keepers none`** so the board opens on the same flat
+full pool the mock is actually running. `make serve-mock` sets it for you.
 
 ### Player types on the board and the roster
 

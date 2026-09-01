@@ -74,11 +74,21 @@ type server struct {
 	savedPath string
 }
 
+// rehearsalTag is the draft id when the board is following a mock, and empty
+// otherwise -- so a rehearsal keeps its own shortlist and the live board keeps
+// the file it already has.
+func rehearsalTag(s *staticData) string {
+	if s.offLeagueDraft {
+		return s.draftID
+	}
+	return ""
+}
+
 func newServer(s *staticData, configDir, keeperScenario string) (*server, error) {
 	srv := &server{
 		static: s, taken: map[string]gone{}, manual: map[string]gone{},
 		scratch: newScratchpad(), leans: newLeanEdits(), configDir: configDir,
-		savedPath:      savedTeamsPath(configDir, s.ownerID),
+		savedPath:      savedTeamsPath(configDir, s.ownerID, rehearsalTag(s)),
 		keeperScenario: keeperScenario,
 	}
 	saved, err := loadSavedTeams(srv.savedPath)
