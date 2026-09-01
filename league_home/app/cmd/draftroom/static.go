@@ -494,10 +494,10 @@ func (s *staticData) Drafting() bool {
 // call per tick to learn the same thing twice would double the board's share of
 // Sleeper's budget for nothing.
 //
-// The nomination is nil unless it is live now. Sleeper never clears
-// nominated_player_id, so it holds the last one indefinitely; timer_end_at is
-// what separates "being bid on" from "was bid on an hour ago". Naming the
-// wrong player mid-auction is worse than naming none.
+// The nomination here is only the name Sleeper has on the block; whether the
+// bidding is still running is settled downstream, when the picks feed reports
+// him sold. See nominationFrom for why the draft object cannot answer that
+// itself.
 func (s *staticData) DraftState() (bool, *draft.Nomination) {
 	if s.draftID == "" {
 		return false, nil
