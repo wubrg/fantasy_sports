@@ -20,6 +20,10 @@ type Draft struct {
 	// LastPicked is 0 until the first pick is made.
 	StartTime  int64 `json:"start_time"`
 	LastPicked int64 `json:"last_picked"`
+	// DraftOrder maps an owner id to the slot he drafts from. Null for this
+	// league's own drafts, where picks name their owner outright; populated
+	// for a mock, where they do not. See staticData.isMine.
+	DraftOrder map[string]int `json:"draft_order"`
 	Metadata   struct {
 		Name string `json:"name"`
 		// ScoringType is Sleeper's coarse label ("half_ppr"), not the
@@ -68,6 +72,10 @@ type DraftPick struct {
 	RosterID int    `json:"roster_id"`
 	PickedBy string `json:"picked_by"`
 	PlayerID string `json:"player_id"`
+	// DraftSlot is the seat the pick was made from, 1..teams. It is the only
+	// ownership Sleeper stamps on a mock pick, which carries neither
+	// picked_by nor roster_id.
+	DraftSlot int `json:"draft_slot"`
 	// IsKeeper is true only for keeper picks. Sleeper sends null rather
 	// than false for ordinary auction picks, which decodes to false —
 	// the same meaning, so no pointer is needed here.

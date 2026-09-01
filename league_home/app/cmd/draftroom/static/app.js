@@ -7,7 +7,11 @@
 // Matched to the server's own Sleeper poll: it can't have newer data than
 // that, and /api/scratch/view is served from the cached snapshot, so asking
 // this often costs no Sleeper traffic at all.
-const POLL_MS = 2000;
+//
+// The two cadences compound rather than overlap — a pick waits up to one
+// server interval to be fetched and then up to one of these to be drawn — so
+// this has to come down with the server's or half the gain is lost here.
+const POLL_MS = 1000;
 
 // The positions the board filters on, in lineup order rather than
 // alphabetical: mid-auction the toggles are found by their place in the

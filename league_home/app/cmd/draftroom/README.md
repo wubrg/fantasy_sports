@@ -539,6 +539,16 @@ What keeps the rehearsal from costing you anything:
   to that draft as well: `saved-teams-<owner>-<draft>.json`. Saving a throwaway
   team during a mock cannot reach the plan you drafted from.
 
+**A mock pick names no owner.** Sleeper stamps `picked_by` on every pick in a
+real draft — 168 of 168 in this league's last one — but leaves it empty in a
+mock and carries the seat on `draft_slot` instead. The board resolves ownership
+down a ladder of the three (`picked_by`, then `roster_id`, then `draft_slot`;
+see `isMine` in `static.go`), so a pick you win in a rehearsal moves your budget
+the way a real one would. Before that ladder existed, a rehearsal could not
+exercise the money at all — the board saw every pick as somebody else's. The
+middle rung matters on draft night too: this league has autopick on, and an
+autopick also arrives with `picked_by` empty.
+
 What to actually watch, since a mock is only useful if you know what would
 count as a failure:
 

@@ -31,6 +31,13 @@ type staticData struct {
 	// either way; what changes is that state written during a rehearsal must
 	// not land where the live board would read it.
 	offLeagueDraft bool
+	// myRosterID and mySlot are the two other ways Sleeper can say a pick is
+	// yours, resolved once at load. Zero means unknown, and an unknown rung
+	// is skipped rather than guessed at — an unset roster_id and an unset
+	// draft_slot are both 0, so a 0 that matched would claim every pick
+	// nobody else had claimed. See isMine.
+	myRosterID int
+	mySlot     int
 
 	// Roster shape and pool size before anything is drafted.
 	shape       draft.PoolState
@@ -396,7 +403,53 @@ func loadStatic(leagueID, draftID, configDir, dataDir, ownerID string, baseline 
 		drafts = nil
 	}
 	s.draftID, s.offLeagueDraft = watchedDraft(draftID, drafts)
+
+	// The two fallback rungs for pick ownership, resolved once here rather
+	// than per poll. Both are best-effort: a board keyed to nobody — Jeff's
+	// runs under a name, not a Sleeper id — resolves neither, and a failed
+	// lookup leaves the rung disabled rather than the board broken.
+	for _, r := range rosters {
+		if r.OwnerID == ownerID {
+			s.myRosterID = r.RosterID
+			break
+		}
+	}
+	if s.draftID != "" && ownerID != "" {
+		if d, err := c.Draft(s.draftID); err == nil {
+			s.mySlot = d.DraftOrder[ownerID]
+		}
+	}
 	return s, nil
+}
+
+// isMine reports whether a pick is yours, down a ladder of what Sleeper
+// actually stamps on one. Each rung is tried only when the one above it says
+// nothing, because each is a weaker claim than the last:
+//
+//	picked_by   the manager who made the pick. Set on every pick in a real
+//	            draft — 168 of 168 in this league's last one — so on draft
+//	            night the ladder stops here and the rest never runs.
+//	roster_id   an autopick leaves picked_by empty. This league has
+//	            cpu_autopick on, so being away from the keyboard must not
+//	            drop the player off your own board.
+//	draft_slot  a mock leaves both empty and carries the seat instead. It is
+//	            the only thing a rehearsal can go on, and without it the
+//	            budget a rehearsal exists to exercise never moves.
+//
+// A zero rung is unknown, not a match. An unset roster_id and an unset
+// draft_slot are both 0, so a board that compared them would claim every
+// unowned pick in the draft.
+func (s *staticData) isMine(p sleeper.DraftPick) bool {
+	if p.PickedBy != "" {
+		return p.PickedBy == s.ownerID
+	}
+	if s.myRosterID != 0 && p.RosterID != 0 {
+		return p.RosterID == s.myRosterID
+	}
+	if s.mySlot != 0 && p.DraftSlot != 0 {
+		return p.DraftSlot == s.mySlot
+	}
+	return false
 }
 
 // Picks fetches the current draft's picks. This is the only call the live
