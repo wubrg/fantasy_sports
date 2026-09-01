@@ -53,6 +53,7 @@ if (!location.pathname.endsWith("/")) {
       <span class="posfilter" id="posfilter"></span>
       <label class="toggle"><input type="checkbox" id="affordable"> only what I can afford</label>
       <label class="toggle"><input type="checkbox" id="above"> only above replacement</label>
+      <span class="leanfilter" id="leanfilter" title="narrow to the reads you hold — any of the lit pills, not all of them"></span>
       <span class="hint" id="hint"></span>
     </div>
     <div class="criteria hidden" id="criteria">
@@ -344,6 +345,17 @@ if (!location.pathname.endsWith("/")) {
           <tr><td><span class="guide-key">position pills</span></td>
             <td>Click QB / RB / WR / TE to narrow to those positions; click again
             to release. More than one can be on at once.</td></tr>
+          <tr><td><span class="guide-key">read pills</span></td>
+            <td>Narrow to the reads you hold: <strong>&#9733;</strong> favorites,
+            <strong>must</strong>, <strong>up</strong>, <strong>down</strong>,
+            <strong>dnd</strong>, with a count of how many each would leave.
+            Lighting several shows players matching <em>any</em> of them, not
+            all &mdash; nobody is both must and down. The star is a tag on top of
+            a read rather than a read itself, so a player can be up and a
+            favorite at once and both pills find him. Unlike the research
+            criteria below, these apply on draft night: &ldquo;which of these do
+            I have an opinion about&rdquo; is the question you ask when a name
+            is called.</td></tr>
           <tr><td><span class="guide-key">only what I can afford</span></td>
             <td>Hides anyone whose <strong>My Max</strong> sits above your max
             bid &mdash; what is still genuinely biddable, not merely cheap.</td></tr>

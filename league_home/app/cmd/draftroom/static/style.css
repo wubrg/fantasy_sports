@@ -184,6 +184,20 @@ main {
   cursor: pointer;
 }
 .critpill:hover { border-color: var(--accent); }
+
+/* The read pills, in the search bar rather than the criteria row: unlike the
+   criteria they apply on draft night, so they sit with the always-on toggles.
+   Reuses .critpill for the shape; only the spacing and the count differ. */
+.leanfilter { display: inline-flex; gap: 0.25rem; align-items: center; }
+.leanfilter .critpill { display: inline-flex; gap: 0.3rem; align-items: center; }
+/* Dimmed inside an unlit pill and inherited once it lights up, so the count
+   never competes with the label it belongs to. */
+.leanfilter .pillcount { color: var(--dim); font-weight: 400; font-size: 0.72rem; }
+.leanfilter .critpill.on .pillcount { color: inherit; opacity: 0.75; }
+/* The star pill carries the same warning colour the row flag does, so the
+   control and the thing it filters for are recognisably the same idea. */
+.leanfilter .lean-fav { color: var(--warn); }
+.leanfilter .lean-fav.on { color: var(--bg); }
 .critpill.on { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 .crit-mode, .crit-clear {
   padding: 0.2rem 0.55rem;
@@ -264,6 +278,10 @@ tr.unaffordable td { opacity: 0.38; }
   color: var(--dim);
 }
 .flag.must { background: #3b2f0b; color: var(--warn); }
+/* The star is a tag on top of a read, so it is drawn quieter than the read
+   pills beside it — it should be findable when scanning, not louder than the
+   MUST it often sits next to. */
+.flag.fav { background: transparent; color: var(--warn); padding: 0 0.15rem; }
 .flag.dnd { background: #3b1414; color: var(--bad); }
 .flag.hurt { background: #3b1414; color: #fca5a5; }
 .flag.split { background: #2a2440; color: #c4b5fd; }
