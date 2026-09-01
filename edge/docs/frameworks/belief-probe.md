@@ -217,9 +217,17 @@ magnitude.
 ## How it is scored
 
 `edgectl beliefs score`, on settled weeks only. Reliability and resolution are reported separately
-and neither substitutes for the other; a base-rate forecaster scores perfectly on the first and
-zero on the second. The primary endpoint is **pre-registered**: the paired Brier gain against the
-frozen reference, pooled, one-sided, at a declared week. Everything else is descriptive.
+and neither substitutes for the other; a base-rate forecaster scores perfectly on the first and zero
+on the second.
+
+The primary endpoint is **pre-registered and has two halves, both of which must pass**: that the
+forecast is more accurate than the reference (paired Brier gain), and that the wagers it implies
+would have won (realised edge on the rows it disagreed by more than the bar). Being more accurate
+and being worth betting are different claims, and a forecaster can hold one without the other.
+
+That is why the instructions above ask you to **abstain freely and commit where you have a reason**.
+A forecast nudged a point or two off the base rate everywhere is more accurate and produces nothing
+to bet.
 
 Rejected predictions are logged and settled anyway, so survivors can be scored against the whole
 set on identical outcomes. That measures what the falsifier is worth, which a bare rejection count

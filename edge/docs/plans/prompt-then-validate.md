@@ -199,14 +199,33 @@ Four scenarios, several statistics and eighteen weekly looks is a garden of fork
 project has already been misled three times by pooling alone. So the endpoint is fixed here, on
 2026-08-24, with the log empty:
 
-> **Primary endpoint.** The paired Brier gain of the prompt's `s` against the frozen reference,
-> pooled over all scenarios, one-sided, evaluated at **week 8** — the first point the power table
-> puts above 80% for the +0.10 edge that matters. Reported with a bootstrap interval clustered by
-> game.
+> **Primary endpoint — two claims, and BOTH must pass.** Evaluated at **week 8**, the first point
+> the power table puts above 80% for the +0.10 edge that matters. Both intervals are bootstrapped
+> clustered by game.
 >
-> **Everything else is descriptive.** Reliability, resolution, slope, AUC, per-scenario splits,
-> confidence weighting and the survivors-versus-all comparison are all worth looking at and none of
-> them is the verdict.
+> | | claim | statistic | passes when |
+> |---|---|---|---|
+> | **E1** | it is more accurate than the reference | paired Brier gain, pooled over positions | lower bound of the 95% CI above 0 |
+> | **E2** | the wagers it implies would have won | realised edge per unit staked, on rows over the bar, at a 6% hold | lower bound of the 95% CI above 0 |
+>
+> **Why both.** They are different claims and they can point in opposite directions. A forecaster
+> better than the reference by a hair on every row passes E1 with a healthy gain and never disagrees
+> by enough to place a single wager — E2 would rest on nothing. One right about a handful of big
+> calls and mediocre elsewhere can fail E1 and be the profitable one. Registering E1 alone would let
+> "it works" be declared about a source that produces no bets; registering E2 alone would rest the
+> whole verdict on the smallest subset in the data.
+>
+> **E2 is the weaker-powered half and that is accepted.** The bar is what turns a row into a wager,
+> and a forecaster abstaining freely — as the contract asks — will put perhaps fifteen to twenty
+> rows a week over it, so E2 rests on order 150 wagers by week 8 rather than 480. If E1 passes and
+> E2 is merely undecided, that is reported as undecided rather than as a pass.
+>
+> **Everything else is descriptive.** Reliability, resolution, slope, AUC, per-scenario and
+> per-confidence splits, the flagged-versus-rest comparison and survivors-versus-all are all worth
+> looking at and none of them is the verdict.
+>
+> Reproduce with one command, no hand-assembly:
+> `edgectl beliefs score -from-week 1 -to-week 8 -bar 0.10 -hold 0.06`
 >
 > **Interim looks are permitted and do not stop the trial.** They are for catching a broken harness,
 > not for calling a result early.

@@ -49,6 +49,9 @@ func beliefsScore(args []string) error {
 	bar := fs.Float64("bar", 0.10,
 		"the s-edge a disagreement must clear to count; FINDINGS 16 puts the "+
 			"requirement at +0.03 to +0.16 depending on the site")
+	hold := fs.Float64("hold", 0.06,
+		"the book's proportional hold, for the realised-edge endpoint. A flat number of "+
+			"points would tax a 12%% line at 20%%, which no book does")
 	includeRejected := fs.Bool("include-rejected", false,
 		"score predictions whose claims were falsified, alongside the survivors")
 	if err := fs.Parse(args); err != nil {
@@ -121,8 +124,7 @@ func beliefsScore(args []string) error {
 		fmt.Printf("    reference Brier %.4f   skill %+.3f\n", r.RefBrier, r.Skill)
 		gain := calib.PairedBrierGain(scored)
 		glo, ghi := calib.BootstrapCI(scored, calib.PairedBrierGain, 800, 20260824, 0.05)
-		fmt.Printf("    paired gain     %+.5f  [%+.5f, %+.5f]   <- the pre-registered endpoint\n",
-			gain, glo, ghi)
+		fmt.Printf("    paired gain     %+.5f  [%+.5f, %+.5f]\n", gain, glo, ghi)
 		fmt.Printf("\n    Calibration is not an edge. These two are what the wager needs:\n")
 		fmt.Printf("    mean |p−ref|    %.4f   does it disagree by enough to matter?\n",
 			r.MeanAbsDisagreement)
@@ -151,11 +153,72 @@ func beliefsScore(args []string) error {
 		}
 	}
 
+	jointVerdict(scored, *bar, *hold)
 	groupReport("BY SCENARIO", use, *bar, func(r scoredRow) string { return r.scenario })
 	groupReport("BY STATED CONFIDENCE", use, *bar, confidenceBand)
 	flaggedReport(use, *bar)
 	powerNote(r.Positions)
 	return nil
+}
+
+// jointVerdict reports the pre-registered endpoint, which is two claims.
+//
+// Both must hold, and they are genuinely different claims:
+//
+//	E1  is this MORE ACCURATE than the reference?
+//	E2  would the wagers it actually produces have WON?
+//
+// A forecaster better than the reference by a hair on every row passes E1 with
+// a healthy gain and never disagrees by enough to place a bet, so E2 rests on
+// nothing. One right about eight big calls and mediocre elsewhere can fail E1
+// and be the profitable one. Registering only the first would let "it works" be
+// declared about a forecaster that produces no wagers.
+//
+// Both intervals are clustered by game, because two teams in one game are not
+// two independent draws.
+func jointVerdict(pts []calib.Point, bar, hold float64) {
+	fmt.Printf("\n  PRE-REGISTERED ENDPOINT  (both must pass)\n")
+
+	gain := calib.PairedBrierGain(pts)
+	glo, ghi := calib.BootstrapCI(pts, calib.PairedBrierGain, 800, 20260824, 0.05)
+	e1 := !math.IsNaN(glo) && glo > 0
+	fmt.Printf("    E1 accuracy     paired Brier gain %+.5f  [%+.5f, %+.5f]   %s\n",
+		gain, glo, ghi, verdictWord(e1, math.IsNaN(glo)))
+
+	n := calib.OverBarCount(pts, bar)
+	edge := calib.RealisedEdge(pts, bar, hold)
+	stat := func(s []calib.Point) float64 { return calib.RealisedEdge(s, bar, hold) }
+	elo, ehi := calib.BootstrapCI(pts, stat, 800, 20260824, 0.05)
+	e2 := !math.IsNaN(elo) && elo > 0
+	fmt.Printf("    E2 profit       realised edge %+.4f  [%+.4f, %+.4f]  on %d wagers   %s\n",
+		edge, elo, ehi, n, verdictWord(e2, math.IsNaN(elo) || n == 0))
+	fmt.Printf("                    per unit staked, at a %.0f%% hold, on rows over ±%.2f\n",
+		hold*100, bar)
+
+	switch {
+	case math.IsNaN(glo) || math.IsNaN(elo) || n == 0:
+		fmt.Printf("    VERDICT         not yet decidable\n")
+	case e1 && e2:
+		fmt.Printf("    VERDICT         BOTH PASS — accurate, and the wagers it implies won\n")
+	case e1:
+		fmt.Printf("    VERDICT         accuracy only. It beats the reference and does not\n")
+		fmt.Printf("                    disagree by enough, often enough, to be worth betting\n")
+	case e2:
+		fmt.Printf("    VERDICT         profit only. Its big calls paid without it being\n")
+		fmt.Printf("                    measurably more accurate — treat as unproven at this n\n")
+	default:
+		fmt.Printf("    VERDICT         NEITHER\n")
+	}
+}
+
+func verdictWord(pass, undecided bool) string {
+	switch {
+	case undecided:
+		return "—"
+	case pass:
+		return "PASS"
+	}
+	return "fail"
 }
 
 // confidenceBand buckets a forecaster's own confidence.
