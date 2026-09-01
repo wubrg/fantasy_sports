@@ -942,6 +942,17 @@ async function copyScratch(button) {
 function drawScratch() {
   if (!scratch) return;
   const m = scratch.metrics || {};
+
+  // The same panel answers two questions depending on the mode it is in. In
+  // research it is a roster you are inventing; on draft night it is the one
+  // you actually have, with the players you have won on it, and calling that
+  // "hypothetical" would be telling you not to trust the only record of your
+  // own team on the screen.
+  const research = researchActive();
+  document.getElementById("s-title").textContent =
+    research ? "Scratch roster" : "My team";
+  document.getElementById("s-mode").textContent =
+    research ? "hypothetical" : "live";
   document.getElementById("s-spent").textContent = `$${m.Spend || 0}`;
   document.getElementById("s-left").textContent = `$${scratch.budgetLeft}`;
   document.getElementById("s-slots").textContent = scratch.slotsLeft;
@@ -958,10 +969,11 @@ function drawScratch() {
         `<td colspan="3">empty</td></tr>`);
       continue;
     }
-    // A keeper is already yours: no price to imagine, nothing to remove.
-    if (spot.kept) {
+    // Already yours, by either route: no price to imagine, nothing to remove.
+    // A keeper says so; a player you won shows what you actually paid.
+    if (spot.kept || spot.won) {
       rows.push(`<tr class="kept"><td class="slot">${esc(slot)}</td>` +
-        `<td>${esc(spot.name)} <span class="tag">kept</span></td>` +
+        `<td>${esc(spot.name)} <span class="tag">${spot.won ? "won" : "kept"}</span></td>` +
         `<td class="price">$${spot.price}</td><td></td></tr>`);
       continue;
     }
@@ -971,6 +983,12 @@ function drawScratch() {
   }
   const bench = scratch.bench || [];
   for (const s of bench) {
+    if (s.kept || s.won) {
+      rows.push(`<tr class="bench kept"><td class="slot">BN</td>` +
+        `<td>${esc(s.name)} <span class="tag">${s.won ? "won" : "kept"}</span></td>` +
+        `<td class="price">$${s.price}</td><td></td></tr>`);
+      continue;
+    }
     rows.push(`<tr class="bench"><td class="slot">BN</td><td>${esc(s.name)}</td>` +
       `<td class="price" data-reprice="${esc(s.name)}" title="click to change the price">$${s.price}</td>` +
       `<td class="drop" data-drop="${esc(s.name)}" title="remove">&times;</td></tr>`);
@@ -999,8 +1017,14 @@ function drawScratch() {
   document.getElementById("s-clear").disabled = !!scratch.empty;
 
   const note = document.getElementById("s-note");
-  if (scratch.empty) {
-    note.textContent = "Your keepers are already here. Click + on a row to try a player alongside them; nothing on this panel touches the live board.";
+  // Gated on having no rows rather than on `empty`, which means "nothing to
+  // clear": once you have won a player the panel is a roster, and inviting you
+  // to start one would be describing a screen you are no longer looking at.
+  const bare = (scratch.starters || []).length + (scratch.bench || []).length === 0;
+  if (bare) {
+    note.textContent = researchActive()
+      ? "Your keepers are already here. Click + on a row to try a player alongside them; nothing on this panel touches the live board."
+      : "Players you win appear here as the draft runs. Click + on a row to try one alongside them.";
   } else {
     const bits = [`${m.MyGuys || 0} of your guys`];
     if (m.Injured) bits.push(`${m.Injured} carrying an injury designation`);

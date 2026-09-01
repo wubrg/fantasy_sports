@@ -419,6 +419,10 @@ func loadStatic(leagueID, draftID, configDir, dataDir, ownerID string, baseline 
 			s.mySlot = d.DraftOrder[ownerID]
 		}
 	}
+
+	if s.offLeagueDraft {
+		s.forgetKeepers()
+	}
 	return s, nil
 }
 
@@ -855,6 +859,59 @@ func (s *staticData) heldRoster(ownerID string) []draft.RosterSpot {
 		})
 	}
 	return out
+}
+
+// forgetKeepers empties everything this board knows about keepers, because a
+// mock has none.
+//
+// The files that decide them — owners.csv, rulings.csv, keeper-locks.csv —
+// are keyed to the real league, and a *league* mock resolves every one of them
+// while Sleeper hands all twelve teams a flat budget and the whole pool. Left
+// in, they deduct money nobody has spent, take players off a board where they
+// are biddable, and seat keepers on a roster you do not have.
+//
+// Done once here rather than at each of those sites on purpose. Three separate
+// symptoms of this had already been fixed one at a time — the pool, the
+// board's opening scenario, and the Draft night button — and a fourth path
+// that reads a keeper field would have been wrong again. Emptying the inputs
+// makes every reader correct without having to know it is a rehearsal.
+func (s *staticData) forgetKeepers() {
+	s.projected = nil
+	s.forcedKeepers = nil
+	s.declaredOwners = nil
+	s.keeperOf = map[string]int{}
+}
+
+// wonSpot builds the roster line for a player you bought at auction.
+//
+// He is off the board by the time this is asked — that is what winning him
+// means — so his signals cannot be read from the pool and are assembled here
+// the way heldRoster assembles a keeper's. Price is what you actually paid,
+// not what anything thinks he is worth.
+func (s *staticData) wonSpot(playerID string, price int) draft.RosterSpot {
+	var aav float64
+	for _, m := range s.market {
+		if m.PlayerID == playerID {
+			aav = m.AAV
+			break
+		}
+	}
+	return draft.RosterSpot{
+		Player: draft.PlayerSignals{
+			PlayerID:    playerID,
+			Name:        s.nameOf(playerID),
+			Position:    s.positionOf(playerID),
+			Team:        s.team[playerID],
+			CielyPoints: s.points[playerID],
+			Cost:        int(aav + 0.5),
+			// Traits for the same reason a keeper carries them: a player
+			// who occupies a slot while being invisible to every shape made
+			// of player types makes the lineup measure as though one of its
+			// fourteen were a blank.
+			Traits: s.traits[playerID],
+		},
+		Price: price,
+	}
 }
 
 func (s *staticData) positionOf(playerID string) string {
