@@ -465,12 +465,21 @@ func (s *staticData) Picks() ([]sleeper.DraftPick, error) {
 	return s.client.DraftPicks(s.draftID)
 }
 
-// Drafting reports whether the draft is actually under way.
+// Drafting reports whether a draft is in session.
 //
 // One small call, and it decides how hard the poll loop works. Sleeper's
 // draft status is "pre_draft" until the commissioner starts it and
 // "complete" when it ends, so outside that window there is nothing to
-// discover by asking every two seconds.
+// discover by asking every second.
+//
+// "paused" counts as in session, which is not obvious and was found the hard
+// way. A pause is a break in a draft you are sitting in — someone took a
+// phone call — not the eleven months when no draft exists, and it ends
+// without warning. Treating it as idle dropped the board to the minute
+// cadence at exactly the moment a fast one matters, so the first bids after
+// a resume landed on a board still showing the pool from before the break.
+// The cost of being wrong the other way is a minute of polling a draft that
+// is not moving; the cost of being wrong this way is bidding blind.
 func (s *staticData) Drafting() bool {
 	if s.draftID == "" {
 		return false
@@ -481,7 +490,7 @@ func (s *staticData) Drafting() bool {
 		// the one night it matters.
 		return true
 	}
-	return d.Status == "drafting"
+	return d.Status == "drafting" || d.Status == "paused"
 }
 
 // gone describes a player who has left the board, and what it cost.
