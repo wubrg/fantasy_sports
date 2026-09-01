@@ -481,16 +481,68 @@ func (s *staticData) Picks() ([]sleeper.DraftPick, error) {
 // The cost of being wrong the other way is a minute of polling a draft that
 // is not moving; the cost of being wrong this way is bidding blind.
 func (s *staticData) Drafting() bool {
+	live, _ := s.DraftState()
+	return live
+}
+
+// DraftState is one look at the draft: whether it is in session, and who is up
+// for auction.
+//
+// Both come from the same object, so the nomination costs no request the poll
+// was not already making. That matters, because a nomination lives inside a
+// ten-second timer and has to be read every tick to be seen at all — a second
+// call per tick to learn the same thing twice would double the board's share of
+// Sleeper's budget for nothing.
+//
+// The nomination is nil unless it is live now. Sleeper never clears
+// nominated_player_id, so it holds the last one indefinitely; timer_end_at is
+// what separates "being bid on" from "was bid on an hour ago". Naming the
+// wrong player mid-auction is worse than naming none.
+func (s *staticData) DraftState() (bool, *draft.Nomination) {
 	if s.draftID == "" {
-		return false
+		return false, nil
 	}
 	d, err := s.client.Draft(s.draftID)
 	if err != nil {
 		// Unknown is treated as live: a blip must not stall the board on
-		// the one night it matters.
-		return true
+		// the one night it matters. No nomination, though — a stale name is
+		// a claim, where a missing banner is only silence.
+		return true, nil
 	}
-	return d.Status == "drafting" || d.Status == "paused"
+	live := d.Status == "drafting" || d.Status == "paused"
+	if !live {
+		return false, nil
+	}
+	return true, s.nominationFrom(d)
+}
+
+// nominationFrom reads the live nomination out of a draft, or nil.
+func (s *staticData) nominationFrom(d sleeper.Draft) *draft.Nomination {
+	id := d.Metadata.NominatedPlayerID
+	if id == "" {
+		return nil
+	}
+	// Staleness is only decidable while the clock is running. Paused, Sleeper
+	// drops timer_end_at entirely — there is no expiry to check, and the
+	// player on the block is still the player on the block when bidding
+	// resumes, so a pause must not blank the banner.
+	//
+	// Otherwise an expired timer means the bidding is over and the field is
+	// simply the last thing that happened, since Sleeper never clears it.
+	// Unparseable or missing counts as expired: better to fall silent on a
+	// format we do not understand than to pin a name up forever.
+	if d.Status != "paused" {
+		end, err := time.Parse(time.RFC3339, d.Metadata.TimerEndAt)
+		if err != nil || !time.Now().Before(end) {
+			return nil
+		}
+	}
+	return &draft.Nomination{
+		PlayerID: id,
+		Name:     s.nameOf(id),
+		Position: s.positionOf(id),
+		Team:     s.team[id],
+	}
 }
 
 // gone describes a player who has left the board, and what it cost.

@@ -12,29 +12,29 @@ import (
 	"leaguehome/internal/sleeper"
 )
 
-// TestPollAsksForStatusFarLessOftenThanPicks is the test that protects the
-// call budget.
+// TestPollMakesExactlyTwoCallsPerTick is what protects the call budget now.
 //
-// The loop used to ask Sleeper two questions on every tick — "is the draft
-// running" and "what has been picked" — so halving the interval to make the
-// board feel live would have doubled a cost that was already double what the
-// comment claimed. Picks are what the board watches; status only decides how
-// hard to watch them, and it changes twice in an evening. Holding a stale
-// answer to the cheap question is what pays for asking the expensive one twice
-// as often.
+// This test used to assert the opposite: that status was asked far less often
+// than picks, because staling status to ten seconds is what paid for polling
+// picks every second. That trade is off. The draft object also carries the
+// current nomination, which lives inside a ten-second timer, so reading it a
+// tick late means missing most nominations — it has to be read every tick, and
+// the status now comes along for free rather than the reverse.
 //
-// Two boards run on draft night, so this ratio is the difference between 132
-// calls a minute and 240.
-func TestPollAsksForStatusFarLessOftenThanPicks(t *testing.T) {
+// What is still worth protecting is that the loop makes *two* calls a tick and
+// not four. The obvious way to break it is to ask for the draft twice, once
+// for the status and once for the nomination, which would take two boards on
+// draft night from 240 calls a minute to 480.
+func TestPollMakesExactlyTwoCallsPerTick(t *testing.T) {
 	var mu sync.Mutex
-	var status, picks int
+	var draftCalls, pickCalls int
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
 		if strings.HasSuffix(r.URL.Path, "/picks") {
-			picks++
+			pickCalls++
 		} else {
-			status++
+			draftCalls++
 		}
 		mu.Unlock()
 
@@ -43,8 +43,6 @@ func TestPollAsksForStatusFarLessOftenThanPicks(t *testing.T) {
 			fmt.Fprint(w, `[]`)
 			return
 		}
-		// "drafting" is what puts the loop on the fast cadence; anything
-		// else and this test would measure the idle path instead.
 		fmt.Fprint(w, `{"draft_id":"d1","status":"drafting","type":"auction"}`)
 	}))
 	defer srv.Close()
@@ -58,9 +56,8 @@ func TestPollAsksForStatusFarLessOftenThanPicks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Fast enough to gather a real sample without making the suite slow. The
-	// loop is unbounded by design — it is the board's lifetime — so it is left
-	// running and the process reaps it.
+	// The loop is unbounded by design — it is the board's lifetime — so it is
+	// left running and the process reaps it.
 	const tick = 20 * time.Millisecond
 	go board.pollForever(tick)
 
@@ -68,25 +65,23 @@ func TestPollAsksForStatusFarLessOftenThanPicks(t *testing.T) {
 	time.Sleep(window)
 
 	mu.Lock()
-	gotStatus, gotPicks := status, picks
+	gotDraft, gotPicks := draftCalls, pickCalls
 	mu.Unlock()
 
-	// The window is far shorter than statusInterval, so status should have
-	// been asked once at startup and at most once more. Being generous about
-	// the upper bound keeps this from flaking on a loaded machine; the
-	// failure it exists to catch is status tracking picks one-for-one.
-	if gotStatus > 3 {
-		t.Errorf("status asked %d times in %s (statusInterval is %s): the check is back on every tick",
-			gotStatus, window, statusInterval)
-	}
-	// Sanity: the loop really was polling. Without this a broken loop that
-	// asked for nothing at all would pass the assertion above.
 	if gotPicks < 5 {
 		t.Fatalf("picks polled only %d times in %s at a %s tick — the loop is not running",
 			gotPicks, window, tick)
 	}
-	if gotPicks <= gotStatus {
-		t.Errorf("picks %d, status %d: the two are still coupled", gotPicks, gotStatus)
+	// One of each per tick. Generous bounds, because the assertion is about
+	// the shape of the loop rather than the scheduler's precision; what fails
+	// here is a second fetch per tick, which shows up as roughly double.
+	if gotDraft > gotPicks*3/2 {
+		t.Errorf("draft fetched %d times against %d picks: the loop is asking for the draft more than once a tick",
+			gotDraft, gotPicks)
+	}
+	if gotDraft*3/2 < gotPicks {
+		t.Errorf("draft fetched %d times against %d picks: the nomination is being read less often than every tick, so a ten-second nomination can be missed",
+			gotDraft, gotPicks)
 	}
 }
 

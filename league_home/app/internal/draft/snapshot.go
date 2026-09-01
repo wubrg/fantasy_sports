@@ -50,6 +50,11 @@ type Snapshot struct {
 	Blocked map[string]string `json:"blocked,omitempty"`
 	// MustHaves totals what your declared must-haves commit you to.
 	MustHaves MustHaveCost `json:"mustHaves"`
+	// Nomination is the player the room is bidding on right now, or nil when
+	// nothing is up. Identity only: the board row already carries value, cost,
+	// max bid and the read, so this exists to point at that row rather than to
+	// restate it.
+	Nomination *Nomination `json:"nomination,omitempty"`
 	// Pivot is the single highest-priority trigger, if any fired.
 	Pivot    Pivot `json:"pivot"`
 	HasPivot bool  `json:"hasPivot"`
@@ -71,6 +76,18 @@ type Snapshot struct {
 	// Warnings are non-fatal problems worth showing rather than hiding —
 	// unmatched source rows, stale snapshots.
 	Warnings []string `json:"warnings"`
+}
+
+// Nomination names the player currently up for auction.
+//
+// Position and Team are carried rather than looked up, because the player may
+// not be on the board at all — a keeper, or someone already sold — and the
+// banner still has to be able to say who he is.
+type Nomination struct {
+	PlayerID string `json:"playerId"`
+	Name     string `json:"name"`
+	Position string `json:"position"`
+	Team     string `json:"team"`
 }
 
 // KeptPlayer is one player a research keeper scenario removes from the pool.

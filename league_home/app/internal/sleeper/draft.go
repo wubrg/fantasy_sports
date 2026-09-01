@@ -30,6 +30,20 @@ type Draft struct {
 		// league's actual scoring_settings. Use League.ScoringSettings
 		// for anything that has to be numerically right.
 		ScoringType string `json:"scoring_type"`
+		// NominatedPlayerID is the player currently up for bidding, and
+		// TimerEndAt (RFC3339) is when his clock runs out.
+		//
+		// Present only once a draft has started, and — the trap — they are
+		// never cleared afterwards: both hold the last nomination for as long
+		// as the draft object exists. A caller that reads the id alone will
+		// happily report a player the room finished bidding on an hour ago,
+		// so the timer is what says whether it is still true.
+		//
+		// Sleeper sends both as strings, including the ones that look like
+		// numbers. The bid fields alongside them (highest_offer,
+		// offering_slot, offering_user_id) are deliberately not read here.
+		NominatedPlayerID string `json:"nominated_player_id"`
+		TimerEndAt        string `json:"timer_end_at"`
 	} `json:"metadata"`
 	Settings DraftSettings `json:"settings"`
 }

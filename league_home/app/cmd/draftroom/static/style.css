@@ -61,6 +61,37 @@ body {
 }
 .pivot .name { color: var(--warn); font-weight: 700; margin-right: 0.6rem; }
 
+/* The nomination banner. Amber belongs to the pivot, which is a standing
+   strategic note; this is the ten-second one, so it takes the accent and sits
+   above it. */
+.nomination {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.7rem 1.4rem;
+  background: #0e2438;
+  border-bottom: 1px solid var(--accent);
+  font-size: 1.05rem;
+}
+.nomination .tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--accent);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+}
+.nomination .name { color: var(--accent); font-weight: 700; }
+.nomination .where { color: var(--dim); font-size: 0.85rem; }
+
+/* The same accent on his row, so the banner and the row it points at read as
+   one thing. Left border rather than a fill, which would fight the row states
+   already using background (unaffordable, in-scratch, blocked). */
+#board tr.nominated > td { background: #0e2438; }
+#board tr.nominated > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+
 .musthaves {
   padding: 0.55rem 1.4rem;
   background: #101a24;
