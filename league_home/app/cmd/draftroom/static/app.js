@@ -51,6 +51,34 @@ let critCost = { min: null, max: null };
 let critTraits = new Set();
 let critTraitMode = "any"; // "any" | "all"
 
+// The reads to narrow the board to. Unlike the criteria above this is NOT
+// research-only: when a name is called, "which of these do I actually have an
+// opinion about" is a draft-night question, and the answer has to be one click
+// away rather than behind a mode switch.
+//
+// Holds lean values ("must"/"up"/"down"/"dnd") plus the pseudo-value "fav" for
+// the star, which is a tag layered on a read rather than a read itself — a
+// player can be up and a favorite at once, so the two have to be selectable
+// together and independently.
+const LEAN_PILLS = [
+  { key: "fav", label: "★", title: "favorites" },
+  { key: "must", label: "must", title: "must-haves" },
+  { key: "up", label: "up", title: "conviction up" },
+  { key: "down", label: "down", title: "conviction down" },
+  { key: "dnd", label: "dnd", title: "do not draft" },
+];
+let leanFilter = new Set();
+
+// leanMatch reports whether a player carries any selected read. ANY, not all:
+// the pills are alternatives, and a player cannot be both must and down, so
+// requiring all of them would make every second click empty the board.
+function leanMatch(p) {
+  if (!leanFilter.size) return true;
+  const lean = (p.Lean && p.Lean.Lean) || "";
+  if (lean && leanFilter.has(lean)) return true;
+  return leanFilter.has("fav") && !!(p.Lean && p.Lean.Favorite);
+}
+
 // Player IDs currently on the scratch roster, so board rows can show it.
 function scratchIDs() {
   if (!scratch) return new Set();
@@ -109,6 +137,14 @@ function flagList(p) {
     title: `click: ${nextLean(lean) || "no read"}`,
     lean,
   });
+
+  // The star, next to the read it sits on top of rather than replacing it: a
+  // favorite is a tag, not a lean, and a player can carry both. Shown here
+  // because the leans page was the only screen that knew about it, which left
+  // the board filtering on something you could not see.
+  if (p.Lean && p.Lean.Favorite) {
+    out.push({ label: "\u2605", cls: "flag fav", title: "a favorite" });
+  }
 
   // Blocked leads the info flags: he is off your board because your own
   // roster already spent that offense, which changes the decision more than
@@ -391,6 +427,10 @@ function draw() {
   drawResearch();
   drawPivot();
   drawMustHaves();
+  // Before the rows: the pill counts come off the same snapshot, and a player
+  // leaving the board has to leave his read's count too or the pills start
+  // promising players that are gone.
+  drawLeanFilter();
   drawRows();
   drawMini("bias", Object.entries(snap.bias || {})
     .sort((a, b) => b[1] - a[1])
@@ -639,7 +679,7 @@ function meetsCriteria(p) {
 
 function anyFilter() {
   return positions.size > 0 || filter !== "" || affordableOnly || aboveReplacementOnly ||
-    (researchActive() && critActive());
+    leanFilter.size > 0 || (researchActive() && critActive());
 }
 
 function drawRows() {
@@ -655,6 +695,8 @@ function drawRows() {
     if (needle && !p.Name.toLowerCase().includes(needle)) return false;
     if (affordableOnly && p.MyMaxBid > snap.maxBid) return false;
     if (aboveReplacementOnly && !aboveReplacement(p)) return false;
+    // Above the research gate on purpose: this one applies on draft night.
+    if (!leanMatch(p)) return false;
     // Research-only criteria, gated so the draft-night board is never filtered
     // by a range left over from a research session.
     if (researchActive() && !meetsCriteria(p)) return false;
@@ -739,6 +781,25 @@ function drawCritTraits() {
   document.getElementById("crit-traits").innerHTML = TRAITS.map(t =>
     `<button class="critpill trait-${t}${critTraits.has(t) ? " on" : ""}"` +
     ` data-trait="${t}">${t}</button>`).join("");
+}
+
+// drawLeanFilter draws the read pills, mirroring the position pills: outline
+// off, filled on.
+//
+// Each carries how many players it would leave, because a pill that empties the
+// board is worth knowing about before you click it rather than after — and
+// because the counts are how you notice a read set that did not load.
+function drawLeanFilter() {
+  const counts = {};
+  for (const p of (snap && snap.players) || []) {
+    const lean = (p.Lean && p.Lean.Lean) || "";
+    if (lean) counts[lean] = (counts[lean] || 0) + 1;
+    if (p.Lean && p.Lean.Favorite) counts.fav = (counts.fav || 0) + 1;
+  }
+  document.getElementById("leanfilter").innerHTML = LEAN_PILLS.map(pill =>
+    `<button class="critpill lean-${pill.key}${leanFilter.has(pill.key) ? " on" : ""}"` +
+    ` data-lean="${pill.key}" title="${esc(pill.title)}">${pill.label}` +
+    `<span class="pillcount">${counts[pill.key] || 0}</span></button>`).join("");
 }
 
 // clearCriteria resets every range and trait, and the inputs that hold them, so
@@ -1248,6 +1309,15 @@ document.getElementById("posfilter").addEventListener("click", ev => {
   drawRows();
 });
 
+document.getElementById("leanfilter").addEventListener("click", ev => {
+  const pill = ev.target.closest("button[data-lean]");
+  if (!pill) return;
+  const key = pill.dataset.lean;
+  if (leanFilter.has(key)) leanFilter.delete(key); else leanFilter.add(key);
+  drawLeanFilter();
+  drawRows();
+});
+
 // Click a column header to sort by it; cycleSort handles the direction cycle.
 document.querySelector("#board thead").addEventListener("click", ev => {
   const th = ev.target.closest("th[data-sort]");
@@ -1324,10 +1394,12 @@ document.addEventListener("keydown", ev => {
     sortKey = null;
     sortDir = null;
     clearCriteria();
+    leanFilter.clear();
     document.getElementById("affordable").checked = false;
     document.getElementById("above").checked = false;
     search.blur();
     drawPosFilter();
+    drawLeanFilter();
     drawSortIndicators();
     drawRows();
   }
@@ -1347,6 +1419,7 @@ for (const el of document.querySelectorAll("[data-guide-close]")) {
 
 drawGuide();
 drawPosFilter();
+drawLeanFilter();
 drawCritTraits();
 
 // ---- polling ---------------------------------------------------------
