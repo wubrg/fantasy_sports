@@ -516,26 +516,28 @@ func (s *staticData) DraftState() (bool, *draft.Nomination) {
 	return true, s.nominationFrom(d)
 }
 
-// nominationFrom reads the live nomination out of a draft, or nil.
+// nominationFrom reads the nomination out of a draft, or nil if none is set.
+//
+// Note what this does NOT do: it does not try to decide from the draft object
+// whether the bidding is still going. That was tried and it was wrong.
+//
+// timer_end_at looks like the answer and is not. Sleeper stamps it once and
+// never advances it, so a player who stays nominated for twenty seconds — and
+// they do, because bidding extends — carries a timer that went into the past
+// after the first one or two. Measured against the live mock: one player held
+// the block for twenty seconds while his timer drifted from +0.1s to -18.7s.
+// Treating that as expiry blanked the banner about a second into every
+// nomination, which reads from the outside as a banner that will not update.
+//
+// What actually ends a nomination is the player being sold, and that arrives
+// on the picks feed. rebuildLocked drops him from the snapshot the moment he
+// is in taken, which also covers the gap between nominations, when this field
+// still holds the player who just went. So liveness is decided by the one
+// source that reports it, and this reads the name.
 func (s *staticData) nominationFrom(d sleeper.Draft) *draft.Nomination {
 	id := d.Metadata.NominatedPlayerID
 	if id == "" {
 		return nil
-	}
-	// Staleness is only decidable while the clock is running. Paused, Sleeper
-	// drops timer_end_at entirely — there is no expiry to check, and the
-	// player on the block is still the player on the block when bidding
-	// resumes, so a pause must not blank the banner.
-	//
-	// Otherwise an expired timer means the bidding is over and the field is
-	// simply the last thing that happened, since Sleeper never clears it.
-	// Unparseable or missing counts as expired: better to fall silent on a
-	// format we do not understand than to pin a name up forever.
-	if d.Status != "paused" {
-		end, err := time.Parse(time.RFC3339, d.Metadata.TimerEndAt)
-		if err != nil || !time.Now().Before(end) {
-			return nil
-		}
 	}
 	return &draft.Nomination{
 		PlayerID: id,
