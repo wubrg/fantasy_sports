@@ -211,14 +211,14 @@ func (c *Client) Drafts(leagueID string) ([]Draft, error) {
 // Draft fetches a single draft's settings and status.
 func (c *Client) Draft(draftID string) (Draft, error) {
 	var d Draft
-	err := c.get("/draft/"+draftID, &d)
+	err := c.getFresh("/draft/"+draftID, &d)
 	return d, err
 }
 
 // DraftPicks fetches every pick made in draftID.
 func (c *Client) DraftPicks(draftID string) ([]DraftPick, error) {
 	var picks []DraftPick
-	err := c.get("/draft/"+draftID+"/picks", &picks)
+	err := c.getFresh("/draft/"+draftID+"/picks", &picks)
 	return picks, err
 }
 

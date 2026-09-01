@@ -391,12 +391,24 @@ internet, and this board carries your valuations, your leans, your keeper
 analysis and what you are willing to pay for whom. That is the whole edge,
 readable by anyone who found the URL.
 
-**Safe to leave mounted year-round.** The board polls Sleeper every two
+**Safe to leave mounted year-round.** The board polls Sleeper every three
 seconds while a draft is running and once a minute when one is not, decided
-per tick from the draft's own status. A flat two-second poll left up all
-year would be forty-three thousand requests a day for a draft that happens
-once; the idle cadence is fourteen hundred, and it snaps to two seconds
+per tick from the draft's own status. A flat three-second poll left up all
+year would be twenty-nine thousand requests a day for a draft that happens
+once; the idle cadence is under three thousand, and it snaps to the fast one
 within the minute of your commissioner starting.
+
+Three seconds rather than one for a reason worth knowing. Sleeper serves the
+draft object and its picks through Cloudflare with `s-maxage=30`, so an
+ordinary request can hand back a response half a minute old — on a live draft
+you can watch `cf-cache-status: HIT` with the `age` header climbing toward
+thirty. Polling that once a second re-reads the same cached bytes thirty times
+and learns nothing, which is exactly how the board came to sit half a minute
+behind the room while spending its whole call budget. Those two requests now
+carry a unique parameter so each is its own cache key and reaches origin,
+which makes the interval mean what it says — and makes it the only thing
+holding the volume down. At three seconds two boards cost eighty calls a
+minute against the thousand Sleeper asks callers to stay under.
 
 The plist pre-fills the config and data directories and your owner ID,
 because the binary in the checkout is built by `make draftroom`, which does
@@ -554,7 +566,7 @@ count as a failure:
 
 | | What should happen |
 |---|---|
-| Picks arrive | A pick made in Sleeper leaves the board within about two seconds. Pool dollars and slots drop, and the remaining prices move. You should never need to record a sale by hand. |
+| Picks arrive | A pick made in Sleeper leaves the board within about three seconds. Pool dollars and slots drop, and the remaining prices move. You should never need to record a sale by hand. |
 | Money tracks | The winning bid appears as the sale price. When the pick is yours, budget, slots, max bid and safe ceiling all move together, and the risk band changes as you spend. |
 | Reads survive | Leans set before the draft still show at the end; one set mid-draft is in `rehearsal.yaml` on disk; `reload leans` does not drop board edits; the scratch roster and recorded sales survive the whole thing. |
 
