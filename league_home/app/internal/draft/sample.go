@@ -269,7 +269,7 @@ func betterPick(a, b PlayerSignals, objective Objective) bool {
 			return mine(a)
 		}
 	}
-	return a.CielyPoints > b.CielyPoints
+	return a.PrimaryPoints > b.PrimaryPoints
 }
 
 func mine(p PlayerSignals) bool { return p.Lean.Lean == LeanMust || p.Lean.Lean == LeanUp }

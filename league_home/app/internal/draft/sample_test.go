@@ -8,7 +8,7 @@ func samplePool() []PlayerSignals {
 	mk := func(id, name, pos, team string, cost, pts int) PlayerSignals {
 		return PlayerSignals{
 			PlayerID: id, Name: name, Position: pos, Team: team,
-			Cost: cost, MyMaxBid: cost, CielyPoints: float64(pts),
+			Cost: cost, MyMaxBid: cost, PrimaryPoints: float64(pts),
 		}
 	}
 	return []PlayerSignals{
@@ -169,9 +169,9 @@ func TestSampleCapsQBandTE(t *testing.T) {
 	// A pool deep in cheap quarterbacks and tight ends: an uncapped bench would
 	// happily pile on a third of each. No sampled team may carry more than two.
 	pool := append(samplePool(),
-		PlayerSignals{PlayerID: "qb3", Name: "QB Three", Position: "QB", Team: "QQ", Cost: 2, MyMaxBid: 2, CielyPoints: 270},
-		PlayerSignals{PlayerID: "qb4", Name: "QB Four", Position: "QB", Team: "RR", Cost: 1, MyMaxBid: 1, CielyPoints: 260},
-		PlayerSignals{PlayerID: "te4", Name: "TE Four", Position: "TE", Team: "SS", Cost: 1, MyMaxBid: 1, CielyPoints: 120},
+		PlayerSignals{PlayerID: "qb3", Name: "QB Three", Position: "QB", Team: "QQ", Cost: 2, MyMaxBid: 2, PrimaryPoints: 270},
+		PlayerSignals{PlayerID: "qb4", Name: "QB Four", Position: "QB", Team: "RR", Cost: 1, MyMaxBid: 1, PrimaryPoints: 260},
+		PlayerSignals{PlayerID: "te4", Name: "TE Four", Position: "TE", Team: "SS", Cost: 1, MyMaxBid: 1, PrimaryPoints: 120},
 	)
 	for _, o := range []Objective{ObjectiveStrategy, ObjectiveLeansMax} {
 		teams := SampleTeams(pool, nil, 200, 14, sampleShape(), map[string]float64{}, Preferences{}, o, 80, 9)

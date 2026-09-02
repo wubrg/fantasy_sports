@@ -110,7 +110,7 @@ func TestEffectiveScarcityDropsBelowLeague(t *testing.T) {
 	b := board()
 	withPoints := make([]PlayerSignals, len(b))
 	for i, p := range b {
-		p.CielyPoints = 200
+		p.PrimaryPoints = 200
 		withPoints[i] = p
 	}
 	thresholds := map[string]float64{"WR": 100, "QB": 100, "RB": 100, "TE": 100}

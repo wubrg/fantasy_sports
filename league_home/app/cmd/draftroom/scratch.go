@@ -310,7 +310,7 @@ func toScratchSpot(s draft.RosterSpot) ScratchSpot {
 		Slot:     s.Slot,
 		Price:    s.Price,
 		Kept:     s.Held,
-		Points:   s.Player.CielyPoints,
+		Points:   s.Player.PrimaryPoints,
 		Cost:     s.Player.Cost,
 	}
 }

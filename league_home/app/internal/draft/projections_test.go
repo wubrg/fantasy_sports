@@ -179,3 +179,34 @@ func TestLoadProjectionsUnmatchedWarns(t *testing.T) {
 		t.Errorf("PrimaryWarnings = %v, want [\"1 FantasyPros rows unmatched\"]", pd.PrimaryWarnings)
 	}
 }
+
+// TestPrimaryRankIsTheConsensusNotWhicheverBaselineIsLast is the regression for
+// a bug hand-verification caught on the live board.
+//
+// FantasyPros ships consensus, top-10 and top-20 in one file, and PrimaryRows
+// is deliberately raw — Include has not been applied to it. Reading a rank out
+// of those rows keys them by player and keeps whichever baseline came last,
+// which is top-20. On Travis Hunter that was consensus WR75 against top-20
+// WR69: a divergence of -40 reported as -46, wrong by exactly the gap between
+// two baselines, and invisible on a board.
+//
+// So the rank is built where Include is already applied, beside Points.
+func TestPrimaryRankIsTheConsensusNotWhicheverBaselineIsLast(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "fantasypros-2026.csv", fpHeader+
+		"Ja'Marr Chase,WR,300,consensus,75,3,2,280,320\n"+
+		"Ja'Marr Chase,WR,300,top10,73,3,2,280,320\n"+
+		"Ja'Marr Chase,WR,300,top20,69,3,2,280,320\n")
+
+	pd, err := loadProjections(ProjectionSources, func(f string) string {
+		return filepath.Join(dir, f)
+	}, testProjIndex())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got := pd.PrimaryRank["1"]; got != 75 {
+		t.Errorf("PrimaryRank = %d, want the consensus 75 — a later baseline in "+
+			"the same file overwrote it", got)
+	}
+}

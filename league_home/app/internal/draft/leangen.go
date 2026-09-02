@@ -70,6 +70,12 @@ var Generators = []LeanGenerator{{
 // thresholds; at 12 it selects his ~three dozen strongest disagreements.
 const dellSharpThreshold = 12
 
+// cielySharpThreshold is the positional-rank gap at which Ciely's ordering
+// stops being noise and becomes a flag. Starts level with Dell's because both
+// measure the same thing on the same scale — a gap in positional rank — but
+// kept separate so either can be tuned without moving the other.
+const cielySharpThreshold = 12
+
 // chrisdellLeans turns Chris Dell's rank-vs-consensus into reads. vs_ecr is
 // consensus positional rank minus his own, so a positive gap is a player he
 // rates above the field.

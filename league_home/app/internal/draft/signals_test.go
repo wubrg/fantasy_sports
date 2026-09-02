@@ -46,7 +46,7 @@ func signalFixture() []PlayerSignals {
 			svRow("2", "Justin Jefferson", "WR", "beerplus", 44, 47, 67, true, true),
 			svRow("3", "George Kittle", "TE", "beerplus", 6, 3, 6, false, true),
 		},
-		CielyPoints:    map[string]float64{"1": 324, "2": 240, "3": 155},
+		PrimaryPoints:  map[string]float64{"1": 324, "2": 240, "3": 155},
 		Availability:   map[string]string{"3": "PUP"},
 		Costs:          map[string]int{"1": 72, "2": 50, "3": 4},
 		RecommendedBid: 90,
@@ -277,10 +277,10 @@ func TestGapsAgainstABaseline(t *testing.T) {
 
 func TestScarcityMeasuresDepthAndCliff(t *testing.T) {
 	players := []PlayerSignals{
-		{Name: "RB1", Position: "RB", CielyPoints: 320, ScarcityPct: 90},
-		{Name: "RB2", Position: "RB", CielyPoints: 315, ScarcityPct: 80},
-		{Name: "RB3", Position: "RB", CielyPoints: 250, ScarcityPct: 40},
-		{Name: "WR1", Position: "WR", CielyPoints: 300, ScarcityPct: 95},
+		{Name: "RB1", Position: "RB", PrimaryPoints: 320, ScarcityPct: 90},
+		{Name: "RB2", Position: "RB", PrimaryPoints: 315, ScarcityPct: 80},
+		{Name: "RB3", Position: "RB", PrimaryPoints: 250, ScarcityPct: 40},
+		{Name: "WR1", Position: "WR", PrimaryPoints: 300, ScarcityPct: 95},
 	}
 	state := HitOrMissPool()
 	// A pinned replacement level of 260 makes RB3 waiver fodder.
@@ -309,9 +309,9 @@ func TestScarcityMeasuresDepthAndCliff(t *testing.T) {
 // replacement are waiver fodder, and counting them makes the thinnest
 // position on the board read as the deepest.
 func TestScarcityCountsStartableNotBodies(t *testing.T) {
-	players := []PlayerSignals{{Name: "WR1", Position: "WR", CielyPoints: 300}}
+	players := []PlayerSignals{{Name: "WR1", Position: "WR", PrimaryPoints: 300}}
 	for i := 0; i < 150; i++ {
-		players = append(players, PlayerSignals{Name: "scrub", Position: "WR", CielyPoints: 40})
+		players = append(players, PlayerSignals{Name: "scrub", Position: "WR", PrimaryPoints: 40})
 	}
 	got := Scarcity(players, HitOrMissPool(), map[string]float64{"WR": 180})
 
@@ -333,10 +333,10 @@ func TestScarcityCountsStartableNotBodies(t *testing.T) {
 func TestScarcityFallsAsAPositionIsPickedOver(t *testing.T) {
 	baselines := map[string]float64{"RB": 200}
 	full := []PlayerSignals{
-		{Name: "RB1", Position: "RB", CielyPoints: 320},
-		{Name: "RB2", Position: "RB", CielyPoints: 300},
-		{Name: "RB3", Position: "RB", CielyPoints: 260},
-		{Name: "RB4", Position: "RB", CielyPoints: 120},
+		{Name: "RB1", Position: "RB", PrimaryPoints: 320},
+		{Name: "RB2", Position: "RB", PrimaryPoints: 300},
+		{Name: "RB3", Position: "RB", PrimaryPoints: 260},
+		{Name: "RB4", Position: "RB", PrimaryPoints: 120},
 	}
 	before := Scarcity(full, HitOrMissPool(), baselines)["RB"]
 	after := Scarcity(full[2:], HitOrMissPool(), baselines)["RB"]
@@ -359,14 +359,14 @@ func TestScarcityFallsAsAPositionIsPickedOver(t *testing.T) {
 // stop trusting mid-auction.
 func TestScarcityCarriesTheThresholdItCounted(t *testing.T) {
 	players := []PlayerSignals{
-		{Name: "RB1", Position: "RB", CielyPoints: 320},
-		{Name: "RB2", Position: "RB", CielyPoints: 260},
+		{Name: "RB1", Position: "RB", PrimaryPoints: 320},
+		{Name: "RB2", Position: "RB", PrimaryPoints: 260},
 		// Exactly at the line: meet-or-exceed counts him, so a consumer
 		// filtering with >= has to land on the same answer.
-		{Name: "RB3", Position: "RB", CielyPoints: 200},
-		{Name: "RB4", Position: "RB", CielyPoints: 199},
-		{Name: "WR1", Position: "WR", CielyPoints: 300},
-		{Name: "WR2", Position: "WR", CielyPoints: 100},
+		{Name: "RB3", Position: "RB", PrimaryPoints: 200},
+		{Name: "RB4", Position: "RB", PrimaryPoints: 199},
+		{Name: "WR1", Position: "WR", PrimaryPoints: 300},
+		{Name: "WR2", Position: "WR", PrimaryPoints: 100},
 	}
 	thresholds := map[string]float64{"RB": 200, "WR": 180}
 	got := Scarcity(players, HitOrMissPool(), thresholds)
@@ -378,7 +378,7 @@ func TestScarcityCarriesTheThresholdItCounted(t *testing.T) {
 		}
 		above := 0
 		for _, p := range players {
-			if p.Position == pos && p.CielyPoints >= s.Threshold {
+			if p.Position == pos && p.PrimaryPoints >= s.Threshold {
 				above++
 			}
 		}

@@ -71,6 +71,16 @@ type staticData struct {
 	points      map[string]float64
 	subvert     []draft.SourceRow
 
+	// cielyDelta is Ciely's positional rank against the primary's, per player,
+	// resolved at load because neither side moves afterwards.
+	cielyDelta map[string]int
+
+	// cielyRank is Ciely's positional rank per player ID, the one thing of his
+	// the board reads. His dollars are a linear map of his medians and cannot
+	// see keeper inflation, but where his ordering parts from the field is a
+	// real second look — the same claim the dell flags make for one expert.
+	cielyRank map[string]int
+
 	// fpProjections is the FantasyPros second projection, re-solved into
 	// dollars against the live pool in Build so it is comparable to the Ciely
 	// value. fpRank and fpSharp are the consensus positional rank and the
@@ -244,12 +254,18 @@ func loadStatic(leagueID, draftID, configDir, dataDir, ownerID string, baseline 
 
 	// The primary source is the board's projection backbone; each second
 	// opinion is re-solved against the same pool in Build for a comparable
-	// value. FPValue carries a single second opinion today, so the last one
-	// registered wins — see the scope note on ProjectionData.
+	// value.
+	//
+	// Second opinions are picked by name, not by position. This loop used to
+	// keep whichever came last, which meant the FP column's meaning depended
+	// on the order of a registry that says nothing about it — and it is how
+	// Ciely came to be loaded and silently thrown away for a season. The
+	// dollar column has room for one, and fpSharpSource is the one it shows;
+	// Ciely contributes his ordering instead, see cielyRank.
 	s.projections = proj.Projections
-	for _, so := range proj.SecondOpinions {
-		s.fpProjections, s.fpRank, s.fpSharp = so.Projections, so.Rank, so.Sharp
-	}
+	fp, cielyRank := assignSecondOpinions(proj.SecondOpinions)
+	s.fpProjections, s.fpRank, s.fpSharp = fp.Projections, fp.Rank, fp.Sharp
+	s.cielyRank = cielyRank
 	// Now that the pool exists, reads can be matched to it. A lean is
 	// applied by name, and the pool is spelled the projection source's way,
 	// so "Kenneth Walker III" — Sleeper's spelling and the natural one to
@@ -372,6 +388,11 @@ func loadStatic(leagueID, draftID, configDir, dataDir, ownerID string, baseline 
 	// falls as the pool empties, so a count above it could never drop.
 	s.baselines = draft.ScoringBaselines(s.projections, s.shape)
 	s.traits = classifyTraits(proj.PrimaryRows, sv, info, s.shape)
+	// The primary's positional rank, which is what Ciely's ordering is
+	// measured against. Taken from the same rows the trait classifier reads.
+	// Resolved once here rather than per rebuild: both ranks are fixed for
+	// the life of the process, and Build runs on every poll.
+	s.cielyDelta = cielyDivergence(proj.PrimaryRank, s.cielyRank)
 	s.priceHistory = draft.HistoricalPriceLines(seasons, func(id string) string {
 		return info[id].Position
 	}, minSpendForUsableSeason)
@@ -565,6 +586,58 @@ func (s *staticData) ownsSeat(userID string, slot int) bool {
 	return s.mySlot != 0 && slot != 0 && slot == s.mySlot
 }
 
+// The second-opinion sources this board reads, named so the selection above
+// cannot depend on registry order. They must match ProjectionSources in
+// internal/draft/projections.go.
+const (
+	// fpSharpSource fills the FP dollar column: the top-20 experts by past
+	// accuracy, whose parting from consensus is what that column is for.
+	fpSharpSource = "fantasypros-top20"
+	// cielySource contributes ordering only.
+	cielySource = "ciely"
+)
+
+// assignSecondOpinions decides which loaded second opinion fills which role.
+//
+// By name, never by position. The caller used to keep whichever came last,
+// so the FP column's meaning depended on the order of a registry that says
+// nothing about ordering — and reordering it would have changed the board
+// without changing a line of board code.
+//
+// A source that is absent leaves its role empty, which reads as that signal
+// being off rather than as an error: every consumer already handles it.
+func assignSecondOpinions(sos []draft.SecondOpinion) (fp draft.SecondOpinion, cielyRank map[string]int) {
+	for _, so := range sos {
+		switch so.Name {
+		case fpSharpSource:
+			fp = so
+		case cielySource:
+			cielyRank = so.Rank
+		}
+	}
+	return fp, cielyRank
+}
+
+// cielyDivergence is Ciely's positional rank against the primary's, per player.
+//
+// Sign follows DellDelta: positive where Ciely rates a player above the field,
+// since a better rank is a smaller number. A player either source does not
+// cover is absent rather than zero — zero is agreement, and the two must not
+// be spelled the same way or every uncovered player reads as a consensus.
+func cielyDivergence(primary, ciely map[string]int) map[string]int {
+	out := make(map[string]int, len(ciely))
+	for id, cr := range ciely {
+		pr, ok := primary[id]
+		if !ok || cr == 0 || pr == 0 {
+			continue
+		}
+		if d := pr - cr; d != 0 {
+			out[id] = d
+		}
+	}
+	return out
+}
+
 // gone describes a player who has left the board, and what it cost.
 type gone struct {
 	price int
@@ -746,10 +819,11 @@ func (s *staticData) Build(taken map[string]gone, edits boardEdits, keeperScenar
 	leans := s.effectiveLeans(edits)
 	players := draft.BuildSignals(draft.SignalInputs{
 		Values: values, Costs: costs, Subvertadown: s.subvert,
-		CielyPoints: s.points, Teams: s.team, Availability: s.availability,
+		PrimaryPoints: s.points, Teams: s.team, Availability: s.availability,
 		Leans: leans, Traits: s.traits, RecommendedBid: recommended,
 		FantasyPros: fantasyPros, Offenses: s.prefs.OffenseSet(),
-		DellSharp: s.dellSharp, BorisTier: s.borisTier,
+		DellSharp: s.dellSharp, CielySharp: s.cielyDelta,
+		BorisTier: s.borisTier,
 	})
 	snap := draft.Assemble(s.season, state, me, players, leans, s.tempo(taken, costs), s.thresholds, append(append([]string(nil), s.warnings...), s.leanWarnings...))
 	snap.LeanSets = s.leanSets
@@ -922,12 +996,12 @@ func (s *staticData) heldRoster(ownerID string) []draft.RosterSpot {
 	for _, e := range projectedKeepers(s.projected, aav, ownerID, s.forcedKeepers, s.declaredOwners) {
 		out = append(out, draft.RosterSpot{
 			Player: draft.PlayerSignals{
-				PlayerID:    e.PlayerID,
-				Name:        e.Name,
-				Position:    e.Position,
-				Team:        s.team[e.PlayerID],
-				CielyPoints: s.points[e.PlayerID],
-				Cost:        int(aav[e.PlayerID] + 0.5),
+				PlayerID:      e.PlayerID,
+				Name:          e.Name,
+				Position:      e.Position,
+				Team:          s.team[e.PlayerID],
+				PrimaryPoints: s.points[e.PlayerID],
+				Cost:          int(aav[e.PlayerID] + 0.5),
 				// Traits matter as much as the price. Without them a
 				// keeper occupies the slot and the money while being
 				// invisible to every shape made of player types, so a
@@ -979,12 +1053,12 @@ func (s *staticData) wonSpot(playerID string, price int) draft.RosterSpot {
 	}
 	return draft.RosterSpot{
 		Player: draft.PlayerSignals{
-			PlayerID:    playerID,
-			Name:        s.nameOf(playerID),
-			Position:    s.positionOf(playerID),
-			Team:        s.team[playerID],
-			CielyPoints: s.points[playerID],
-			Cost:        int(aav + 0.5),
+			PlayerID:      playerID,
+			Name:          s.nameOf(playerID),
+			Position:      s.positionOf(playerID),
+			Team:          s.team[playerID],
+			PrimaryPoints: s.points[playerID],
+			Cost:          int(aav + 0.5),
 			// Traits for the same reason a keeper carries them: a player
 			// who occupies a slot while being invisible to every shape made
 			// of player types makes the lineup measure as though one of its
