@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -539,12 +540,29 @@ func (s *staticData) nominationFrom(d sleeper.Draft) *draft.Nomination {
 	if id == "" {
 		return nil
 	}
+	slot, _ := strconv.Atoi(d.Metadata.OfferingSlot)
+	offer, _ := strconv.Atoi(d.Metadata.HighestOffer)
 	return &draft.Nomination{
-		PlayerID: id,
-		Name:     s.nameOf(id),
-		Position: s.positionOf(id),
-		Team:     s.team[id],
+		PlayerID:     id,
+		Name:         s.nameOf(id),
+		Position:     s.positionOf(id),
+		Team:         s.team[id],
+		HighestOffer: offer,
+		Leader:       slot,
+		Mine:         s.ownsSeat(d.Metadata.OfferingUserID, slot),
 	}
+}
+
+// ownsSeat reports whether a user id or a draft slot is yours, down the same
+// ladder isMine walks for a completed pick and for the same reason: Sleeper
+// names the manager on a real draft and leaves the field empty in a mock,
+// where the seat is all there is. A zero seat is unknown rather than a match,
+// or an unbid nomination would read as yours.
+func (s *staticData) ownsSeat(userID string, slot int) bool {
+	if userID != "" {
+		return userID == s.ownerID
+	}
+	return s.mySlot != 0 && slot != 0 && slot == s.mySlot
 }
 
 // gone describes a player who has left the board, and what it cost.

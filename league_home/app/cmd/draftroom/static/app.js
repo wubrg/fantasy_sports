@@ -462,24 +462,71 @@ function draw() {
     (snap.warnings && snap.warnings.length ? ` · ${snap.warnings.join("; ")}` : "");
 }
 
-// drawNomination names the player the room is bidding on right now.
+// drawNomination is the player the room is bidding on, and whether to bid.
 //
-// Identity only, deliberately: his board row carries value, cost, max bid and
-// the read, and is highlighted below. The banner exists to point at that row
-// while a ten-second timer runs, not to restate it.
+// The verdict leads, because the numbers are already on his row and reading
+// them off a table is what this exists to save you from. Watching the mock:
+// CeeDee Lamb went up at $11 against a $47 max, and the board knew he was a
+// bargain with no way to say so at the moment it counted.
+//
+// Everything below the verdict comes from his board row rather than the
+// server, so the banner cannot disagree with the table under it.
 function drawNomination() {
   const el = document.getElementById("nomination");
   const nom = snap.nomination;
   if (!nom) { el.classList.add("hidden"); return; }
   el.classList.remove("hidden");
 
-  // He may not be on the board at all — a keeper, or already sold elsewhere.
-  // The server carries his position and team for exactly this case, so the
-  // banner can still say who he is.
+  const row = (snap.players || []).find(p => p.PlayerID === nom.playerId);
   const where = [nom.position, nom.team].filter(Boolean).join(" ");
-  el.innerHTML = `<span class="tag">nominated</span>` +
+  const bid = nom.highestOffer > 0 ? `$${nom.highestOffer}` : "no bid yet";
+  // "$11 now" reads well; "no bid yet now" does not.
+  const bidPhrase = nom.highestOffer > 0 ? `${bid} now` : bid;
+
+  // He may not be on the board at all — a keeper, or already sold. Say who he
+  // is and what he is going for, and claim nothing about a row that is not
+  // there: a $0 max would read as do-not-draft, which is a different thing
+  // from not knowing.
+  if (!row) {
+    el.className = "nomination unknown";
+    el.innerHTML = `<span class="tag">nominated</span>` +
+      `<span class="name">${esc(nom.name)}</span>` +
+      (where ? `<span class="where">${esc(where)}</span>` : "") +
+      `<span class="bid">${bid}</span>` +
+      `<span class="note">not on your board</span>`;
+    return;
+  }
+
+  const lean = (row.Lean && row.Lean.Lean) || "";
+  const max = row.MyMaxBid || 0;
+  const headroom = max - nom.highestOffer;
+
+  // Three states, in the order they overrule each other. A do-not-draft is a
+  // refusal rather than a price, so it outranks any headroom left.
+  let verdict, cls;
+  if (lean === "dnd")            { verdict = "do not draft";       cls = "no"; }
+  else if (nom.mine)             { verdict = "yours at " + bid;    cls = "mine"; }
+  else if (max <= 0)             { verdict = "no bid";             cls = "no"; }
+  else if (headroom <= 0)        { verdict = "past your max";      cls = "no"; }
+  else                           { verdict = `bid — $${headroom} headroom`; cls = "go"; }
+
+  const flags = [];
+  if (lean === "must") flags.push(`<span class="flag must">MUST</span>`);
+  else if (lean === "up") flags.push(`<span class="flag">+</span>`);
+  else if (lean === "down") flags.push(`<span class="flag">-</span>`);
+  if (row.Lean && row.Lean.Favorite) flags.push(`<span class="flag fav">\u2605</span>`);
+
+  el.className = "nomination " + cls;
+  el.innerHTML =
+    `<span class="tag">nominated</span>` +
     `<span class="name">${esc(nom.name)}</span>` +
-    (where ? `<span class="where">${esc(where)}</span>` : "");
+    (where ? `<span class="where">${esc(where)}</span>` : "") +
+    flags.join("") +
+    `<span class="verdict">${esc(verdict)}</span>` +
+    `<span class="nums">${bidPhrase} \u00b7 your max $${max} \u00b7 ` +
+    `value $${row.Value} \u00b7 cost $${row.Cost}` +
+    (nom.leader && !nom.mine ? ` \u00b7 bid: seat ${nom.leader}` : "") +
+    `</span>`;
 }
 
 function drawPivot() {

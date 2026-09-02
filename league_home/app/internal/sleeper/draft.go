@@ -38,13 +38,19 @@ type Draft struct {
 		// they still are. Only the picks feed reports that, by the player
 		// turning up sold.
 		//
-		// timer_end_at sits beside it and is not read, because it cannot
-		// answer that question either: Sleeper stamps it once and never
+		// timer_end_at sits beside it and is deliberately not read, because it
+		// cannot answer that question either: Sleeper stamps it once and never
 		// advances it, so a player who holds the block for twenty seconds
-		// carries a timer that expired fifteen seconds ago. The bid fields
-		// (highest_offer, offering_slot, offering_user_id) are not read
-		// either — the board names the player and nothing more.
+		// carries a timer that expired fifteen seconds ago.
 		NominatedPlayerID string `json:"nominated_player_id"`
+		// HighestOffer is the leading bid in dollars, and OfferingSlot the
+		// seat that holds it. OfferingUserID names the manager, but only
+		// sometimes — it is empty in a mock exactly as picked_by is, which is
+		// why the seat is read as well. All three are strings, including the
+		// two that are plainly numbers.
+		HighestOffer   string `json:"highest_offer"`
+		OfferingSlot   string `json:"offering_slot"`
+		OfferingUserID string `json:"offering_user_id"`
 	} `json:"metadata"`
 	Settings DraftSettings `json:"settings"`
 }

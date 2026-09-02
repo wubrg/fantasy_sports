@@ -85,6 +85,25 @@ body {
 }
 .nomination .name { color: var(--accent); font-weight: 700; }
 .nomination .where { color: var(--dim); font-size: 0.85rem; }
+.nomination .nums { color: var(--dim); font-size: 0.85rem; margin-left: auto; }
+.nomination .note { color: var(--dim); font-size: 0.85rem; font-style: italic; }
+.nomination .bid { font-weight: 700; }
+
+/* The verdict carries the colour, because it is the only part you read when a
+   name is called. The banner border follows it, so the answer is legible from
+   across the room without focusing on the words. */
+.nomination .verdict {
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 3px;
+  color: var(--bg);
+}
+.nomination.go   .verdict { background: var(--good); }
+.nomination.no   .verdict { background: var(--bad); }
+.nomination.mine .verdict { background: var(--accent); }
+.nomination.go   { border-bottom-color: var(--good); }
+.nomination.no   { border-bottom-color: var(--bad); }
+.nomination.unknown .verdict { display: none; }
 
 /* The same accent on his row, so the banner and the row it points at read as
    one thing. Left border rather than a fill, which would fight the row states

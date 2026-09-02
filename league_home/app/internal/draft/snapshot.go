@@ -88,6 +88,14 @@ type Nomination struct {
 	Name     string `json:"name"`
 	Position string `json:"position"`
 	Team     string `json:"team"`
+	// HighestOffer is the leading bid in dollars, zero before anyone has bid.
+	HighestOffer int `json:"highestOffer"`
+	// Leader is the seat holding that bid, for when the page wants to say
+	// who it is up against. Zero when Sleeper has not said.
+	Leader int `json:"leader"`
+	// Mine reports that the leading bid is yours, so the page can stop
+	// telling you to outbid yourself.
+	Mine bool `json:"mine"`
 }
 
 // KeptPlayer is one player a research keeper scenario removes from the pool.
