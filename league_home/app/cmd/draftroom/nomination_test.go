@@ -15,11 +15,17 @@ import (
 // timerEnd is still written into the stub even though nothing reads it, so a
 // test can prove that a long-expired timer does not hide a live nomination.
 func nominatingBoard(t *testing.T, status, playerID, timerEnd string) *staticData {
+	return biddingBoard(t, status, playerID, timerEnd, "", "", "")
+}
+
+// biddingBoard is nominatingBoard with the bid fields set. Sleeper sends all of
+// them as strings, including the two that are plainly numbers.
+func biddingBoard(t *testing.T, status, playerID, timerEnd, offer, slot, userID string) *staticData {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"draft_id":"d1","status":%q,"type":"auction","metadata":{"nominated_player_id":%q,"timer_end_at":%q}}`,
-			status, playerID, timerEnd)
+		fmt.Fprintf(w, `{"draft_id":"d1","status":%q,"type":"auction","metadata":{"nominated_player_id":%q,"timer_end_at":%q,"highest_offer":%q,"offering_slot":%q,"offering_user_id":%q}}`,
+			status, playerID, timerEnd, offer, slot, userID)
 	}))
 	t.Cleanup(srv.Close)
 
@@ -153,5 +159,66 @@ func TestASoldPlayerLeavesTheBanner(t *testing.T) {
 	}
 	if nom := srv.snapshot().Nomination; nom != nil {
 		t.Errorf("still bidding on %q after he was sold", nom.Name)
+	}
+}
+
+// TestTheLeadingBidIsRead — the banner leads with whether to bid, and cannot
+// without knowing what it is up against.
+func TestTheLeadingBidIsRead(t *testing.T) {
+	s := biddingBoard(t, "drafting", "1", soon(), "46", "2", "")
+	_, nom := s.DraftState()
+	if nom == nil {
+		t.Fatal("no nomination")
+	}
+	if nom.HighestOffer != 46 {
+		t.Errorf("HighestOffer = %d, want 46 parsed from the string Sleeper sends", nom.HighestOffer)
+	}
+	if nom.Leader != 2 {
+		t.Errorf("Leader = %d, want seat 2", nom.Leader)
+	}
+}
+
+// An unbid nomination is zero, not a guess. "no bid yet" and "$0" are
+// different claims and the page renders them differently.
+func TestAnUnbidNominationHasNoOffer(t *testing.T) {
+	_, nom := biddingBoard(t, "drafting", "1", soon(), "", "", "").DraftState()
+	if nom == nil {
+		t.Fatal("no nomination")
+	}
+	if nom.HighestOffer != 0 || nom.Leader != 0 || nom.Mine {
+		t.Errorf("want an empty bid, got %+v", nom)
+	}
+}
+
+// TestWhoHoldsTheBid walks the same ladder isMine walks for a pick, and for
+// the same reason: a real draft names the manager, a mock gives only the seat.
+func TestWhoHoldsTheBid(t *testing.T) {
+	const me = "243501760939814912"
+	for _, tc := range []struct {
+		name        string
+		offer, slot string
+		userID      string
+		mySlot      int
+		want        bool
+	}{
+		{"named as me", "20", "7", me, 7, true},
+		{"named as someone else", "20", "7", "467790106363686912", 7, false},
+		{"mock: my seat, no user id", "20", "7", "", 7, true},
+		{"mock: another seat", "20", "3", "", 7, false},
+		{"no seat known, nothing claimed", "20", "7", "", 0, false},
+		{"no seat offered, nothing claimed", "20", "", "", 7, false},
+		// The case that matters: an unset seat and an unknown seat are both
+		// zero, so a bare equality claims every unbid nomination as yours.
+		{"both unknown must not match", "20", "", "", 0, false},
+	} {
+		s := biddingBoard(t, "drafting", "1", soon(), tc.offer, tc.slot, tc.userID)
+		s.ownerID, s.mySlot = me, tc.mySlot
+		_, nom := s.DraftState()
+		if nom == nil {
+			t.Fatalf("%s: no nomination", tc.name)
+		}
+		if nom.Mine != tc.want {
+			t.Errorf("%s: Mine = %v, want %v", tc.name, nom.Mine, tc.want)
+		}
 	}
 }
