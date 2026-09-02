@@ -9,7 +9,7 @@ import (
 func sig(id, name, pos string, points float64, cost int) PlayerSignals {
 	return PlayerSignals{
 		PlayerID: id, Name: name, Position: pos,
-		CielyPoints: points, Cost: cost, Value: cost,
+		PrimaryPoints: points, Cost: cost, Value: cost,
 	}
 }
 

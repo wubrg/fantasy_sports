@@ -188,6 +188,15 @@ function flagList(p) {
   else if (dell <= -12) out.push({ label: "dell-", cls: "flag sharp-down",
     title: `Chris Dell ranks him ${-dell} spots lower than consensus` });
 
+  // Ciely's ordering, not his dollars: he publishes auction values, but they
+  // are a linear map of his medians and cannot see keeper inflation, so where
+  // he ranks a player is the part worth reading.
+  const ciely = p.CielyDelta || 0;
+  if (ciely >= 12) out.push({ label: "ciely+", cls: "flag sharp-up",
+    title: `Ciely ranks him ${ciely} spots higher than the projection the board solves on` });
+  else if (ciely <= -12) out.push({ label: "ciely-", cls: "flag sharp-down",
+    title: `Ciely ranks him ${-ciely} spots lower than the projection the board solves on` });
+
   if (p.Availability) {
     out.push({ label: p.Availability.toLowerCase(), cls: "flag hurt" });
   }
@@ -703,7 +712,7 @@ function aboveReplacement(p) {
   // him is the safe failure: hiding a player the server said nothing about
   // is how you miss a nomination.
   if (!s) return true;
-  return p.CielyPoints >= s.Threshold;
+  return p.PrimaryPoints >= s.Threshold;
 }
 
 // Research mode is any active keeper scenario — the same field drawResearch

@@ -255,6 +255,14 @@ if (!location.pathname.endsWith("/")) {
           <td>The most-accurate experts (FantasyPros' top-10/20 subset) rank him
           higher / lower than the full consensus &mdash; a read the sharps and
           the field disagree on.</td></tr>
+          <tr><td><span class="flag sharp-up">dell+</span>&nbsp;<span class="flag sharp-down">dell-</span></td>
+            <td>One named expert, Chris Dell, ranks him higher / lower than the
+            full consensus. Same shape as <em>sharp</em>, but one voice rather
+            than the most-accurate subset.</td></tr>
+          <tr><td><span class="flag sharp-up">ciely+</span>&nbsp;<span class="flag sharp-down">ciely-</span></td>
+            <td>Ciely ranks him higher / lower than the projection the board
+            solves against. His ordering only &mdash; none of the dollars on the
+            board are his, for the reason under <em>Ciely</em> below.</td></tr>
         <tr><td><span class="flag">swing&nbsp;$12</span></td>
           <td>His model value swings this much across the valuation curves; the
           bigger it is, the more his price depends on where replacement is
@@ -439,12 +447,16 @@ if (!location.pathname.endsWith("/")) {
             <td>Produces <em>median</em> projections, which explicitly removes the
             range of outcomes. His dollars are a linear map of those medians, so
             they cannot see keeper inflation and they systematically underprice
-            upside. Use his ordering; do not read his dollars as prices. Values
-            under about $15 carry no information &mdash; his board floors there
-            while a real market has a long $1&ndash;3 tail.</td></tr>
+            upside &mdash; and under about $15 they carry no information at all,
+            because his board floors there while a real market has a long
+            $1&ndash;3 tail. So the board reads his <em>ordering</em> and nothing
+            else: where he ranks a player well above or below the projection
+            everything is solved against, the row carries a
+            <strong>ciely+</strong> or <strong>ciely-</strong> flag. He is not a
+            column, and no dollar on the board is his.</td></tr>
           <tr><td><span class="guide-key">Subvertadown</span></td>
             <td>AAV is what humans actually pay, so it prices the range. Measured
-            against Ciely, the market pays about $5 more for players carrying an
+            against a median projection, the market pays about $5 more for players carrying an
             industry upside flag and $9 less for contested ones.</td></tr>
           <tr><td><span class="guide-key">FantasyPros</span></td>
             <td>A second projection and an expert-consensus ranking, recomputed

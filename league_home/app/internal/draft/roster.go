@@ -181,7 +181,7 @@ func Score(r *Roster, baselines map[string]float64, shape PoolState) RosterMetri
 	for pos := range byPos {
 		idx := byPos[pos]
 		sort.SliceStable(idx, func(a, b int) bool {
-			return r.Players[idx[a]].Player.CielyPoints > r.Players[idx[b]].Player.CielyPoints
+			return r.Players[idx[a]].Player.PrimaryPoints > r.Players[idx[b]].Player.PrimaryPoints
 		})
 	}
 
@@ -214,7 +214,7 @@ func Score(r *Roster, baselines map[string]float64, shape PoolState) RosterMetri
 				if used[i] {
 					continue
 				}
-				if pts := r.Players[i].Player.CielyPoints; best < 0 || pts > bestPts {
+				if pts := r.Players[i].Player.PrimaryPoints; best < 0 || pts > bestPts {
 					best, bestPts = i, pts
 				}
 				break // the position list is sorted, so only its head matters
@@ -229,7 +229,7 @@ func Score(r *Roster, baselines map[string]float64, shape PoolState) RosterMetri
 	}
 
 	for i, s := range r.Players {
-		pts := s.Player.CielyPoints
+		pts := s.Player.PrimaryPoints
 		if !r.Players[i].Starting {
 			m.BenchPoints += pts
 			continue

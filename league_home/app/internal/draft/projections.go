@@ -132,6 +132,16 @@ type ProjectionData struct {
 	// and for scarcity ordering, DST excluded to match the priced pool.
 	Projections []Projection
 	Points      map[string]float64
+	// PrimaryRank is the primary's positional rank per player, and is what a
+	// rank divergence is measured against.
+	//
+	// Built here rather than by the caller from PrimaryRows, because those
+	// rows are deliberately raw: a source whose file carries several baselines
+	// ships all of them, and picking a rank out of that without applying the
+	// same Include filter silently reads whichever baseline the file happened
+	// to end with. FantasyPros ships consensus, top-10 and top-20 in one file,
+	// so that mistake is worth exactly the gap between them.
+	PrimaryRank map[string]int
 	// PrimaryWarnings are the primary source's unmatched-row problems.
 	PrimaryWarnings []string
 	// SecondOpinions are the re-solvable comparison projections.
@@ -156,7 +166,7 @@ func LoadProjections(normalized func(string) string, idx *PlayerIndex) (Projecti
 // loadProjections is LoadProjections over an explicit source set, so a test
 // can drive it without the real registry's filenames.
 func loadProjections(sources []ProjectionSource, normalized func(string) string, idx *PlayerIndex) (ProjectionData, error) {
-	pd := ProjectionData{Points: map[string]float64{}}
+	pd := ProjectionData{Points: map[string]float64{}, PrimaryRank: map[string]int{}}
 	for _, src := range sources {
 		rows, warn, err := loadProjectionRows(normalized(src.File), src)
 		if err != nil {
@@ -193,6 +203,9 @@ func loadProjections(sources []ProjectionSource, normalized func(string) string,
 					continue
 				}
 				pd.Points[r.PlayerID] = r.Points
+				if r.PosRank != 0 {
+					pd.PrimaryRank[r.PlayerID] = r.PosRank
+				}
 				// The band comes with him. Carrying it only on the second-opinion
 				// branch was harmless while the primary published no range, but a
 				// primary that does would have had it dropped here — and the band

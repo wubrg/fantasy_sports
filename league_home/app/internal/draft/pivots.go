@@ -180,8 +180,8 @@ func tierCliffPivots(players []PlayerSignals, scarcity map[string]PositionScarci
 func bestPointsAt(players []PlayerSignals, pos string) float64 {
 	var best float64
 	for _, p := range players {
-		if p.Position == pos && p.CielyPoints > best {
-			best = p.CielyPoints
+		if p.Position == pos && p.PrimaryPoints > best {
+			best = p.PrimaryPoints
 		}
 	}
 	return best

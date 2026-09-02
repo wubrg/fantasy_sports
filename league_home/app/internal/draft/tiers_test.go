@@ -104,9 +104,9 @@ func TestSmoothPositionHasNoTiers(t *testing.T) {
 // median is as good as the typical member of it.
 func TestScarcityCountsMeetOrExceed(t *testing.T) {
 	players := []PlayerSignals{
-		{Name: "over", Position: "RB", CielyPoints: 201},
-		{Name: "exactly", Position: "RB", CielyPoints: 200},
-		{Name: "under", Position: "RB", CielyPoints: 199},
+		{Name: "over", Position: "RB", PrimaryPoints: 201},
+		{Name: "exactly", Position: "RB", PrimaryPoints: 200},
+		{Name: "under", Position: "RB", PrimaryPoints: 199},
 	}
 	got := Scarcity(players, HitOrMissPool(), map[string]float64{"RB": 200})
 	if got["RB"].Startable != 2 {
@@ -178,7 +178,7 @@ func TestStartableFallsAsTheTierIsPickedOver(t *testing.T) {
 	th := map[string]float64{"WR": 200}
 	var board []PlayerSignals
 	for _, p := range band(300, 280, 260, 240, 220, 180, 160) {
-		board = append(board, PlayerSignals{Position: "WR", CielyPoints: p})
+		board = append(board, PlayerSignals{Position: "WR", PrimaryPoints: p})
 	}
 	before := Scarcity(board, HitOrMissPool(), th)["WR"].Startable
 	after := Scarcity(board[3:], HitOrMissPool(), th)["WR"].Startable

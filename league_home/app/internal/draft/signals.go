@@ -48,9 +48,15 @@ type PlayerSignals struct {
 	AAV float64
 	// VBD holds the model price under each Subvertadown baseline.
 	VBD map[Baseline]float64
-	// CielyPoints is a median projection restated in league scoring. Used
-	// for ordering and corroboration, never as a dollar figure.
-	CielyPoints float64
+	// PrimaryPoints is the primary projection source restated in league
+	// scoring — see ProjectionData, which produces it. Used for ordering and
+	// corroboration, never as a dollar figure: Value is the dollar answer.
+	//
+	// Named for its role rather than its source on purpose. It was called
+	// CielyPoints back when Ciely was primary, and kept that name through the
+	// switch to FantasyPros, so for a while it carried one analyst's numbers
+	// under another's name — which is exactly as misleading as it sounds.
+	PrimaryPoints float64
 	// FPValue is the FantasyPros second projection re-solved into dollars
 	// against the same live pool as Value, so the two are directly
 	// comparable. Zero means FantasyPros did not cover him.
@@ -85,6 +91,15 @@ type PlayerSignals struct {
 	// most-accurate subset, so it earns its own flag. Zero is agreement or no
 	// coverage.
 	DellDelta int
+	// CielyDelta is the same measurement for Ciely: his positional rank
+	// against the primary's, positive where he rates the player above the
+	// field. Zero is agreement or no coverage.
+	//
+	// Rank rather than dollars deliberately. Ciely publishes auction values,
+	// but they are a linear map of his medians and cannot see keeper
+	// inflation, so his ordering is the part worth reading — and ordering is
+	// what the board already knows how to show a disagreement in.
+	CielyDelta int
 	// BorisTier is Boris Chen's within-position half-PPR tier (1 is best).
 	// A second opinion on tiering, kept beside our own gap-based tiers rather
 	// than blended: his tiers come from a mixture model over expert consensus,
@@ -192,6 +207,23 @@ func (p PlayerSignals) DellSharp() SharpState {
 	return SharpNone
 }
 
+// CielySharp reports Ciely's read, on its own threshold rather than Dell's.
+//
+// Separate constants because they answer to different things: Dell's is tied
+// to the lean set generated from him, so flag and set agree about who counts,
+// while Ciely's only has to be the point where a positional gap stops being
+// noise. Sharing one number would couple two unrelated judgements and make
+// tuning either of them a change to both.
+func (p PlayerSignals) CielySharp() SharpState {
+	switch {
+	case p.CielyDelta >= cielySharpThreshold:
+		return SharpUp
+	case p.CielyDelta <= -cielySharpThreshold:
+		return SharpDown
+	}
+	return SharpNone
+}
+
 // SignalInputs are the assembled sources a board is built from.
 type SignalInputs struct {
 	// Values come from Solve against the live pool.
@@ -200,8 +232,9 @@ type SignalInputs struct {
 	Costs map[string]int
 	// Subvertadown rows across every baseline, already ID-resolved.
 	Subvertadown []SourceRow
-	// CielyPoints maps player ID to a projection in league scoring.
-	CielyPoints map[string]float64
+	// PrimaryPoints maps player ID to the primary source's projection in
+	// league scoring.
+	PrimaryPoints map[string]float64
 	// FantasyPros holds the second projection's read on each player, keyed by
 	// player ID: the dollar value it re-solves to, its positional rank, and
 	// the sharp-expert move. A player absent here carries no FantasyPros
@@ -221,6 +254,10 @@ type SignalInputs struct {
 	// preferences. A player on one gets the "rich offense" trait. Empty when
 	// none are named, which adds no traits.
 	Offenses map[string]bool
+	// CielySharp is Ciely's rank-vs-primary gap per player ID. Empty when the
+	// source is absent, which reads as no ciely flags rather than as
+	// agreement everywhere.
+	CielySharp map[string]int
 	// DellSharp is Chris Dell's rank-vs-consensus gap per player ID. Empty
 	// when his source is absent, which shows no dell flags.
 	DellSharp map[string]int
@@ -285,15 +322,15 @@ func BuildSignals(in SignalInputs) []PlayerSignals {
 	out := make([]PlayerSignals, 0, len(in.Values))
 	for _, v := range in.Values {
 		p := PlayerSignals{
-			PlayerID:    v.PlayerID,
-			Name:        v.Name,
-			Position:    v.Position,
-			Value:       v.Price,
-			Cost:        in.Costs[v.PlayerID],
-			MyMaxBid:    v.Price,
-			Team:        in.Teams[v.PlayerID],
-			VBD:         map[Baseline]float64{},
-			CielyPoints: in.CielyPoints[v.PlayerID],
+			PlayerID:      v.PlayerID,
+			Name:          v.Name,
+			Position:      v.Position,
+			Value:         v.Price,
+			Cost:          in.Costs[v.PlayerID],
+			MyMaxBid:      v.Price,
+			Team:          in.Teams[v.PlayerID],
+			VBD:           map[Baseline]float64{},
+			PrimaryPoints: in.PrimaryPoints[v.PlayerID],
 		}
 		if a, ok := sv[v.PlayerID]; ok {
 			p.AAV, p.ScarcityPct, p.VBD = a.aav, a.ps, a.vbd
@@ -304,6 +341,7 @@ func BuildSignals(in SignalInputs) []PlayerSignals {
 			p.FPLow, p.FPHigh = fp.Low, fp.High
 		}
 		p.DellDelta = in.DellSharp[v.PlayerID]
+		p.CielyDelta = in.CielySharp[v.PlayerID]
 		p.BorisTier = in.BorisTier[v.PlayerID]
 		if s, ok := in.Availability[v.PlayerID]; ok {
 			p.Availability = s
@@ -557,12 +595,12 @@ func Scarcity(players []PlayerSignals, state PoolState, thresholds map[string]fl
 
 	out := map[string]PositionScarcity{}
 	for pos, list := range byPos {
-		sort.SliceStable(list, func(i, j int) bool { return list[i].CielyPoints > list[j].CielyPoints })
+		sort.SliceStable(list, func(i, j int) bool { return list[i].PrimaryPoints > list[j].PrimaryPoints })
 		startable := 0
 		for _, p := range list {
 			// Meet or exceed: a player who projects exactly at the tier
 			// median is as good as the typical member of it.
-			if p.CielyPoints >= thresholds[pos] {
+			if p.PrimaryPoints >= thresholds[pos] {
 				startable++
 			}
 		}
@@ -585,7 +623,7 @@ func Scarcity(players []PlayerSignals, state PoolState, thresholds map[string]fl
 				window = len(list)
 			}
 			for i := 0; i+1 < window; i++ {
-				if d := list[i].CielyPoints - list[i+1].CielyPoints; d > s.Cliff {
+				if d := list[i].PrimaryPoints - list[i+1].PrimaryPoints; d > s.Cliff {
 					s.Cliff = d
 				}
 			}

@@ -86,8 +86,8 @@ func TestScarcityBreakFiresOnlyForPositionsYouNeed(t *testing.T) {
 
 func TestTierCliffNeedsAMeaningfulDrop(t *testing.T) {
 	players := []PlayerSignals{
-		{Name: "RB1", Position: "RB", CielyPoints: 300},
-		{Name: "RB2", Position: "RB", CielyPoints: 295},
+		{Name: "RB1", Position: "RB", PrimaryPoints: 300},
+		{Name: "RB2", Position: "RB", PrimaryPoints: 295},
 	}
 	scarce := roomyScarcity()
 
@@ -228,7 +228,7 @@ func TestTempoRatioHandlesEmptyBoard(t *testing.T) {
 func TestOnlyOneBannerShows(t *testing.T) {
 	scarce := roomyScarcity()
 	scarce["RB"] = PositionScarcity{Position: "RB", Startable: 20, StartersLeft: 20, Cover: 1, TopScarcityPct: 5, Cliff: 80}
-	players := []PlayerSignals{{Name: "RB1", Position: "RB", CielyPoints: 300}}
+	players := []PlayerSignals{{Name: "RB1", Position: "RB", PrimaryPoints: 300}}
 	me := MyState{Budget: 100, OpenSlots: 6, StartersNeeded: map[string]int{"RB": 1}}
 
 	pivots := Pivots(players, scarce, me, DraftTempo{Spent: 300, Expected: 200, Picks: 20})
