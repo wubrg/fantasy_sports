@@ -39,6 +39,17 @@ import re
 import sys
 
 # Baseline label -> filename stem, in the order Subvertadown presents them.
+#
+# A baseline whose sheet is absent is skipped rather than fatal. Each is a
+# separate page save, and which ones get saved is a judgement about what the
+# board needs rather than a fixed set: beerplus is the default the board prices
+# on and vols is what rosters are scored against, so beer is the one that can
+# be left out without anything downstream noticing. Every consumer of the
+# per-baseline map already guards its lookup.
+#
+# At least one is still required. An empty extract would leave the board with
+# no market price at all, which is a different and much quieter failure than a
+# missing file.
 BASELINES = {"beer": "stock-beer", "beerplus": "stock-beerplus", "vols": "stock-vols"}
 
 # Column indexes in the board table. The header row is:
@@ -122,24 +133,37 @@ def main():
     for baseline, stem in BASELINES.items():
         path = os.path.join(sheets_dir, f"{stem}.html")
         if not os.path.exists(path):
-            sys.exit(f"extract_subvertadown: missing {path}")
+            print(f"  {baseline:9} skipped, no {stem}.html in this snapshot")
+            continue
         rows = parse_sheet(path, baseline)
         if not rows:
             sys.exit(f"extract_subvertadown: parsed 0 rows from {path}")
         all_rows.extend(rows)
         print(f"  {baseline:9} {len(rows):3} players from {os.path.basename(path)}")
 
+    # A sheet that is present but unparseable is fatal above. Nothing at all is
+    # fatal here, because writing an empty CSV would take the market off the
+    # board without saying so.
+    if not all_rows:
+        sys.exit(f"extract_subvertadown: no baseline sheets found in {sheets_dir}; "
+                 f"expected any of {', '.join(s + '.html' for s in BASELINES.values())}")
+
     with open(out_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(all_rows[0].keys()))
         writer.writeheader()
         writer.writerows(all_rows)
 
-    per_baseline = len(all_rows) // len(BASELINES)
+    # Count the baselines actually read, not the ones this script knows about:
+    # one may have been skipped, and a summary reporting the wrong divisor is
+    # how a half-loaded market gets mistaken for a full one.
+    read = sorted({r["baseline"] for r in all_rows})
+    per_baseline = len(all_rows) // len(read)
     one = [r for r in all_rows if r["baseline"] == "beerplus"]
     up = sum(r["ecr_up"] for r in one)
     down = sum(r["ecr_down"] for r in one)
     both = sum(1 for r in one if r["ecr_up"] and r["ecr_down"])
-    print(f"wrote {len(all_rows)} rows ({per_baseline} players x {len(BASELINES)} baselines) to {out_path}")
+    print(f"wrote {len(all_rows)} rows ({per_baseline} players x {len(read)} baselines: "
+          f"{', '.join(read)}) to {out_path}")
     print(f"  ECR flags (beerplus): {up} up, {down} down, {both} carrying both")
 
 
