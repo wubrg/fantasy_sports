@@ -62,7 +62,13 @@ type Prediction struct {
 	SMarket    *float64 `json:"s_market,omitempty"`
 	SBaseRate  *float64 `json:"s_base_rate,omitempty"`
 	SIncumbent *float64 `json:"s_incumbent,omitempty"`
-	PriorForm  *float64 `json:"prior_form,omitempty"`
+	// SLine is the line-only logistic: P(scenario) from the posted total and
+	// spread alone. It is the honest null for "does an outside read beat the
+	// numbers already in the pack", and exists only for efficient_offense and
+	// pass_heavy -- the two scenarios with no market line of their own. Nil
+	// where the scenario is not modelled or the game had no posted total/spread.
+	SLine     *float64 `json:"s_line,omitempty"`
+	PriorForm *float64 `json:"prior_form,omitempty"`
 
 	Kickoff     time.Time `json:"kickoff"`
 	GeneratedAt time.Time `json:"generated_at"`

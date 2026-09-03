@@ -23,6 +23,7 @@ const (
 	refBaseRate  = "base-rate"
 	refIncumbent = "belief-json"
 	refMarket    = "market"
+	refLine      = "line"
 )
 
 // scenariosNotWagerable are the pairings a good belief cannot be spent on.
@@ -45,7 +46,7 @@ func beliefsScore(args []string) error {
 		"ignore weeks after this. With -from-week this expresses the pre-registered "+
 			"window exactly, e.g. -from-week 1 -to-week 8")
 	vs := fs.String("vs", refAuto,
-		"what to measure against: auto, base-rate, belief-json or market")
+		"what to measure against: auto, base-rate, belief-json, line or market")
 	bar := fs.Float64("bar", 0.10,
 		"the s-edge a disagreement must clear to count; FINDINGS 16 puts the "+
 			"requirement at +0.03 to +0.16 depending on the site")
@@ -154,6 +155,7 @@ func beliefsScore(args []string) error {
 	}
 
 	jointVerdict(scored, *bar, *hold)
+	referenceBreakdown(preds, *only, *fromWeek, *toWeek, *includeRejected, *bar)
 	groupReport("BY SCENARIO", use, *bar, func(r scoredRow) string { return r.scenario })
 	groupReport("BY STATED CONFIDENCE", use, *bar, confidenceBand)
 	flaggedReport(use, *bar)
@@ -237,6 +239,60 @@ func confidenceBand(r scoredRow) string {
 		return "medium"
 	}
 	return "high"
+}
+
+// referenceBreakdown scores each opponent on its OWN rows, never pooled.
+//
+// The default auto number mixes reference types across rows -- some measured
+// against the market, some the incumbent, some the line, some the base rate --
+// and the 2026-09-01 review showed why that hides the result: a forecaster can
+// beat a stale base rate on weeks 1-3 and lose to the market later, and the
+// pooled gain averages the two into something that means neither. Beating the
+// line is the claim that matters, so it gets its own row here.
+func referenceBreakdown(preds []betlog.SettledPrediction, only string,
+	fromWeek, toWeek int, includeRejected bool, bar float64) {
+	type ref struct {
+		name, mode string
+	}
+	refs := []ref{
+		{"market", refMarket},
+		{"belief-json (incumbent)", refIncumbent},
+		{"line", refLine},
+		{"base-rate", refBaseRate},
+	}
+	fmt.Printf("\n  BY REFERENCE  (each opponent scored on its own rows — never pooled)\n")
+	fmt.Printf("    %-24s %6s %10s %11s\n", "", "n", "gain", "over bar")
+	any := false
+	for _, rf := range refs {
+		rows := points(preds, only, fromWeek, toWeek, rf.mode, includeRejected)
+		pts := calib.Positions(onlyPoints(rows))
+		var withRef []calib.Point
+		for _, p := range pts {
+			if p.HasRef {
+				withRef = append(withRef, p)
+			}
+		}
+		if len(withRef) == 0 {
+			continue
+		}
+		any = true
+		g, err := calib.Score(withRef, bar)
+		gain := calib.PairedBrierGain(withRef)
+		glo, ghi := calib.BootstrapCI(withRef, calib.PairedBrierGain, 800, 20260824, 0.05)
+		gs := "—"
+		if !math.IsNaN(gain) {
+			gs = fmt.Sprintf("%+.5f", gain)
+		}
+		over := "—"
+		if err == nil {
+			over = fmt.Sprintf("%d of %d", g.OverBar, g.RefN)
+		}
+		fmt.Printf("    %-24s %6d %10s %11s  [%+.5f, %+.5f]\n",
+			rf.name, len(withRef), gs, over, glo, ghi)
+	}
+	if !any {
+		fmt.Printf("    (no row carried any reference yet)\n")
+	}
 }
 
 func groupReport(title string, rows []scoredRow, bar float64, key func(scoredRow) string) {
@@ -408,13 +464,23 @@ func reference(p betlog.Prediction, mode string) (float64, bool) {
 		return pick(p.SMarket)
 	case refIncumbent:
 		return pick(p.SIncumbent)
+	case refLine:
+		return pick(p.SLine)
 	case refBaseRate:
 		return pick(p.SBaseRate)
 	}
+	// Auto prefers the sharpest opponent available. The line model sits above
+	// the base rate: it is available from week 1 on the two PROE scenarios --
+	// exactly where the base rate was stale and the exploit lived -- so where
+	// there is no market or incumbent yet, the default opponent is the line,
+	// not a constant.
 	if v, ok := pick(p.SMarket); ok {
 		return v, true
 	}
 	if v, ok := pick(p.SIncumbent); ok {
+		return v, true
+	}
+	if v, ok := pick(p.SLine); ok {
 		return v, true
 	}
 	return pick(p.SBaseRate)

@@ -133,12 +133,21 @@ def base_rates() -> dict:
     rather than recomputed -- recomputing would mean a second pass over every
     season's play-by-play to reproduce a number that is already committed. The
     two market-derived ones come straight from games.csv, which is cheap.
+
+    The reference is the HELD-OUT rate, not the in-sample one. base_rate is
+    computed over 2009-2025 and is stale: efficient_offense is 0.3243 in sample
+    and 0.3721 out of it, so a forecaster saying nothing but "0.37 everywhere"
+    beat the in-sample reference by five points for free -- ~30% of the target
+    edge, with no football knowledge. The artifact already carries the honest
+    number beside the stale one; this reads it. (The market scenarios are
+    overwritten from games.csv below and also get an s_market at ingest, so
+    their base rate is only a fallback and its staleness does not bite.)
     """
     out = {}
     if BELIEF_ARTIFACT.exists():
         b = json.loads(BELIEF_ARTIFACT.read_text())
         for name, m in b.get("scenarios", {}).items():
-            out[name] = m["base_rate"]
+            out[name] = m.get("base_rate_held_out", m["base_rate"])
 
     tot = {"shootout": [0, 0], "blowout_loss": [0, 0]}
     for r in csv.DictReader((F.CACHE / "games.csv").open()):

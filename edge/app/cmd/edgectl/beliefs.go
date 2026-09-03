@@ -360,6 +360,22 @@ func freezeReferences(p *betlog.Prediction, pk inputPack, g packGame,
 		}
 	}
 
+	// The line-only reference: P(scenario) from the posted total and this team's
+	// expected margin alone. Available from week 1 -- it needs no prior form,
+	// only the numbers already in the pack -- and modelled only for the two PROE
+	// scenarios (Predict returns ok=false for the rest). This is the opponent
+	// that makes "the forecaster knows something" mean beating the market's line,
+	// not just a constant.
+	if lm, err := scenario.LoadLineModel(); err == nil && g.TotalLine != nil && g.SpreadLine != nil {
+		expected := *g.SpreadLine // home team's expected margin
+		if p.Team != board.CanonicalTeam(g.Home) {
+			expected = -expected
+		}
+		if s, ok := lm.Predict(p.Scenario, *g.TotalLine, expected); ok {
+			p.SLine = &s
+		}
+	}
+
 	// The incumbent, where prior form exists. Nil before week 4 rather than a
 	// number, because "not measured" is not "measured at zero".
 	if t, ok := g.Teams[p.Team]; ok && t.PriorForm != nil {
@@ -375,7 +391,17 @@ func freezeReferences(p *betlog.Prediction, pk inputPack, g packGame,
 		if def.Basis == "offense_proe" || def.Basis == "success_rate" {
 			p.PriorForm = &prior
 			if band, _, err := bel.Lookup(p.Scenario, prior); err == nil {
+				// The HELD-OUT band probability, not the in-sample P. band.P is
+				// fitted on the same rows it scores, and every band's held_p sits
+				// above it (e.g. efficient_offense 0.1691 -> 0.2211): freezing P
+				// hands the forecaster an incumbent biased low by the amount the
+				// fit overfit, which correcting alone earns ~15-17% of the target
+				// edge. HeldP is nil only where the held-out split was empty; fall
+				// back to P there rather than drop the reference.
 				v := band.P
+				if band.HeldP != nil {
+					v = *band.HeldP
+				}
 				p.SIncumbent = &v
 			}
 		}

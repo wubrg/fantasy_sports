@@ -6,7 +6,7 @@ DEMO_LOG := /tmp/edgectl-demo.jsonl
 .PHONY: help build check test vet fmt fmt-check lint clean \
 	board board-check board-report \
 	data data-status data-clean \
-	fit fit-residuals fit-conditionals verify-model lag findings \
+	fit fit-residuals fit-conditionals fit-belief fit-line-model verify-model lag findings \
 	demo demo-clean
 
 # This is the working entry point for the edge app. It covers both halves:
@@ -120,7 +120,7 @@ verify-model: ## Re-run both fits read-only and print calibration (writes nothin
 	@echo "== conditionals: scenario separation =="
 	@$(PY) $(MODEL)/analysis/fit_conditionals.py --report
 
-fit: fit-residuals fit-conditionals fit-belief ## Regenerate ALL artifacts (rewrites committed files)
+fit: fit-residuals fit-conditionals fit-belief fit-line-model ## Regenerate ALL artifacts (rewrites committed files)
 
 fit-residuals: ## Refit the game-line residual distribution
 	$(PY) $(MODEL)/analysis/fit_residuals.py
@@ -130,6 +130,9 @@ fit-conditionals: ## Refit the pooled q/r grid
 
 fit-belief: ## Refit P(scenario occurs) from team prior form -- the `s` half
 	$(PY) $(MODEL)/analysis/fit_belief.py
+
+fit-line-model: ## Refit the line-only reference -- P(scenario) from total+spread, the belief probe's honest null
+	$(PY) $(MODEL)/analysis/fit_line_model.py
 
 # A backtest must score an ARTIFACT, not a reconstruction of one: a measurement
 # that rebuilds the grid in memory cannot see anything the serialisation does,

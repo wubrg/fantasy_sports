@@ -231,6 +231,13 @@ forecast is more accurate than the reference (paired Brier gain), and that the w
 would have won (realised edge on the rows it disagreed by more than the bar). Being more accurate
 and being worth betting are different claims, and a forecaster can hold one without the other.
 
+**The reference is not just the base rate.** `beliefs score` reports each opponent on its own rows,
+never pooled: the market where there is one, the incumbent model from week 4, and — for the two
+scenarios with no market line — a **line-only logistic**, `P(scenario)` fitted on nothing but the
+posted total and spread. That last one is the honest null. The numbers it uses are already in your
+pack, so beating it is the only version of "an outside read added something" that means what it
+says; beating a stale constant is not.
+
 That is why the instructions above ask you to **abstain freely and commit where you have a reason**.
 A forecast nudged a point or two off the base rate everywhere is more accurate and produces nothing
 to bet.
