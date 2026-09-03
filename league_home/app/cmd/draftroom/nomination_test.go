@@ -42,7 +42,7 @@ func past() string { return time.Now().Add(-1 * time.Minute).UTC().Format(time.R
 func TestNominationNamesThePlayerBeingBidOn(t *testing.T) {
 	s := nominatingBoard(t, "drafting", "1", soon())
 
-	live, nom := s.DraftState()
+	live, nom, _ := s.DraftState()
 	if !live {
 		t.Fatal("a drafting board did not report itself in session")
 	}
@@ -72,7 +72,7 @@ func TestNominationNamesThePlayerBeingBidOn(t *testing.T) {
 // player. What ends a nomination is the sale, not the clock.
 func TestAnExpiredTimerDoesNotHideALiveNomination(t *testing.T) {
 	for _, timer := range []string{past(), "", "not-a-time"} {
-		live, nom := nominatingBoard(t, "drafting", "1", timer).DraftState()
+		live, nom, _ := nominatingBoard(t, "drafting", "1", timer).DraftState()
 		if !live {
 			t.Fatalf("timer %q: draft not in session", timer)
 		}
@@ -84,7 +84,7 @@ func TestAnExpiredTimerDoesNotHideALiveNomination(t *testing.T) {
 
 // Nothing nominated is not a nomination.
 func TestNoNominatedPlayerIsNoNomination(t *testing.T) {
-	if _, nom := nominatingBoard(t, "drafting", "", soon()).DraftState(); nom != nil {
+	if _, nom, _ := nominatingBoard(t, "drafting", "", soon()).DraftState(); nom != nil {
 		t.Errorf("invented a nomination from an empty id: %+v", nom)
 	}
 }
@@ -92,7 +92,7 @@ func TestNoNominatedPlayerIsNoNomination(t *testing.T) {
 // A draft nobody has started has no nomination, whatever its metadata says.
 func TestADraftNotInSessionHasNoNomination(t *testing.T) {
 	for _, status := range []string{"pre_draft", "complete"} {
-		live, nom := nominatingBoard(t, status, "1", soon()).DraftState()
+		live, nom, _ := nominatingBoard(t, status, "1", soon()).DraftState()
 		if live {
 			t.Errorf("status %q reported as in session", status)
 		}
@@ -107,7 +107,7 @@ func TestADraftNotInSessionHasNoNomination(t *testing.T) {
 // which is one of the several shapes that field takes and one more reason
 // nothing reads it.
 func TestAPausedDraftKeepsItsNomination(t *testing.T) {
-	live, nom := nominatingBoard(t, "paused", "1", "").DraftState()
+	live, nom, _ := nominatingBoard(t, "paused", "1", "").DraftState()
 	if !live {
 		t.Fatal("a paused draft is still in session")
 	}
@@ -128,7 +128,7 @@ func TestAFailedLookupReportsNoNomination(t *testing.T) {
 	s.client = &sleeper.Client{BaseURL: srv.URL, HTTPClient: srv.Client()}
 	s.draftID = "d1"
 
-	live, nom := s.DraftState()
+	live, nom, _ := s.DraftState()
 	if !live {
 		t.Error("a blip dropped the board to the idle cadence")
 	}
@@ -166,7 +166,7 @@ func TestASoldPlayerLeavesTheBanner(t *testing.T) {
 // without knowing what it is up against.
 func TestTheLeadingBidIsRead(t *testing.T) {
 	s := biddingBoard(t, "drafting", "1", soon(), "46", "2", "")
-	_, nom := s.DraftState()
+	_, nom, _ := s.DraftState()
 	if nom == nil {
 		t.Fatal("no nomination")
 	}
@@ -181,7 +181,7 @@ func TestTheLeadingBidIsRead(t *testing.T) {
 // An unbid nomination is zero, not a guess. "no bid yet" and "$0" are
 // different claims and the page renders them differently.
 func TestAnUnbidNominationHasNoOffer(t *testing.T) {
-	_, nom := biddingBoard(t, "drafting", "1", soon(), "", "", "").DraftState()
+	_, nom, _ := biddingBoard(t, "drafting", "1", soon(), "", "", "").DraftState()
 	if nom == nil {
 		t.Fatal("no nomination")
 	}
@@ -213,7 +213,7 @@ func TestWhoHoldsTheBid(t *testing.T) {
 	} {
 		s := biddingBoard(t, "drafting", "1", soon(), tc.offer, tc.slot, tc.userID)
 		s.ownerID, s.mySlot = me, tc.mySlot
-		_, nom := s.DraftState()
+		_, nom, _ := s.DraftState()
 		if nom == nil {
 			t.Fatalf("%s: no nomination", tc.name)
 		}

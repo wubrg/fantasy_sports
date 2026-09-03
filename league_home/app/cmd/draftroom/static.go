@@ -514,7 +514,7 @@ func (s *staticData) Picks() ([]sleeper.DraftPick, error) {
 // The cost of being wrong the other way is a minute of polling a draft that
 // is not moving; the cost of being wrong this way is bidding blind.
 func (s *staticData) Drafting() bool {
-	live, _ := s.DraftState()
+	live, _, _ := s.DraftState()
 	return live
 }
 
@@ -531,22 +531,26 @@ func (s *staticData) Drafting() bool {
 // bidding is still running is settled downstream, when the picks feed reports
 // him sold. See nominationFrom for why the draft object cannot answer that
 // itself.
-func (s *staticData) DraftState() (bool, *draft.Nomination) {
+// DraftState reports whether the draft is running, who is up for auction, and
+// when it is scheduled to start. The start time is returned even when the
+// draft is not live — especially then, since it is what tells an idle board
+// how soon to look again.
+func (s *staticData) DraftState() (bool, *draft.Nomination, time.Time) {
 	if s.draftID == "" {
-		return false, nil
+		return false, nil, time.Time{}
 	}
 	d, err := s.client.Draft(s.draftID)
 	if err != nil {
 		// Unknown is treated as live: a blip must not stall the board on
 		// the one night it matters. No nomination, though — a stale name is
 		// a claim, where a missing banner is only silence.
-		return true, nil
+		return true, nil, time.Time{}
 	}
 	live := d.Status == "drafting" || d.Status == "paused"
 	if !live {
-		return false, nil
+		return false, nil, d.StartsAt()
 	}
-	return true, s.nominationFrom(d)
+	return true, s.nominationFrom(d), d.StartsAt()
 }
 
 // nominationFrom reads the nomination out of a draft, or nil if none is set.
