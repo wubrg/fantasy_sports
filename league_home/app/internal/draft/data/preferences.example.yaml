@@ -13,6 +13,14 @@
 
 # Block a second player from an NFL team you already own a piece of, unless the
 # pair is an allowed stack (below).
+# Which positions you will actually start in the flex. Defaults to the
+# league's own rule when omitted; may narrow it, never widen it.
+#
+# A preference, not a shape change: it governs your roster only. Pricing keeps
+# assuming the league's flex, because the rest of the room will use theirs and
+# that is what sets replacement depth.
+# flex_positions: [RB, WR]
+
 one_per_offense: true
 
 # Block a second player at the same position on a team you already own — the

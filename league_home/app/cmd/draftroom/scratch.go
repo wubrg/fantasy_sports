@@ -226,7 +226,7 @@ func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 		r.Add(p, picks[id])
 	}
 
-	view.Metrics = draft.Score(r, s.scoringBaselines(), s.static.shape)
+	view.Metrics = draft.Score(r, s.scoringBaselines(), s.static.rosterShape())
 	view.Unfilled = view.Metrics.Unfilled
 	// After Score: it assigns the lineup, and composition counts starters.
 	view.Traits = map[string]int{}
@@ -250,7 +250,7 @@ func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 		view.Bench = append(view.Bench, owned(spot))
 	}
 
-	view.BenchSlots = benchSlots(s.static.shape)
+	view.BenchSlots = benchSlots(s.static.rosterShape())
 
 	// Budget and slots are already net of the keepers, so only the players
 	// actually bought here count against them.

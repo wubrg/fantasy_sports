@@ -77,7 +77,7 @@ func (s *server) handleTeams(w http.ResponseWriter, r *http.Request) {
 		slots--
 	}
 
-	teams := draft.SampleTeams(snap.Players, keepers, budget, slots, s.static.shape,
+	teams := draft.SampleTeams(snap.Players, keepers, budget, slots, s.static.rosterShape(),
 		s.scoringBaselines(), s.static.prefs, obj, sampleDraws, time.Now().UnixNano())
 	if len(teams) > showTeams {
 		teams = teams[:showTeams]
