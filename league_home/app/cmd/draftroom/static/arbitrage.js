@@ -56,8 +56,33 @@ function player(t) {
     `<span class="money dim">max $${t.myMaxBid}</span>`;
 }
 
-// The affordable line-up. Priced at cost, because that is what winning a
-// player takes.
+// One line-up as a table: who fills what, at cost, and what it is worth.
+function fitTable(picks) {
+  return `<table class="mini fit"><tbody>` + picks.map(p =>
+    `<tr><td class="slot">${esc(p.slot)}</td>` +
+    `<td class="pos">${esc(p.pick.position)}</td>` +
+    `<td class="pname">${esc(p.pick.name)} ${tag(p.pick)}</td>` +
+    `<td class="num">$${p.pick.cost}</td>` +
+    `<td class="num dim">worth $${p.pick.value}</td></tr>`).join("") +
+    `</tbody></table>`;
+}
+
+// Surplus is what the line keeps after paying for itself. Shown because a line
+// climbs in value all the way to the cap while its surplus falls: spending
+// everything always looks better by value alone.
+function fitTotal(line, extra) {
+  const s = line.surplus;
+  const cls = s > 0 ? "good" : s < 0 ? "bad" : "dim";
+  return `<div class="fittotal">$${line.spend} for $${line.value} of value ` +
+    `<span class="surplus ${cls}">${s >= 0 ? "+" : "-"}$${Math.abs(s)} kept</span>` +
+    (line.unfilled && line.unfilled.length
+      ? ` &middot; cannot cover ${line.unfilled.map(esc).join(", ")}`
+      : ` &middot; every starting slot covered`) + (extra || "") + `</div>`;
+}
+
+// The two answers, side by side. Most value is what the cap can buy; best per
+// dollar is what is worth buying. They are different questions and the page
+// does not pick between them.
 function drawBestFit() {
   const el = document.getElementById("bestfit");
   const b = view.bestFit || {};
@@ -68,17 +93,69 @@ function drawBestFit() {
     el.innerHTML = `<p class="note">Nothing your targets can buy at this ceiling.</p>`;
     return;
   }
-  el.innerHTML = `<table class="mini fit"><tbody>` + b.picks.map(p =>
-    `<tr><td class="slot">${esc(p.slot)}</td>` +
-    `<td class="pos">${esc(p.pick.position)}</td>` +
-    `<td class="pname">${esc(p.pick.name)} ${tag(p.pick)}</td>` +
-    `<td class="num">$${p.pick.cost}</td>` +
-    `<td class="num dim">worth $${p.pick.value}</td></tr>`).join("") +
-    `</tbody></table>` +
-    `<div class="fittotal">$${b.spend} spent for $${b.value} of value` +
-    (b.unfilled && b.unfilled.length
-      ? ` &middot; cannot cover ${b.unfilled.map(esc).join(", ")} at this ceiling`
-      : ` &middot; every starting slot covered`) + `</div>`;
+
+  const pd = view.perDollar;
+  let right;
+  if (view.perDollarIsBest) {
+    right = `<div class="agree">The most valuable line is also the one that
+      keeps the most. Nothing here is being bought above what it is worth.</div>`;
+  } else if (pd) {
+    right = fitTable(pd.picks) + fitTotal(pd);
+  } else {
+    right = `<div class="agree none">No combination of your targets is worth
+      more than it costs at these prices. Everything left is priced at or above
+      your read on it.</div>`;
+  }
+
+  el.innerHTML = `<div class="twoline">
+      <section class="fitcol">
+        <h3>Most value <span class="mode">what the cap can buy</span></h3>
+        ${fitTable(b.picks)}${fitTotal(b)}
+      </section>
+      <section class="fitcol">
+        <h3>Best per dollar <span class="mode">what is worth buying</span></h3>
+        ${right}
+      </section>
+    </div>` + alternativesHTML();
+}
+
+// The runner-ups: for each rival anchor, the best line built on him instead,
+// and what changing horses costs in value. This is the answer to "does the
+// board think I should take him" — it does not; it is showing what else is
+// reachable and by how much it trails.
+function alternativesHTML() {
+  const alts = view.alternatives || [];
+  if (!alts.length) return "";
+  const best = view.bestFit || {};
+  const anchor = line => {
+    let a = null;
+    for (const p of line.picks || []) {
+      if (!a || p.pick.cost > a.cost || (p.pick.cost === a.cost && p.pick.value > a.value)) a = p.pick;
+    }
+    return a;
+  };
+  const lead = anchor(best);
+
+  return `<div class="alts">
+    <h3>If not ${esc(lead ? lead.name : "him")}
+      <span class="mode">the best line built on someone else</span></h3>` +
+    alts.map(a => {
+      const an = anchor(a);
+      const margin = (best.value || 0) - a.value;
+      return `<div class="alt">
+        <div class="altline">
+          <span class="altmargin">${margin === 0 ? "level" : "&minus;$" + margin}</span>
+          <span class="pname">${esc(an ? an.name : "\u2014")}</span>
+          <span class="dim">${esc(an ? an.position : "")} $${an ? an.cost : 0}</span>
+          <span class="altspend">$${a.spend} for $${a.value}
+            <span class="surplus ${a.surplus > 0 ? "good" : a.surplus < 0 ? "bad" : "dim"}">${a.surplus >= 0 ? "+" : "-"}$${Math.abs(a.surplus)}</span></span>
+        </div>
+        <div class="altrest dim">${(a.picks || []).filter(p => !an || p.pick.playerId !== an.playerId)
+          .map(p => esc(p.pick.name) + " $" + p.pick.cost).join(" &middot; ")}` +
+        (a.unfilled && a.unfilled.length ? ` &middot; ${a.unfilled.map(esc).join(", ")} open` : "") +
+        `</div>
+      </div>`;
+    }).join("") + `</div>`;
 }
 
 function drawChain() {

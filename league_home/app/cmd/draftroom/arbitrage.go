@@ -87,6 +87,10 @@ type arbBestFit struct {
 	// the room charges, not what you were willing to go to.
 	Value int `json:"value"`
 	Spend int `json:"spend"`
+	// Surplus is Value less Spend: what the line is worth beyond what it
+	// takes to buy. A line can climb in value while falling in surplus, which
+	// is what spending the whole cap looks like from the inside.
+	Surplus int `json:"surplus"`
 	// Cap is the ceiling this was solved against, Pct the share of the budget
 	// it came from, and Reserve the bench money held back underneath it.
 	Cap     int `json:"cap"`
@@ -100,8 +104,18 @@ type arbBestFit struct {
 type ArbitrageView struct {
 	Targets int        `json:"targets"`
 	BestFit arbBestFit `json:"bestFit"`
-	Groups  []arbGroup `json:"groups"`
-	Chain   []arbStep  `json:"chain"`
+	// Alternatives are the best line for each rival anchor: what I end up
+	// with if I do not take the player the best line is built on.
+	Alternatives []arbBestFit `json:"alternatives,omitempty"`
+	// PerDollar is the line that keeps the most value after paying for it.
+	// Nil where no combination of targets is worth more than it costs, or
+	// where it is the same line as BestFit — see PerDollarIsBest.
+	PerDollar *arbBestFit `json:"perDollar,omitempty"`
+	// PerDollarIsBest says the two objectives agree, which is a real signal
+	// and not a missing answer.
+	PerDollarIsBest bool       `json:"perDollarIsBest,omitempty"`
+	Groups          []arbGroup `json:"groups"`
+	Chain           []arbStep  `json:"chain"`
 	// Unfilled are the starting slots the chain could not fill from targets
 	// alone. Expected and not a failure: it says where my reads run out.
 	Unfilled []string `json:"unfilled,omitempty"`
@@ -226,7 +240,52 @@ func buildGroups(targets []draft.PlayerSignals, prefs draft.Preferences) []arbGr
 // answer; a beam is near-optimal at this size and, unlike a random sample, it
 // returns the same line-up twice in a row. Sixty is well past the point where
 // widening it changes the answer on a board this size.
-const beamWidth = 60
+// maxBeam is how many partial line-ups survive each round of pruning.
+//
+// It replaces a flat top-60, which collapsed onto the single best anchor and
+// then reported it as the answer. With 68 targets there are 67 lines pairing
+// the most valuable player with someone, so every slot could be taken by a
+// line containing him before any rival anchor was weighed once — measured, a
+// flat beam returns zero alternatives on a board built to expose it. That made
+// the runner-up list a row of near-copies and hid the choice the page exists
+// to show.
+//
+// Wider than the old sixty because the width now buys two things: depth on the
+// leader, and one guaranteed line per rival. The solve runs outside the board
+// lock and only when the board changes, so it costs the arbitrage page a
+// slower first refresh after a pick and costs the board nothing.
+const (
+	maxBeam = 120
+	// maxAlternatives is how many runner-up anchors the page shows.
+	maxAlternatives = 4
+)
+
+// arbLines is every answer the search found worth reporting.
+type arbLines struct {
+	// Best is the most valuable line the cap can buy.
+	Best arbBestFit
+	// PerDollar is the line with the most value left over after paying for
+	// it. Nil where no combination of targets is worth more than it costs.
+	PerDollar *arbBestFit
+	// Alternatives are the best line for each rival anchor, most valuable
+	// first, never repeating the anchor Best already used.
+	Alternatives []arbBestFit
+}
+
+// anchorOf names a line by the pick it is really a bet on: the most expensive,
+// ties going to the more valuable and then to the lower ID so the name is
+// stable between solves.
+func anchorOf(picks []arbPick) string {
+	best := ""
+	var bc, bv int
+	for _, p := range picks {
+		c, v := p.Pick.Cost, p.Pick.Value
+		if best == "" || c > bc || (c == bc && v > bv) || (c == bc && v == bv && p.Pick.PlayerID < best) {
+			best, bc, bv = p.Pick.PlayerID, c, v
+		}
+	}
+	return best
+}
 
 // beamState is one partial line-up under construction.
 type beamState struct {
@@ -250,8 +309,14 @@ type beamState struct {
 // cap is the spend ceiling. Bench money is reserved underneath it before the
 // percentage applies, because a line-up that leaves nothing for the remaining
 // slots is not one you could actually field.
+// bestFit is the most valuable line alone, for callers that want only that.
 func (s *server) bestFit(held, targets []draft.PlayerSignals, prefs draft.Preferences,
 	baselines map[string]float64, shape draft.PoolState, cap int) arbBestFit {
+	return s.bestFitLines(held, targets, prefs, baselines, shape, cap).Best
+}
+
+func (s *server) bestFitLines(held, targets []draft.PlayerSignals, prefs draft.Preferences,
+	baselines map[string]float64, shape draft.PoolState, cap int) arbLines {
 
 	start := &draft.Roster{}
 	for _, h := range held {
@@ -263,6 +328,15 @@ func (s *server) bestFit(held, targets []draft.PlayerSignals, prefs draft.Prefer
 		taken:  map[string]bool{},
 	}}
 	best := beam[0]
+	// Lines nothing more can be added to: either every starting slot is full
+	// or nothing affordable fills what is left. These are the finished teams,
+	// and the runner-up list is drawn from them.
+	var terminal []beamState
+	// The best surplus is tracked over every state rather than the finished
+	// ones, because adding a player always adds value but not always more
+	// value than he costs. The most profitable line is often one that stops
+	// early, and it would never appear among the terminal states.
+	bestSurplus := beam[0]
 
 	for {
 		var next []beamState
@@ -271,9 +345,11 @@ func (s *server) bestFit(held, targets []draft.PlayerSignals, prefs draft.Prefer
 		for _, st := range beam {
 			unfilled := draft.Score(st.roster, baselines, shape).Unfilled
 			if len(unfilled) == 0 {
+				terminal = append(terminal, st)
 				continue
 			}
 			blocked := draft.BlockedForMe(st.owned, targets, prefs)
+			grew := false
 
 			for _, c := range targets {
 				if st.taken[c.PlayerID] {
@@ -307,40 +383,120 @@ func (s *server) bestFit(held, targets []draft.PlayerSignals, prefs draft.Prefer
 				}
 				seen[key] = true
 
-				next = append(next, beamState{
+				grown := beamState{
 					roster: trial,
 					owned:  append(append([]draft.PlayerSignals(nil), st.owned...), c),
 					picks:  append(append([]arbPick(nil), st.picks...), arbPick{Pick: toArbTarget(c), Slot: filledSlot(unfilled, after)}),
 					taken:  taken,
 					spend:  st.spend + askingPrice(c),
 					value:  st.value + c.Value,
-				})
+				}
+				if grown.value-grown.spend > bestSurplus.value-bestSurplus.spend {
+					bestSurplus = grown
+				}
+				next = append(next, grown)
+				grew = true
+			}
+			if !grew {
+				terminal = append(terminal, st)
 			}
 		}
 		if len(next) == 0 {
 			break
 		}
-		sort.Slice(next, func(i, j int) bool {
-			if next[i].value != next[j].value {
-				return next[i].value > next[j].value
-			}
-			return next[i].spend < next[j].spend // same value, cheaper wins
-		})
-		if len(next) > beamWidth {
-			next = next[:beamWidth]
-		}
+		sortStates(next)
+		next = pruneByAnchor(next)
 		if next[0].value > best.value {
 			best = next[0]
 		}
 		beam = next
 	}
 
-	return arbBestFit{
-		Picks:    best.picks,
-		Value:    best.value,
-		Spend:    best.spend,
-		Unfilled: draft.Score(best.roster, baselines, shape).Unfilled,
+	lines := arbLines{Best: s.lineOf(best, baselines, shape)}
+
+	// The winner is a finished line too, and the alternatives are drawn from
+	// the same pool, so it has to be in there for its anchor to be excluded.
+	terminal = append(terminal, best)
+	sortStates(terminal)
+	usedAnchor := anchorOf(lines.Best.Picks)
+	seenAnchor := map[string]bool{usedAnchor: true}
+	for _, st := range terminal {
+		if len(lines.Alternatives) >= maxAlternatives {
+			break
+		}
+		a := anchorOf(st.picks)
+		if a == "" || seenAnchor[a] {
+			continue
+		}
+		seenAnchor[a] = true
+		lines.Alternatives = append(lines.Alternatives, s.lineOf(st, baselines, shape))
 	}
+
+	// No picks means nothing was worth more than it cost. Say so by leaving
+	// this empty rather than falling back to the value line, which would
+	// quietly answer a question nobody asked.
+	if len(bestSurplus.picks) > 0 {
+		pd := s.lineOf(bestSurplus, baselines, shape)
+		lines.PerDollar = &pd
+	}
+	return lines
+}
+
+// lineOf renders one search state as a reportable line.
+func (s *server) lineOf(st beamState, baselines map[string]float64, shape draft.PoolState) arbBestFit {
+	return arbBestFit{
+		Picks:    st.picks,
+		Value:    st.value,
+		Spend:    st.spend,
+		Surplus:  st.value - st.spend,
+		Unfilled: draft.Score(st.roster, baselines, shape).Unfilled,
+	}
+}
+
+// sortStates orders by value, then by the cheaper line where value ties.
+func sortStates(states []beamState) {
+	sort.Slice(states, func(i, j int) bool {
+		if states[i].value != states[j].value {
+			return states[i].value > states[j].value
+		}
+		if states[i].spend != states[j].spend {
+			return states[i].spend < states[j].spend
+		}
+		// A stable last resort, so the same board gives the same answer twice.
+		return stateKey(states[i].taken) < stateKey(states[j].taken)
+	})
+}
+
+// pruneByAnchor keeps every anchor alive without taking depth from the leader.
+//
+// Each anchor's single best line is kept first, so no rival is ever crowded
+// out entirely; the rest of the width is then filled in plain value order,
+// which hands most of it back to whichever anchor is actually winning. A flat
+// per-anchor quota would have done the diversity job too, but it would also
+// have capped the leader at a fraction of the depth the old beam gave it, and
+// the line the page leads with is the one that must not get worse.
+//
+// Expects states already sorted.
+func pruneByAnchor(states []beamState) []beamState {
+	if len(states) <= maxBeam {
+		return states
+	}
+	seen := map[string]bool{}
+	var head, rest []beamState
+	for _, st := range states {
+		if a := anchorOf(st.picks); !seen[a] {
+			seen[a] = true
+			head = append(head, st)
+			continue
+		}
+		rest = append(rest, st)
+	}
+	if len(head) >= maxBeam {
+		return head
+	}
+	out := append(head, rest[:maxBeam-len(head)]...)
+	sortStates(out)
+	return out
 }
 
 // stateKey identifies a line-up by its players, order independent.
@@ -617,8 +773,18 @@ func (s *server) arbitrageView(pct int) ArbitrageView {
 		room = 0
 	}
 	cap := spendCap(room, pct)
-	view.BestFit = s.bestFit(held, targets, prefs, baselines, shape, cap)
+	lines := s.bestFitLines(held, targets, prefs, baselines, shape, cap)
+	view.BestFit = lines.Best
 	view.BestFit.Pct, view.BestFit.Cap, view.BestFit.Reserve = pct, cap, reserve
+	view.Alternatives = lines.Alternatives
+	view.PerDollar = lines.PerDollar
+	// Both objectives landing on one line is worth saying once rather than
+	// printing the same table twice under two headings.
+	if lines.PerDollar != nil && anchorOf(lines.PerDollar.Picks) == anchorOf(lines.Best.Picks) &&
+		lines.PerDollar.Value == lines.Best.Value && lines.PerDollar.Spend == lines.Best.Spend {
+		view.PerDollar = nil
+		view.PerDollarIsBest = true
+	}
 
 	view.Chain, view.Unfilled, view.Spend = s.buildChain(
 		held, targets, prefs, baselines, shape)
