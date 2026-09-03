@@ -1,7 +1,9 @@
 /* The arbitrage page. Layout only — colours and flags come from style.css and
    leans.css, so a flag here reads the same as the same flag on the board. */
 
-.arbitrage main { max-width: 62rem; }
+/* Wider than the leans page, because the contested offenses below sit in
+   columns and two of them need the room. */
+.arbitrage main { max-width: 76rem; }
 .arbitrage h2 .mode { color: var(--dim); font-size: 0.8rem; font-weight: 400; margin-left: 0.5rem; }
 .arbitrage .note { color: var(--dim); font-size: 0.85rem; margin: 0.2rem 0 0.8rem; }
 
@@ -34,8 +36,23 @@
 }
 .overspend { border-left: 3px solid var(--warn); }
 
-/* One card per contested offense. */
-.group { margin: 0 0 1rem; padding: 0.6rem 0.8rem; background: var(--panel); border-radius: 5px; }
+/* One card per contested offense, in as many columns as the window affords.
+   Grid rather than CSS multi-column: multi-column flows a card across a break
+   and would split an offense down the middle, which is the one thing these
+   cards must not do. auto-fill collapses to a single column on a narrow
+   screen, so a phone needs no separate rule.
+
+   align-items: start keeps each card its own height — stretched cards would
+   pad a two-target offense out to match a three-target one beside it and
+   imply a symmetry that is not there. */
+#groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr));
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.group { margin: 0; padding: 0.6rem 0.8rem; background: var(--panel); border-radius: 5px; }
 .group h3 { margin: 0 0 0.4rem; font-size: 0.95rem; color: var(--accent); }
 .grow { padding: 0.15rem 0; }
 .takes { margin-left: 0.6rem; font-size: 0.8rem; color: var(--bad); }
