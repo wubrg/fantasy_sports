@@ -542,7 +542,7 @@ func (s *server) handleArbitrage(w http.ResponseWriter, r *http.Request) {
 		view.Groups = buildGroups(targets, prefs)
 	}
 
-	baselines, shape := s.scoringBaselines(), s.static.shape
+	baselines, shape := s.scoringBaselines(), s.static.rosterShape()
 
 	// The affordable line-up. Bench money comes off first: every slot the
 	// starters do not fill still needs a dollar, and a line-up that leaves

@@ -448,6 +448,17 @@ func loadStatic(leagueID, draftID, configDir, dataDir, ownerID string, baseline 
 	return s, nil
 }
 
+// rosterShape is the league shape narrowed by your own lineup preferences.
+//
+// Use it wherever a roster of yours is assembled or scored; use s.shape where
+// the pool is priced. The two differ because a preference is not a rule: the
+// league's flex takes a tight end and eleven other managers will use it that
+// way, so replacement depth — and every price that follows from it — has to be
+// computed against the league's flex, not against the one you intend to field.
+func (s *staticData) rosterShape() draft.PoolState {
+	return s.prefs.RosterShape(s.shape)
+}
+
 // isMine reports whether a pick is yours, down a ladder of what Sleeper
 // actually stamps on one. Each rung is tried only when the one above it says
 // nothing, because each is a weaker claim than the last:

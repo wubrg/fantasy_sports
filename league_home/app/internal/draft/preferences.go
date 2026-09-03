@@ -31,6 +31,16 @@ type Preferences struct {
 	// independent. A pair here overrides OnePerOffense; it never overrides
 	// NoHandcuffs, because a same-position pair is a handcuff, not a stack.
 	Stacks []Stack
+	// FlexPositions narrows which positions you will actually start in the
+	// flex. Empty means the league's own rule, whatever that is.
+	//
+	// A preference, emphatically not a shape change. The league's flex takes a
+	// tight end and eleven other managers will use it that way, so the pool
+	// must keep pricing against the league rule — flex demand is split across
+	// the eligible positions to set replacement depth, and narrowing that
+	// would move every price on the board. This only governs which of your own
+	// players fills your own flex.
+	FlexPositions []string
 	// Offenses are NFL teams (as abbreviations) you have named as targets:
 	// deep, points-rich offenses whose players carry the "rich offense"
 	// trait on the board. This is a display signal, not a filter -- it
@@ -93,6 +103,7 @@ type prefsDoc struct {
 	NoHandcuffs   *bool       `yaml:"no_handcuffs,omitempty"`
 	Stacks        *[][]string `yaml:"stacks,omitempty"`
 	Offenses      *[]string   `yaml:"offenses,omitempty"`
+	FlexPositions *[]string   `yaml:"flex_positions,omitempty"`
 }
 
 // ParsePreferences reads the personal draft filters from YAML. An unknown key
@@ -109,7 +120,7 @@ func ParsePreferences(r io.Reader) (Preferences, error) {
 			return DefaultPreferences(), nil
 		}
 		return Preferences{}, fmt.Errorf("reading preferences: %w "+
-			"(keys are one_per_offense, no_handcuffs, stacks, offenses)", err)
+			"(keys are one_per_offense, no_handcuffs, stacks, offenses, flex_positions)", err)
 	}
 
 	p := DefaultPreferences()
@@ -127,6 +138,12 @@ func ParsePreferences(r io.Reader) (Preferences, error) {
 					"stack %v needs exactly two positions", pair)
 			}
 			p.Stacks = append(p.Stacks, Stack{A: normPos(pair[0]), B: normPos(pair[1])})
+		}
+	}
+	if doc.FlexPositions != nil {
+		p.FlexPositions = nil
+		for _, pos := range *doc.FlexPositions {
+			p.FlexPositions = append(p.FlexPositions, normPos(pos))
 		}
 	}
 	if doc.Offenses != nil {
@@ -170,3 +187,33 @@ func LoadPreferences(path string) (Preferences, error) {
 }
 
 func normPos(s string) string { return strings.ToUpper(strings.TrimSpace(s)) }
+
+// RosterShape narrows a league shape to the positions you will actually start
+// in the flex.
+//
+// Used where a roster of yours is assembled or scored, never where the pool is
+// priced: the league's flex is what the league's flex is, and pricing against
+// a narrower one would quietly move every number on the board. Returns the
+// shape unchanged when no preference is set.
+func (p Preferences) RosterShape(shape PoolState) PoolState {
+	if len(p.FlexPositions) == 0 {
+		return shape
+	}
+	// Only positions the league's own flex allows: a preference may narrow the
+	// rule, never widen it past what the lineup would accept.
+	allowed := map[string]bool{}
+	for _, pos := range shape.FlexPositions {
+		allowed[pos] = true
+	}
+	var out []string
+	for _, pos := range p.FlexPositions {
+		if allowed[pos] {
+			out = append(out, pos)
+		}
+	}
+	if len(out) == 0 {
+		return shape
+	}
+	shape.FlexPositions = out
+	return shape
+}
