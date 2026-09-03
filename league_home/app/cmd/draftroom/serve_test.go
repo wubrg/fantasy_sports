@@ -83,13 +83,44 @@ func TestBuildDebitsOnlyMyOwnPurchases(t *testing.T) {
 	}
 }
 
-// TestBuildLowersTheCeilingAfterSpending
-func TestBuildLowersTheCeilingAfterSpending(t *testing.T) {
+// TestTheSnapshotCeilingIsTheOneBuildComputed is the wiring regression.
+//
+// Assemble used to work the ceiling out for itself as well as taking it from
+// the caller, so the two disagreed the moment the caller's changed: the board
+// priced favourites against forty-nine while the strip above them read one
+// dollar, which is impossible and was on screen anyway. Only the caller has
+// the priced pool the figure needs, so only the caller computes it.
+func TestTheSnapshotCeilingIsTheOneBuildComputed(t *testing.T) {
+	s := testStatic()
+	snap, err := s.Build(nil, nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	candidates := make([]draft.StarterCandidate, 0, len(snap.Players))
+	for _, p := range snap.Players {
+		candidates = append(candidates, draft.StarterCandidate{
+			PlayerID: p.PlayerID, Position: p.Position,
+			Cost: p.Cost, Points: p.PrimaryPoints,
+		})
+	}
+	want := draft.AffordableCeiling(snap.Me, candidates, s.thresholds,
+		s.prefs.RosterShape(s.shape).FlexPositions)
+
+	if snap.Recommended != want {
+		t.Errorf("snapshot ceiling $%d, want the affordable $%d — Assemble is "+
+			"computing its own again", snap.Recommended, want)
+	}
+}
+
+// The ceiling has to move with the money: spending narrows what is left to
+// reserve against, so it can only fall.
+func TestSpendingNeverRaisesTheCeiling(t *testing.T) {
 	s := testStatic()
 	base, _ := s.Build(nil, nil, "")
 	after, _ := s.Build(map[string]gone{"1": {price: 100, mine: true}}, nil, "")
-	if after.Recommended >= base.Recommended {
-		t.Errorf("spending $100 should lower the safe ceiling: %d -> %d",
+	if after.Recommended > base.Recommended {
+		t.Errorf("spending $100 raised the ceiling: $%d -> $%d",
 			base.Recommended, after.Recommended)
 	}
 }

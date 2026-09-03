@@ -326,7 +326,7 @@ const STRIP_HELP = [
   ["budget", "budget", "The money you have left."],
   ["slots", "slots", "Roster spots you still have to fill. Every one of them needs at least a dollar, which is what caps your max bid."],
   ["maxbid", "max bid", "The most you can bid on one player and still fill the roster \u2014 your budget less $1 for every other open slot. A physical limit, not advice."],
-  ["ceiling", "safe ceiling", "The most you can pay for one player before the rest of your roster suffers. Scored as your dollars per remaining starting spot against the league's, held at the stretched band. You do not pick it and it moves with the draft: when the room overspends early, the yardstick drops and this rises on its own. It is per-player, so it does not stop you committing to several \u2014 the must-have line does that job. Hover the number itself for the live band."],
+  ["ceiling", "safe ceiling", "The most you can pay for one player and still put a real starter in every remaining starting slot \u2014 real meaning above his position's replacement level, the same bar as the \u201conly above replacement\u201d filter. Behind it sits a reserve: the cheapest startable player left for each unfilled slot, plus a dollar for the bench and the defense. It assumes those players are still there when you reach them, so read it as the point past which a real starter somewhere becomes arithmetically impossible, not as a shopping list. It is per-player and does not stop you committing to several \u2014 the must-have line does that. Hover the number for how the spend leaves you against the rest of the league."],
   ["needs", "still starting", "The starting spots still empty on your roster. \u201clineup full\u201d means every starter is filled and the rest is bench."],
   ["pool", "pool", "What is left in the room: total dollars over total open slots, and the replacement curve prices are solved against. There is no inflation multiplier \u2014 prices are re-solved from the money and players actually remaining, so keeper inflation falls out of that by itself."],
 ];
@@ -423,7 +423,9 @@ function draw() {
 
   const ceiling = document.getElementById("ceiling");
   ceiling.textContent = money(snap.recommended);
-  ceiling.title = snap.risk ? `${snap.risk.Band}: $${Math.round(snap.risk.PerStarter)} per remaining starter vs the league's $${Math.round(snap.risk.LeaguePerStarter)}` : "";
+  // Where you stand, not what bidding the ceiling would do — the two answer
+  // different questions and the number above is the affordability one.
+  ceiling.title = snap.risk ? `you have $${Math.round(snap.risk.PerStarter)} per remaining starter against the league's $${Math.round(snap.risk.LeaguePerStarter)} — ${snap.risk.Band}` : "";
   ceiling.className = "value " + (snap.risk && (snap.risk.Band === "risky" || snap.risk.Band === "dangerous") ? "bad" : "");
 
   const needs = Object.entries(me.StartersNeeded || {})

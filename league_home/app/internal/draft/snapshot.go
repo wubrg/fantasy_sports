@@ -122,13 +122,19 @@ func (s Snapshot) AdjustedEdges(minEdge float64) []PlayerSignals {
 // Kept as a plain constructor rather than something that fetches: the
 // caller owns loading, so this stays testable and the web server can
 // rebuild a snapshot on every request without hidden network calls.
+// recommended is passed in rather than computed here. It used to be worked out
+// in this function AND again by the caller, which is how a fix to one of them
+// reached the bids on every row and never reached the number on the strip: the
+// board showed a ceiling of a dollar while pricing favourites against forty
+// nine. One concept, one computation, and the caller owns it because only the
+// caller has the priced pool the figure depends on.
 func Assemble(season string, state PoolState, me MyState, players []PlayerSignals,
-	leans Leans, tempo DraftTempo, thresholds map[string]float64, warnings []string) Snapshot {
+	leans Leans, tempo DraftTempo, thresholds map[string]float64, recommended int,
+	warnings []string) Snapshot {
 
 	bias := PositionalBias(players)
 	scarcity := Scarcity(players, state, thresholds)
 	leaguePerStarter := state.LeaguePerStarter()
-	recommended := me.MaxRecommendedBid(leaguePerStarter, DefaultRiskFloor)
 
 	bids := map[string]int{}
 	for _, p := range players {
@@ -149,14 +155,20 @@ func Assemble(season string, state PoolState, me MyState, players []PlayerSignal
 		Me:               me,
 		MaxBid:           me.MaxBid(),
 		Recommended:      recommended,
-		Risk:             me.RiskOf(recommended, leaguePerStarter),
-		Players:          players,
-		Bias:             bias,
-		Scarcity:         scarcity,
-		MustHaves:        leans.MustHaves(me.Budget, me.OpenSlots, bids),
-		Pivot:            top,
-		HasPivot:         has,
-		Pivots:           pivots,
-		Warnings:         warnings,
+		// Where you stand now, not where bidding the ceiling would leave you.
+		// The ceiling used to be a league-relative figure pinned at the band
+		// edge, so scoring the risk at it described roughly where you already
+		// were. It is an affordability figure now — often most of the budget —
+		// and scoring the risk there would report "dangerous" almost always
+		// and light the number red on a board that is perfectly healthy.
+		Risk:      me.RiskOf(0, leaguePerStarter),
+		Players:   players,
+		Bias:      bias,
+		Scarcity:  scarcity,
+		MustHaves: leans.MustHaves(me.Budget, me.OpenSlots, bids),
+		Pivot:     top,
+		HasPivot:  has,
+		Pivots:    pivots,
+		Warnings:  warnings,
 	}
 }
