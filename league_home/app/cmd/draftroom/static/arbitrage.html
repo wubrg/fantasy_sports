@@ -36,10 +36,24 @@ if (location.pathname.length > 1 && location.pathname.endsWith("/")) {
 <div id="err" class="errbar hidden"></div>
 
 <main>
-  <!-- The chain leads: it is the answer, and the groups underneath are the
-       working. -->
+  <!-- Best fit leads: it is the answer to "what can I actually end up with".
+       The two blocks under it are the working. -->
   <section class="reads">
-    <h2>Best fit from your targets <span class="mode">greedy by value</span></h2>
+    <h2>Best fit <span class="mode">most value the budget can buy</span></h2>
+    <p class="note">The most valuable set of your targets that fits, priced at
+      what the room should charge rather than at your ceiling. A dollar is held
+      back for every slot the starters do not fill.</p>
+    <div class="pctbar">
+      <label for="pct">starters may spend</label>
+      <input type="range" id="pct" min="20" max="100" step="5" value="90">
+      <output id="pctout">90%</output>
+      <span class="capnote" id="capnote"></span>
+    </div>
+    <div id="bestfit"></div>
+  </section>
+
+  <section class="reads">
+    <h2>Best value available per position <span class="mode">and what each costs you</span></h2>
     <p class="note" id="chain-note"></p>
     <div id="chain"></div>
   </section>

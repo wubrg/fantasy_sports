@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http/httptest"
 	"testing"
 
 	"leaguehome/internal/draft"
@@ -233,5 +234,123 @@ func TestSoldTargetsLeaveThePage(t *testing.T) {
 	}
 	if after != before-1 {
 		t.Errorf("targets %d -> %d, want one fewer", before, after)
+	}
+}
+
+// costed is sig with a market price, since best fit budgets against Cost.
+func costed(id, name, pos, team string, value, cost int) draft.PlayerSignals {
+	p := sig(id, name, pos, team, value)
+	p.Cost = cost
+	return p
+}
+
+// TestBestFitRespectsTheCap.
+//
+// The whole point of this block over the greedy one: it may only pick what the
+// budget can actually buy. The greedy walk takes the best player regardless
+// and reports the damage afterwards.
+func TestBestFitRespectsTheCap(t *testing.T) {
+	srv := scratchServer(t)
+	targets := []draft.PlayerSignals{
+		costed("1", "Expensive", "RB", "DET", 90, 95),
+		costed("2", "Affordable", "RB", "CIN", 40, 20),
+	}
+
+	fit := srv.bestFit(nil, targets, arbPrefs(), srv.scoringBaselines(), srv.static.shape, 30)
+
+	for _, p := range fit.Picks {
+		if p.Pick.Name == "Expensive" {
+			t.Error("picked a $95 player against a $30 cap")
+		}
+	}
+	if fit.Spend > 30 {
+		t.Errorf("spend $%d over the $30 cap", fit.Spend)
+	}
+}
+
+// It maximises value, not count: one good player beats two cheap ones when
+// the money only stretches to one.
+func TestBestFitPrefersValueOverCount(t *testing.T) {
+	srv := scratchServer(t)
+	targets := []draft.PlayerSignals{
+		costed("1", "Star", "RB", "DET", 80, 40),
+		costed("2", "Filler A", "WR", "CIN", 5, 20),
+		costed("3", "Filler B", "TE", "BUF", 5, 20),
+	}
+
+	fit := srv.bestFit(nil, targets, arbPrefs(), srv.scoringBaselines(), srv.static.shape, 40)
+
+	got := map[string]bool{}
+	for _, p := range fit.Picks {
+		got[p.Pick.Name] = true
+	}
+	if !got["Star"] {
+		t.Errorf("took %v, want the high-value player the cap affords", fit.Picks)
+	}
+}
+
+// Exclusions bind here exactly as they do everywhere else: an affordable pair
+// on one offense is still only one player.
+func TestBestFitHonoursExclusions(t *testing.T) {
+	srv := scratchServer(t)
+	targets := []draft.PlayerSignals{
+		costed("1", "Back", "RB", "DET", 50, 10),
+		costed("2", "Receiver", "WR", "DET", 50, 10),
+	}
+
+	fit := srv.bestFit(nil, targets, arbPrefs(), srv.scoringBaselines(), srv.static.shape, 100)
+
+	det := 0
+	for _, p := range fit.Picks {
+		if p.Pick.Team == "DET" {
+			det++
+		}
+	}
+	if det > 1 {
+		t.Errorf("took %d Lions; one per offense allows one", det)
+	}
+}
+
+// TestBenchReserveCountsOnlyTheSlotsStartersWillNotFill.
+//
+// Measured against what is still unfilled on the roster already held, not the
+// whole starting lineup — keepers have taken some of those spots, and counting
+// them twice reserves too little. On the live board that was the difference
+// between holding back $4 and the $6 the defense and five bench spots need.
+func TestBenchReserveCountsOnlyTheSlotsStartersWillNotFill(t *testing.T) {
+	srv := scratchServer(t)
+	me := draft.MyState{OpenSlots: 12}
+
+	empty := benchReserve(me, nil, srv.scoringBaselines(), srv.static.shape)
+	held := []draft.PlayerSignals{
+		sig("h1", "Kept Back", "RB", "MIA", 50),
+		sig("h2", "Kept Receiver", "WR", "LAR", 50),
+	}
+	seeded := benchReserve(me, held, srv.scoringBaselines(), srv.static.shape)
+
+	if seeded <= empty {
+		t.Errorf("reserve %d with keepers against %d without: holding a starter "+
+			"leaves fewer starting slots to fill, so more of the budget is bench",
+			seeded, empty)
+	}
+}
+
+// The control is a slider on a page, so an impossible number is clamped rather
+// than rejected: mid-auction a sane line-up beats an error where one should be.
+func TestPctParamClamps(t *testing.T) {
+	for _, tc := range []struct {
+		raw  string
+		want int
+	}{
+		{"", defaultBestFitPct}, {"bogus", defaultBestFitPct},
+		{"50", 50}, {"0", 1}, {"-10", 1}, {"250", 100}, {"100", 100},
+	} {
+		r := httptest.NewRequest("GET", "/api/arbitrage?pct="+tc.raw, nil)
+		if tc.raw == "" {
+			r = httptest.NewRequest("GET", "/api/arbitrage", nil)
+		}
+		if got := pctParam(r, defaultBestFitPct); got != tc.want {
+			t.Errorf("pct=%q -> %d, want %d", tc.raw, got, tc.want)
+		}
 	}
 }
