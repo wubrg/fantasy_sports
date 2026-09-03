@@ -954,8 +954,14 @@ function drawSold() {
   const el = document.getElementById("soldlist");
   const entries = Object.entries(snap.__sold || {});
   if (!entries.length) { el.innerHTML = `<li class="empty">none yet</li>`; return; }
-  el.innerHTML = entries.map(([name, price]) =>
-    `<li>${esc(name)}<span class="price">${price ? "$" + price : "them"}</span></li>`).join("");
+  // A tilde means the board assumed the price rather than being told it, which
+  // is every opponent buy. The money is out of the pool either way; the mark
+  // says the figure is the board's estimate and not a fact.
+  el.innerHTML = entries.map(([name, s]) => {
+    const price = typeof s === "number" ? s : (s && s.price) || 0;
+    const est = typeof s === "object" && s && s.estimated;
+    return `<li>${esc(name)}<span class="price">${price ? (est ? "~$" : "$") + price : "them"}</span></li>`;
+  }).join("");
 }
 
 // SLOT_ORDER is the lineup read top to bottom: QB, RB, RB, WR, WR, WR, TE,
@@ -1217,19 +1223,30 @@ async function scratchAction(action, player, price) {
 // the board.
 
 async function recordSale(player, mine) {
-  let price = 0;
+  const body = { player, mine };
+  let shown;
   if (mine) {
     const answer = prompt(`What did you pay for ${player}?`);
     if (answer === null) return;
-    price = parseInt(answer, 10);
+    const price = parseInt(answer, 10);
     if (!Number.isFinite(price) || price < 1) return;
+    body.price = price;
+    shown = { price, estimated: false };
+  } else {
+    // No price sent at all, rather than a zero. The server prices him at his
+    // own COST, which is the board's answer to what he should go for, and
+    // takes that out of the pool. Asking instead would be a modal on every
+    // opponent's buy; posting a zero was how his money stayed in the room.
+    const row = (snap.players || []).find(p => p.Name === player);
+    const cost = row && row.Cost > 0 ? row.Cost : 1;
+    shown = { price: cost, estimated: true };
   }
   const sold = snap.__sold || {};
-  sold[player] = price;
+  sold[player] = shown;
   snap = await fetchJSON("api/sold", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ player, price, mine }),
+    body: JSON.stringify(body),
   });
   snap.__sold = sold;
   draw();

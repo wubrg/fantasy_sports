@@ -657,6 +657,11 @@ func cielyDivergence(primary, ciely map[string]int) map[string]int {
 type gone struct {
 	price int
 	mine  bool
+	// estimated marks a price the board assumed rather than one it was told.
+	// Set when a sale is entered by hand for another team, where asking would
+	// mean a modal on every opponent's buy; the player's own Cost stands in
+	// until the feed says what he really went for.
+	estimated bool
 }
 
 // Build recomputes the whole board from the cached statics plus whatever
