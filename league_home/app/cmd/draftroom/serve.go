@@ -196,8 +196,26 @@ func (s *server) rebuildLocked() error {
 	for id, g := range s.taken {
 		combined[id] = g
 	}
-	// Hand-entered sales win: you knew before the API did.
+	// Hand entry and the feed each know something the other does not, and they
+	// are different things.
+	//
+	// Hand entry knows the player is gone before the API does — that timing is
+	// the whole reason the button exists, so it wins on existence outright.
+	// What it does not know is the price: nobody is asked for one on an
+	// opponent's buy, so the board assumes his Cost to keep the pool honest in
+	// the meantime. The feed does know the price. So once the feed has the
+	// pick, an assumed price gives way to the real one, and attribution goes
+	// with it — isMine has a careful fallback ladder and should not be
+	// second-guessed by a click.
+	//
+	// A price entered by hand is never overruled: you typed it, you meant it.
 	for id, g := range s.manual {
+		if g.estimated {
+			if fed, ok := s.taken[id]; ok {
+				combined[id] = fed
+				continue
+			}
+		}
 		combined[id] = g
 	}
 	snap, err := s.static.Build(combined, s.leans.snapshot(), s.keeperScenario)
@@ -323,6 +341,27 @@ func (s *server) handleBoard(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, s.snapshot())
 }
 
+// assumedPriceLocked is what the board thinks a player goes for, used when a
+// sale is recorded without one.
+//
+// Floored at a dollar for the reason established when the arbitrage page was
+// billed the same way: no auction sells anyone for nothing, and most of the
+// board is priced under a dollar. A bin player still takes a dollar out of the
+// room, and pricing him at zero is how the pool stopped shrinking.
+//
+// Caller holds mu.
+func (s *server) assumedPriceLocked(playerID string) int {
+	for _, p := range s.cached.Players {
+		if p.PlayerID == playerID {
+			if p.Cost < 1 {
+				return 1
+			}
+			return p.Cost
+		}
+	}
+	return 1
+}
+
 // handleSold records a purchase by hand. Posting mine=false marks a player
 // as bought by someone else: he leaves the board without costing you.
 func (s *server) handleSold(w http.ResponseWriter, r *http.Request) {
@@ -330,9 +369,12 @@ func (s *server) handleSold(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "POST required", http.StatusMethodNotAllowed)
 		return
 	}
+	// Price is a pointer so that "not sent" and "free" stop being the same
+	// message. They were the same message, and that was the bug: the them
+	// button posted a flat zero and the pool never lost the money.
 	var body struct {
 		Player string `json:"player"`
-		Price  int    `json:"price"`
+		Price  *int   `json:"price"`
 		Mine   bool   `json:"mine"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -346,11 +388,21 @@ func (s *server) handleSold(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.mu.Lock()
-	price := body.Price
-	if !body.Mine && price < 0 {
-		price = 0
+	price, estimated := 0, false
+	switch {
+	case body.Price != nil:
+		price = *body.Price
+		if price < 0 {
+			price = 0
+		}
+	default:
+		// No price given, which is every opponent buy: assume the board's own
+		// answer to what he should go for. Asking instead would be a modal on
+		// each of eleven rivals every round, which is why the button never
+		// asked — but the cost of not asking was pricing him at nothing.
+		price, estimated = s.assumedPriceLocked(id), true
 	}
-	s.manual[id] = gone{price: price, mine: body.Mine}
+	s.manual[id] = gone{price: price, mine: body.Mine, estimated: estimated}
 	err := s.rebuildLocked()
 	s.mu.Unlock()
 
