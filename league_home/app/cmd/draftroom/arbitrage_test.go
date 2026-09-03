@@ -416,3 +416,55 @@ func TestSellingAPlayerDropsTheCachedView(t *testing.T) {
 		t.Error("a sale left the arbitrage view cached")
 	}
 }
+
+// TestDollarBinPlayersCostADollar — no auction sells anyone for nothing.
+//
+// Cost is a market model and lands at zero for most of the board. Priced
+// straight off it, a line-up leaning on dollar-bin players reads cheaper here
+// than it could ever be bought for, by exactly the number of them it uses.
+// The error is a dollar early and grows late, when the targets left are mostly
+// dollar-bin and the budget is tightest.
+func TestDollarBinPlayersCostADollar(t *testing.T) {
+	srv := scratchServer(t)
+	targets := []draft.PlayerSignals{
+		costed("1", "Free A", "RB", "DET", 6, 0),
+		costed("2", "Free B", "WR", "CIN", 5, 0),
+		costed("3", "Free C", "TE", "BUF", 4, 0),
+	}
+
+	fit := srv.bestFit(nil, targets, arbPrefs(), srv.scoringBaselines(), srv.static.shape, 50)
+
+	if len(fit.Picks) == 0 {
+		t.Fatal("took nobody from three affordable targets")
+	}
+	for _, p := range fit.Picks {
+		if p.Pick.Cost < 1 {
+			t.Errorf("%s priced at $%d; the minimum bid is $1", p.Pick.Name, p.Pick.Cost)
+		}
+	}
+	if fit.Spend != len(fit.Picks) {
+		t.Errorf("spend $%d for %d dollar-bin picks, want $%d",
+			fit.Spend, len(fit.Picks), len(fit.Picks))
+	}
+}
+
+// The floor binds the cap too: three free players against a $2 cap is two
+// players, not three. Without it the search would take the whole board for
+// nothing.
+func TestTheDollarFloorBindsTheCap(t *testing.T) {
+	srv := scratchServer(t)
+	targets := []draft.PlayerSignals{
+		costed("1", "Free A", "RB", "DET", 6, 0),
+		costed("2", "Free B", "WR", "CIN", 5, 0),
+		costed("3", "Free C", "TE", "BUF", 4, 0),
+	}
+
+	fit := srv.bestFit(nil, targets, arbPrefs(), srv.scoringBaselines(), srv.static.shape, 2)
+
+	if len(fit.Picks) > 2 {
+		t.Errorf("took %d players against a $2 cap", len(fit.Picks))
+	}
+	if fit.Spend > 2 {
+		t.Errorf("spend $%d over the $2 cap", fit.Spend)
+	}
+}
