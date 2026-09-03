@@ -279,6 +279,60 @@ func WriteKeeperOptions(w io.Writer, options []KeeperOption, names Names, season
 //
 // Cheapest first within a team, because the question an owner opens this
 // with is which of his players is a bargain.
+// WriteDeclaredKeepers prints the keepers each team has actually filed and
+// what they cost, with the budget each is left holding.
+//
+// The other two views answer different questions and neither answers this one.
+// WriteShareableKeepers prices every eligible player, which is the menu a
+// manager reads *before* deciding; the reconciliation view prints what the
+// value math *recommends*, which is not what anyone declared — it will tell a
+// team to keep nobody while their filed pair sits in keeper-locks.csv.
+//
+// This is the post-decision document: the settled fact, and the one thing
+// worth sending the league. Sleeper cannot show it, because it charges every
+// team a flat budget and never applies the escalating ladder.
+func WriteDeclaredKeepers(w io.Writer, declared []Entry, names Names, season string, fullBudget int) error {
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+
+	byOwner := map[string][]Entry{}
+	for _, e := range declared {
+		byOwner[e.OwnerID] = append(byOwner[e.OwnerID], e)
+	}
+	owners := make([]string, 0, len(byOwner))
+	for o := range byOwner {
+		owners = append(owners, o)
+		// Dearest first: the expensive keeper is the one that shapes a team's
+		// night, and reading down from it is how the list gets used.
+		sort.Slice(byOwner[o], func(i, j int) bool {
+			if byOwner[o][i].LeaguePrice != byOwner[o][j].LeaguePrice {
+				return byOwner[o][i].LeaguePrice > byOwner[o][j].LeaguePrice
+			}
+			return byOwner[o][i].Name < byOwner[o][j].Name
+		})
+	}
+	sort.Slice(owners, func(i, j int) bool { return names.Of(owners[i]) < names.Of(owners[j]) })
+
+	fmt.Fprintf(tw, "%s KEEPERS - DECLARED\n\n", season)
+	fmt.Fprintf(tw, "What each team is keeping and what the league charges for it.\n")
+	fmt.Fprintf(tw, "Sleeper shows every team a flat $%d and does not apply the\n", fullBudget)
+	fmt.Fprintf(tw, "escalating ladder, so these are the budgets that count.\n")
+
+	total, kept := 0, 0
+	for _, o := range owners {
+		cost := 0
+		for _, e := range byOwner[o] {
+			cost += e.LeaguePrice
+		}
+		total, kept = total+cost, kept+len(byOwner[o])
+		fmt.Fprintf(tw, "\n%s\tkeeps for $%d, leaving $%d\n", names.Of(o), cost, fullBudget-cost)
+		for _, e := range byOwner[o] {
+			fmt.Fprintf(tw, "  %s\t%s\t$%d\n", e.Name, e.Position, e.LeaguePrice)
+		}
+	}
+	fmt.Fprintf(tw, "\n%d keepers\t$%d off the board\t%d teams\n", kept, total, len(owners))
+	return tw.Flush()
+}
+
 func WriteShareableKeepers(w io.Writer, entries []Entry, names Names, season string, maxKeepers, fullBudget int) error {
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 
