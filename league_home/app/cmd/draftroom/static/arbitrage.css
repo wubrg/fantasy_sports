@@ -71,3 +71,17 @@
 .pair .mark { display: inline-block; width: 1rem; font-weight: 700; }
 .pair.stack { color: var(--good); }
 .pair .why { margin-left: 0.5rem; opacity: 0.75; }
+
+/* The budget control. Inline with its own readout so the number you are about
+   to solve against is never off screen from the slider that sets it. */
+.pctbar { display: flex; align-items: center; gap: 0.6rem; margin: 0 0 0.7rem; font-size: 0.85rem; }
+.pctbar label { color: var(--dim); }
+.pctbar input[type="range"] { width: 12rem; accent-color: var(--accent); }
+.pctbar output { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 3rem; }
+.pctbar .capnote { color: var(--dim); }
+
+table.fit { width: 100%; }
+table.fit td { padding: 0.15rem 0.4rem 0.15rem 0; vertical-align: baseline; }
+table.fit .slot { color: var(--accent); font-weight: 700; font-size: 0.8rem; width: 3rem; }
+table.fit .num { text-align: right; font-variant-numeric: tabular-nums; width: 5rem; }
+.fittotal { margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px solid var(--line); font-size: 0.85rem; }

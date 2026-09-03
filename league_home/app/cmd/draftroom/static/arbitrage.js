@@ -9,10 +9,12 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
 
 let view = null;
 
+function pct() { return document.getElementById("pct").value; }
+
 async function load() {
   const err = document.getElementById("err");
   try {
-    const res = await fetch("api/arbitrage");
+    const res = await fetch(`api/arbitrage?pct=${pct()}`);
     if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
     view = await res.json();
     err.classList.add("hidden");
@@ -38,6 +40,31 @@ function player(t) {
     `<span class="pname">${esc(t.name)}</span> ${tag(t)}` +
     `<span class="money">$${t.value}</span>` +
     `<span class="money dim">max $${t.myMaxBid}</span>`;
+}
+
+// The affordable line-up. Priced at cost, because that is what winning a
+// player takes.
+function drawBestFit() {
+  const el = document.getElementById("bestfit");
+  const b = view.bestFit || {};
+  document.getElementById("capnote").textContent =
+    `= $${b.cap ?? 0} of $${view.budgetLeft ?? 0}, holding $${b.reserve ?? 0} back for the rest of the roster`;
+
+  if (!b.picks || !b.picks.length) {
+    el.innerHTML = `<p class="note">Nothing your targets can buy at this ceiling.</p>`;
+    return;
+  }
+  el.innerHTML = `<table class="mini fit"><tbody>` + b.picks.map(p =>
+    `<tr><td class="slot">${esc(p.slot)}</td>` +
+    `<td class="pos">${esc(p.pick.position)}</td>` +
+    `<td class="pname">${esc(p.pick.name)} ${tag(p.pick)}</td>` +
+    `<td class="num">$${p.pick.cost}</td>` +
+    `<td class="num dim">worth $${p.pick.value}</td></tr>`).join("") +
+    `</tbody></table>` +
+    `<div class="fittotal">$${b.spend} spent for $${b.value} of value` +
+    (b.unfilled && b.unfilled.length
+      ? ` &middot; cannot cover ${b.unfilled.map(esc).join(", ")} at this ceiling`
+      : ` &middot; every starting slot covered`) + `</div>`;
 }
 
 function drawChain() {
@@ -127,9 +154,19 @@ function draw() {
   document.getElementById("n-chain").textContent = (view.chain || []).length;
   document.getElementById("n-spend").textContent = `$${view.spend || 0}`;
   document.getElementById("n-budget").textContent = `$${view.budgetLeft || 0}`;
+  drawBestFit();
   drawChain();
   drawGroups();
 }
 
 document.getElementById("reload").addEventListener("click", load);
+
+// The slider label follows the thumb, but the solve only reruns when you let
+// go: it is a beam search over every target, not something to run per pixel.
+const slider = document.getElementById("pct");
+slider.addEventListener("input", () => {
+  document.getElementById("pctout").textContent = `${slider.value}%`;
+});
+slider.addEventListener("change", load);
+
 load();

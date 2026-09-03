@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 
 	"leaguehome/internal/draft"
@@ -28,6 +29,9 @@ type arbTarget struct {
 	Position string `json:"position"`
 	Team     string `json:"team"`
 	Value    int    `json:"value"`
+	// Cost is what the room should charge for him, and so what getting him
+	// takes. MyMaxBid is only what you were willing to go to.
+	Cost     int    `json:"cost"`
 	MyMaxBid int    `json:"myMaxBid"`
 	Lean     string `json:"lean,omitempty"`
 	Favorite bool   `json:"favorite"`
@@ -67,9 +71,35 @@ type arbStep struct {
 	Spend int `json:"spend"`
 }
 
+// arbPick is one player in the affordable best fit. No casualty list: this
+// block answers "what can I actually end up with", and the cost of getting
+// there is the block below's job.
+type arbPick struct {
+	Pick arbTarget `json:"pick"`
+	Slot string    `json:"slot"`
+}
+
+// arbBestFit is the most valuable set of targets that fits the budget.
+type arbBestFit struct {
+	Picks []arbPick `json:"picks"`
+	// Value is what the set is worth, Spend what it costs at market. Spend is
+	// priced at Cost rather than MyMaxBid because winning a player takes what
+	// the room charges, not what you were willing to go to.
+	Value int `json:"value"`
+	Spend int `json:"spend"`
+	// Cap is the ceiling this was solved against, Pct the share of the budget
+	// it came from, and Reserve the bench money held back underneath it.
+	Cap     int `json:"cap"`
+	Pct     int `json:"pct"`
+	Reserve int `json:"reserve"`
+	// Unfilled are starting slots no affordable target could cover.
+	Unfilled []string `json:"unfilled,omitempty"`
+}
+
 // ArbitrageView is the whole page.
 type ArbitrageView struct {
 	Targets int        `json:"targets"`
+	BestFit arbBestFit `json:"bestFit"`
 	Groups  []arbGroup `json:"groups"`
 	Chain   []arbStep  `json:"chain"`
 	// Unfilled are the starting slots the chain could not fill from targets
@@ -98,7 +128,7 @@ func isTarget(p draft.PlayerSignals) bool {
 func toArbTarget(p draft.PlayerSignals) arbTarget {
 	return arbTarget{
 		PlayerID: p.PlayerID, Name: p.Name, Position: p.Position, Team: p.Team,
-		Value: p.Value, MyMaxBid: p.MyMaxBid,
+		Value: p.Value, Cost: p.Cost, MyMaxBid: p.MyMaxBid,
 		Lean: string(p.Lean.Lean), Favorite: p.Lean.Favorite,
 	}
 }
@@ -173,6 +203,139 @@ func buildGroups(targets []draft.PlayerSignals, prefs draft.Preferences) []arbGr
 		return out[i].Team < out[j].Team
 	})
 	return out
+}
+
+// beamWidth is how many partial line-ups the search carries forward.
+//
+// The problem is a knapsack with exclusions on top, so there is no cheap exact
+// answer; a beam is near-optimal at this size and, unlike a random sample, it
+// returns the same line-up twice in a row. Sixty is well past the point where
+// widening it changes the answer on a board this size.
+const beamWidth = 60
+
+// beamState is one partial line-up under construction.
+type beamState struct {
+	roster *draft.Roster
+	owned  []draft.PlayerSignals
+	picks  []arbPick
+	taken  map[string]bool
+	spend  int
+	value  int
+}
+
+// bestFit finds the most valuable line-up that the budget can actually buy.
+//
+// Priced at Cost, not MyMaxBid: getting a player takes what the room charges,
+// and MyMaxBid is only what you were willing to go to. Everyone stays a
+// candidate even where Cost is above your ceiling — the set is what is out
+// there, and whether you would break your own limit for it is your call to
+// make with the number in front of you rather than the search's to make by
+// hiding him.
+//
+// cap is the spend ceiling. Bench money is reserved underneath it before the
+// percentage applies, because a line-up that leaves nothing for the remaining
+// slots is not one you could actually field.
+func (s *server) bestFit(held, targets []draft.PlayerSignals, prefs draft.Preferences,
+	baselines map[string]float64, shape draft.PoolState, cap int) arbBestFit {
+
+	start := &draft.Roster{}
+	for _, h := range held {
+		start.Add(h, 0)
+	}
+	beam := []beamState{{
+		roster: start,
+		owned:  append([]draft.PlayerSignals(nil), held...),
+		taken:  map[string]bool{},
+	}}
+	best := beam[0]
+
+	for {
+		var next []beamState
+		seen := map[string]bool{}
+
+		for _, st := range beam {
+			unfilled := draft.Score(st.roster, baselines, shape).Unfilled
+			if len(unfilled) == 0 {
+				continue
+			}
+			blocked := draft.BlockedForMe(st.owned, targets, prefs)
+
+			for _, c := range targets {
+				if st.taken[c.PlayerID] {
+					continue
+				}
+				if _, off := blocked[c.PlayerID]; off {
+					continue
+				}
+				if st.spend+c.Cost > cap {
+					continue
+				}
+				trial := &draft.Roster{Players: append([]draft.RosterSpot(nil), st.roster.Players...)}
+				trial.Add(c, 0)
+				after := draft.Score(trial, baselines, shape).Unfilled
+				if len(after) >= len(unfilled) {
+					continue // fills no starting slot
+				}
+
+				taken := make(map[string]bool, len(st.taken)+1)
+				for k := range st.taken {
+					taken[k] = true
+				}
+				taken[c.PlayerID] = true
+
+				// Dedupe by the set of players, not the order they arrived in:
+				// the same five in a different sequence is the same line-up,
+				// and without this the beam fills with permutations.
+				key := stateKey(taken)
+				if seen[key] {
+					continue
+				}
+				seen[key] = true
+
+				next = append(next, beamState{
+					roster: trial,
+					owned:  append(append([]draft.PlayerSignals(nil), st.owned...), c),
+					picks:  append(append([]arbPick(nil), st.picks...), arbPick{Pick: toArbTarget(c), Slot: filledSlot(unfilled, after)}),
+					taken:  taken,
+					spend:  st.spend + c.Cost,
+					value:  st.value + c.Value,
+				})
+			}
+		}
+		if len(next) == 0 {
+			break
+		}
+		sort.Slice(next, func(i, j int) bool {
+			if next[i].value != next[j].value {
+				return next[i].value > next[j].value
+			}
+			return next[i].spend < next[j].spend // same value, cheaper wins
+		})
+		if len(next) > beamWidth {
+			next = next[:beamWidth]
+		}
+		if next[0].value > best.value {
+			best = next[0]
+		}
+		beam = next
+	}
+
+	return arbBestFit{
+		Picks:    best.picks,
+		Value:    best.value,
+		Spend:    best.spend,
+		Unfilled: draft.Score(best.roster, baselines, shape).Unfilled,
+	}
+}
+
+// stateKey identifies a line-up by its players, order independent.
+func stateKey(taken map[string]bool) string {
+	ids := make([]string, 0, len(taken))
+	for id := range taken {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	return strings.Join(ids, ",")
 }
 
 // buildChain walks a best-fit starting lineup out of targets alone.
@@ -291,6 +454,57 @@ func without(pool []draft.PlayerSignals, id string) []draft.PlayerSignals {
 	return out
 }
 
+// defaultBestFitPct is how much of the spendable budget the starters may eat
+// before you say otherwise. Ninety leaves a tenth for the bargain that turns
+// up late, which is the shape of an auction rather than a rule.
+const defaultBestFitPct = 90
+
+// pctParam reads ?pct= and clamps it. Out of range is clamped rather than
+// rejected: this arrives from a control on the page, and a silently sane
+// number is better mid-auction than an error where the line-up should be.
+func pctParam(r *http.Request, fallback int) int {
+	raw := r.URL.Query().Get("pct")
+	if raw == "" {
+		return fallback
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil {
+		return fallback
+	}
+	if n < 1 {
+		return 1
+	}
+	if n > 100 {
+		return 100
+	}
+	return n
+}
+
+// benchReserve is a dollar for every open slot the starters will not fill.
+//
+// Measured against the slots still unfilled on the roster you already hold,
+// not against the whole starting lineup: keepers have already taken some of
+// those spots, and counting them again reserves too little. Here that is the
+// difference between holding back $4 and the $6 the defense and five bench
+// spots actually need.
+//
+// Asked of Score for the same reason the rest of this file asks it — the flex
+// is not a position and only the lineup assignment knows what is genuinely
+// still open.
+func benchReserve(me draft.MyState, held []draft.PlayerSignals,
+	baselines map[string]float64, shape draft.PoolState) int {
+
+	r := &draft.Roster{}
+	for _, h := range held {
+		r.Add(h, 0)
+	}
+	toFill := len(draft.Score(r, baselines, shape).Unfilled)
+	if rest := me.OpenSlots - toFill; rest > 0 {
+		return rest
+	}
+	return 0
+}
+
 // handleArbitrage serves the page's data against the current board.
 func (s *server) handleArbitrage(w http.ResponseWriter, r *http.Request) {
 	snap := s.snapshot()
@@ -327,8 +541,25 @@ func (s *server) handleArbitrage(w http.ResponseWriter, r *http.Request) {
 	if !view.Inactive {
 		view.Groups = buildGroups(targets, prefs)
 	}
+
+	baselines, shape := s.scoringBaselines(), s.static.shape
+
+	// The affordable line-up. Bench money comes off first: every slot the
+	// starters do not fill still needs a dollar, and a line-up that leaves
+	// nothing for them is not one you could field. The percentage then
+	// applies to what is left, so 100% still reserves the bench.
+	pct := pctParam(r, defaultBestFitPct)
+	reserve := benchReserve(snap.Me, held, baselines, shape)
+	room := snap.Me.Budget - reserve
+	if room < 0 {
+		room = 0
+	}
+	cap := room * pct / 100
+	view.BestFit = s.bestFit(held, targets, prefs, baselines, shape, cap)
+	view.BestFit.Pct, view.BestFit.Cap, view.BestFit.Reserve = pct, cap, reserve
+
 	view.Chain, view.Unfilled, view.Spend = s.buildChain(
-		held, targets, prefs, s.scoringBaselines(), s.static.shape)
+		held, targets, prefs, baselines, shape)
 
 	writeJSON(w, view)
 }
