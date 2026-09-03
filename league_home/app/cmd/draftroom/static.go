@@ -822,7 +822,26 @@ func (s *staticData) Build(taken map[string]gone, edits boardEdits, keeperScenar
 		costs[m.PlayerID] = m.Cost
 	}
 
-	recommended := me.MaxRecommendedBid(state.LeaguePerStarter(), draft.DefaultRiskFloor)
+	// The ceiling is what you can bid and still start a real player
+	// everywhere — not what keeps you level with the room. The league-relative
+	// figure still colours the risk band below; it collapses to a dollar the
+	// moment you spend ahead of the field, and it also caps must-have and
+	// favourite bids, so as a ceiling it took every premium down with it.
+	//
+	// Costs and points are already resolved here, and the flex is asked of the
+	// roster shape rather than the pricing one so a preference about what may
+	// start there is honoured.
+	candidates := make([]draft.StarterCandidate, 0, len(values))
+	for _, v := range values {
+		if c, priced := costs[v.PlayerID]; priced {
+			candidates = append(candidates, draft.StarterCandidate{
+				PlayerID: v.PlayerID, Position: v.Position,
+				Cost: c, Points: s.points[v.PlayerID],
+			})
+		}
+	}
+	recommended := draft.AffordableCeiling(me, candidates, s.thresholds,
+		s.prefs.RosterShape(s.shape).FlexPositions)
 	// Resolved once and used by both consumers below. Passing the raw set
 	// to either would put a read on the board that the must-have budget
 	// line does not know about — the two would disagree about the same
@@ -836,7 +855,7 @@ func (s *staticData) Build(taken map[string]gone, edits boardEdits, keeperScenar
 		DellSharp: s.dellSharp, CielySharp: s.cielyDelta,
 		BorisTier: s.borisTier,
 	})
-	snap := draft.Assemble(s.season, state, me, players, leans, s.tempo(taken, costs), s.thresholds, append(append([]string(nil), s.warnings...), s.leanWarnings...))
+	snap := draft.Assemble(s.season, state, me, players, leans, s.tempo(taken, costs), s.thresholds, recommended, append(append([]string(nil), s.warnings...), s.leanWarnings...))
 	snap.LeanSets = s.leanSets
 	// Players already gone price the curve at what they actually went for,
 	// which is why this is assembled here where taken is in scope.
