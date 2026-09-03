@@ -25,6 +25,48 @@ var staticFS embed.FS
 // commissioner starting without pretending anything is happening.
 const idleInterval = 60 * time.Second
 
+// nearStartWindow and lateStartGrace bound the stretch either side of the
+// scheduled start where an idle board stops idling.
+//
+// Once a minute is right for the eleven months a draft is not happening and
+// wrong for the ten minutes before one: the opening nomination runs on a short
+// clock, so a board that takes up to a minute to notice the draft began can
+// miss the first player outright. Inside the window it watches at the live
+// cadence instead.
+//
+// The window reaches past the start as well as before it, because the case
+// this exists for is a commissioner starting late — the hour comes and goes,
+// the status has not flipped, and the board must not have gone back to sleep.
+// The grace period ends it so a draft that never happened does not poll at
+// draft speed forever.
+//
+// The cost is bounded and small: ten minutes at three seconds is 400 requests
+// against Sleeper's 1000 a minute, and outside the window an idle board's
+// volume is exactly what it was.
+const (
+	nearStartWindow = 10 * time.Minute
+	lateStartGrace  = 2 * time.Hour
+)
+
+// idleCadence is how long to wait before looking again at a draft that is not
+// running: the live interval around its scheduled start, and the idle one
+// otherwise. A draft with no start time set has nothing to tighten around.
+func idleCadence(startsAt, now time.Time, live time.Duration) time.Duration {
+	// Deliberately explicit, and no test can tell the difference. A zero time
+	// is year 1, so the subtraction below overflows int64 nanoseconds and
+	// saturates near -292 years, which lands outside the grace period and
+	// returns the same answer by accident. Correct behaviour resting on
+	// integer overflow is not behaviour worth relying on.
+	if startsAt.IsZero() {
+		return idleInterval
+	}
+	until := startsAt.Sub(now)
+	if until <= nearStartWindow && until > -lateStartGrace {
+		return live
+	}
+	return idleInterval
+}
+
 // defaultPollInterval is how often the live draft is read while it is running,
 // and the default for -poll.
 //
@@ -197,7 +239,7 @@ func (s *server) invalidateArbitrage() {
 // board makes the same two calls a minute apart rather than a second apart.
 func (s *server) pollForever(every time.Duration) {
 	for {
-		drafting, nom := s.static.DraftState()
+		drafting, nom, startsAt := s.static.DraftState()
 		s.setNomination(nom)
 		// Poll on both cadences: picks can be entered before the status
 		// flips, and a stale board is worse than a slow one.
@@ -206,7 +248,7 @@ func (s *server) pollForever(every time.Duration) {
 			time.Sleep(every)
 			continue
 		}
-		time.Sleep(idleInterval)
+		time.Sleep(idleCadence(startsAt, time.Now(), every))
 	}
 }
 
