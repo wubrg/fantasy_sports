@@ -187,15 +187,15 @@ func jointVerdict(pts []calib.Point, bar, hold float64) {
 	fmt.Printf("    E1 accuracy     paired Brier gain %+.5f  [%+.5f, %+.5f]   %s\n",
 		gain, glo, ghi, verdictWord(e1, math.IsNaN(glo)))
 
-	n := calib.OverBarCount(pts, bar)
+	n := calib.OverBarCount(pts, bar, hold)
 	edge := calib.RealisedEdge(pts, bar, hold)
 	stat := func(s []calib.Point) float64 { return calib.RealisedEdge(s, bar, hold) }
 	elo, ehi := calib.BootstrapCI(pts, stat, 800, 20260824, 0.05)
 	e2 := !math.IsNaN(elo) && elo > 0
-	fmt.Printf("    E2 profit       realised edge %+.4f  [%+.4f, %+.4f]  on %d wagers   %s\n",
+	fmt.Printf("    E2 profit       realised ROI %+.4f  [%+.4f, %+.4f]  on %d wagers   %s\n",
 		edge, elo, ehi, n, verdictWord(e2, math.IsNaN(elo) || n == 0))
-	fmt.Printf("                    per unit staked, at a %.0f%% hold, on rows over ±%.2f\n",
-		hold*100, bar)
+	fmt.Printf("                    per unit STAKED (comparable to FINDINGS §16's +7%%..+18%%),\n")
+	fmt.Printf("                    a prop reconstructed from the frozen site at a %.0f%% hold\n", hold*100)
 
 	switch {
 	case math.IsNaN(glo) || math.IsNaN(elo) || n == 0:
@@ -440,6 +440,11 @@ func points(preds []betlog.SettledPrediction, only string, fromWeek, toWeek int,
 		}
 		if ref, ok := reference(p, mode); ok {
 			pt.Ref, pt.HasRef = ref, true
+		}
+		// The frozen wagerable site, if this scenario has one. Both halves or
+		// neither: q and r only mean something together.
+		if p.Q != nil && p.R != nil {
+			pt.Q, pt.R, pt.HasQR = *p.Q, *p.R, true
 		}
 		out = append(out, scoredRow{pt: pt, scenario: p.Scenario, week: p.Week,
 			confidence: p.Confidence, flagged: p.Flagged})

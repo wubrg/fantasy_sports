@@ -228,8 +228,13 @@ on the second.
 
 The primary endpoint is **pre-registered and has two halves, both of which must pass**: that the
 forecast is more accurate than the reference (paired Brier gain), and that the wagers it implies
-would have won (realised edge on the rows it disagreed by more than the bar). Being more accurate
-and being worth betting are different claims, and a forecaster can hold one without the other.
+would have won. That second half is a **real prop wager, not a bet on the scenario directly** —
+there is no market in "was it a shootout". For the two wagerable scenarios the tool freezes the best
+validated site's `q` and `r` at ingest, turns your `s` and the reference's into prop prices
+`P = q·s + r·(1−s)`, and counts a row as a wager only where your price clears the book's *after its
+hold*. The return is reported per unit **staked**, so it is comparable to
+[FINDINGS §16](../../model/FINDINGS.md)'s +7% to +18% oracle bound. Being more accurate and being
+worth betting are different claims, and a forecaster can hold one without the other.
 
 **The reference is not just the base rate.** `beliefs score` reports each opponent on its own rows,
 never pooled: the market where there is one, the incumbent model from week 4, and — for the two

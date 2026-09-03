@@ -70,6 +70,18 @@ type Point struct {
 	// Cluster is the unit of dependence: the game. Bootstrap resamples these,
 	// not rows.
 	Cluster string
+
+	// Q and R are the prop-conversion the belief probe's E2 needs: P(prop hit)
+	// with the scenario and without it, at the wagerable site frozen onto this
+	// prediction at ingest. HasQR is false where the scenario has no wagerable
+	// site (blowout_loss, pass_heavy) -- those rows are scored for accuracy but
+	// never become a wager, which is correct rather than a gap.
+	//
+	// P(hit) = q*s + r*(1-s). They are frozen, not recomputed, for the same
+	// reason the references are: a refit must not change the wager a settled
+	// prediction is judged on.
+	Q, R  float64
+	HasQR bool
 }
 
 func (p Point) y() float64 {
@@ -527,39 +539,37 @@ func BootstrapCI(pts []Point, stat func([]Point) float64, iters int, seed int64,
 	return vals[loIdx], vals[hiIdx]
 }
 
-// RealisedEdge is what the wagers this forecast would actually place returned,
-// per unit staked, against the price the reference implies.
+// RealisedEdge is the return on the prop wagers this forecast implies, per unit
+// STAKED -- the same units as FINDINGS §16's oracle bound (+7% to +18%), so the
+// two can finally be compared. It used to return per unit of maximum payout, a
+// different and incomparable number, on a direct market that does not exist.
 //
-// This is the money question, and no calibration statistic answers it. A
-// forecaster can be more accurate than the reference everywhere by a hair --
-// a healthy paired Brier gain -- and never disagree by enough to place a single
-// bet. The two endpoints are different claims and both have to hold.
+// The belief probe settles the game SCRIPT, not a prop: it has no player, line
+// or prop outcome. So the wager is reconstructed from the site frozen onto each
+// row. q and r turn a P(scenario) into a prop price, P = q*s + r*(1-s):
 //
-// Only rows over the bar count, because those are the only ones that become
-// wagers. The side taken follows the direction of the disagreement:
+//	P_book = q*s_ref + r*(1-s_ref)   the price the reference's belief implies
+//	P_you  = q*s_you + r*(1-s_you)   the price yours does
 //
-//	p > ref   bet the scenario happens;     breakeven ref*(1+hold),      realised y
-//	p < ref   bet it does not;              breakeven (1-ref)*(1+hold),  realised 1-y
+// A row is a wager only where your price clears the book's price AFTER its hold
+// -- P_you > P_book*(1+hold) to bet over, the mirror to bet under. That is
+// exactly the plan's requirement s_you - s_ref > P_book*hold/(q-r): the hold is
+// levied on the prop price, not in s-space, which is the fix for the endpoint
+// that used to report a profit on negative-EV strategies.
 //
-// Positive means the wagers won more than the price required.
+// The realised prop-hit rate given the observed scenario is q if it occurred and
+// r if it did not -- the honest realisation available without a prop line, lower
+// variance than a single 0/1 prop, and ungameable because q and r are frozen.
+// Rows without a wagerable site (no q/r) never become wagers.
 func RealisedEdge(pts []Point, bar, hold float64) float64 {
 	var sum float64
 	var n int
 	for _, p := range Positions(pts) {
-		if !p.HasRef {
+		roi, ok := p.wagerROI(bar, hold)
+		if !ok {
 			continue
 		}
-		d := p.P - p.Ref
-		if math.Abs(d) <= bar {
-			continue
-		}
-		var breakeven, realised float64
-		if d > 0 {
-			breakeven, realised = p.Ref*(1+hold), p.y()
-		} else {
-			breakeven, realised = (1-p.Ref)*(1+hold), 1-p.y()
-		}
-		sum += realised - breakeven
+		sum += roi
 		n++
 	}
 	if n == 0 {
@@ -568,15 +578,56 @@ func RealisedEdge(pts []Point, bar, hold float64) float64 {
 	return sum / float64(n)
 }
 
-// OverBarCount is how many rows the realised-edge statistic actually rests on.
+// wagerROI reconstructs the prop wager one row implies and returns its realised
+// return per unit staked, or ok=false if the row is not a wager.
 //
-// Reported beside it because it is a small fraction of the sample: the bar is
-// what makes a row a wager, and a forecaster that abstains freely -- as the
-// contract asks it to -- will put few rows over it.
-func OverBarCount(pts []Point, bar float64) int {
+// bar is an extra floor on the s-disagreement on top of clearing the vig, so a
+// caller can demand a minimum edge; bar=0 recovers pure break-even-plus-hold.
+func (p Point) wagerROI(bar, hold float64) (float64, bool) {
+	if !p.HasRef || !p.HasQR {
+		return 0, false
+	}
+	if p.Q-p.R <= 0 {
+		return 0, false // the scenario does not raise the prop: nothing to bet on it
+	}
+	if math.Abs(p.P-p.Ref) <= bar {
+		return 0, false
+	}
+	pBook := p.Q*p.Ref + p.R*(1-p.Ref)
+	pYou := p.Q*p.P + p.R*(1-p.P)
+
+	// The prop's realised hit rate GIVEN the scenario we observed.
+	h := p.R
+	if p.Y {
+		h = p.Q
+	}
+
+	if pYou > pBook {
+		be := pBook * (1 + hold) // bet OVER
+		if pYou <= be || be <= 0 || be >= 1 {
+			return 0, false
+		}
+		return (h - be) / be, true
+	}
+	be := (1 - pBook) * (1 + hold) // bet UNDER
+	if (1-pYou) <= be || be <= 0 || be >= 1 {
+		return 0, false
+	}
+	return ((1 - h) - be) / be, true
+}
+
+// OverBarCount is how many rows the realised-edge statistic actually rests on:
+// the wagers it implies, not merely the rows over the bar. A row is a wager only
+// if it has a frozen site AND its price clears the book's after the hold, so this
+// counts exactly what RealisedEdge averages over.
+//
+// Reported beside the edge because it is a small fraction of the sample: a
+// forecaster that abstains freely -- as the contract asks -- and only bets where
+// the vig is cleared will put few rows here, and that is the finding, not a flaw.
+func OverBarCount(pts []Point, bar, hold float64) int {
 	var n int
 	for _, p := range Positions(pts) {
-		if p.HasRef && math.Abs(p.P-p.Ref) > bar {
+		if _, ok := p.wagerROI(bar, hold); ok {
 			n++
 		}
 	}

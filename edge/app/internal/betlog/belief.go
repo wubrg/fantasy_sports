@@ -70,6 +70,16 @@ type Prediction struct {
 	SLine     *float64 `json:"s_line,omitempty"`
 	PriorForm *float64 `json:"prior_form,omitempty"`
 
+	// Q, R and Site are the wagerable site frozen for the realised-edge endpoint:
+	// P(prop hit) with the scenario and without it, and where in the grid they
+	// came from. Present only for scenarios with a deployable validated site
+	// (shootout, efficient_offense); nil for the rest, which are scored for
+	// accuracy but never become a wager. Frozen at ingest so a refit cannot
+	// change the wager a settled prediction was judged on.
+	Q    *float64 `json:"q,omitempty"`
+	R    *float64 `json:"r,omitempty"`
+	Site string   `json:"site,omitempty"`
+
 	Kickoff     time.Time `json:"kickoff"`
 	GeneratedAt time.Time `json:"generated_at"`
 

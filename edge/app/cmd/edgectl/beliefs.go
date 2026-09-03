@@ -376,6 +376,14 @@ func freezeReferences(p *betlog.Prediction, pk inputPack, g packGame,
 		}
 	}
 
+	// The wagerable site for the realised-edge endpoint: q and r at the best
+	// validated cell for this scenario, frozen so a refit cannot change the
+	// wager a settled prediction was judged on. Absent for scenarios with no
+	// deployable site, which then produce no E2 wager.
+	if q, r, site, ok := c.BestWagerableSite(p.Scenario); ok {
+		p.Q, p.R, p.Site = &q, &r, site
+	}
+
 	// The incumbent, where prior form exists. Nil before week 4 rather than a
 	// number, because "not measured" is not "measured at zero".
 	if t, ok := g.Teams[p.Team]; ok && t.PriorForm != nil {
