@@ -443,9 +443,27 @@ func (s *server) bestFitLines(held, targets []draft.PlayerSignals, prefs draft.P
 }
 
 // lineOf renders one search state as a reportable line.
+//
+// Picks come out of the beam in the order it added them, which is by
+// descending value and reads as arbitrary on the page. They are reported in
+// lineup order instead — QB, RB, RB, WR, WR, WR, TE, FLEX — because that is
+// how a lineup is said out loud and the shape is what you recognise
+// mid-auction. Slot rather than position, so the flex reads last even holding
+// a running back.
+//
+// A copy, not the state's own slice: the winning state is also appended to the
+// terminal set and passes through here more than once.
 func (s *server) lineOf(st beamState, baselines map[string]float64, shape draft.PoolState) arbBestFit {
+	picks := append([]arbPick(nil), st.picks...)
+	sort.SliceStable(picks, func(i, j int) bool {
+		if a, b := draft.SlotRank(picks[i].Slot), draft.SlotRank(picks[j].Slot); a != b {
+			return a < b
+		}
+		// Dearest first inside a slot, matching Roster.Starters.
+		return picks[i].Pick.Cost > picks[j].Pick.Cost
+	})
 	return arbBestFit{
-		Picks:    st.picks,
+		Picks:    picks,
 		Value:    st.value,
 		Spend:    st.spend,
 		Surplus:  st.value - st.spend,

@@ -243,10 +243,29 @@ func Score(r *Roster, baselines map[string]float64, shape PoolState) RosterMetri
 	return m
 }
 
+// lineupOrder is the lineup read top to bottom: QB, RB, RB, WR, WR, WR, TE,
+// FLEX. Not alphabetical and not fullest-first — it is the order the lineup is
+// actually said in, so the shape is recognisable at a glance.
+var lineupOrder = []string{"QB", "RB", "WR", "TE", "FLEX"}
+
+// SlotRank is where a lineup slot sits when a roster is read top to bottom.
+//
+// An unknown slot ranks last rather than first, so a roster shape this package
+// has not been taught about still renders instead of leading the lineup ahead
+// of the quarterback. That is what the board's own renderer does, and a map
+// lookup returning zero for a missing key quietly did the opposite.
+func SlotRank(slot string) int {
+	for i, s := range lineupOrder {
+		if s == slot {
+			return i
+		}
+	}
+	return len(lineupOrder)
+}
+
 // Starters returns the spots making the lineup, in slot order. Score must
 // have run first.
 func (r Roster) Starters() []RosterSpot {
-	order := map[string]int{"QB": 0, "RB": 1, "WR": 2, "TE": 3, "FLEX": 4}
 	var out []RosterSpot
 	for _, s := range r.Players {
 		if s.Starting {
@@ -254,8 +273,8 @@ func (r Roster) Starters() []RosterSpot {
 		}
 	}
 	sort.SliceStable(out, func(i, j int) bool {
-		if order[out[i].Slot] != order[out[j].Slot] {
-			return order[out[i].Slot] < order[out[j].Slot]
+		if a, b := SlotRank(out[i].Slot), SlotRank(out[j].Slot); a != b {
+			return a < b
 		}
 		return out[i].Price > out[j].Price
 	})
