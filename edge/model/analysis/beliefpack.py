@@ -253,9 +253,53 @@ def pack(season: int, week: int) -> dict:
     }
 
 
+SPEC = Path(__file__).parent.parent.parent / "docs" / "frameworks" / "belief-probe.md"
+OPERATIVE_BEGIN = "<!-- BEGIN OPERATIVE PROMPT"
+OPERATIVE_END = "<!-- END OPERATIVE PROMPT -->"
+
+
+def operative_prompt() -> str:
+    """The instruction block, lifted verbatim from the operative spec.
+
+    The pasteable prompt and belief-probe.md must not drift -- so there is one
+    copy, in the document, and this reads it. Missing markers are a hard error
+    rather than a silent fallback: emitting a pack with no instructions is
+    exactly the bug this exists to prevent, and a rename should shout.
+    """
+    text = SPEC.read_text()
+    try:
+        after = text.split(OPERATIVE_BEGIN, 1)[1]
+        body = after.split("-->", 1)[1]
+        block = body.split(OPERATIVE_END, 1)[0]
+    except IndexError:
+        raise SystemExit(
+            f"belief-probe.md is missing the operative markers "
+            f"({OPERATIVE_BEGIN} ... {OPERATIVE_END}); the pasteable prompt "
+            f"cannot be built without them. Did the spec get renamed or edited?"
+        )
+    block = block.strip()
+    if "OUTPUT CONTRACT" not in block or "predictions" not in block:
+        raise SystemExit(
+            "the operative block was found but does not contain the output "
+            "contract; refusing to emit a prompt a forecaster cannot answer."
+        )
+    return block
+
+
 def render(p: dict, sha: str) -> str:
-    """The pack as text to paste into a model."""
+    """The pack as text to paste into a model: instructions, then this week's facts.
+
+    The instructions are the operative block from belief-probe.md; the facts are
+    the tables below, bound to the pack's own sha. A forecaster needs both, and
+    for a long time this emitted only the second half.
+    """
     L = [f"# BELIEF PACK — {p['season']} week {p['week']}", ""]
+    L.append(operative_prompt())
+    L.append("")
+    L.append("---")
+    L.append("")
+    L.append("## THE PACK — the facts your forecast is bound to")
+    L.append("")
     L.append(f"pack_sha256: {sha}")
     L.append("Echo this sha back in your output. It binds your forecast to exactly "
              "these facts.")

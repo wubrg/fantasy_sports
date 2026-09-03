@@ -52,6 +52,39 @@ func TestSlopeRecoversOneWhenCalibrated(t *testing.T) {
 	}
 }
 
+// TestScoreReportsTheSlopeNotTheIntercept. CalibrationSlope returns
+// (intercept, slope) in that order; Score once assigned them the wrong way
+// round, so a perfectly calibrated forecaster reported a slope of ~0 (its
+// intercept) under prose reading "1.0 is honest". The tests above call
+// CalibrationSlope directly and destructure correctly, so they passed AROUND
+// the bug — this one goes through Score and asserts on Report.Slope, which is
+// the field the CLI prints.
+func TestScoreReportsTheSlopeNotTheIntercept(t *testing.T) {
+	calibrated, err := Score(synth(40000, 1.0, 1), 0.10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if math.Abs(calibrated.Slope-1) > 0.10 {
+		t.Errorf("Report.Slope %.3f on calibrated forecasts, want ~1 "+
+			"(intercept is %.3f — a swap would put ~0 here)",
+			calibrated.Slope, calibrated.Intercept)
+	}
+	if math.Abs(calibrated.Intercept) > 0.15 {
+		t.Errorf("Report.Intercept %.3f on calibrated forecasts, want ~0", calibrated.Intercept)
+	}
+
+	// Over-confident: the slope must fall below the calibrated one. If the
+	// fields were swapped this would compare intercepts and prove nothing.
+	inflated, err := Score(synth(40000, 1.8, 2), 0.10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if inflated.Slope >= calibrated.Slope {
+		t.Errorf("inflated Report.Slope %.3f is not below the calibrated %.3f",
+			inflated.Slope, calibrated.Slope)
+	}
+}
+
 // TestSlopeCatchesTheForecasterThatOrdersNothing. A source that always returns
 // the base rate is perfectly calibrated on average and worth nothing. Bias
 // alone cannot tell it apart from a good one; resolution and slope can.

@@ -49,6 +49,11 @@ before kickoff. See [ADR-002](../ADR-002-belief-log-tracked-in-git.md).
 
 ---
 
+<!-- BEGIN OPERATIVE PROMPT — beliefpack.py render() lifts everything between
+     these markers verbatim into the pasteable week??.prompt.md, so the file a
+     forecaster is handed and the document reviewed here cannot drift. Editing
+     the block edits the prompt; renaming or removing the markers makes the pack
+     fail loudly rather than emit an instruction-less file. -->
 ## SYSTEM PROMPT: THE BELIEF PROBE
 
 **ROLE:** You are forecasting NFL game scripts. You are not selecting wagers, not naming players,
@@ -194,6 +199,7 @@ base rate everywhere is perfectly calibrated and worth nothing, and one that dis
 the wrong direction is worse than one that says nothing.
 
 So: abstain freely, commit where you have a reason, and make the reason checkable.
+<!-- END OPERATIVE PROMPT -->
 
 ---
 

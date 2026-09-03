@@ -155,7 +155,10 @@ func Score(pts []Point, bar float64) (Report, error) {
 	r.Brier = Brier(live)
 	r.Bins = binCount(len(live))
 	r.Reliability, r.Resolution, r.Uncertainty = Decompose(live, r.Bins)
-	r.Slope, r.Intercept, r.SlopeSE, r.Converged = CalibrationSlope(live)
+	// CalibrationSlope returns (a, b) = (intercept, slope) in that order; the
+	// assignment must match, or a perfectly calibrated forecaster reports a
+	// slope of ~0 (its intercept) under prose that reads "1.0 is honest".
+	r.Intercept, r.Slope, r.SlopeSE, r.Converged = CalibrationSlope(live)
 	r.AUC, _ = AUC(live)
 	r.Separation = separation(live)
 	r.Bar = bar
