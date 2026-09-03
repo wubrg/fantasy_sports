@@ -354,3 +354,65 @@ func TestPctParamClamps(t *testing.T) {
 		}
 	}
 }
+
+// TestArbitrageIsCachedUntilTheBoardChanges.
+//
+// The page polls on the board's cadence, and the solve behind it costs twenty
+// times what serving the board does — a beam search over every target. Without
+// a cache that search runs sixty times a minute to produce the same answer,
+// on the machine running the draft.
+func TestArbitrageIsCachedUntilTheBoardChanges(t *testing.T) {
+	srv := scratchServer(t)
+
+	first := httptest.NewRecorder()
+	srv.handleArbitrage(first, httptest.NewRequest("GET", "/api/arbitrage?pct=90", nil))
+	if first.Code != 200 {
+		t.Fatalf("first request: %d", first.Code)
+	}
+	srv.arbMu.Lock()
+	cached := len(srv.arbCache)
+	srv.arbMu.Unlock()
+	if cached != 1 {
+		t.Errorf("cache holds %d views after one request, want 1", cached)
+	}
+
+	// A different ceiling is a different answer and must not reuse the first.
+	srv.handleArbitrage(httptest.NewRecorder(),
+		httptest.NewRequest("GET", "/api/arbitrage?pct=50", nil))
+	srv.arbMu.Lock()
+	cached = len(srv.arbCache)
+	srv.arbMu.Unlock()
+	if cached != 2 {
+		t.Errorf("cache holds %d views for two ceilings, want 2", cached)
+	}
+
+	// A rebuild is the board changing, which is exactly when the answer can
+	// differ — every ceiling has to be dropped, not just the one that moved.
+	if err := srv.rebuild(); err != nil {
+		t.Fatal(err)
+	}
+	srv.arbMu.Lock()
+	cached = len(srv.arbCache)
+	srv.arbMu.Unlock()
+	if cached != 0 {
+		t.Errorf("cache kept %d views across a rebuild — the page would serve a stale board", cached)
+	}
+}
+
+// A sale is a rebuild, so the page must not answer from the cache afterwards.
+func TestSellingAPlayerDropsTheCachedView(t *testing.T) {
+	srv := scratchServer(t)
+	srv.handleArbitrage(httptest.NewRecorder(),
+		httptest.NewRequest("GET", "/api/arbitrage", nil))
+
+	srv.taken["1"] = gone{price: 40, mine: false}
+	if err := srv.rebuild(); err != nil {
+		t.Fatal(err)
+	}
+
+	srv.arbMu.Lock()
+	defer srv.arbMu.Unlock()
+	if len(srv.arbCache) != 0 {
+		t.Error("a sale left the arbitrage view cached")
+	}
+}

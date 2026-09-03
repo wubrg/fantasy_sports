@@ -506,7 +506,38 @@ func benchReserve(me draft.MyState, held []draft.PlayerSignals,
 }
 
 // handleArbitrage serves the page's data against the current board.
+//
+// Cached per budget percentage and rebuilt only when the board changes, since
+// the page polls on the board's cadence and the solve behind it is not cheap.
 func (s *server) handleArbitrage(w http.ResponseWriter, r *http.Request) {
+	pct := pctParam(r, defaultBestFitPct)
+
+	s.arbMu.Lock()
+	if v, ok := s.arbCache[pct]; ok {
+		s.arbMu.Unlock()
+		writeJSON(w, v)
+		return
+	}
+	s.arbMu.Unlock()
+
+	view := s.arbitrageView(pct)
+
+	// A rebuild may have landed while this was being built, which would have
+	// cleared a cache this is about to write into. Storing a view one board
+	// old is harmless — the next poll is a second away and will miss the
+	// cache again — and the alternative is holding a lock across the solve.
+	s.arbMu.Lock()
+	if s.arbCache == nil {
+		s.arbCache = map[int]ArbitrageView{}
+	}
+	s.arbCache[pct] = view
+	s.arbMu.Unlock()
+
+	writeJSON(w, view)
+}
+
+// arbitrageView builds the page against the current board.
+func (s *server) arbitrageView(pct int) ArbitrageView {
 	snap := s.snapshot()
 	prefs := s.static.prefs
 
@@ -548,7 +579,6 @@ func (s *server) handleArbitrage(w http.ResponseWriter, r *http.Request) {
 	// starters do not fill still needs a dollar, and a line-up that leaves
 	// nothing for them is not one you could field. The percentage then
 	// applies to what is left, so 100% still reserves the bench.
-	pct := pctParam(r, defaultBestFitPct)
 	reserve := benchReserve(snap.Me, held, baselines, shape)
 	room := snap.Me.Budget - reserve
 	if room < 0 {
@@ -561,5 +591,5 @@ func (s *server) handleArbitrage(w http.ResponseWriter, r *http.Request) {
 	view.Chain, view.Unfilled, view.Spend = s.buildChain(
 		held, targets, prefs, baselines, shape)
 
-	writeJSON(w, view)
+	return view
 }

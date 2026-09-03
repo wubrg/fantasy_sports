@@ -7,7 +7,18 @@
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+// The board's own cadence, so this page moves when it does. Matched to
+// POLL_MS in app.js: the server cannot have newer data than its last Sleeper
+// poll, and the view is cached server-side between board changes, so asking
+// this often costs a cache read on most ticks.
+const POLL_MS = 1000;
+
 let view = null;
+// The last payload drawn, so a tick that changes nothing changes nothing on
+// screen. Without this the page would rebuild itself every second under
+// whatever you were reading, and a table that reflows while you look at it is
+// worse than one a second behind.
+let lastPayload = "";
 
 function pct() { return document.getElementById("pct").value; }
 
@@ -16,8 +27,11 @@ async function load() {
   try {
     const res = await fetch(`api/arbitrage?pct=${pct()}`);
     if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-    view = await res.json();
+    const body = await res.text();
     err.classList.add("hidden");
+    if (body === lastPayload) return; // nothing moved; leave the page alone
+    lastPayload = body;
+    view = JSON.parse(body);
     draw();
   } catch (e) {
     // Into the bar rather than the console: an empty page and a failed fetch
@@ -167,6 +181,9 @@ const slider = document.getElementById("pct");
 slider.addEventListener("input", () => {
   document.getElementById("pctout").textContent = `${slider.value}%`;
 });
-slider.addEventListener("change", load);
+// A new ceiling is a different answer, so force the redraw past the
+// unchanged-payload check.
+slider.addEventListener("change", () => { lastPayload = ""; load(); });
 
 load();
+setInterval(load, POLL_MS);

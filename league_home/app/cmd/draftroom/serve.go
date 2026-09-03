@@ -93,6 +93,19 @@ type server struct {
 	// the rest of the live state, since changing it rebuilds the board.
 	keeperScenario string
 
+	// arbCache holds the arbitrage view per budget percentage, because that
+	// page costs twenty times what the board does to build — a beam search
+	// over every target — and the page polls on the board's cadence. The
+	// board changes when a pick lands, perhaps twice a minute; without this
+	// the search would run sixty times to produce the same answer.
+	//
+	// Its own lock, not the board's: the solve takes tens of milliseconds and
+	// holding mu through it would stall every poll and sale behind it.
+	// Invalidated wholesale in rebuildLocked, which is precisely "the board
+	// changed" and so precisely when the answer can differ.
+	arbMu    sync.Mutex
+	arbCache map[int]ArbitrageView
+
 	// nomination is the player currently up for auction, nil when none is.
 	// Live state like taken and manual, written by the poll and guarded by mu.
 	nomination *draft.Nomination
@@ -161,7 +174,16 @@ func (s *server) rebuildLocked() error {
 		}
 	}
 	s.cached = snap
+	s.invalidateArbitrage()
 	return nil
+}
+
+// invalidateArbitrage drops the cached views. Called from rebuildLocked, which
+// runs on every change to the board the page is built from.
+func (s *server) invalidateArbitrage() {
+	s.arbMu.Lock()
+	s.arbCache = nil
+	s.arbMu.Unlock()
 }
 
 // poll reads the live draft and folds any new picks into the board.
