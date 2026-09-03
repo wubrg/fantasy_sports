@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"leaguehome/internal/draft"
 )
 
 // keeperLocksFile names the players their owners are known to be keeping,
@@ -102,4 +104,61 @@ func loadKeeperLocks(cfg string) ([]keeperLock, error) {
 		out = append(out, keeperLock{Owner: owner, Player: player})
 	}
 	return out, nil
+}
+
+// declaredEntries joins the filed keeper locks to the priced candidate pool.
+//
+// Through the board's own PoolMatcher rather than a bare name comparison. The
+// file is typed by hand and the pool is spelled the projection source's way,
+// so "James Cook III" has to reach "James Cook" — and it does not on a plain
+// normalize, which keeps the suffix. The matcher carries the stem index that
+// closes that gap, and the aliases file besides; it also refuses a stem two
+// players share, which is the behaviour worth having when the alternative is
+// charging a keeper to the wrong roster.
+//
+// The owner comes from the entry, never from the file's owner column. That
+// column is documentation — a player sits on exactly one roster and that
+// settles whose keeper he is — so a name filed against the wrong manager still
+// lands on the right team here rather than corrupting two of them.
+//
+// A lock that reaches no priced entry is returned as a warning rather than
+// dropped in silence. It means a keeper nobody can price, and this list is
+// about to be sent to eleven other people.
+func declaredEntries(cfg string, priced []draft.Entry) ([]draft.Entry, []string) {
+	locks, err := loadKeeperLocks(cfg)
+	if err != nil {
+		return nil, []string{fmt.Sprintf("keeper locks unreadable: %v", err)}
+	}
+
+	names := make([]string, 0, len(priced))
+	byName := make(map[string]draft.Entry, len(priced))
+	for _, e := range priced {
+		names = append(names, e.Name)
+		byName[e.Name] = e
+	}
+	// Aliases are optional; without them the matcher still has its name and
+	// stem indexes, which is what this join actually leans on.
+	aliases, _ := draft.LoadAliases(filepath.Join(cfg, aliasesFile))
+	matcher := draft.NewPoolMatcher(names, aliases)
+
+	var out []draft.Entry
+	var warn []string
+	for _, lk := range locks {
+		if lk.Declared() {
+			// A "keeps nobody" row is a declaration, not a keeper.
+			continue
+		}
+		canonical, ok := matcher.Canonical(lk.Player)
+		if !ok {
+			warn = append(warn, fmt.Sprintf("%q is filed as a keeper but reaches no priced player — omitted", lk.Player))
+			continue
+		}
+		e, ok := byName[canonical]
+		if !ok {
+			warn = append(warn, fmt.Sprintf("%q resolved to %q, which carries no price — omitted", lk.Player, canonical))
+			continue
+		}
+		out = append(out, e)
+	}
+	return out, warn
 }

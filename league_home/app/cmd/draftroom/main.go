@@ -106,6 +106,7 @@ func main() {
 	convert := fs.Bool("convert", false, "leans: rewrite the named sets as YAML, leaving the originals in place")
 	unmatched := fs.Bool("unmatched", false, "sources: show only the rows that reach no Sleeper player")
 	share := fs.Bool("share", false, "keepers: print keeper prices for the league, without your valuations")
+	declared := fs.Bool("declared", false, "keepers: print what each team has actually filed and what it costs")
 	seasons := fs.String("seasons", "2023,2024,2025", "calibrate: seasons to measure, comma separated (empty for every usable one)")
 	includeAll := fs.Bool("all", false, "calibrate: measure every completed season, including ones whose prices are not comparable")
 	fs.Usage = func() {
@@ -132,7 +133,7 @@ func main() {
 	switch command {
 	case "keepers":
 		if err := runKeepers(*leagueID, orBuiltin(*configDir, builtinConfigDir),
-			orBuiltin(*dataDir, builtinDataDir), *share); err != nil {
+			orBuiltin(*dataDir, builtinDataDir), *share, *declared); err != nil {
 			log("draftroom: %v", err)
 			os.Exit(1)
 		}
@@ -191,7 +192,7 @@ func envOr(key, fallback string) string {
 
 // runKeepers rebuilds the keeper ledger from every season Sleeper has and
 // prints the reconciliation plus the most recent season's budgets.
-func runKeepers(leagueID, configDir, dataDir string, share bool) error {
+func runKeepers(leagueID, configDir, dataDir string, share, declared bool) error {
 	cfg, err := draft.ResolveConfigDir(configDir)
 	if err != nil {
 		return err
@@ -244,7 +245,7 @@ func runKeepers(leagueID, configDir, dataDir string, share bool) error {
 	// to the league — and they name the seasons whose keeper data the tool
 	// distrusts, which is not yours to publish. The shareable form prints
 	// one thing and nothing else, so it can be pasted whole.
-	if !share {
+	if !share && !declared {
 		if err := rec.WriteText(os.Stdout, names, teams, budget); err != nil {
 			return err
 		}
@@ -278,6 +279,13 @@ func runKeepers(leagueID, configDir, dataDir string, share bool) error {
 	// The shareable form stops here on purpose. Everything below prices
 	// keepers against the auction, and that is the part that must not be
 	// sent to the people you are bidding against.
+	if declared {
+		filed, warn := declaredEntries(cfg, projected)
+		for _, w := range warn {
+			fmt.Fprintln(os.Stderr, "warning:", w)
+		}
+		return draft.WriteDeclaredKeepers(os.Stdout, filed, names, upcoming, budget)
+	}
 	if share {
 		return draft.WriteShareableKeepers(os.Stdout, projected, names, upcoming, maxKeepers, budget)
 	}
