@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script>
+// Same normalizer as leans.html, for the same tailscale serve --set-path
+// reason: this page is a leaf served at "/arbitrage", so a trailing slash
+// would push "arbitrage.js" into a directory that does not exist.
+if (location.pathname.length > 1 && location.pathname.endsWith("/")) {
+  location.replace(location.pathname.slice(0, -1) + location.search + location.hash);
+}
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arbitrage</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="leans.css">
+<link rel="stylesheet" href="arbitrage.css">
+</head>
+<body class="leans arbitrage">
+
+<header id="strip">
+  <div class="stat"><span class="label">targets</span><span class="value" id="n-targets">—</span></div>
+  <div class="stat"><span class="label">contested offenses</span><span class="value" id="n-groups">—</span></div>
+  <div class="stat"><span class="label">best fit</span><span class="value" id="n-chain">—</span></div>
+  <div class="stat"><span class="label">that line costs</span><span class="value" id="n-spend">—</span></div>
+  <div class="stat wide right"><span class="label">budget left</span><span class="value" id="n-budget">—</span></div>
+</header>
+
+<div id="modebar">
+  <a class="mode-btn" href=".">&larr; Board</a>
+  <a class="mode-btn" href="leans">Leans</a>
+  <span class="research-badge">YOUR TARGETS &mdash; favorites and up-leans, not the whole board</span>
+  <button id="reload" class="undo" title="Re-read the board. Targets leave this page as they are sold.">refresh</button>
+</div>
+
+<div id="err" class="errbar hidden"></div>
+
+<main>
+  <!-- The chain leads: it is the answer, and the groups underneath are the
+       working. -->
+  <section class="reads">
+    <h2>Best fit from your targets <span class="mode">greedy by value</span></h2>
+    <p class="note" id="chain-note"></p>
+    <div id="chain"></div>
+  </section>
+
+  <section class="reads">
+    <h2>Contested offenses <span class="mode">who rules out whom</span></h2>
+    <p class="note">Your one-per-offense and no-handcuff rules make these
+      mutually exclusive. A quarterback may share his offense with a pass
+      catcher; nobody else may share one at all.</p>
+    <div id="groups"></div>
+  </section>
+</main>
+
+<script src="arbitrage.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+/* The arbitrage page. Layout only — colours and flags come from style.css and
+   leans.css, so a flag here reads the same as the same flag on the board. */
+
+.arbitrage main { max-width: 62rem; }
+.arbitrage h2 .mode { color: var(--dim); font-size: 0.8rem; font-weight: 400; margin-left: 0.5rem; }
+.arbitrage .note { color: var(--dim); font-size: 0.85rem; margin: 0.2rem 0 0.8rem; }
+
+.arbitrage .pos { color: var(--dim); font-size: 0.75rem; width: 2rem; display: inline-block; }
+.arbitrage .pname { font-weight: 600; }
+.arbitrage .money { margin-left: 0.5rem; font-variant-numeric: tabular-nums; }
+.arbitrage .money.dim, .arbitrage .dim { color: var(--dim); font-size: 0.8rem; }
+
+/* The chain reads top to bottom as a sequence of decisions, so each step is
+   numbered and its consequence sits underneath it rather than beside it. */
+.step { display: flex; gap: 0.7rem; padding: 0.5rem 0; border-bottom: 1px solid var(--line); }
+.stepnum {
+  flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  background: var(--panel); color: var(--dim);
+  font-size: 0.8rem; font-weight: 700; text-align: center; line-height: 1.5rem;
+}
+.stepbody { flex: 1; }
+.pick .slot {
+  display: inline-block; min-width: 2.6rem;
+  color: var(--accent); font-weight: 700; font-size: 0.8rem;
+}
+.pick .running { float: right; color: var(--dim); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.cost { margin: 0.25rem 0 0 2.6rem; font-size: 0.85rem; color: var(--bad); }
+.cost.none { color: var(--dim); }
+.cost .lost { white-space: nowrap; }
+
+.unfilled, .overspend {
+  margin-top: 0.7rem; padding: 0.5rem 0.7rem; border-radius: 4px;
+  font-size: 0.85rem; background: var(--panel);
+}
+.overspend { border-left: 3px solid var(--warn); }
+
+/* One card per contested offense. */
+.group { margin: 0 0 1rem; padding: 0.6rem 0.8rem; background: var(--panel); border-radius: 5px; }
+.group h3 { margin: 0 0 0.4rem; font-size: 0.95rem; color: var(--accent); }
+.grow { padding: 0.15rem 0; }
+.takes { margin-left: 0.6rem; font-size: 0.8rem; color: var(--bad); }
+.takes.free { color: var(--dim); }
+
+.pair { margin-top: 0.2rem; font-size: 0.82rem; color: var(--dim); }
+.pair .mark { display: inline-block; width: 1rem; font-weight: 700; }
+.pair.stack { color: var(--good); }
+.pair .why { margin-left: 0.5rem; opacity: 0.75; }

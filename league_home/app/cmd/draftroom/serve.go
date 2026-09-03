@@ -413,6 +413,13 @@ func runServe(addr, leagueID, draftID, configDir, dataDir, ownerID string, basel
 		r.URL.Path = "/leans.html"
 		files.ServeHTTP(w, r)
 	})
+	// Same rewrite as /leans above, and for the same reason — no trailing
+	// slash, so relative asset paths survive the tailscale --set-path mount.
+	mux.HandleFunc("/arbitrage", func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = "/arbitrage.html"
+		files.ServeHTTP(w, r)
+	})
+	mux.HandleFunc("/api/arbitrage", srv.handleArbitrage)
 	mux.HandleFunc("/api/board", srv.handleBoard)
 	mux.HandleFunc("/api/sold", srv.handleSold)
 	mux.HandleFunc("/api/undo", srv.handleUndo)
