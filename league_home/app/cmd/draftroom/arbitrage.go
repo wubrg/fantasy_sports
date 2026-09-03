@@ -125,10 +125,25 @@ func isTarget(p draft.PlayerSignals) bool {
 	return p.Lean.Favorite || p.Lean.Lean == draft.LeanUp
 }
 
+// askingPrice is what winning a player actually takes at auction.
+//
+// Cost is a market model and lands under a dollar for most of the board — 251
+// of 423 players on a live mock. No auction sells anyone for nothing: the
+// minimum bid is $1, so a line-up priced straight off Cost is cheaper on this
+// page than it could ever be in the room, by exactly the number of dollar-bin
+// players it leans on. That error is invisible early and grows late, when the
+// targets left are mostly dollar-bin and the budget is tightest.
+func askingPrice(p draft.PlayerSignals) int {
+	if p.Cost < 1 {
+		return 1
+	}
+	return p.Cost
+}
+
 func toArbTarget(p draft.PlayerSignals) arbTarget {
 	return arbTarget{
 		PlayerID: p.PlayerID, Name: p.Name, Position: p.Position, Team: p.Team,
-		Value: p.Value, Cost: p.Cost, MyMaxBid: p.MyMaxBid,
+		Value: p.Value, Cost: askingPrice(p), MyMaxBid: p.MyMaxBid,
 		Lean: string(p.Lean.Lean), Favorite: p.Lean.Favorite,
 	}
 }
@@ -267,7 +282,7 @@ func (s *server) bestFit(held, targets []draft.PlayerSignals, prefs draft.Prefer
 				if _, off := blocked[c.PlayerID]; off {
 					continue
 				}
-				if st.spend+c.Cost > cap {
+				if st.spend+askingPrice(c) > cap {
 					continue
 				}
 				trial := &draft.Roster{Players: append([]draft.RosterSpot(nil), st.roster.Players...)}
@@ -297,7 +312,7 @@ func (s *server) bestFit(held, targets []draft.PlayerSignals, prefs draft.Prefer
 					owned:  append(append([]draft.PlayerSignals(nil), st.owned...), c),
 					picks:  append(append([]arbPick(nil), st.picks...), arbPick{Pick: toArbTarget(c), Slot: filledSlot(unfilled, after)}),
 					taken:  taken,
-					spend:  st.spend + c.Cost,
+					spend:  st.spend + askingPrice(c),
 					value:  st.value + c.Value,
 				})
 			}
