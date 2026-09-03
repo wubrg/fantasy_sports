@@ -119,8 +119,17 @@ func AffordableCeiling(me MyState, pool []StarterCandidate, thresholds map[strin
 	if ceiling > hard {
 		ceiling = hard
 	}
-	if ceiling < 0 {
-		return 0
+	// A dollar is always biddable while a dollar is affordable.
+	//
+	// Late on, the reserve swallows the budget whole and the arithmetic goes
+	// to zero or below — every slot is spoken for at the minimum. That reads
+	// as "do not bid", and it is wrong: the slots are still empty and the
+	// minimum bid is $1, so bidding is not optional. Zero belongs only where
+	// there is genuinely no dollar to spend.
+	// A broke roster returned zero at the top, where hard is zero; past that
+	// point a dollar is always both affordable and biddable.
+	if ceiling < 1 {
+		return 1
 	}
 	return ceiling
 }

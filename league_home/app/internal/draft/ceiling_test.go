@@ -96,15 +96,56 @@ func TestCeilingNeverExceedsTheHardMax(t *testing.T) {
 	}
 }
 
-// An unaffordable roster floors at zero rather than going negative, which
-// would render as a nonsense ceiling rather than as "you cannot".
-func TestCeilingFloorsAtZero(t *testing.T) {
+// A roster that cannot afford real starters never goes negative, and never
+// goes to zero while a dollar is still in hand.
+//
+// This test previously wanted zero here, and that was the original bug in
+// miniature: $5 against three $40 starters means you cannot buy a real one,
+// not that you cannot bid. The slots are empty, the minimum is $1, and filling
+// them is compulsory. Zero is reserved for being broke.
+func TestCeilingNeverGoesNegative(t *testing.T) {
 	me := MyState{Budget: 5, OpenSlots: 3, StartersNeeded: map[string]int{"WR": 3}}
 	pool := []StarterCandidate{
 		cand("a", "WR", 40, 200), cand("b", "WR", 40, 200), cand("c", "WR", 40, 200),
 	}
 
-	if got := AffordableCeiling(me, pool, bar(), nil); got != 0 {
-		t.Errorf("ceiling $%d, want 0", got)
+	got := AffordableCeiling(me, pool, bar(), nil)
+	if got != 1 {
+		t.Errorf("ceiling $%d with $5 in hand and three slots open, want $1", got)
+	}
+	if hard := me.MaxBid(); got > hard {
+		t.Errorf("ceiling $%d over the hard max $%d", got, hard)
+	}
+}
+
+// TestTheCeilingKeepsADollarWhileOneIsAffordable — the endgame.
+//
+// Late on, the reserve swallows the budget whole: every remaining slot is
+// spoken for at the minimum and Budget-reserve goes to zero or below. Printed
+// as $0 that reads "do not bid", which is exactly backwards — the slots are
+// still empty, the minimum bid is $1, and filling them is not optional.
+func TestTheCeilingKeepsADollarWhileOneIsAffordable(t *testing.T) {
+	me := MyState{Budget: 7, OpenSlots: 7, StartersNeeded: map[string]int{"WR": 1}}
+	pool := []StarterCandidate{
+		{PlayerID: "1", Position: "WR", Cost: 1, Points: 100},
+	}
+	got := AffordableCeiling(me, pool, map[string]float64{"WR": 50}, []string{"RB", "WR"})
+	if got != 1 {
+		t.Errorf("ceiling $%d with $7 and 7 slots to fill, want $1", got)
+	}
+	if hard := me.MaxBid(); got > hard {
+		t.Errorf("ceiling $%d over the hard max $%d", got, hard)
+	}
+}
+
+// Broke means broke. The dollar floor is affordability, not optimism: with no
+// money there is no bid, and the ceiling must still say so.
+func TestABrokeRosterHasNoCeiling(t *testing.T) {
+	me := MyState{Budget: 0, OpenSlots: 3, StartersNeeded: map[string]int{"WR": 1}}
+	pool := []StarterCandidate{
+		{PlayerID: "1", Position: "WR", Cost: 1, Points: 100},
+	}
+	if got := AffordableCeiling(me, pool, map[string]float64{"WR": 50}, []string{"RB", "WR"}); got != 0 {
+		t.Errorf("ceiling $%d on a $0 budget, want $0", got)
 	}
 }

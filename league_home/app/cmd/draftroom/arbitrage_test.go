@@ -468,3 +468,39 @@ func TestTheDollarFloorBindsTheCap(t *testing.T) {
 		t.Errorf("spend $%d over the $2 cap", fit.Spend)
 	}
 }
+
+// TestTheCapKeepsADollarNearTheEnd — the percentage rounds a real dollar away.
+//
+// $7 left against a $6 bench reserve leaves $1 of room, and 90% of it truncates
+// to nothing. Paired with the $1 asking-price floor that means an empty panel
+// while the slots it is meant to fill are still open.
+func TestTheCapKeepsADollarNearTheEnd(t *testing.T) {
+	if got := spendCap(1, 90); got != 1 {
+		t.Errorf("spendCap(room $1, 90%%) = $%d, want $1", got)
+	}
+	if got := spendCap(7, 90); got != 6 {
+		t.Errorf("spendCap(room $7, 90%%) = $%d, want $6", got)
+	}
+	// No room is no cap: the floor is affordability, not optimism.
+	if got := spendCap(0, 90); got != 0 {
+		t.Errorf("spendCap(room $0, 90%%) = $%d, want $0", got)
+	}
+	if got := spendCap(-4, 90); got != 0 {
+		t.Errorf("spendCap(negative room) = $%d, want $0", got)
+	}
+}
+
+// And the search spends that dollar rather than returning nothing.
+func TestBestFitBuysABodyWithItsLastDollar(t *testing.T) {
+	srv := scratchServer(t)
+	targets := []draft.PlayerSignals{costed("1", "Body", "WR", "DET", 3, 0)}
+
+	fit := srv.bestFit(nil, targets, arbPrefs(), srv.scoringBaselines(), srv.static.shape, spendCap(1, 90))
+
+	if len(fit.Picks) == 0 {
+		t.Fatal("empty line against $1 of room with a dollar-bin target available")
+	}
+	if fit.Spend != 1 {
+		t.Errorf("spend $%d, want $1", fit.Spend)
+	}
+}

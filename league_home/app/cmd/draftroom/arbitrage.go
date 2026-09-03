@@ -474,6 +474,23 @@ func without(pool []draft.PlayerSignals, id string) []draft.PlayerSignals {
 // up late, which is the shape of an auction rather than a rule.
 const defaultBestFitPct = 90
 
+// spendCap is the share of the spendable room the starters may eat.
+//
+// The percentage rounds down, and near the end it rounds a real dollar away:
+// $7 left against a $6 bench reserve is $1 of room, 90% of which truncates to
+// nothing. Paired with the $1 asking-price floor that empties the best-fit
+// panel while the slots it exists to fill are still open — the moment the page
+// is most worth reading. Any room at all is worth at least a dollar.
+func spendCap(room, pct int) int {
+	if room < 1 {
+		return 0
+	}
+	if c := room * pct / 100; c >= 1 {
+		return c
+	}
+	return 1
+}
+
 // pctParam reads ?pct= and clamps it. Out of range is clamped rather than
 // rejected: this arrives from a control on the page, and a silently sane
 // number is better mid-auction than an error where the line-up should be.
@@ -599,7 +616,7 @@ func (s *server) arbitrageView(pct int) ArbitrageView {
 	if room < 0 {
 		room = 0
 	}
-	cap := room * pct / 100
+	cap := spendCap(room, pct)
 	view.BestFit = s.bestFit(held, targets, prefs, baselines, shape, cap)
 	view.BestFit.Pct, view.BestFit.Cap, view.BestFit.Reserve = pct, cap, reserve
 
