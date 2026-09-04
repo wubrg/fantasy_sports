@@ -362,8 +362,16 @@ func flaggedReport(rows []scoredRow, bar float64) {
 		if err != nil {
 			continue
 		}
-		fmt.Printf("    %-10s n=%-4d Brier %.4f   gain %+.5f\n",
-			tc.name, g.Positions, g.Brier, calib.PairedBrierGain(calib.Positions(tc.pts)))
+		// A one-row group has no paired gain to speak of; print an em dash like
+		// every other section rather than a bare +NaN. A single flagged
+		// candidate is entirely plausible early season.
+		gain := calib.PairedBrierGain(calib.Positions(tc.pts))
+		gs := "—"
+		if !math.IsNaN(gain) {
+			gs = fmt.Sprintf("%+.5f", gain)
+		}
+		fmt.Printf("    %-10s n=%-4d Brier %.4f   gain %s\n",
+			tc.name, g.Positions, g.Brier, gs)
 	}
 	fmt.Printf("    Flagging does not filter the score. If these are no better than the\n")
 	fmt.Printf("    rest, the forecaster cannot pick its own spots — a different finding\n")

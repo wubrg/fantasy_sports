@@ -171,6 +171,32 @@ func TestFalsifierRegressionsFromReview(t *testing.T) {
 	}
 }
 
+// TestFalsifierDoesNotConvictIncidentalKeywords pins the C-A cases from the
+// 2026-09-04 review: the falsifier stopped missing false claims by starting to
+// convict true ones, on incidental "road", "last N games", and "line".
+func TestFalsifierDoesNotConvictIncidentalKeywords(t *testing.T) {
+	// testGame() has KC hosting DEN; KC prior_games 4, success .4512, total 47.5,
+	// spread 3.5. All of these are TRUE or unverifiable and must survive.
+	for _, cl := range []string{
+		// "road" is a past game, not this one's location; KC is the home team.
+		"schedule: KC — hosting, coming off a road win",
+		"schedule: KC — at home after a long road trip",
+		// "last N games" is a form window, not a claim about the prior-game count.
+		"form: KC — over their last 3 games the offense has clicked",
+		// A correctly-stated total must not be convicted as a wrong spread.
+		"market: DEN@KC — the line has moved and total sits at 47.5",
+	} {
+		if r := check(t, cl); r.Reason != "" {
+			t.Errorf("incidental-keyword claim %q was falsely convicted: %s", cl, r.Reason)
+		}
+	}
+
+	// But a real total-count claim is still checked: prior_games is 4, not 8.
+	if r := check(t, "form: KC — 8 games in and rolling"); r.Reason == "" {
+		t.Error("a wrong prior-games count phrased as 'N games in' was not caught")
+	}
+}
+
 func TestParseClaimShape(t *testing.T) {
 	c, ok := parseClaim("form: KC — prior success rate .451")
 	if !ok {

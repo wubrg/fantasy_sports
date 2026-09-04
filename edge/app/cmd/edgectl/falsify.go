@@ -219,13 +219,23 @@ func adjudicate(c claim, g packGame, home, away string) (why string, checked boo
 }
 
 var (
-	reTotal   = regexp.MustCompile(`\btotal\b|\bo/?u\b|\bover/under\b`)
-	reSpread  = regexp.MustCompile(`\bspread\b|\bline\b|\bfavou?red\b|\bfavou?rite\b|\bunderdog\b|\bdog\b|\blaying\b|\bgetting\b`)
+	reTotal = regexp.MustCompile(`\btotal\b|\bo/?u\b|\bover/under\b`)
+	// "line" is deliberately NOT here: it is ambiguous between the total line and
+	// the spread, and binding it to the spread convicted a correctly-stated total
+	// ("the line has moved and total sits at 47.5"). A spread stated only as
+	// "line N" goes unchecked, which is the safe direction.
+	reSpread  = regexp.MustCompile(`\bspread\b|\bfavou?red\b|\bfavou?rite\b|\bunderdog\b|\bdog\b|\blaying\b|\bgetting\b`)
 	reSuccess = regexp.MustCompile(`success[ -]?rate|\bsuccess\b`)
 	reProe    = regexp.MustCompile(`\bproe\b|pass[ -]?rate[ -]?over[ -]?expected|\bpass[ -]?oe\b`)
-	reGames   = regexp.MustCompile(`\bgames?\b`)
-	reHome    = regexp.MustCompile(`\bhome\b|\bhosting\b|\bhosts?\b`)
-	reAway    = regexp.MustCompile(`\baway\b|\broad\b`)
+	// The CUMULATIVE prior-game count, not a recent-form window. "over their last
+	// 3 games" is ordinary form phrasing and must not be read as prior_games==3;
+	// only total-count phrasings ("prior games", "N games in", "games played")
+	// are a claim about the pack's count.
+	reGames = regexp.MustCompile(`\bprior[ _-]?games\b|\bgames? (?:in|into|played|so far|this season)\b|\bthrough \d+ games?\b`)
+	reHome  = regexp.MustCompile(`\bhome\b|\bhosting\b|\bhosts?\b`)
+	// bare "road" is gone: "coming off a road win" is a past game, not where this
+	// one is played. Only the explicit "on the road" phrase reads as away.
+	reAway = regexp.MustCompile(`\baway\b|\bon the road\b`)
 )
 
 // contradiction falsifies a claim only where a NAMED quantity's stated value
