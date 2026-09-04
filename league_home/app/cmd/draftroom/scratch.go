@@ -186,9 +186,11 @@ func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 	// roster feels like, and yours already contains the players you are
 	// keeping — leaving them out understates POPR, hides the slots they
 	// fill, and disagrees with the shapes report about the same roster.
+	kept := map[string]bool{}
 	for _, h := range s.static.heldRoster(s.static.ownerID) {
 		h.Held = true
 		r.Players = append(r.Players, h)
+		kept[h.Player.PlayerID] = true
 	}
 	// Then the players you have actually won, for the same reason and with
 	// the same standing. A keeper and a player bought an hour ago are both
@@ -202,6 +204,15 @@ func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 	// other.
 	won := map[string]bool{}
 	for _, o := range s.ownedPicks() {
+		if kept[o.ID] {
+			// A keeper the league has since entered into Sleeper as a draft
+			// pick, so he arrives down both routes. He is already on the
+			// roster above, and as what he actually is: adding him again put
+			// two of him on the panel, and Score read that as two filled
+			// slots — the panel called the position done while the board
+			// still wanted one, with spend, counts and POPR doubled to match.
+			continue
+		}
 		spot := s.static.wonSpot(o.ID, o.Price)
 		spot.Held = true
 		r.Players = append(r.Players, spot)
