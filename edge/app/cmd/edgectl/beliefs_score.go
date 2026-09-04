@@ -154,8 +154,8 @@ func beliefsScore(args []string) error {
 		}
 	}
 
-	jointVerdict(scored, *bar, *hold)
-	referenceBreakdown(preds, *only, *fromWeek, *toWeek, *includeRejected, *bar)
+	jointVerdict(preds, *only, *fromWeek, *toWeek, *includeRejected, scored, *bar, *hold)
+	referenceBreakdown(referenceSets(preds, *only, *fromWeek, *toWeek, *includeRejected), *bar)
 	groupReport("BY SCENARIO", use, *bar, func(r scoredRow) string { return r.scenario })
 	groupReport("BY STATED CONFIDENCE", use, *bar, confidenceBand)
 	flaggedReport(use, *bar)
@@ -178,16 +178,69 @@ func beliefsScore(args []string) error {
 //
 // Both intervals are clustered by game, because two teams in one game are not
 // two independent draws.
-func jointVerdict(pts []calib.Point, bar, hold float64) {
+// refSet is one opponent's rows, ready to score. Built once and shared by the
+// verdict and the breakdown so the number the verdict decides on is the same
+// number the table prints.
+type refSet struct {
+	name, mode string
+	binding    bool // a real opponent the verdict must beat; false for the base-rate floor
+	pts        []calib.Point
+}
+
+// referenceSets scores each opponent on its OWN rows. base-rate is included but
+// marked non-binding: it is the universal fallback, the easiest to beat, and
+// pooling it across scenarios would reintroduce the very pooling this avoids, so
+// it informs but does not decide.
+func referenceSets(preds []betlog.SettledPrediction, only string,
+	fromWeek, toWeek int, includeRejected bool) []refSet {
+	defs := []struct {
+		name, mode string
+		binding    bool
+	}{
+		{"market", refMarket, true},
+		{"belief-json (incumbent)", refIncumbent, true},
+		{"line", refLine, true},
+		{"base-rate", refBaseRate, false},
+	}
+	var out []refSet
+	for _, d := range defs {
+		rows := points(preds, only, fromWeek, toWeek, d.mode, includeRejected)
+		var withRef []calib.Point
+		for _, p := range calib.Positions(onlyPoints(rows)) {
+			if p.HasRef {
+				withRef = append(withRef, p)
+			}
+		}
+		if len(withRef) > 0 {
+			out = append(out, refSet{d.name, d.mode, d.binding, withRef})
+		}
+	}
+	return out
+}
+
+func jointVerdict(preds []betlog.SettledPrediction, only string, fromWeek, toWeek int,
+	includeRejected bool, autoPts []calib.Point, bar, hold float64) {
 	fmt.Printf("\n  PRE-REGISTERED ENDPOINT  (both must pass)\n")
 
-	gain := calib.PairedBrierGain(pts)
-	glo, ghi := calib.BootstrapCI(pts, calib.PairedBrierGain, 800, 20260824, 0.05)
-	e1 := !math.IsNaN(glo) && glo > 0
-	fmt.Printf("    E1 accuracy     paired Brier gain %+.5f  [%+.5f, %+.5f]   %s\n",
-		gain, glo, ghi, verdictWord(e1, math.IsNaN(glo)))
+	// E1 must beat EVERY real opponent, each scored on its own rows -- the
+	// HARDEST binds. The old verdict scored one auto-picked reference, so it
+	// scored the two PROE scenarios against the beatable incumbent and never
+	// against the line the C1 fix added; a forecaster replaying the line beat the
+	// incumbent and passed. Now the line is one of the opponents that must be
+	// beaten, and losing to any of them fails E1.
+	sets := referenceSets(preds, only, fromWeek, toWeek, includeRejected)
+	ev := evaluateE1(sets)
+	e1, e1Decidable := ev.pass, ev.decidable
+	if !e1Decidable {
+		fmt.Printf("    E1 accuracy     no opponent is evaluable yet\n")
+	} else {
+		fmt.Printf("    E1 accuracy     vs the hardest of %d opponents (%s)\n", bindingCount(sets), ev.name)
+		fmt.Printf("                    paired Brier gain %+.5f  [%+.5f, %+.5f]   %s\n",
+			ev.gain, ev.lo, ev.hi, verdictWord(e1, false))
+	}
 
-	n := calib.OverBarCount(pts, bar, hold)
+	n := calib.OverBarCount(autoPts, bar, hold)
+	pts := autoPts
 	edge := calib.RealisedEdge(pts, bar, hold)
 	stat := func(s []calib.Point) float64 { return calib.RealisedEdge(s, bar, hold) }
 	elo, ehi := calib.BootstrapCI(pts, stat, 800, 20260824, 0.05)
@@ -198,7 +251,7 @@ func jointVerdict(pts []calib.Point, bar, hold float64) {
 	fmt.Printf("                    a prop reconstructed from the frozen site at a %.0f%% hold\n", hold*100)
 
 	switch {
-	case math.IsNaN(glo) || math.IsNaN(elo) || n == 0:
+	case !e1Decidable || math.IsNaN(elo) || n == 0:
 		fmt.Printf("    VERDICT         not yet decidable\n")
 	case e1 && e2:
 		fmt.Printf("    VERDICT         BOTH PASS — accurate, and the wagers it implies won\n")
@@ -249,36 +302,64 @@ func confidenceBand(r scoredRow) string {
 // beat a stale base rate on weeks 1-3 and lose to the market later, and the
 // pooled gain averages the two into something that means neither. Beating the
 // line is the claim that matters, so it gets its own row here.
-func referenceBreakdown(preds []betlog.SettledPrediction, only string,
-	fromWeek, toWeek int, includeRejected bool, bar float64) {
-	type ref struct {
-		name, mode string
-	}
-	refs := []ref{
-		{"market", refMarket},
-		{"belief-json (incumbent)", refIncumbent},
-		{"line", refLine},
-		{"base-rate", refBaseRate},
-	}
-	fmt.Printf("\n  BY REFERENCE  (each opponent scored on its own rows — never pooled)\n")
-	fmt.Printf("    %-24s %6s %10s %11s\n", "", "n", "gain", "over bar")
-	any := false
-	for _, rf := range refs {
-		rows := points(preds, only, fromWeek, toWeek, rf.mode, includeRejected)
-		pts := calib.Positions(onlyPoints(rows))
-		var withRef []calib.Point
-		for _, p := range pts {
-			if p.HasRef {
-				withRef = append(withRef, p)
-			}
-		}
-		if len(withRef) == 0 {
+// e1Eval is the outcome of the E1 accuracy test: the binding (hardest) opponent
+// and whether the forecaster beat every one.
+type e1Eval struct {
+	pass, decidable bool
+	name            string
+	gain, lo, hi    float64
+}
+
+// evaluateE1 requires the forecaster to beat EVERY real opponent, each scored on
+// its own rows. The hardest (lowest lower-bound) binds and is reported. An
+// opponent whose interval is unmeasurable is skipped rather than counted as a
+// pass or a fail; if none is measurable the test is not yet decidable.
+func evaluateE1(sets []refSet) e1Eval {
+	out := e1Eval{pass: true}
+	first := true
+	for _, s := range sets {
+		if !s.binding {
 			continue
 		}
-		any = true
-		g, err := calib.Score(withRef, bar)
-		gain := calib.PairedBrierGain(withRef)
-		glo, ghi := calib.BootstrapCI(withRef, calib.PairedBrierGain, 800, 20260824, 0.05)
+		gain := calib.PairedBrierGain(s.pts)
+		lo, hi := calib.BootstrapCI(s.pts, calib.PairedBrierGain, 800, 20260824, 0.05)
+		if math.IsNaN(lo) {
+			continue
+		}
+		out.decidable = true
+		if lo <= 0 {
+			out.pass = false
+		}
+		if first || lo < out.lo {
+			out.name, out.gain, out.lo, out.hi, first = s.name, gain, lo, hi, false
+		}
+	}
+	out.pass = out.pass && out.decidable
+	return out
+}
+
+// bindingCount is how many real opponents the verdict must beat.
+func bindingCount(sets []refSet) int {
+	n := 0
+	for _, s := range sets {
+		if s.binding {
+			n++
+		}
+	}
+	return n
+}
+
+func referenceBreakdown(sets []refSet, bar float64) {
+	fmt.Printf("\n  BY REFERENCE  (each opponent scored on its own rows — never pooled)\n")
+	fmt.Printf("    %-24s %6s %10s %11s\n", "", "n", "gain", "over bar")
+	if len(sets) == 0 {
+		fmt.Printf("    (no row carried any reference yet)\n")
+		return
+	}
+	for _, s := range sets {
+		g, err := calib.Score(s.pts, bar)
+		gain := calib.PairedBrierGain(s.pts)
+		glo, ghi := calib.BootstrapCI(s.pts, calib.PairedBrierGain, 800, 20260824, 0.05)
 		gs := "—"
 		if !math.IsNaN(gain) {
 			gs = fmt.Sprintf("%+.5f", gain)
@@ -287,11 +368,12 @@ func referenceBreakdown(preds []betlog.SettledPrediction, only string,
 		if err == nil {
 			over = fmt.Sprintf("%d of %d", g.OverBar, g.RefN)
 		}
+		name := s.name
+		if !s.binding {
+			name += " (floor)"
+		}
 		fmt.Printf("    %-24s %6d %10s %11s  [%+.5f, %+.5f]\n",
-			rf.name, len(withRef), gs, over, glo, ghi)
-	}
-	if !any {
-		fmt.Printf("    (no row carried any reference yet)\n")
+			name, len(s.pts), gs, over, glo, ghi)
 	}
 }
 
