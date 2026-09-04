@@ -764,12 +764,9 @@ func (s *server) arbitrageView(pct int) ArbitrageView {
 	// two sources the roster panel seeds from, so the two screens cannot
 	// disagree about what I hold.
 	var held []draft.PlayerSignals
-	for _, h := range s.static.heldRoster(s.static.ownerID) {
+	spots, _ := s.heldRoster()
+	for _, h := range spots {
 		held = append(held, h.Player)
-	}
-	for _, o := range s.ownedPicks() {
-		spot := s.static.wonSpot(o.ID, o.Price)
-		held = append(held, spot.Player)
 	}
 	for _, h := range held {
 		view.Held = append(view.Held, toArbTarget(h))

@@ -120,3 +120,69 @@ func TestAPlayerBoughtAtAuctionStillReadsAsWon(t *testing.T) {
 		t.Fatal("the purchase is not on the panel")
 	}
 }
+
+// TestTheArbitragePageHoldsEachKeeperOnce.
+//
+// The roster panel and the arbitrage page ask the same question and used to
+// answer it with their own copy of the same two-source walk. Fixing the panel
+// alone left the arbitrage page holding each keeper twice, which read as extra
+// filled slots — so best fit solved for four slots where six were open and the
+// lineup came up short.
+func TestTheArbitragePageHoldsEachKeeperOnce(t *testing.T) {
+	srv := scratchServer(t)
+	keepGibbs(srv)
+	srv.mu.Lock()
+	srv.taken["1"] = gone{price: 35, mine: true}
+	err := srv.rebuildLocked()
+	srv.mu.Unlock()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	view := srv.arbitrageView(defaultBestFitPct)
+
+	seen := map[string]int{}
+	for _, h := range view.Held {
+		seen[h.Name]++
+	}
+	for name, n := range seen {
+		if n > 1 {
+			t.Errorf("arbitrage holds %s %d times, want once", name, n)
+		}
+	}
+}
+
+// Both screens answer from the same list, so they cannot disagree about what
+// I hold — which is what the comment above the old duplicate claimed and the
+// code did not deliver.
+func TestBothScreensAgreeOnWhatIHold(t *testing.T) {
+	srv := scratchServer(t)
+	keepGibbs(srv)
+	srv.mu.Lock()
+	srv.taken["1"] = gone{price: 35, mine: true}
+	srv.taken["2"] = gone{price: 62, mine: true}
+	err := srv.rebuildLocked()
+	srv.mu.Unlock()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	panelNames := map[string]bool{}
+	pv := srv.scratchView(srv.snapshot())
+	for _, s := range append(append([]ScratchSpot(nil), pv.Starters...), pv.Bench...) {
+		panelNames[s.Name] = true
+	}
+	arbNames := map[string]bool{}
+	for _, h := range srv.arbitrageView(defaultBestFitPct).Held {
+		arbNames[h.Name] = true
+	}
+
+	if len(panelNames) != len(arbNames) {
+		t.Errorf("panel holds %v, arbitrage holds %v", panelNames, arbNames)
+	}
+	for n := range panelNames {
+		if !arbNames[n] {
+			t.Errorf("%s is on the roster panel but not held by arbitrage", n)
+		}
+	}
+}

@@ -168,6 +168,41 @@ func (s *server) ownedPicks() []struct {
 	return out
 }
 
+// heldRoster is everything already mine: keepers, then players won, each once.
+//
+// The single source for both screens that ask the question. They used to build
+// this list separately from the same two places, and when the league entered
+// its keepers into Sleeper those keepers arrived down both routes — so each
+// appeared twice, Score read the duplicates as extra filled slots, and the
+// panel and the arbitrage page each decided a position was done while the
+// board still wanted one. Fixing that in one of the two places and not the
+// other is exactly how it recurred, so there is now only one place.
+//
+// Held on every spot, because Held is the question the callers ask: is this
+// already mine, or something I am trying on. The returned set names the ones
+// bought at auction rather than kept, which is all that separates them for
+// display — a price on one, "kept" on the other.
+func (s *server) heldRoster() ([]draft.RosterSpot, map[string]bool) {
+	var out []draft.RosterSpot
+	kept := map[string]bool{}
+	for _, h := range s.static.heldRoster(s.static.ownerID) {
+		h.Held = true
+		out = append(out, h)
+		kept[h.Player.PlayerID] = true
+	}
+	won := map[string]bool{}
+	for _, o := range s.ownedPicks() {
+		if kept[o.ID] {
+			continue // a keeper the league has since entered as a draft pick
+		}
+		spot := s.static.wonSpot(o.ID, o.Price)
+		spot.Held = true
+		out = append(out, spot)
+		won[o.ID] = true
+	}
+	return out, won
+}
+
 // scratchView scores the scratchpad against a board.
 //
 // Uses the same Score and ScoringBaselines the board does, so the roster
@@ -186,12 +221,8 @@ func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 	// roster feels like, and yours already contains the players you are
 	// keeping — leaving them out understates POPR, hides the slots they
 	// fill, and disagrees with the shapes report about the same roster.
-	kept := map[string]bool{}
-	for _, h := range s.static.heldRoster(s.static.ownerID) {
-		h.Held = true
-		r.Players = append(r.Players, h)
-		kept[h.Player.PlayerID] = true
-	}
+	roster, won := s.heldRoster()
+	r.Players = append(r.Players, roster...)
 	// Then the players you have actually won, for the same reason and with
 	// the same standing. A keeper and a player bought an hour ago are both
 	// simply yours; the panel that shows what your roster feels like is wrong
@@ -202,22 +233,6 @@ func (s *server) scratchView(snap draft.Snapshot) ScratchView {
 	// on" — and the budget is already net of these picks. Only Won separates
 	// the two for the panel, which prints a price for one and "kept" for the
 	// other.
-	won := map[string]bool{}
-	for _, o := range s.ownedPicks() {
-		if kept[o.ID] {
-			// A keeper the league has since entered into Sleeper as a draft
-			// pick, so he arrives down both routes. He is already on the
-			// roster above, and as what he actually is: adding him again put
-			// two of him on the panel, and Score read that as two filled
-			// slots — the panel called the position done while the board
-			// still wanted one, with spend, counts and POPR doubled to match.
-			continue
-		}
-		spot := s.static.wonSpot(o.ID, o.Price)
-		spot.Held = true
-		r.Players = append(r.Players, spot)
-		won[o.ID] = true
-	}
 	for _, id := range order {
 		if won[id] {
 			// Penciled in, then actually won. He is on the roster above at
