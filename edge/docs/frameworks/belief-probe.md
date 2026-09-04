@@ -67,8 +67,10 @@ claims that can be checked afterwards.
 2. **You may not contradict the pack.** Every number in it is measured. Restating one wrongly is a
    hallucination, and it voids the prediction it supports.
 3. **You must forecast every row in the pack**, including the games you have no read on. Where you
-   have none, give the base rate and set `"abstained": true`. An abstention is a real answer and is
-   scored separately; a *missing* row is a hole in the record.
+   have none, set `"abstained": true` and put the base rate in `belief` as a neutral placeholder.
+   The base rate is **not** the number you are scored against — you are measured against the market,
+   the incumbent model, or the line — so an abstention is not a bet you lose; it is scored apart and
+   a *missing* row, not an abstention, is the hole in the record. A file that omits rows is refused.
 4. **Every factual claim beyond the pack must be typed** (see the taxonomy). An untyped assertion
    is discarded before scoring, and a prediction supported only by discarded claims is flagged.
 5. **A probability is a number between 0 and 1.** Not a tier, not a lean, not a star rating, not a

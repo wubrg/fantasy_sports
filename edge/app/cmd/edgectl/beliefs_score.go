@@ -38,6 +38,42 @@ var scenariosNotWagerable = map[string]string{
 	"blowout_loss": "fails validation on every outcome it is fitted for",
 }
 
+// decisionScenarios are the ones the pre-registered verdict is computed on. The
+// other two are scored and reported but do not decide: blowout_loss cannot be
+// wagered at all, and pass_heavy's line barely moves, so pooling either into the
+// verdict measures something the decision does not rest on. They still appear in
+// BY REFERENCE and BY SCENARIO.
+var decisionScenarios = map[string]bool{
+	"shootout":          true,
+	"efficient_offense": true,
+}
+
+func sortedKeys(m map[string]bool) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// forDecision keeps only the predictions the verdict is allowed to rest on: the
+// decision scenarios, further narrowed to `only` when the user asked for one.
+func forDecision(preds []betlog.SettledPrediction, only string) []betlog.SettledPrediction {
+	var out []betlog.SettledPrediction
+	for _, sp := range preds {
+		s := sp.Prediction.Scenario
+		if !decisionScenarios[s] {
+			continue
+		}
+		if only != "" && s != only {
+			continue
+		}
+		out = append(out, sp)
+	}
+	return out
+}
+
 func beliefsScore(args []string) error {
 	fs := flag.NewFlagSet("beliefs score", flag.ExitOnError)
 	logPath := fs.String("log", "beliefs/log.jsonl", "the belief log")
@@ -155,7 +191,7 @@ func beliefsScore(args []string) error {
 		}
 	}
 
-	jointVerdict(preds, *only, *fromWeek, *toWeek, *includeRejected, scored, *bar, *hold)
+	jointVerdict(preds, *only, *fromWeek, *toWeek, *includeRejected, *bar, *hold)
 	referenceBreakdown(referenceSets(preds, *only, *fromWeek, *toWeek, *includeRejected), *bar)
 	groupReport("BY SCENARIO", use, *bar, func(r scoredRow) string { return r.scenario })
 	groupReport("BY STATED CONFIDENCE", use, *bar, confidenceBand)
@@ -222,8 +258,16 @@ func referenceSets(preds []betlog.SettledPrediction, only string,
 }
 
 func jointVerdict(preds []betlog.SettledPrediction, only string, fromWeek, toWeek int,
-	includeRejected bool, autoPts []calib.Point, bar, hold float64) {
+	includeRejected bool, bar, hold float64) {
 	fmt.Printf("\n  PRE-REGISTERED ENDPOINT  E1 accuracy is the decision; E2 is a diagnostic\n")
+	fmt.Printf("                 on %s only — the other scenarios are scored but do not decide\n",
+		strings.Join(sortedKeys(decisionScenarios), " and "))
+
+	// The verdict rests ONLY on the decision scenarios. Building from a filtered
+	// prediction set here — rather than the report-wide points — keeps blowout_loss
+	// (unwagerable, and negatively correlated, which would inflate effective n) and
+	// pass_heavy (a line that barely moves) out of the decision.
+	dpreds := forDecision(preds, only)
 
 	// E1 must beat EVERY real opponent, each scored on its own rows -- the
 	// HARDEST binds. The old verdict scored one auto-picked reference, so it
@@ -231,7 +275,8 @@ func jointVerdict(preds []betlog.SettledPrediction, only string, fromWeek, toWee
 	// against the line the C1 fix added; a forecaster replaying the line beat the
 	// incumbent and passed. Now the line is one of the opponents that must be
 	// beaten, and losing to any of them fails E1.
-	sets := referenceSets(preds, only, fromWeek, toWeek, includeRejected)
+	sets := referenceSets(dpreds, "", fromWeek, toWeek, includeRejected)
+	autoPts := calib.Positions(onlyPoints(points(dpreds, "", fromWeek, toWeek, refAuto, includeRejected)))
 	ev := evaluateE1(sets)
 	e1, e1Decidable := ev.pass, ev.decidable
 	if !e1Decidable {

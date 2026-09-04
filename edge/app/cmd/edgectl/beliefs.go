@@ -80,8 +80,10 @@ type forecast struct {
 	Confidence float64  `json:"confidence"`
 	Abstained  bool     `json:"abstained"`
 	Claims     []string `json:"claims"`
-	Rejected   bool     `json:"rejected"`
-	Reason     string   `json:"rejected_reason"`
+	// `rejected` is deliberately NOT a field here. It is the falsifier's verdict,
+	// not the forecaster's to set -- a self-declared rejection is a prompt marking
+	// its own homework, and with DisallowUnknownFields a file that includes it is
+	// refused rather than trusted.
 }
 
 func beliefsCmd(args []string) error {
@@ -162,6 +164,9 @@ func beliefsIngest(args []string) error {
 	logPath := fs.String("log", "beliefs/log.jsonl", "the belief log to append to")
 	dropLate := fs.Bool("drop-late", false,
 		"drop predictions made after kickoff instead of refusing the whole file")
+	partial := fs.Bool("partial", false,
+		"accept a file that does not cover every pack row (rehearsal, or a known-truncated "+
+			"file); the missing count is recorded. The pre-registered run does NOT use this")
 	dry := fs.Bool("n", false, "print the plan and write nothing")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -267,15 +272,14 @@ func beliefsIngest(args []string) error {
 			InputPack: *packPath, InputPackSHA: sum,
 			Kickoff: g.Kickoff, GeneratedAt: ff.GeneratedAt,
 			Abstained: p.Abstained, Flagged: flagged[key],
-			Rejected: p.Rejected, RejectedReason: p.Reason, Claims: p.Claims,
+			Claims: p.Claims,
 		}
-		// Check the reasons against the facts the forecaster was handed. A
-		// self-reported `rejected` is a prompt marking its own homework; this is
-		// the only thing that makes the survivors-versus-all comparison mean
-		// anything.
+		// Rejection is decided HERE, by checking the reasons against the facts the
+		// forecaster was handed -- never taken from the file. This is the only
+		// thing that makes the survivors-versus-all comparison mean anything.
 		fr := falsifyPrediction(p, g, g.Home, g.Away)
 		tally.add(fr, len(p.Claims))
-		if fr.Reason != "" && !pred.Rejected {
+		if fr.Reason != "" {
 			pred.Rejected, pred.RejectedReason = true, fr.Reason
 		}
 		if fr.OnlyUnverifiable(len(p.Claims)) {
@@ -293,6 +297,36 @@ func beliefsIngest(args []string) error {
 		ready = append(ready, pred)
 	}
 
+	// Completeness. The contract is a forecast for EVERY row in the pack -- abstain
+	// where there is no read, never omit -- so a file missing rows is refused
+	// rather than scored on a self-selected subset. This is what stops a forecaster
+	// (or a truncated LLM response) from quietly steering the population onto the
+	// rows it does best on; `seen` was filled as each valid row was processed.
+	var missing []string
+	for _, g := range pk.Games {
+		for name, def := range pk.Definitions {
+			if def.Basis == "total" {
+				if k := g.GameID + "//" + name; !seen[k] {
+					missing = append(missing, k)
+				}
+				continue
+			}
+			for _, t := range []string{board.CanonicalTeam(g.Away), board.CanonicalTeam(g.Home)} {
+				if k := g.GameID + "/" + t + "/" + name; !seen[k] {
+					missing = append(missing, k)
+				}
+			}
+		}
+	}
+	if len(missing) > 0 && !*partial {
+		return fmt.Errorf(
+			"beliefs: the forecast is missing %d of the pack's rows (e.g. %s). The contract "+
+				"is a forecast for every row — abstain, do not omit — so a partial file is "+
+				"refused rather than scored on a self-selected subset. Pass -partial to accept "+
+				"it anyway (rehearsal only; the pre-registered run does not)",
+			len(missing), strings.Join(firstN(missing, 3), ", "))
+	}
+
 	if len(late) > 0 && !*dropLate {
 		return fmt.Errorf(
 			"beliefs: %d of %d predictions were made or ingested after kickoff (%s). "+
@@ -307,6 +341,10 @@ func beliefsIngest(args []string) error {
 	tally.report(len(ff.Predictions), onlyNarrative)
 	if len(late) > 0 {
 		fmt.Printf("  DROPPED  %d made after kickoff\n", len(late))
+	}
+	if len(missing) > 0 {
+		fmt.Printf("  PARTIAL  %d of the pack's rows are missing — accepted under -partial; "+
+			"the verdict rests on a self-selected subset\n", len(missing))
 	}
 	if *dry {
 		fmt.Printf("\n-n: nothing written\n")

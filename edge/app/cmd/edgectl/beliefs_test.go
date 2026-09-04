@@ -94,7 +94,7 @@ func TestIngestAcceptsACleanFile(t *testing.T) {
 		{GameID: "2026_01_DEN_KC", Team: "KC", Scenario: "efficient_offense", Belief: 0.5},
 	}, time.Now(), kick)
 
-	if err := beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log}); err != nil {
+	if err := beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-partial"}); err != nil {
 		t.Fatal(err)
 	}
 	if err := beliefsList([]string{"-log", log}); err != nil {
@@ -118,7 +118,7 @@ func TestIngestRefusesAWrongPackHash(t *testing.T) {
 	pk.Games[0].TotalLine = f64(60)
 	writeTestJSON(t, filepath.Dir(pack), filepath.Base(pack), pk)
 
-	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log}),
+	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-partial"}),
 		"different facts")
 }
 
@@ -140,7 +140,7 @@ func TestIngestRefusesAnUnknownField(t *testing.T) {
 	ps[0].(map[string]any)["price"] = -110
 	writeTestJSON(t, filepath.Dir(file), filepath.Base(file), m)
 
-	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log}), "price")
+	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-partial"}), "price")
 }
 
 func TestIngestRefusesAWrongUnitOrTeam(t *testing.T) {
@@ -151,14 +151,14 @@ func TestIngestRefusesAWrongUnitOrTeam(t *testing.T) {
 	pack, file, log := ingestFixture(t, []forecast{
 		{GameID: "2026_01_DEN_KC", Team: "KC", Scenario: "shootout", Belief: 0.44},
 	}, time.Now(), kick)
-	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log}),
+	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-partial"}),
 		"property of the game")
 
 	// A team that is not in the game at all.
 	pack, file, log = ingestFixture(t, []forecast{
 		{GameID: "2026_01_DEN_KC", Team: "SF", Scenario: "pass_heavy", Belief: 0.4},
 	}, time.Now(), kick)
-	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log}),
+	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-partial"}),
 		"not a side of")
 }
 
@@ -170,7 +170,7 @@ func TestIngestRefusesADuplicateClaim(t *testing.T) {
 		{GameID: "2026_01_DEN_KC", Team: "KC", Scenario: "pass_heavy", Belief: 0.40},
 		{GameID: "2026_01_DEN_KC", Team: "KC", Scenario: "pass_heavy", Belief: 0.55},
 	}, time.Now(), kick)
-	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log}), "twice")
+	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-partial"}), "twice")
 }
 
 // Both clocks. A file honestly written but ingested late fails the wall clock;
@@ -181,12 +181,12 @@ func TestIngestRefusesLatePredictions(t *testing.T) {
 		{GameID: "2026_01_DEN_KC", Scenario: "shootout", Belief: 0.44},
 	}, time.Now().Add(-3*time.Hour), past)
 
-	err := beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log})
+	err := beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-partial"})
 	mustFail(t, err, "after kickoff")
 
 	// -drop-late keeps the rest and records the loss rather than pretending it
 	// did not happen.
-	if err := beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-drop-late"}); err != nil {
+	if err := beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-drop-late", "-partial"}); err != nil {
 		t.Fatalf("-drop-late should salvage the file: %v", err)
 	}
 }
@@ -196,8 +196,46 @@ func TestIngestRefusesABeliefOutOfRange(t *testing.T) {
 	pack, file, log := ingestFixture(t, []forecast{
 		{GameID: "2026_01_DEN_KC", Scenario: "shootout", Belief: 1.4},
 	}, time.Now(), kick)
-	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log}),
+	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-partial"}),
 		"not a probability")
+}
+
+// S5: a forecast missing pack rows is refused by default, so a forecaster cannot
+// steer the scored population onto the rows it does best on. -partial accepts it
+// deliberately, recording the count.
+func TestIngestRefusesAnIncompleteForecast(t *testing.T) {
+	kick := time.Now().Add(48 * time.Hour)
+	pack, file, log := ingestFixture(t, []forecast{
+		{GameID: "2026_01_DEN_KC", Scenario: "shootout", Belief: 0.44},
+	}, time.Now(), kick)
+	// Default: refused, because the one-game pack has seven rows and this file has one.
+	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log}),
+		"missing")
+	// -partial accepts it.
+	if err := beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-partial"}); err != nil {
+		t.Fatalf("-partial should accept an incomplete file: %v", err)
+	}
+}
+
+// S5: `rejected` is the falsifier's verdict, not the forecaster's to set. With
+// DisallowUnknownFields, a file that includes it is refused rather than trusted.
+func TestIngestRefusesAForecasterSetRejection(t *testing.T) {
+	kick := time.Now().Add(48 * time.Hour)
+	pack, file, log := ingestFixture(t, []forecast{
+		{GameID: "2026_01_DEN_KC", Scenario: "shootout", Belief: 0.44},
+	}, time.Now(), kick)
+
+	// Inject a forecaster-set "rejected" into the JSON directly.
+	raw, _ := os.ReadFile(file)
+	var m map[string]any
+	if err := json.Unmarshal(raw, &m); err != nil {
+		t.Fatal(err)
+	}
+	m["predictions"].([]any)[0].(map[string]any)["rejected"] = true
+	writeTestJSON(t, filepath.Dir(file), filepath.Base(file), m)
+
+	mustFail(t, beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-partial"}),
+		"rejected")
 }
 
 // The market's own view must be frozen onto the record, and the spread sign has
@@ -211,7 +249,7 @@ func TestIngestFreezesReferencesWithTheRightSpreadSign(t *testing.T) {
 		{GameID: "2026_01_DEN_KC", Team: "DEN", Scenario: "blowout_loss", Belief: 0.35},
 		{GameID: "2026_01_DEN_KC", Scenario: "shootout", Belief: 0.40},
 	}, time.Now(), kick)
-	if err := beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log}); err != nil {
+	if err := beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-partial"}); err != nil {
 		t.Fatal(err)
 	}
 	preds, err := betlog.LoadPredictions(log)
@@ -259,7 +297,7 @@ func TestSettleIsIdempotent(t *testing.T) {
 		{GameID: "2026_01_DEN_KC", Team: "KC", Scenario: "efficient_offense", Belief: 0.52},
 		{GameID: "2026_01_DEN_KC", Team: "DEN", Scenario: "pass_heavy", Belief: 0.61},
 	}, time.Now(), kick)
-	if err := beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log}); err != nil {
+	if err := beliefsIngest([]string{"-file", file, "-pack", pack, "-log", log, "-partial"}); err != nil {
 		t.Fatal(err)
 	}
 
