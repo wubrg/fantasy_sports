@@ -45,9 +45,12 @@ type Prediction struct {
 
 	// InputPackSHA binds this prediction to the exact bytes it was shown.
 	// Paths are mutable; content is not.
+	//
+	// There is deliberately no commit_sha: the record cannot carry the commit that
+	// carries it. The predates-kickoff attestation is the git history of beliefs/
+	// itself (see ADR-002), not a self-referential field.
 	InputPack    string `json:"input_pack,omitempty"`
 	InputPackSHA string `json:"input_pack_sha256,omitempty"`
-	CommitSHA    string `json:"commit_sha,omitempty"`
 
 	// The references this prediction is measured against, FROZEN at ingest.
 	//

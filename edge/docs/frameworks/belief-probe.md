@@ -96,13 +96,17 @@ FORM          each team's prior-form rates, from earlier games only
 is a real absence, not a gap to fill by guessing, and the weeks it happens in are the ones where
 nobody — you, the model, or the market — has much to go on.
 
-Three things are deliberately **not** in the pack:
+Two things are deliberately **not** in the pack:
 
-- **The fitted model's own `s`.** You are being measured against it. Showing you its answer would
-  test anchoring rather than judgement.
 - **Any derived probability.** The posted total and spread are the market's view in raw form.
   Converting a line into a probability is the tool's job.
 - **Any player, line or price.**
+
+The pack does not print the fitted model's own `s` either — but be honest about what that buys. The
+incumbent is a committed artifact (`belief.json`) and its bands are reconstructible from your own
+prior-form numbers, so a determined reader could recover roughly what the model would say. Withholding
+`s` reduces anchoring; it does not prevent it. The experiment relies on you **not** reverse-engineering
+the incumbent and reporting your genuine read, which is the only version of this that measures anything.
 
 ### THE FOUR SCENARIOS
 

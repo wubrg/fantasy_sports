@@ -103,6 +103,7 @@ type Report struct {
 	// Brier and Murphy's decomposition: Brier = Reliability − Resolution +
 	// Uncertainty. Reported together because either alone misleads.
 	Brier       float64
+	BinnedBrier float64 // what the three terms below sum to; the gap to Brier is discretisation
 	Reliability float64
 	Resolution  float64
 	Uncertainty float64
@@ -167,6 +168,7 @@ func Score(pts []Point, bar float64) (Report, error) {
 	r.Brier = Brier(live)
 	r.Bins = binCount(len(live))
 	r.Reliability, r.Resolution, r.Uncertainty = Decompose(live, r.Bins)
+	r.BinnedBrier = r.Reliability - r.Resolution + r.Uncertainty
 	// CalibrationSlope returns (a, b) = (intercept, slope) in that order; the
 	// assignment must match, or a perfectly calibrated forecaster reports a
 	// slope of ~0 (its intercept) under prose that reads "1.0 is honest".
@@ -318,9 +320,15 @@ func Decompose(pts []Point, bins int) (reliability, resolution, uncertainty floa
 		sumP float64
 		sumY float64
 	}
+	// Quantile bins, not equal-width. A forecaster concentrated in a narrow band
+	// (a realistic 0.28-0.44, say) filled only 2 of 10 equal-width bins, so
+	// reliability could not see miscalibration finer than a third of the range.
+	// Ranking and splitting into groups of ~equal count fills every bin.
+	sorted := append([]Point(nil), pts...)
+	sort.Slice(sorted, func(i, j int) bool { return sorted[i].P < sorted[j].P })
 	bs := make([]bin, bins)
-	for _, p := range pts {
-		i := int(p.P * float64(bins))
+	for idx, p := range sorted {
+		i := idx * bins / n
 		if i >= bins {
 			i = bins - 1
 		}

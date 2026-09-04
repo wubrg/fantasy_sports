@@ -48,8 +48,11 @@ a commit timestamp is evidence of *when a price was observed*, which matters bec
 Here a commit **pushed to a remote before kickoff** is the only externally checkable evidence that a
 forecast predates the game it forecasts. Without it there is no test, only an assertion.
 
-Each prediction record carries `commit_sha` alongside `generated_at` so the two can be compared
-later.
+The record does **not** store the commit that carries it — it cannot, because that commit does not
+exist until after the record is written and the file is committed. The attestation is the git history
+of `beliefs/` itself: `git log --follow beliefs/<week>.jsonl` recovers when each line was committed and
+pushed, and that commit's timestamp is compared against `generated_at` and kickoff. The evidence lives
+in the tree, not in a self-referential field.
 
 ### And it is attestation, not proof
 

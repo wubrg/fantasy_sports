@@ -27,13 +27,14 @@ const (
 	refLine      = "line"
 )
 
-// scenariosNotWagerable are the pairings a good belief cannot be spent on.
+// scenariosNotWagerable are the scenarios a belief cannot be spent on at all.
 //
-// blowout_loss fails validation everywhere it is fitted, and pass_heavy is
-// vetoed for receiving yards as a volume identity. Scoring them is free and
-// informs how honest the forecaster is; DECIDING on them would be deciding on a
-// wager that cannot be placed, so the score says so rather than leaving a
-// reader to find it in the fit script.
+// Only blowout_loss: it fails validation on every outcome it is fitted for, so
+// no site prices it. pass_heavy IS wagerable (it validates on passing_yards),
+// but its line barely moves, which is why it is excluded from the DECISION by
+// decisionScenarios rather than from wagering here. Scoring an unwagerable
+// scenario is free and informs how honest the forecaster is; the footer says so
+// rather than leaving a reader to find it in the fit script.
 var scenariosNotWagerable = map[string]string{
 	"blowout_loss": "fails validation on every outcome it is fitted for",
 }
@@ -137,6 +138,9 @@ func beliefsScore(args []string) error {
 	fmt.Printf("\n  RELIABILITY and RESOLUTION are different things, and one good number\n")
 	fmt.Printf("  for the first proves nothing about the second.\n")
 	fmt.Printf("    Brier           %.4f  [%.4f, %.4f]  (clustered by game)\n", r.Brier, lo, hi)
+	fmt.Printf("    binned Brier    %.4f   what the three terms below sum to; gap %+.4f is\n",
+		r.BinnedBrier, r.Brier-r.BinnedBrier)
+	fmt.Printf("                    discretisation, not miscalibration\n")
 	fmt.Printf("    reliability     %.4f   lower is better — is 40%% really 40%%?\n", r.Reliability)
 	fmt.Printf("    resolution      %.4f   HIGHER is better — does it vary, usefully?\n", r.Resolution)
 	fmt.Printf("    uncertainty     %.4f   the base rate's own variance; not the forecaster's\n",
@@ -149,7 +153,13 @@ func beliefsScore(args []string) error {
 	if r.Converged {
 		fmt.Printf("\n  CALIBRATION SLOPE  %.3f  (se %.3f, intercept %+.3f)\n",
 			r.Slope, r.SlopeSE, r.Intercept)
-		fmt.Printf("    1.0 is honest; below 1 means its confident calls are over-confident.\n")
+		switch {
+		case r.Slope < 0:
+			fmt.Printf("    BELOW ZERO: higher belief went with the scenario happening LESS — its\n")
+			fmt.Printf("    confident calls point the wrong way, which is worse than saying nothing.\n")
+		default:
+			fmt.Printf("    1.0 is honest; below 1 means its confident calls are over-confident.\n")
+		}
 	} else {
 		// No number, rather than a number to be misread -- and the RIGHT reason,
 		// because the two causes mean opposite things about the forecaster.
@@ -404,7 +414,9 @@ func bindingCount(sets []refSet) int {
 
 func referenceBreakdown(sets []refSet, bar float64) {
 	fmt.Printf("\n  BY REFERENCE  (each opponent scored on its own rows — never pooled)\n")
-	fmt.Printf("    %-24s %6s %10s %11s\n", "", "n", "gain", "over bar")
+	// "over ±bar" counts rows disagreeing by more than the bar — NOT the E2 wager
+	// count, which additionally requires clearing the vig.
+	fmt.Printf("    %-24s %6s %10s %11s\n", "", "n", "gain", "over ±bar")
 	if len(sets) == 0 {
 		fmt.Printf("    (no row carried any reference yet)\n")
 		return

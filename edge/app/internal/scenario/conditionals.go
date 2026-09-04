@@ -793,6 +793,12 @@ func (c *Conditionals) QR(outcome, scenario string, at Site, line, confidence fl
 // ok=false when the scenario has no validated site -- blowout_loss, and
 // pass_heavy on the volume outcomes -- so those never produce a wager, which is
 // correct rather than a gap.
+//
+// Caveat: taking the MAX separation over validated cells carries a winner's
+// curse -- the selected q-r is biased high by the selection -- which inflates the
+// implied wager count and narrows E2's interval. E2 is a diagnostic, not the
+// decision, so this is noted rather than corrected; a shrunk or held-out
+// separation would be the fix if E2 were ever promoted.
 func (c *Conditionals) BestWagerableSite(scenario string) (q, r float64, site string, ok bool) {
 	for i := range c.Cells {
 		cell := c.Cells[i]
