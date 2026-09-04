@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"math"
+	"math/rand"
 	"sort"
 	"strings"
 
@@ -163,21 +164,23 @@ func beliefsScore(args []string) error {
 	return nil
 }
 
-// jointVerdict reports the pre-registered endpoint, which is two claims.
+// jointVerdict reports the pre-registered endpoint.
 //
-// Both must hold, and they are genuinely different claims:
+// The DECISION is E1: is this more accurate than every opponent that exists —
+// the market, the incumbent, and the line — each scored on its own rows, with
+// the hardest binding? Beating a single auto-picked reference was the flaw the
+// 2026-09-04 review found; beating one that the tool's own line model already
+// beats is no achievement.
 //
-//	E1  is this MORE ACCURATE than the reference?
-//	E2  would the wagers it actually produces have WON?
+// E2 — would the implied wagers have profited? — was registered as a co-equal
+// second claim, but the belief probe collects no prop: a wager settles on the
+// same game-script outcome Y that drives E1, so E2 is a rescaling of E1, not
+// independent evidence. It is kept as a DIAGNOSTIC with an honest interval
+// (Bernoulli-settled, not the plug-in mean) rather than a gate. See the
+// pre-registration amendment in docs/frameworks/belief-probe.md.
 //
-// A forecaster better than the reference by a hair on every row passes E1 with
-// a healthy gain and never disagrees by enough to place a bet, so E2 rests on
-// nothing. One right about eight big calls and mediocre elsewhere can fail E1
-// and be the profitable one. Registering only the first would let "it works" be
-// declared about a forecaster that produces no wagers.
-//
-// Both intervals are clustered by game, because two teams in one game are not
-// two independent draws.
+// Intervals are clustered by game, because two teams in one game are not two
+// independent draws.
 // refSet is one opponent's rows, ready to score. Built once and shared by the
 // verdict and the breakdown so the number the verdict decides on is the same
 // number the table prints.
@@ -220,7 +223,7 @@ func referenceSets(preds []betlog.SettledPrediction, only string,
 
 func jointVerdict(preds []betlog.SettledPrediction, only string, fromWeek, toWeek int,
 	includeRejected bool, autoPts []calib.Point, bar, hold float64) {
-	fmt.Printf("\n  PRE-REGISTERED ENDPOINT  (both must pass)\n")
+	fmt.Printf("\n  PRE-REGISTERED ENDPOINT  E1 accuracy is the decision; E2 is a diagnostic\n")
 
 	// E1 must beat EVERY real opponent, each scored on its own rows -- the
 	// HARDEST binds. The old verdict scored one auto-picked reference, so it
@@ -239,30 +242,35 @@ func jointVerdict(preds []betlog.SettledPrediction, only string, fromWeek, toWee
 			ev.gain, ev.lo, ev.hi, verdictWord(e1, false))
 	}
 
+	// E2 is a DIAGNOSTIC, not a second gate. With game-script-only data the
+	// wager's outcome is the same Y that drives E1, so it is a rescaling of E1,
+	// not independent evidence -- registering it as a co-equal claim was a promise
+	// the data cannot keep. The point estimate is the EXPECTED ROI assuming the
+	// frozen site is right; the interval is bootstrapped over Bernoulli-settled
+	// wagers so it reflects real prop variance rather than the ~5x-too-tight
+	// plug-in spread.
 	n := calib.OverBarCount(autoPts, bar, hold)
-	pts := autoPts
-	edge := calib.RealisedEdge(pts, bar, hold)
-	stat := func(s []calib.Point) float64 { return calib.RealisedEdge(s, bar, hold) }
-	elo, ehi := calib.BootstrapCI(pts, stat, 800, 20260824, 0.05)
-	e2 := !math.IsNaN(elo) && elo > 0
-	fmt.Printf("    E2 profit       realised ROI %+.4f  [%+.4f, %+.4f]  on %d wagers   %s\n",
-		edge, elo, ehi, n, verdictWord(e2, math.IsNaN(elo) || n == 0))
-	fmt.Printf("                    per unit STAKED (comparable to FINDINGS §16's +7%%..+18%%),\n")
-	fmt.Printf("                    a prop reconstructed from the frozen site at a %.0f%% hold\n", hold*100)
+	edge := calib.RealisedEdge(autoPts, bar, hold)
+	rng := rand.New(rand.NewSource(20260904))
+	stat := func(s []calib.Point) float64 { return calib.RealisedEdgeSampled(s, bar, hold, rng) }
+	elo, ehi := calib.BootstrapCI(autoPts, stat, 800, 20260824, 0.05)
+	if n == 0 {
+		fmt.Printf("    E2 diagnostic   no wagers implied yet\n")
+	} else {
+		fmt.Printf("    E2 diagnostic   expected ROI %+.4f  [%+.4f, %+.4f]  on %d implied wagers\n",
+			edge, elo, ehi, n)
+		fmt.Printf("                    per unit staked at a %.0f%% hold, assuming the frozen site is\n", hold*100)
+		fmt.Printf("                    exact; a robustness check on E1, not independent of it\n")
+	}
 
+	// The decision is E1 alone.
 	switch {
-	case !e1Decidable || math.IsNaN(elo) || n == 0:
-		fmt.Printf("    VERDICT         not yet decidable\n")
-	case e1 && e2:
-		fmt.Printf("    VERDICT         BOTH PASS — accurate, and the wagers it implies won\n")
+	case !e1Decidable:
+		fmt.Printf("    VERDICT         not yet decidable — no opponent is evaluable\n")
 	case e1:
-		fmt.Printf("    VERDICT         accuracy only. It beats the reference and does not\n")
-		fmt.Printf("                    disagree by enough, often enough, to be worth betting\n")
-	case e2:
-		fmt.Printf("    VERDICT         profit only. Its big calls paid without it being\n")
-		fmt.Printf("                    measurably more accurate — treat as unproven at this n\n")
+		fmt.Printf("    VERDICT         PASS — more accurate than every opponent that exists\n")
 	default:
-		fmt.Printf("    VERDICT         NEITHER\n")
+		fmt.Printf("    VERDICT         FAIL — it loses to at least one opponent (%s)\n", ev.name)
 	}
 }
 

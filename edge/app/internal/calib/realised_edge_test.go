@@ -2,8 +2,43 @@ package calib
 
 import (
 	"math"
+	"math/rand"
 	"testing"
 )
+
+// TestRealisedEdgeSampledIsUnbiasedButWider is the S-B fix: the plug-in ROI gives
+// every wager its expected value with no variance, so its bootstrap interval is
+// far too tight. The sampled version settles each wager by a real Bernoulli draw
+// — same mean, honest spread.
+func TestRealisedEdgeSampledIsUnbiasedButWider(t *testing.T) {
+	var pts []Point
+	for i := 0; i < 400; i++ {
+		pts = append(pts, over(0.60, 0.30, 0.55, 0.35, i%3 == 0))
+	}
+	plug := RealisedEdge(pts, 0.0, 0.06)
+
+	// Averaging many sampled realisations recovers the plug-in mean (unbiased).
+	rng := rand.New(rand.NewSource(1))
+	var acc float64
+	const reps = 600
+	for r := 0; r < reps; r++ {
+		acc += RealisedEdgeSampled(pts, 0.0, 0.06, rng)
+	}
+	if mean := acc / reps; math.Abs(mean-plug) > 0.02 {
+		t.Errorf("sampled mean %.4f vs plug-in %.4f — not unbiased", mean, plug)
+	}
+
+	// The bootstrap interval over the sampled statistic must be materially wider
+	// than over the plug-in: the plug-in's is the one that declared significance
+	// on thin evidence.
+	plugLo, plugHi := BootstrapCI(pts, func(s []Point) float64 { return RealisedEdge(s, 0.0, 0.06) }, 400, 7, 0.05)
+	rng2 := rand.New(rand.NewSource(2))
+	sampLo, sampHi := BootstrapCI(pts, func(s []Point) float64 { return RealisedEdgeSampled(s, 0.0, 0.06, rng2) }, 400, 7, 0.05)
+	if (sampHi - sampLo) < 2*(plugHi-plugLo) {
+		t.Errorf("sampled CI width %.4f is not materially wider than plug-in %.4f",
+			sampHi-sampLo, plugHi-plugLo)
+	}
+}
 
 // A wagerable row carries a frozen site (q, r). These helpers build one on each
 // side so the tests read as the wagers they describe.

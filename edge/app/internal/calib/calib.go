@@ -557,19 +557,21 @@ func BootstrapCI(pts []Point, stat func([]Point) float64, iters int, seed int64,
 // levied on the prop price, not in s-space, which is the fix for the endpoint
 // that used to report a profit on negative-EV strategies.
 //
-// The realised prop-hit rate given the observed scenario is q if it occurred and
-// r if it did not -- the honest realisation available without a prop line, lower
-// variance than a single 0/1 prop, and ungameable because q and r are frozen.
+// The win probability given the observed scenario is q if it occurred and r if
+// it did not (the mirror for an under bet). RealisedEdge plugs that mean in
+// directly, so it is the EXPECTED ROI assuming the frozen site is exactly right;
+// it is an unbiased point estimate, but its spread across wagers omits the prop's
+// own 0/1 variance. RealisedEdgeSampled restores that variance for the interval.
 // Rows without a wagerable site (no q/r) never become wagers.
 func RealisedEdge(pts []Point, bar, hold float64) float64 {
 	var sum float64
 	var n int
 	for _, p := range Positions(pts) {
-		roi, ok := p.wagerROI(bar, hold)
+		w, be, ok := p.wager(bar, hold)
 		if !ok {
 			continue
 		}
-		sum += roi
+		sum += (w - be) / be // expected return per unit staked
 		n++
 	}
 	if n == 0 {
@@ -578,25 +580,56 @@ func RealisedEdge(pts []Point, bar, hold float64) float64 {
 	return sum / float64(n)
 }
 
-// wagerROI reconstructs the prop wager one row implies and returns its realised
-// return per unit staked, or ok=false if the row is not a wager.
+// RealisedEdgeSampled is RealisedEdge with each wager settled by an actual
+// Bernoulli(win) draw rather than its mean, so a bootstrap over it produces an
+// interval that reflects real prop variance.
+//
+// The plug-in mean makes the per-wager spread ~5x too small (a 60% shot returns
+// its expected value every time instead of winning 60% and losing 40%), so the
+// plug-in CI declares significance on far thinner evidence than a real bet
+// history would. Passing this as the bootstrap statistic fixes that. It does NOT
+// propagate the grid's own uncertainty in q,r -- those are frozen constants -- so
+// the interval is still conditional on the site being correct.
+func RealisedEdgeSampled(pts []Point, bar, hold float64, rng *rand.Rand) float64 {
+	var sum float64
+	var n int
+	for _, p := range Positions(pts) {
+		w, be, ok := p.wager(bar, hold)
+		if !ok {
+			continue
+		}
+		if rng.Float64() < w {
+			sum += (1 - be) / be // won: collect the payout net of the stake
+		} else {
+			sum += -1 // lost the stake
+		}
+		n++
+	}
+	if n == 0 {
+		return math.NaN()
+	}
+	return sum / float64(n)
+}
+
+// wager reconstructs the prop wager one row implies: its win probability and the
+// break-even price it must beat, or ok=false if the row is not a wager.
 //
 // bar is an extra floor on the s-disagreement on top of clearing the vig, so a
 // caller can demand a minimum edge; bar=0 recovers pure break-even-plus-hold.
-func (p Point) wagerROI(bar, hold float64) (float64, bool) {
+func (p Point) wager(bar, hold float64) (win, breakeven float64, ok bool) {
 	if !p.HasRef || !p.HasQR {
-		return 0, false
+		return 0, 0, false
 	}
 	if p.Q-p.R <= 0 {
-		return 0, false // the scenario does not raise the prop: nothing to bet on it
+		return 0, 0, false // the scenario does not raise the prop: nothing to bet on it
 	}
 	if math.Abs(p.P-p.Ref) <= bar {
-		return 0, false
+		return 0, 0, false
 	}
 	pBook := p.Q*p.Ref + p.R*(1-p.Ref)
 	pYou := p.Q*p.P + p.R*(1-p.P)
 
-	// The prop's realised hit rate GIVEN the scenario we observed.
+	// The prop's win probability GIVEN the scenario we observed.
 	h := p.R
 	if p.Y {
 		h = p.Q
@@ -605,15 +638,15 @@ func (p Point) wagerROI(bar, hold float64) (float64, bool) {
 	if pYou > pBook {
 		be := pBook * (1 + hold) // bet OVER
 		if pYou <= be || be <= 0 || be >= 1 {
-			return 0, false
+			return 0, 0, false
 		}
-		return (h - be) / be, true
+		return h, be, true
 	}
 	be := (1 - pBook) * (1 + hold) // bet UNDER
 	if (1-pYou) <= be || be <= 0 || be >= 1 {
-		return 0, false
+		return 0, 0, false
 	}
-	return ((1 - h) - be) / be, true
+	return 1 - h, be, true
 }
 
 // OverBarCount is how many rows the realised-edge statistic actually rests on:
@@ -627,7 +660,7 @@ func (p Point) wagerROI(bar, hold float64) (float64, bool) {
 func OverBarCount(pts []Point, bar, hold float64) int {
 	var n int
 	for _, p := range Positions(pts) {
-		if _, ok := p.wagerROI(bar, hold); ok {
+		if _, _, ok := p.wager(bar, hold); ok {
 			n++
 		}
 	}

@@ -226,22 +226,33 @@ magnitude.
 and neither substitutes for the other; a base-rate forecaster scores perfectly on the first and zero
 on the second.
 
-The primary endpoint is **pre-registered and has two halves, both of which must pass**: that the
-forecast is more accurate than the reference (paired Brier gain), and that the wagers it implies
-would have won. That second half is a **real prop wager, not a bet on the scenario directly** —
-there is no market in "was it a shootout". For the two wagerable scenarios the tool freezes the best
-validated site's `q` and `r` at ingest, turns your `s` and the reference's into prop prices
-`P = q·s + r·(1−s)`, and counts a row as a wager only where your price clears the book's *after its
-hold*. The return is reported per unit **staked**, so it is comparable to
-[FINDINGS §16](../../model/FINDINGS.md)'s +7% to +18% oracle bound. Being more accurate and being
-worth betting are different claims, and a forecaster can hold one without the other.
+The primary endpoint is **E1: is the forecast more accurate than every opponent that exists?**
+`beliefs score` scores each opponent on its own rows, never pooled — the market where there is one,
+the incumbent model from week 4, and, for the two scenarios with no market line, a **line-only
+logistic**, `P(scenario)` fitted on nothing but the posted total and spread. That last one is the
+honest null: the numbers it uses are already in your pack, so beating it is the only version of "an
+outside read added something" that means what it says. **The hardest of these opponents binds** — a
+forecaster that beats the incumbent but loses to the line fails, because the line is one of the
+opponents it must beat. The base rate is shown as a non-binding floor.
 
-**The reference is not just the base rate.** `beliefs score` reports each opponent on its own rows,
-never pooled: the market where there is one, the incumbent model from week 4, and — for the two
-scenarios with no market line — a **line-only logistic**, `P(scenario)` fitted on nothing but the
-posted total and spread. That last one is the honest null. The numbers it uses are already in your
-pack, so beating it is the only version of "an outside read added something" that means what it
-says; beating a stale constant is not.
+> **Pre-registration amendment, 2026-09-04.** E1 was originally "paired Brier gain, pooled over
+> positions", scored against a single auto-picked reference. That pooled the reference types and,
+> once prior form existed, scored the two PROE scenarios against the incumbent — which the line
+> model beats with no football knowledge. E1 is now the conjunction above: beat every opponent, the
+> hardest binds. The amendment is made with the log still empty (no data has been observed), which
+> is when a pre-registration can still be corrected.
+
+**E2 is a diagnostic, not a second gate.** It asks whether the wagers the forecast implies would have
+profited: for the wagerable scenarios the tool freezes the best validated site's `q` and `r` at
+ingest, turns your `s` and the reference's into prop prices `P = q·s + r·(1−s)`, and counts a row as
+a wager only where your price clears the book's *after its hold*. But the probe collects **no prop** —
+a wager settles on the same game-script outcome that drives E1, so E2 is a re-expression of E1, not
+independent evidence. It was originally registered as a co-equal "both must pass" claim; that was a
+promise game-script-only data cannot keep, so it is reported as a robustness check with an honest
+interval (each wager settled by a real Bernoulli draw, not its mean, which the review showed made the
+plug-in interval ~5× too tight). Its point estimate is the **expected** ROI per unit staked assuming
+the frozen site is exactly right — comparable in units to [FINDINGS §16](../../model/FINDINGS.md)'s
++7% to +18%, but not a realised track record.
 
 That is why the instructions above ask you to **abstain freely and commit where you have a reason**.
 A forecast nudged a point or two off the base rate everywhere is more accurate and produces nothing

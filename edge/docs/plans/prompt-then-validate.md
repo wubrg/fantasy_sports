@@ -223,6 +223,28 @@ project has already been misled three times by pooling alone. So the endpoint is
 > **Everything else is descriptive.** Reliability, resolution, slope, AUC, per-scenario and
 > per-confidence splits, the flagged-versus-rest comparison and survivors-versus-all are all worth
 > looking at and none of them is the verdict.
+
+**Amendment, 2026-09-04 (log still empty).** The 2026-09-04 review found two defects in the endpoint
+above, both fixable only by changing its definition. Amended here rather than at scoring time because
+no data has been observed:
+
+> **E1 is now: beat every opponent, the hardest binds.** "Pooled over positions against the
+> reference" scored one auto-picked opponent, and auto prefers the incumbent over the line, so from
+> week 4 the two PROE scenarios were scored against the incumbent — which the committed line model
+> beats with no football knowledge. E1 now scores each opponent (market, incumbent, line) on its own
+> rows and requires the forecast to beat **all** of them; the lowest lower-bound binds and is
+> reported. The base rate is a non-binding floor.
+>
+> **E2 is demoted from a co-equal gate to a diagnostic.** The "both must pass" framing assumed E1 and
+> E2 are independent claims. They are not: the probe collects no prop, so a reconstructed wager
+> settles on the same game-script outcome that drives E1 — E2 is a rescaling of E1, not a second
+> measurement. Its interval was also ~5× too tight, settling each wager at its expected value instead
+> of a real 0/1 draw. E2 is now reported as a robustness check with a Bernoulli-settled interval, and
+> the **verdict is E1 alone**. E2 being negative or undecided is informative but does not fail the
+> endpoint.
+>
+> The power table (week-8 decision point) is unchanged here and is being revisited separately, with
+> the honest one-sided α and team-season clustering; that revision may move the decision week.
 >
 > Reproduce with one command, no hand-assembly:
 > `edgectl beliefs score -from-week 1 -to-week 8 -bar 0.10 -hold 0.06`
