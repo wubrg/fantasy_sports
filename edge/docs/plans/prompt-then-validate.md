@@ -159,22 +159,58 @@ are drawn from the same afternoon. Measured over 2,608 games: `efficient_offense
 blown out, which makes that pair carry *more* information than two independent draws. For the two
 scenarios the belief model covers, a 64-record week is worth about **60 effective** predictions.
 
-**Second, power at that size is poor precisely where it matters.** Simulated, testing "the prompt
-beats the base rate" at 95%, one-sided:
+**Second, power at that size is poor precisely where it matters.** The table below is the
+**corrected** one — the original (retained at the end of this section for the record) was
+unreproducible from anything in the repo and wrong three ways the 2026-09-04 review found. This one
+comes from `make power-table` (`app/cmd/powersim`), which drives the **shipped** `calib.PairedBrierGain`
+and `calib.BootstrapCI` so the table cannot drift from the code that decides the endpoint. It fixes:
 
-| weeks | n | edge +0.05 | +0.10 | +0.15 | +0.20 |
+- **α.** The old table read the bootstrap lower bound at `alpha=0.05`, which is one-sided **2.5%**,
+  not the "one-sided 95%" it claimed. This passes `alpha=0.10` for a genuine one-sided 5% bound.
+- **Population.** After the S6 fix the decision rests on `shootout` (16/wk) and `efficient_offense`
+  (32/wk) — 48 raw rows a week, not 112 — and a forecaster that abstains freely commits on a
+  fraction of them. The `n` column is committed positions at a **generous 40% commit rate**, not raw
+  rows × 60.
+- **Clustering.** `efficient_offense` rows for a team are correlated across weeks and the bootstrap
+  clusters on team-season, not game.
+
+Testing "the prompt beats the reference", one-sided 5%, 500 trials, commit rate 0.40:
+
+| weeks | committed n | edge +0.05 | +0.10 | +0.15 | +0.20 |
 |---|---|---|---|---|---|
-| 1 | 60 | 9% | **21%** | 40% | 63% |
+| 1 | 22 | 10% | 13% | 23% | 33% |
+| 3 | 61 | 13% | 26% | 32% | 48% |
+| 6 | 121 | 15% | 28% | 46% | 67% |
+| 8 | 160 | 19% | **31%** | 58% | 77% |
+| 12 | 233 | 17% | 42% | 67% | 87% |
+| 18 | 361 | 19% | **49%** | **79%** | 94% |
+
+- **The edge that actually matters (+0.10) never reaches 80% in a season** — 49% at week 18, against
+  the old table's 90% at week 8. This is the single most important correction: the decision point was
+  chosen as "the first week +0.10 clears 80%", and **there is no such week.**
+- **A large edge (+0.15) reaches ~80% only at the end of the regular season (week 18); +0.20 by
+  around week 12.**
+- **+0.05 is undetectable all season**, and it still clears the +0.03 bar on the best sites. There is
+  a real regime where this is profitable and untestable, and no test design removes it.
+
+**This table is an upper bound, for three reasons that all push real power lower:** it models a single
+reference, but E1 now requires beating *every* opponent (the hardest binds); it models a perfectly
+calibrated forecaster; and its gain-clustering is milder than a real forecaster's persistent
+per-team error. Read every cell as "no more than this."
+
+<details><summary>The original (superseded) table, for the record</summary>
+
+| weeks | n | +0.05 | +0.10 | +0.15 | +0.20 |
+|---|---|---|---|---|---|
+| 1 | 60 | 9% | 21% | 40% | 63% |
 | 3 | 180 | 17% | 52% | 85% | 98% |
-| 6 | 360 | 30% | **80%** | 99% | 100% |
+| 6 | 360 | 30% | 80% | 99% | 100% |
 | 8 | 480 | 37% | 90% | 100% | 100% |
 | 18 | 1080 | 68% | 100% | 100% | 100% |
 
-- **A very good prompt (+0.20) shows up in two or three weeks.**
-- **The edge that actually matters (+0.10) needs six to eight.**
-- **A +0.05 edge is not reliably detectable in a season** — and it still clears the +0.03 bar on
-  the best sites. There is a real regime where this is profitable and untestable, and no amount of
-  care about the test design removes it.
+It used one-sided 2.5% mislabelled as 5%, `n = weeks × 60` (raw rows, no abstention), game-level
+clustering, and a generative model no script in the repo reproduced.
+</details>
 
 Three things buy power, and they are worth taking in this order:
 
@@ -243,8 +279,14 @@ no data has been observed:
 > the **verdict is E1 alone**. E2 being negative or undecided is informative but does not fail the
 > endpoint.
 >
-> The power table (week-8 decision point) is unchanged here and is being revisited separately, with
-> the honest one-sided α and team-season clustering; that revision may move the decision week.
+> **The decision point moves from week 8 to week 18, and the detectable effect from +0.10 to +0.15.**
+> Week 8 was chosen as the first week the old table put +0.10 above 80% power. The corrected table
+> (above, `make power-table`) shows +0.10 never reaches 80% in a season — 49% at week 18 — so that
+> decision point does not exist. The endpoint is re-registered at **week 18** (end of the regular
+> season), where +0.15 reaches ~80%; **+0.10 is evaluated and reported but is known to be
+> underpowered**, which is itself the finding — a real edge in the +0.05 to +0.10 band is profitable
+> and not reliably detectable in one season. The α is now a genuine one-sided 5% (`alpha=0.10` to
+> `BootstrapCI`), matching the table.
 >
 > Reproduce with one command, no hand-assembly:
 > `edgectl beliefs score -from-week 1 -to-week 8 -bar 0.10 -hold 0.06`

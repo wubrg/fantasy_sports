@@ -6,7 +6,7 @@ DEMO_LOG := /tmp/edgectl-demo.jsonl
 .PHONY: help build check test vet fmt fmt-check lint clean \
 	board board-check board-report \
 	data data-status data-clean \
-	fit fit-residuals fit-conditionals fit-belief fit-line-model verify-model lag findings \
+	fit fit-residuals fit-conditionals fit-belief fit-line-model power-table verify-model lag findings \
 	demo demo-clean
 
 # This is the working entry point for the edge app. It covers both halves:
@@ -133,6 +133,9 @@ fit-belief: ## Refit P(scenario occurs) from team prior form -- the `s` half
 
 fit-line-model: ## Refit the line-only reference -- P(scenario) from total+spread, the belief probe's honest null
 	$(PY) $(MODEL)/analysis/fit_line_model.py
+
+power-table: ## Regenerate the belief-probe power table with the shipped calib (writes nothing; paste into the plan)
+	cd app && go run ./cmd/powersim
 
 # A backtest must score an ARTIFACT, not a reconstruction of one: a measurement
 # that rebuilds the grid in memory cannot see anything the serialisation does,

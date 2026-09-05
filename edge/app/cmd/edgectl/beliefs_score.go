@@ -385,7 +385,10 @@ func evaluateE1(sets []refSet) e1Eval {
 			continue
 		}
 		gain := calib.PairedBrierGain(s.pts)
-		lo, hi := calib.BootstrapCI(s.pts, calib.PairedBrierGain, 800, 20260824, 0.05)
+		// alpha=0.10 so the lower bound is a genuine one-sided 5% bound, matching
+		// the pre-registration and the power table. Passing 0.05 here would be a
+		// one-sided 2.5% test — the α defect the 2026-09-04 review found.
+		lo, hi := calib.BootstrapCI(s.pts, calib.PairedBrierGain, 800, 20260824, 0.10)
 		if math.IsNaN(lo) {
 			continue
 		}
@@ -424,7 +427,9 @@ func referenceBreakdown(sets []refSet, bar float64) {
 	for _, s := range sets {
 		g, err := calib.Score(s.pts, bar)
 		gain := calib.PairedBrierGain(s.pts)
-		glo, ghi := calib.BootstrapCI(s.pts, calib.PairedBrierGain, 800, 20260824, 0.05)
+		// One-sided 5% lower bound, the same the verdict decides on, so the table
+		// and the decision cannot show different bounds for the same opponent.
+		glo, ghi := calib.BootstrapCI(s.pts, calib.PairedBrierGain, 800, 20260824, 0.10)
 		gs := "—"
 		if !math.IsNaN(gain) {
 			gs = fmt.Sprintf("%+.5f", gain)
@@ -648,23 +653,22 @@ func reference(p betlog.Prediction, mode string) (float64, bool) {
 
 // powerNote exists because 112 rows in week one looks decisive and is not.
 func powerNote(n int) {
-	fmt.Printf("\n  POWER  %d scored positions.\n", n)
-	weeks := float64(n) / 60.0
-	fmt.Printf("    A week is about 60 EFFECTIVE predictions once within-game correlation\n")
-	fmt.Printf("    is discounted, so this is roughly %.1f weeks.\n", weeks)
+	fmt.Printf("\n  POWER  %d committed positions (decision scenarios).\n", n)
+	// Committed positions, not raw rows: a forecaster abstaining freely puts far
+	// fewer over the season than 60/week suggested. The bands come from the
+	// corrected power table (make power-table), one-sided 5%.
 	switch {
 	case n < 120:
-		fmt.Printf("    At this size only a very large edge (+0.20) is detectable, and even\n")
-		fmt.Printf("    that at about 40%% power. READ NOTHING INTO THE SIGN YET.\n")
-	case n < 360:
-		fmt.Printf("    Enough for a +0.15 edge (~85%%). A +0.10 edge is still a coin flip\n")
-		fmt.Printf("    to detect at ~52%%.\n")
-	case n < 480:
-		fmt.Printf("    Enough for +0.10 at ~80%% power. This is the first point worth\n")
-		fmt.Printf("    reading as a verdict.\n")
+		fmt.Printf("    Even a large edge (+0.15) is under 50%% detectable here. READ NOTHING\n")
+		fmt.Printf("    INTO THE SIGN YET.\n")
+	case n < 200:
+		fmt.Printf("    A +0.15 edge is ~55-60%% detectable; +0.10 is ~30%%, a coin flip or worse.\n")
+	case n < 340:
+		fmt.Printf("    A +0.15 edge approaches ~70%%; +0.10 is ~42%% and still not decidable.\n")
 	default:
-		fmt.Printf("    Enough for +0.10 at 90%%+. A +0.05 edge remains undetectable in a\n")
-		fmt.Printf("    season, and would still clear the bar on the best sites.\n")
+		fmt.Printf("    +0.15 reaches ~80%% (the week-18 decision point); +0.10 tops out near\n")
+		fmt.Printf("    50%% in a full season and +0.05 is undetectable — both still clear the bar\n")
+		fmt.Printf("    on the best sites, a real profitable-but-untestable regime.\n")
 	}
 	if len(scenariosNotWagerable) > 0 {
 		var names []string
