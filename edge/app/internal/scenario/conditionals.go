@@ -778,6 +778,67 @@ func (c *Conditionals) QR(outcome, scenario string, at Site, line, confidence fl
 	return q, r, nil
 }
 
+// BestWagerableSite returns the (q, r) the belief probe's realised-edge endpoint
+// wagers against for a scenario: the validated site where the scenario moves the
+// prop MOST, priced at the player's own median line (ratio 1.0).
+//
+// The belief probe names no player, line or site, so E2 needs a representative
+// one. The choice is deliberate on two counts. The site is the best available --
+// "on the sharpest cell you could actually deploy this, would the belief have
+// paid?" -- because a site where the scenario barely moves the distribution can
+// never pay however good the read. The line is the median, ratio 1.0, which is
+// the most conservative: separation is smaller there than at a deep line, so E2
+// understates rather than overstates the edge. Both are frozen at ingest.
+//
+// ok=false when the scenario has no validated site -- blowout_loss, and
+// pass_heavy on the volume outcomes -- so those never produce a wager, which is
+// correct rather than a gap.
+//
+// Caveat: taking the MAX separation over validated cells carries a winner's
+// curse -- the selected q-r is biased high by the selection -- which inflates the
+// implied wager count and narrows E2's interval. E2 is a diagnostic, not the
+// decision, so this is noted rather than corrected; a shrunk or held-out
+// separation would be the fix if E2 were ever promoted.
+func (c *Conditionals) BestWagerableSite(scenario string) (q, r float64, site string, ok bool) {
+	for i := range c.Cells {
+		cell := c.Cells[i]
+		if cell.Scenario != scenario || !cell.Occurred || !cell.Validated {
+			continue
+		}
+		at := Site{
+			Posted:   interiorPoint(cell.PostedMin, cell.PostedMax),
+			Baseline: interiorPoint(cell.BaselineMin, cell.BaselineMax),
+			Trend:    interiorPoint(cell.TrendMin, cell.TrendMax),
+		}
+		if at.Baseline <= 0 {
+			continue
+		}
+		qc, rc, err := c.QR(cell.Outcome, scenario, at, at.Baseline, 0.95)
+		if err != nil {
+			continue // this site's other half is unvalidated or ratio 1.0 is off its support
+		}
+		if sep := qc.Prob - rc.Prob; sep > 0 && sep > q-r {
+			q, r, ok = qc.Prob, rc.Prob, true
+			site = cell.Outcome + " @ " + cell.SiteLabel()
+		}
+	}
+	return q, r, site, ok
+}
+
+// interiorPoint is a representative value inside a possibly open-ended band.
+func interiorPoint(min, max float64) float64 {
+	switch {
+	case math.IsInf(min, -1) && math.IsInf(max, 1):
+		return 0
+	case math.IsInf(min, -1):
+		return max
+	case math.IsInf(max, 1):
+		return min
+	default:
+		return (min + max) / 2
+	}
+}
+
 // ScenarioNames lists the scenarios the fitted grid covers.
 func (c *Conditionals) ScenarioNames() []string {
 	seen := map[string]bool{}

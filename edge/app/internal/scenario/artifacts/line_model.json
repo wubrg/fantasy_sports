@@ -1,0 +1,53 @@
+{
+ "generated_at": "2026-09-03T03:06:28Z",
+ "generated_by": "edge/model/analysis/fit_line_model.py",
+ "seasons": [
+  2009,
+  2025
+ ],
+ "features": [
+  "1",
+  "(total-45)/5",
+  "expected_margin/7",
+  "abs(expected_margin)/7"
+ ],
+ "transform": {
+  "total_center": 45.0,
+  "total_scale": 5.0,
+  "margin_scale": 7.0
+ },
+ "cache": {
+  "games.csv": {
+   "bytes": 2177175,
+   "fetched_at": "2026-08-20T13:07:43Z",
+   "sha256": "b4970da16bba2cc409ea40156516cab2b53f6e5a59553eb4005689d0f4cab6de",
+   "url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
+  }
+ },
+ "models": {
+  "efficient_offense": {
+   "coefficients": [
+    -0.631981,
+    0.603634,
+    0.537647,
+    -0.107017
+   ],
+   "n": 8446,
+   "base_rate": 0.3436,
+   "held_out_logloss": 0.59462,
+   "converged": true
+  },
+  "pass_heavy": {
+   "coefficients": [
+    -0.735114,
+    0.409793,
+    0.154111,
+    0.001896
+   ],
+   "n": 8446,
+   "base_rate": 0.3276,
+   "held_out_logloss": 0.61801,
+   "converged": true
+  }
+ }
+}

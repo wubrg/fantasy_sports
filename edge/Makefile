@@ -6,7 +6,7 @@ DEMO_LOG := /tmp/edgectl-demo.jsonl
 .PHONY: help build check test vet fmt fmt-check lint clean \
 	board board-check board-report \
 	data data-status data-clean \
-	fit fit-residuals fit-conditionals verify-model lag findings \
+	fit fit-residuals fit-conditionals fit-belief fit-line-model power-table verify-model lag findings \
 	demo demo-clean
 
 # This is the working entry point for the edge app. It covers both halves:
@@ -120,7 +120,7 @@ verify-model: ## Re-run both fits read-only and print calibration (writes nothin
 	@echo "== conditionals: scenario separation =="
 	@$(PY) $(MODEL)/analysis/fit_conditionals.py --report
 
-fit: fit-residuals fit-conditionals fit-belief ## Regenerate ALL artifacts (rewrites committed files)
+fit: fit-residuals fit-conditionals fit-belief fit-line-model ## Regenerate ALL artifacts (rewrites committed files)
 
 fit-residuals: ## Refit the game-line residual distribution
 	$(PY) $(MODEL)/analysis/fit_residuals.py
@@ -130,6 +130,12 @@ fit-conditionals: ## Refit the pooled q/r grid
 
 fit-belief: ## Refit P(scenario occurs) from team prior form -- the `s` half
 	$(PY) $(MODEL)/analysis/fit_belief.py
+
+fit-line-model: ## Refit the line-only reference -- P(scenario) from total+spread, the belief probe's honest null
+	$(PY) $(MODEL)/analysis/fit_line_model.py
+
+power-table: ## Regenerate the belief-probe power table with the shipped calib (writes nothing; paste into the plan)
+	cd app && go run ./cmd/powersim
 
 # A backtest must score an ARTIFACT, not a reconstruction of one: a measurement
 # that rebuilds the grid in memory cannot see anything the serialisation does,
@@ -147,6 +153,32 @@ backtest: ## Score the tool on a season it never saw (slow: fits a 2009-2024 gri
 backtest-tails: ## What a tail costs to chase, and whether the belief model can pay it
 	@cd $(MODEL)/analysis && $(PY) backtest.py --grid $(BACKTEST_DIR)/grid.json \
 		--belief $(BACKTEST_DIR)/belief.json --from 2025 --tails
+
+## --- Belief probe (see docs/plans/prompt-then-validate.md) ---
+
+BELIEF_DIR := beliefs
+
+belief-pack: ## What a forecaster is shown. make belief-pack SEASON=2026 WEEK=1
+	@cd $(MODEL)/analysis && $(PY) beliefpack.py pack \
+		--season $(SEASON) --week $(WEEK) --out-dir ../../$(BELIEF_DIR)/$(SEASON)
+
+belief-outcomes: ## Did each scenario occur? make belief-outcomes SEASON=2025 WEEK=5
+	@cd $(MODEL)/analysis && $(PY) beliefpack.py outcomes \
+		--season $(SEASON) --week $(WEEK) \
+		--out ../../$(BELIEF_DIR)/$(SEASON)/week$(shell printf %02d $(WEEK)).outcomes.json
+
+belief-ingest: ## Ingest a week's forecasts. make belief-ingest SEASON=2026 WEEK=1 FILE=...
+	@cd $(APP) && ./edgectl beliefs ingest -file ../$(FILE) \
+		-pack ../$(BELIEF_DIR)/$(SEASON)/week$(shell printf %02d $(WEEK)).input.json \
+		-log ../$(BELIEF_DIR)/log.jsonl
+
+belief-settle: ## Settle a week from its outcome pack. make belief-settle SEASON=2026 WEEK=1
+	@cd $(APP) && ./edgectl beliefs settle \
+		-outcomes ../$(BELIEF_DIR)/$(SEASON)/week$(shell printf %02d $(WEEK)).outcomes.json \
+		-log ../$(BELIEF_DIR)/log.jsonl
+
+belief-score: ## Score every recorded belief
+	@cd $(APP) && ./edgectl beliefs score -log ../$(BELIEF_DIR)/log.jsonl
 
 backtest-oracle: ## The ceiling: what a PERFECT belief would earn, to bound the rest
 	@cd $(MODEL)/analysis && $(PY) backtest.py --grid $(BACKTEST_DIR)/grid.json \

@@ -10,8 +10,32 @@ derived_from:
 
 # URPS Wager Engine (operative)
 
-> **This is the version to paste into a model.** The unmodified source is
-> [`urps-wager-engine.source.md`](./urps-wager-engine.source.md).
+> **Superseded as a prompt by the `urps` skill, 2026-08-24.** This document remains the rationale
+> and the audit trail — the deviation table below and its evidence are why the methodology looks
+> the way it does, and dissolving that into a skill file would lose it. The workflow now lives in
+> `.claude/skills/urps/SKILL.md`.
+>
+> The reason for the move is in the deviation table itself. Every ABSOLUTE CONSTRAINT here says some
+> form of *do not compute, do not invent, do not recall* — and pasted into a chat window, each one
+> is an honour system that has already failed. As a skill they are tool calls: the arithmetic
+> happens in `edgectl`, and there is nothing to read if no price was supplied.
+>
+> The unmodified source is [`urps-wager-engine.source.md`](./urps-wager-engine.source.md).
+
+## Audit against the current tool, 2026-08-24
+
+Four things this template still says that the tool no longer does. They are recorded rather than
+edited, because the template is the archive of what was decided and when.
+
+| # | This document | Now |
+|---|---|---|
+| 1 | **Filter 1 requires a projection gap** — a `PROJECTIONS` block, ≥3 sources, `p_true` from simulation, and the prop is "dead" without one | Aims at the wrong quantity. [FINDINGS §15](../../model/FINDINGS.md) scored the apparatus at **+0.74pp over 16,512 wagers** and every one still loses at −110: *calibration is not an edge.* The quantity that pays is `s_edge > P_book × hold / (q − r)` |
+| 2 | Filter 3 screens on **snap share, target share, air yards** | The grid is no longer cut on target share. It conditions on the player's own **baseline output**, the posted total and the role trend, and `player.py` supplies them |
+| 3 | Assumes `s` is the operator's to assert | `edgectl belief` measures it for the two scenarios that had no market line — the S-problem the review named |
+| 4 | Treats a scenario as on or off for an outcome | The gate is **per site**, and each verdict carries how much of it is the two constants |
+
+Neither `-side under` nor the per-site refusals existed when this was written. The skill covers
+both.
 
 ## Why this deviates from the source
 

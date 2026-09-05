@@ -22,6 +22,7 @@ in this module and none intended.
 | [Adversarial review, 2026-08](docs/reviews/2026-08-23-adversarial.md) | Two reviewers, the defects they found, and the fix order |
 | [Findings](model/FINDINGS.md) | Every measured claim, with the script that produced it |
 | [Source frameworks](docs/frameworks/README.md) | The transcribed corpus, with its errors annotated |
+| [Belief probe](docs/frameworks/belief-probe.md) | The prompt that forecasts a game script, and how it is scored |
 | [Plan: prompt to find, tool to validate](docs/plans/prompt-then-validate.md) | Testing whether a read on a game beats the base rate |
 | [ADR-001](docs/ADR-001-line-board-tracked-in-git.md) | Why the line board is tracked in git |
 

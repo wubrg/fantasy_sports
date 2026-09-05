@@ -35,6 +35,8 @@ func main() {
 		err = hitrateCmd(os.Args[2:])
 	case "belief":
 		err = beliefCmd(os.Args[2:])
+	case "beliefs":
+		err = beliefsCmd(os.Args[2:])
 	case "scenario":
 		err = scenarioCmd(os.Args[2:])
 	case "log":
@@ -97,6 +99,12 @@ func usage() {
         scenarios with no market line to read it off. With no arguments,
         lists the models. This is the s in q*s + r*(1-s), which for these two
         scenarios used to be a number the operator invented.
+
+  edgectl beliefs ingest|settle|list|score
+        The forward-only belief probe. Ingest a forecaster's P(scenario) for a
+        week, settle it from the data once the games are played, and score
+        whether it beat the base rate. No price, no stake, no prop -- the
+        belief is the half of q*s + r*(1-s) that needs proving.
 
   edgectl hedge -face <amount> -back <american> -against <american>
         Convert a bonus bet to guaranteed cash by backing the other side at a

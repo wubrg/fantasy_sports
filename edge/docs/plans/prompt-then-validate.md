@@ -71,14 +71,9 @@ regardless of how good the belief gets.
 
 **Input:** the shape list, this week's schedule, posted totals from the board.
 
-**Output:** structured, one record per candidate —
-
-| field | |
-|---|---|
-| `game`, `team`, `scenario` | which shape it is claiming |
-| `belief` | P(scenario occurs), as a number |
-| `claims` | the reasons, each a checkable assertion |
-| `confidence` | how sure, so overconfidence can be scored separately |
+The contract is written out in full, with its output schema and claim taxonomy, in
+[`docs/frameworks/belief-probe.md`](../frameworks/belief-probe.md) — the document you actually
+paste. It is not restated here.
 
 **Never requested:** player baselines, trends, target shares, historical rates, prices, or the
 identity of which player to bet. The tool knows all of those.
@@ -93,9 +88,29 @@ Every claim is checked against the cache *before* the belief is used:
 | team form | `signals.prior_form`, `proe.prior_form` |
 | which week, which season | supplied by the tool, so it cannot be wrong |
 
-A candidate with a false claim is **rejected and logged as a prompt error**. The rejection rate is
-itself a measurement: a prompt that invents a quarter of its evidence is not usable however good
-its beliefs look on the ones that survive.
+**These are two separate tests and must not be run together.**
+
+| | question | population |
+|---|---|---|
+| **A — reliability** | does it state things that are false? | every prediction |
+| **B — edge** | given a forecast that is not false, does `s` beat the base rate? | predictions that survive |
+
+Test B is conditional on passing the falsifier, and **that is correct rather than a bias**: the
+falsifier is part of the strategy, not a diagnostic beside it. In deployment a forecast caught
+inventing evidence is discarded before any wager, so the quantity worth estimating is the edge of
+the forecasts that survive. Conditioning on a filter you actually apply is evaluating the real
+pipeline.
+
+The falsifier is incomplete, and that is recorded rather than assumed away: `personnel` and
+`narrative` claims have nothing to check against, so "survived" means *no falsehood was detected*.
+Test B's population is therefore slightly generous.
+
+Test A's rate matters on its own terms. A prompt that is sharp when honest but invents a third of
+the time yields few usable candidates a week, which is a **coverage** problem — it shrinks the
+sample Test B can draw on, and the power table below shows how little slack there is.
+
+Rejected predictions are **logged and settled anyway**, so survivors can be scored against the whole
+set on identical outcomes. That measures what the falsifier is worth; a bare rejection count cannot.
 
 ## Phase 4 — validate the wager
 
@@ -144,22 +159,58 @@ are drawn from the same afternoon. Measured over 2,608 games: `efficient_offense
 blown out, which makes that pair carry *more* information than two independent draws. For the two
 scenarios the belief model covers, a 64-record week is worth about **60 effective** predictions.
 
-**Second, power at that size is poor precisely where it matters.** Simulated, testing "the prompt
-beats the base rate" at 95%, one-sided:
+**Second, power at that size is poor precisely where it matters.** The table below is the
+**corrected** one — the original (retained at the end of this section for the record) was
+unreproducible from anything in the repo and wrong three ways the 2026-09-04 review found. This one
+comes from `make power-table` (`app/cmd/powersim`), which drives the **shipped** `calib.PairedBrierGain`
+and `calib.BootstrapCI` so the table cannot drift from the code that decides the endpoint. It fixes:
 
-| weeks | n | edge +0.05 | +0.10 | +0.15 | +0.20 |
+- **α.** The old table read the bootstrap lower bound at `alpha=0.05`, which is one-sided **2.5%**,
+  not the "one-sided 95%" it claimed. This passes `alpha=0.10` for a genuine one-sided 5% bound.
+- **Population.** After the S6 fix the decision rests on `shootout` (16/wk) and `efficient_offense`
+  (32/wk) — 48 raw rows a week, not 112 — and a forecaster that abstains freely commits on a
+  fraction of them. The `n` column is committed positions at a **generous 40% commit rate**, not raw
+  rows × 60.
+- **Clustering.** `efficient_offense` rows for a team are correlated across weeks and the bootstrap
+  clusters on team-season, not game.
+
+Testing "the prompt beats the reference", one-sided 5%, 500 trials, commit rate 0.40:
+
+| weeks | committed n | edge +0.05 | +0.10 | +0.15 | +0.20 |
 |---|---|---|---|---|---|
-| 1 | 60 | 9% | **21%** | 40% | 63% |
+| 1 | 22 | 10% | 13% | 23% | 33% |
+| 3 | 61 | 13% | 26% | 32% | 48% |
+| 6 | 121 | 15% | 28% | 46% | 67% |
+| 8 | 160 | 19% | **31%** | 58% | 77% |
+| 12 | 233 | 17% | 42% | 67% | 87% |
+| 18 | 361 | 19% | **49%** | **79%** | 94% |
+
+- **The edge that actually matters (+0.10) never reaches 80% in a season** — 49% at week 18, against
+  the old table's 90% at week 8. This is the single most important correction: the decision point was
+  chosen as "the first week +0.10 clears 80%", and **there is no such week.**
+- **A large edge (+0.15) reaches ~80% only at the end of the regular season (week 18); +0.20 by
+  around week 12.**
+- **+0.05 is undetectable all season**, and it still clears the +0.03 bar on the best sites. There is
+  a real regime where this is profitable and untestable, and no test design removes it.
+
+**This table is an upper bound, for three reasons that all push real power lower:** it models a single
+reference, but E1 now requires beating *every* opponent (the hardest binds); it models a perfectly
+calibrated forecaster; and its gain-clustering is milder than a real forecaster's persistent
+per-team error. Read every cell as "no more than this."
+
+<details><summary>The original (superseded) table, for the record</summary>
+
+| weeks | n | +0.05 | +0.10 | +0.15 | +0.20 |
+|---|---|---|---|---|---|
+| 1 | 60 | 9% | 21% | 40% | 63% |
 | 3 | 180 | 17% | 52% | 85% | 98% |
-| 6 | 360 | 30% | **80%** | 99% | 100% |
+| 6 | 360 | 30% | 80% | 99% | 100% |
 | 8 | 480 | 37% | 90% | 100% | 100% |
 | 18 | 1080 | 68% | 100% | 100% | 100% |
 
-- **A very good prompt (+0.20) shows up in two or three weeks.**
-- **The edge that actually matters (+0.10) needs six to eight.**
-- **A +0.05 edge is not reliably detectable in a season** — and it still clears the +0.03 bar on
-  the best sites. There is a real regime where this is profitable and untestable, and no amount of
-  care about the test design removes it.
+It used one-sided 2.5% mislabelled as 5%, `n = weeks × 60` (raw rows, no abstention), game-level
+clustering, and a generative model no script in the repo reproduced.
+</details>
 
 Three things buy power, and they are worth taking in this order:
 
@@ -177,6 +228,77 @@ the incumbent starts at week 4. Weeks 1–3 are also when the prompt has least t
 market is weakest, which makes them the most interesting weeks and the least conclusive ones.
 
 ## Phase 6 — the decision
+
+### Pre-registered, before any data exists
+
+Four scenarios, several statistics and eighteen weekly looks is a garden of forking paths, and this
+project has already been misled three times by pooling alone. So the endpoint is fixed here, on
+2026-08-24, with the log empty:
+
+> **Primary endpoint — two claims, and BOTH must pass.** Evaluated at **week 8**, the first point
+> the power table puts above 80% for the +0.10 edge that matters. Both intervals are bootstrapped
+> clustered by game.
+>
+> | | claim | statistic | passes when |
+> |---|---|---|---|
+> | **E1** | it is more accurate than the reference | paired Brier gain, pooled over positions | lower bound of the 95% CI above 0 |
+> | **E2** | the wagers it implies would have won | realised edge per unit staked, on rows over the bar, at a 6% hold | lower bound of the 95% CI above 0 |
+>
+> **Why both.** They are different claims and they can point in opposite directions. A forecaster
+> better than the reference by a hair on every row passes E1 with a healthy gain and never disagrees
+> by enough to place a single wager — E2 would rest on nothing. One right about a handful of big
+> calls and mediocre elsewhere can fail E1 and be the profitable one. Registering E1 alone would let
+> "it works" be declared about a source that produces no bets; registering E2 alone would rest the
+> whole verdict on the smallest subset in the data.
+>
+> **E2 is the weaker-powered half and that is accepted.** The bar is what turns a row into a wager,
+> and a forecaster abstaining freely — as the contract asks — will put perhaps fifteen to twenty
+> rows a week over it, so E2 rests on order 150 wagers by week 8 rather than 480. If E1 passes and
+> E2 is merely undecided, that is reported as undecided rather than as a pass.
+>
+> **Everything else is descriptive.** Reliability, resolution, slope, AUC, per-scenario and
+> per-confidence splits, the flagged-versus-rest comparison and survivors-versus-all are all worth
+> looking at and none of them is the verdict.
+
+**Amendment, 2026-09-04 (log still empty).** The 2026-09-04 review found two defects in the endpoint
+above, both fixable only by changing its definition. Amended here rather than at scoring time because
+no data has been observed:
+
+> **E1 is now: beat every opponent, the hardest binds.** "Pooled over positions against the
+> reference" scored one auto-picked opponent, and auto prefers the incumbent over the line, so from
+> week 4 the two PROE scenarios were scored against the incumbent — which the committed line model
+> beats with no football knowledge. E1 now scores each opponent (market, incumbent, line) on its own
+> rows and requires the forecast to beat **all** of them; the lowest lower-bound binds and is
+> reported. The base rate is a non-binding floor.
+>
+> **E2 is demoted from a co-equal gate to a diagnostic.** The "both must pass" framing assumed E1 and
+> E2 are independent claims. They are not: the probe collects no prop, so a reconstructed wager
+> settles on the same game-script outcome that drives E1 — E2 is a rescaling of E1, not a second
+> measurement. Its interval was also ~5× too tight, settling each wager at its expected value instead
+> of a real 0/1 draw. E2 is now reported as a robustness check with a Bernoulli-settled interval, and
+> the **verdict is E1 alone**. E2 being negative or undecided is informative but does not fail the
+> endpoint.
+>
+> **The decision point moves from week 8 to week 18, and the detectable effect from +0.10 to +0.15.**
+> Week 8 was chosen as the first week the old table put +0.10 above 80% power. The corrected table
+> (above, `make power-table`) shows +0.10 never reaches 80% in a season — 49% at week 18 — so that
+> decision point does not exist. The endpoint is re-registered at **week 18** (end of the regular
+> season), where +0.15 reaches ~80%; **+0.10 is evaluated and reported but is known to be
+> underpowered**, which is itself the finding — a real edge in the +0.05 to +0.10 band is profitable
+> and not reliably detectable in one season. The α is now a genuine one-sided 5% (`alpha=0.10` to
+> `BootstrapCI`), matching the table.
+>
+> Reproduce with one command, no hand-assembly:
+> `edgectl beliefs score -from-week 1 -to-week 8 -bar 0.10 -hold 0.06`
+>
+> **Interim looks are permitted and do not stop the trial.** They are for catching a broken harness,
+> not for calling a result early.
+>
+> **The decision weights `shootout` and `efficient_offense`.** `blowout_loss` fails validation
+> everywhere it is fitted, and `pass_heavy` is vetoed for receiving yards, so a good belief on
+> either cannot be spent. They are still scored, because they inform Test A for free.
+
+
 
 If the prompt's `s` beats the base rate by more than the requirement on a real sample, it is a
 strategy and the wagering follows. If it does not, it joins the six other belief signals this

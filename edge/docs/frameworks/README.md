@@ -36,7 +36,8 @@ should return real prose. Against the PDFs it returns nothing useful.
 
 | File | Source | Pages | Status |
 |---|---|---|---|
-| [`urps-wager-engine.md`](./urps-wager-engine.md) | derived | — | **Operative.** Use this one. |
+| [`belief-probe.md`](./belief-probe.md) | derived | — | **Operative.** Forecasts a game script; asks for no wager. |
+| [`urps-wager-engine.md`](./urps-wager-engine.md) | derived | — | **Operative.** Prices a wager from operator-supplied numbers. |
 | [`urps-wager-engine.source.md`](./urps-wager-engine.source.md) | `URPS-v3.pdf` | 150–154 | Archive |
 | [`edge-of-vigor.md`](./edge-of-vigor.md) | `edge-of-vigor.pdf` | all 36 | Archive |
 | [`analytical-hobbyist.md`](./analytical-hobbyist.md) | `analytical-hobbyist.pdf` | all 20 | Archive |
