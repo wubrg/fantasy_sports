@@ -1,0 +1,68 @@
+BELIEF SCORE  (survivors)
+
+  settled           80  (27 took a position, 53 abstained)
+  predicted         0.483
+  happened          0.667
+  bias              -18.33pp
+
+  RELIABILITY and RESOLUTION are different things, and one good number
+  for the first proves nothing about the second.
+    Brier           0.1418  [0.1215, 0.1617]  (clustered by game)
+    binned Brier    0.1418   what the three terms below sum to; gap -0.0000 is
+                    discretisation, not miscalibration
+    reliability     0.1418   lower is better — is 40% really 40%?
+    resolution      0.2222   HIGHER is better — does it vary, usefully?
+    uncertainty     0.2222   the base rate's own variance; not the forecaster's
+
+  CALIBRATION SLOPE  unmeasurable — every call separated the outcome perfectly (AUC 1.000), so the fit runs to infinity. That is a small-sample artefact, not a slope of zero
+  DISCRIMINATION     AUC 1.000, separation +0.305
+
+  AGAINST THE REFERENCE  (27 of 27 rows had one)
+    reference Brier 0.3390   skill +0.582
+    paired gain     +0.19725  [+0.14564, +0.25068]
+
+    Calibration is not an edge. These two are what the wager needs:
+    mean |p−ref|    0.1915   does it disagree by enough to matter?
+    over the bar    20 of 27 at ±0.10
+    informed        100.0%   of those, the share that moved the RIGHT way
+
+  PRE-REGISTERED ENDPOINT  E1 accuracy is the decision; E2 is a diagnostic
+                 on efficient_offense and shootout only — the other scenarios are scored but do not decide
+    E1 accuracy     vs the hardest of 3 opponents (market)
+                    paired Brier gain +0.18717  [+0.11218, +0.26215]   PASS
+    E2 diagnostic   expected ROI +0.2934  [-0.3529, +0.9036]  on 9 implied wagers
+                    per unit staked at a 6% hold, assuming the frozen site is
+                    exact; a robustness check on E1, not independent of it
+    VERDICT         PASS — more accurate than every opponent that exists
+
+  BY REFERENCE  (each opponent scored on its own rows — never pooled)
+                                  n       gain   over ±bar
+    market                       13   +0.23134     9 of 13  [+0.15805, +0.29932]
+    belief-json (incumbent)      14   +0.16559    11 of 14  [+0.12545, +0.20574]
+    line                         14   +0.18399     9 of 14  [+0.13099, +0.23360]
+    base-rate (floor)            27   +0.16723    18 of 27  [+0.14183, +0.19319]
+
+  BY SCENARIO
+                              n    Brier    resol.      gain    informed
+    blowout_loss              7   0.1504    0.1088  +0.26920   100% of 5
+    efficient_offense         7   0.1421    0.1088  +0.16071   100% of 7
+    pass_heavy                7   0.1327    0.2449  +0.17047   100% of 4
+    shootout                  6   0.1418    0.2222  +0.18717   100% of 4
+
+  BY STATED CONFIDENCE
+                              n    Brier    resol.      gain    informed
+    high                     27   0.1418    0.2222  +0.19725  100% of 20
+    low                      53   all abstentions
+
+  FLAGGED CANDIDATES  9 of 80
+    flagged    n=9    Brier 0.1444   gain +0.29716
+    the rest   n=18   Brier 0.1404   gain +0.14729
+    Flagging does not filter the score. If these are no better than the
+    rest, the forecaster cannot pick its own spots — a different finding
+    from being unable to forecast.
+
+  POWER  27 committed positions (decision scenarios).
+    Even a large edge (+0.15) is under 50% detectable here. READ NOTHING
+    INTO THE SIGN YET.
+
+  NOT WAGERABLE  blowout_loss — score it, but do not decide on it.

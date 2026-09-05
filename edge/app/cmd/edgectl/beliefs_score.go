@@ -4,9 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"math"
-	"math/rand"
+	"os"
 	"sort"
-	"strings"
 
 	"edge/internal/betlog"
 	"edge/internal/calib"
@@ -101,132 +100,24 @@ func beliefsScore(args []string) error {
 	if err != nil {
 		return err
 	}
+	// The empty-log notice names the path, which is a CLI-only nicety score()
+	// cannot know; everything else the object carries.
 	if len(preds) == 0 {
 		fmt.Printf("no beliefs recorded in %s\n", *logPath)
 		return nil
 	}
 
-	all := points(preds, *only, *fromWeek, *toWeek, *vs, true)
-	survivors := points(preds, *only, *fromWeek, *toWeek, *vs, false)
-	use := survivors
-	label := "survivors"
-	if *includeRejected {
-		use = all
-		label = "all, including falsified"
-	}
-	if len(use) == 0 {
-		fmt.Printf("nothing settled yet to score (%d predictions recorded)\n", len(preds))
-		return nil
-	}
-
-	pts := onlyPoints(use)
-	r, err := calib.Score(pts, *bar)
+	res, err := score(preds, scoreOpts{
+		only: *only, fromWeek: *fromWeek, toWeek: *toWeek,
+		vs: *vs, bar: *bar, hold: *hold, includeRejected: *includeRejected,
+	})
 	if err != nil {
 		return err
 	}
-
-	fmt.Printf("BELIEF SCORE  (%s)\n\n", label)
-	fmt.Printf("  settled           %d  (%d took a position, %d abstained)\n",
-		r.N, r.Positions, r.Abstained)
-	fmt.Printf("  predicted         %.3f\n  happened          %.3f\n  bias              %+.2fpp\n",
-		r.Mean, r.Base, r.Bias*100)
-
-	// The interval must cover the same population as the estimate: positions,
-	// not positions plus abstentions.
-	scored := calib.Positions(pts)
-	lo, hi := calib.BootstrapCI(scored, calib.Brier, 800, 20260824, 0.05)
-	fmt.Printf("\n  RELIABILITY and RESOLUTION are different things, and one good number\n")
-	fmt.Printf("  for the first proves nothing about the second.\n")
-	fmt.Printf("    Brier           %.4f  [%.4f, %.4f]  (clustered by game)\n", r.Brier, lo, hi)
-	fmt.Printf("    binned Brier    %.4f   what the three terms below sum to; gap %+.4f is\n",
-		r.BinnedBrier, r.Brier-r.BinnedBrier)
-	fmt.Printf("                    discretisation, not miscalibration\n")
-	fmt.Printf("    reliability     %.4f   lower is better — is 40%% really 40%%?\n", r.Reliability)
-	fmt.Printf("    resolution      %.4f   HIGHER is better — does it vary, usefully?\n", r.Resolution)
-	fmt.Printf("    uncertainty     %.4f   the base rate's own variance; not the forecaster's\n",
-		r.Uncertainty)
-	if r.Resolution < 0.002 {
-		fmt.Printf("    NOTE resolution near zero: this is saying much the same thing about\n")
-		fmt.Printf("         every game. That can be perfectly calibrated and still worthless.\n")
-	}
-
-	if r.Converged {
-		fmt.Printf("\n  CALIBRATION SLOPE  %.3f  (se %.3f, intercept %+.3f)\n",
-			r.Slope, r.SlopeSE, r.Intercept)
-		switch {
-		case r.Slope < 0:
-			fmt.Printf("    BELOW ZERO: higher belief went with the scenario happening LESS — its\n")
-			fmt.Printf("    confident calls point the wrong way, which is worse than saying nothing.\n")
-		default:
-			fmt.Printf("    1.0 is honest; below 1 means its confident calls are over-confident.\n")
-		}
-	} else {
-		// No number, rather than a number to be misread -- and the RIGHT reason,
-		// because the two causes mean opposite things about the forecaster.
-		fmt.Printf("\n  CALIBRATION SLOPE  unmeasurable — %s\n", slopeFailure(r))
-	}
-	fmt.Printf("  DISCRIMINATION     AUC %.3f, separation %+.3f\n", r.AUC, r.Separation)
-
-	if r.HasRef {
-		fmt.Printf("\n  AGAINST THE REFERENCE  (%d of %d rows had one)\n", r.RefN, r.Positions)
-		fmt.Printf("    reference Brier %.4f   skill %+.3f\n", r.RefBrier, r.Skill)
-		gain := calib.PairedBrierGain(scored)
-		glo, ghi := calib.BootstrapCI(scored, calib.PairedBrierGain, 800, 20260824, 0.05)
-		fmt.Printf("    paired gain     %+.5f  [%+.5f, %+.5f]\n", gain, glo, ghi)
-		fmt.Printf("\n    Calibration is not an edge. These two are what the wager needs:\n")
-		fmt.Printf("    mean |p−ref|    %.4f   does it disagree by enough to matter?\n",
-			r.MeanAbsDisagreement)
-		fmt.Printf("    over the bar    %d of %d at ±%.2f\n", r.OverBar, r.RefN, r.Bar)
-		if r.OverBar > 0 {
-			fmt.Printf("    informed        %.1f%%   of those, the share that moved the RIGHT way\n",
-				r.InformedFraction*100)
-			if r.InformedFraction < 0.5 {
-				fmt.Printf("    NOTE below half: its big disagreements point the wrong way, which\n")
-				fmt.Printf("         is worse than not disagreeing at all.\n")
-			}
-		}
-	} else {
-		fmt.Printf("\n  No reference on any row — nothing to beat, so no edge can be claimed.\n")
-	}
-
-	// Survivors against everything, on identical outcomes. This is what the
-	// falsifier is worth; a bare rejection count cannot say.
-	if !*includeRejected && len(all) > len(survivors) {
-		if ra, err := calib.Score(onlyPoints(all), *bar); err == nil {
-			fmt.Printf("\n  THE FALSIFIER  %d of %d predictions had a claim falsified\n",
-				len(all)-len(survivors), len(all))
-			fmt.Printf("    survivors Brier %.4f   all %.4f   (lower is better)\n", r.Brier, ra.Brier)
-			fmt.Printf("    Discarding them is part of the strategy, not a filter on the score:\n")
-			fmt.Printf("    a forecast caught inventing evidence is never wagered on.\n")
-		}
-	}
-
-	jointVerdict(preds, *only, *fromWeek, *toWeek, *includeRejected, *bar, *hold)
-	referenceBreakdown(referenceSets(preds, *only, *fromWeek, *toWeek, *includeRejected), *bar)
-	groupReport("BY SCENARIO", use, *bar, func(r scoredRow) string { return r.scenario })
-	groupReport("BY STATED CONFIDENCE", use, *bar, confidenceBand)
-	flaggedReport(use, *bar)
-	powerNote(r.Positions)
+	res.WriteTerminal(os.Stdout)
 	return nil
 }
 
-// jointVerdict reports the pre-registered endpoint.
-//
-// The DECISION is E1: is this more accurate than every opponent that exists —
-// the market, the incumbent, and the line — each scored on its own rows, with
-// the hardest binding? Beating a single auto-picked reference was the flaw the
-// 2026-09-04 review found; beating one that the tool's own line model already
-// beats is no achievement.
-//
-// E2 — would the implied wagers have profited? — was registered as a co-equal
-// second claim, but the belief probe collects no prop: a wager settles on the
-// same game-script outcome Y that drives E1, so E2 is a rescaling of E1, not
-// independent evidence. It is kept as a DIAGNOSTIC with an honest interval
-// (Bernoulli-settled, not the plug-in mean) rather than a gate. See the
-// pre-registration amendment in docs/frameworks/belief-probe.md.
-//
-// Intervals are clustered by game, because two teams in one game are not two
-// independent draws.
 // refSet is one opponent's rows, ready to score. Built once and shared by the
 // verdict and the breakdown so the number the verdict decides on is the same
 // number the table prints.
@@ -267,68 +158,6 @@ func referenceSets(preds []betlog.SettledPrediction, only string,
 	return out
 }
 
-func jointVerdict(preds []betlog.SettledPrediction, only string, fromWeek, toWeek int,
-	includeRejected bool, bar, hold float64) {
-	fmt.Printf("\n  PRE-REGISTERED ENDPOINT  E1 accuracy is the decision; E2 is a diagnostic\n")
-	fmt.Printf("                 on %s only — the other scenarios are scored but do not decide\n",
-		strings.Join(sortedKeys(decisionScenarios), " and "))
-
-	// The verdict rests ONLY on the decision scenarios. Building from a filtered
-	// prediction set here — rather than the report-wide points — keeps blowout_loss
-	// (unwagerable, and negatively correlated, which would inflate effective n) and
-	// pass_heavy (a line that barely moves) out of the decision.
-	dpreds := forDecision(preds, only)
-
-	// E1 must beat EVERY real opponent, each scored on its own rows -- the
-	// HARDEST binds. The old verdict scored one auto-picked reference, so it
-	// scored the two PROE scenarios against the beatable incumbent and never
-	// against the line the C1 fix added; a forecaster replaying the line beat the
-	// incumbent and passed. Now the line is one of the opponents that must be
-	// beaten, and losing to any of them fails E1.
-	sets := referenceSets(dpreds, "", fromWeek, toWeek, includeRejected)
-	autoPts := calib.Positions(onlyPoints(points(dpreds, "", fromWeek, toWeek, refAuto, includeRejected)))
-	ev := evaluateE1(sets)
-	e1, e1Decidable := ev.pass, ev.decidable
-	if !e1Decidable {
-		fmt.Printf("    E1 accuracy     no opponent is evaluable yet\n")
-	} else {
-		fmt.Printf("    E1 accuracy     vs the hardest of %d opponents (%s)\n", bindingCount(sets), ev.name)
-		fmt.Printf("                    paired Brier gain %+.5f  [%+.5f, %+.5f]   %s\n",
-			ev.gain, ev.lo, ev.hi, verdictWord(e1, false))
-	}
-
-	// E2 is a DIAGNOSTIC, not a second gate. With game-script-only data the
-	// wager's outcome is the same Y that drives E1, so it is a rescaling of E1,
-	// not independent evidence -- registering it as a co-equal claim was a promise
-	// the data cannot keep. The point estimate is the EXPECTED ROI assuming the
-	// frozen site is right; the interval is bootstrapped over Bernoulli-settled
-	// wagers so it reflects real prop variance rather than the ~5x-too-tight
-	// plug-in spread.
-	n := calib.OverBarCount(autoPts, bar, hold)
-	edge := calib.RealisedEdge(autoPts, bar, hold)
-	rng := rand.New(rand.NewSource(20260904))
-	stat := func(s []calib.Point) float64 { return calib.RealisedEdgeSampled(s, bar, hold, rng) }
-	elo, ehi := calib.BootstrapCI(autoPts, stat, 800, 20260824, 0.05)
-	if n == 0 {
-		fmt.Printf("    E2 diagnostic   no wagers implied yet\n")
-	} else {
-		fmt.Printf("    E2 diagnostic   expected ROI %+.4f  [%+.4f, %+.4f]  on %d implied wagers\n",
-			edge, elo, ehi, n)
-		fmt.Printf("                    per unit staked at a %.0f%% hold, assuming the frozen site is\n", hold*100)
-		fmt.Printf("                    exact; a robustness check on E1, not independent of it\n")
-	}
-
-	// The decision is E1 alone.
-	switch {
-	case !e1Decidable:
-		fmt.Printf("    VERDICT         not yet decidable — no opponent is evaluable\n")
-	case e1:
-		fmt.Printf("    VERDICT         PASS — more accurate than every opponent that exists\n")
-	default:
-		fmt.Printf("    VERDICT         FAIL — it loses to at least one opponent (%s)\n", ev.name)
-	}
-}
-
 func verdictWord(pass, undecided bool) string {
 	switch {
 	case undecided:
@@ -357,14 +186,6 @@ func confidenceBand(r scoredRow) string {
 	return "high"
 }
 
-// referenceBreakdown scores each opponent on its OWN rows, never pooled.
-//
-// The default auto number mixes reference types across rows -- some measured
-// against the market, some the incumbent, some the line, some the base rate --
-// and the 2026-09-01 review showed why that hides the result: a forecaster can
-// beat a stale base rate on weeks 1-3 and lose to the market later, and the
-// pooled gain averages the two into something that means neither. Beating the
-// line is the claim that matters, so it gets its own row here.
 // e1Eval is the outcome of the E1 accuracy test: the binding (hardest) opponent
 // and whether the forecaster beat every one.
 type e1Eval struct {
@@ -415,120 +236,10 @@ func bindingCount(sets []refSet) int {
 	return n
 }
 
-func referenceBreakdown(sets []refSet, bar float64) {
-	fmt.Printf("\n  BY REFERENCE  (each opponent scored on its own rows — never pooled)\n")
-	// "over ±bar" counts rows disagreeing by more than the bar — NOT the E2 wager
-	// count, which additionally requires clearing the vig.
-	fmt.Printf("    %-24s %6s %10s %11s\n", "", "n", "gain", "over ±bar")
-	if len(sets) == 0 {
-		fmt.Printf("    (no row carried any reference yet)\n")
-		return
-	}
-	for _, s := range sets {
-		g, err := calib.Score(s.pts, bar)
-		gain := calib.PairedBrierGain(s.pts)
-		// One-sided 5% lower bound, the same the verdict decides on, so the table
-		// and the decision cannot show different bounds for the same opponent.
-		glo, ghi := calib.BootstrapCI(s.pts, calib.PairedBrierGain, 800, 20260824, 0.10)
-		gs := "—"
-		if !math.IsNaN(gain) {
-			gs = fmt.Sprintf("%+.5f", gain)
-		}
-		over := "—"
-		if err == nil {
-			over = fmt.Sprintf("%d of %d", g.OverBar, g.RefN)
-		}
-		name := s.name
-		if !s.binding {
-			name += " (floor)"
-		}
-		fmt.Printf("    %-24s %6d %10s %11s  [%+.5f, %+.5f]\n",
-			name, len(s.pts), gs, over, glo, ghi)
-	}
-}
-
-func groupReport(title string, rows []scoredRow, bar float64, key func(scoredRow) string) {
-	groups := map[string][]scoredRow{}
-	var order []string
-	for _, r := range rows {
-		k := key(r)
-		if _, seen := groups[k]; !seen {
-			order = append(order, k)
-		}
-		groups[k] = append(groups[k], r)
-	}
-	if len(order) < 2 {
-		return // a split into one group says nothing
-	}
-	sort.Strings(order)
-	fmt.Printf("\n  %s\n", title)
-	fmt.Printf("    %-20s %6s %8s %9s %9s %11s\n",
-		"", "n", "Brier", "resol.", "gain", "informed")
-	for _, k := range order {
-		pts := onlyPoints(groups[k])
-		g, err := calib.Score(pts, bar)
-		if err != nil {
-			fmt.Printf("    %-20s %6d   %s\n", k, len(pts), "all abstentions")
-			continue
-		}
-		gain := calib.PairedBrierGain(calib.Positions(pts))
-		inf := "—"
-		if g.OverBar > 0 {
-			inf = fmt.Sprintf("%.0f%% of %d", g.InformedFraction*100, g.OverBar)
-		}
-		gs := "—"
-		if !math.IsNaN(gain) {
-			gs = fmt.Sprintf("%+.5f", gain)
-		}
-		fmt.Printf("    %-20s %6d %8.4f %9.4f %9s %11s\n",
-			k, g.Positions, g.Brier, g.Resolution, gs, inf)
-	}
-}
-
-// flaggedReport compares the candidates the forecaster would actually have bet
-// against everything else it said.
-//
-// It does not filter the score -- flagging is the forecaster's own choice, and
-// letting it select its own scored set is the cherry-picking the contract
-// exists to stop. It is reported because a source whose FLAGGED calls are no
-// better than its others has no candidate-selection skill, which is a different
-// finding from having no forecasting skill.
-func flaggedReport(rows []scoredRow, bar float64) {
-	var yes, no []calib.Point
-	for _, r := range rows {
-		if r.flagged {
-			yes = append(yes, r.pt)
-		} else {
-			no = append(no, r.pt)
-		}
-	}
-	if len(yes) == 0 {
-		return
-	}
-	fmt.Printf("\n  FLAGGED CANDIDATES  %d of %d\n", len(yes), len(rows))
-	for _, tc := range []struct {
-		name string
-		pts  []calib.Point
-	}{{"flagged", yes}, {"the rest", no}} {
-		g, err := calib.Score(tc.pts, bar)
-		if err != nil {
-			continue
-		}
-		// A one-row group has no paired gain to speak of; print an em dash like
-		// every other section rather than a bare +NaN. A single flagged
-		// candidate is entirely plausible early season.
-		gain := calib.PairedBrierGain(calib.Positions(tc.pts))
-		gs := "—"
-		if !math.IsNaN(gain) {
-			gs = fmt.Sprintf("%+.5f", gain)
-		}
-		fmt.Printf("    %-10s n=%-4d Brier %.4f   gain %s\n",
-			tc.name, g.Positions, g.Brier, gs)
-	}
-	fmt.Printf("    Flagging does not filter the score. If these are no better than the\n")
-	fmt.Printf("    rest, the forecaster cannot pick its own spots — a different finding\n")
-	fmt.Printf("    from being unable to forecast.\n")
-}
+// flagging is the forecaster's own choice, and letting it select its own scored
+// set is the cherry-picking the contract exists to stop. computeFlagged reports
+// it because a source whose FLAGGED calls are no better than its others has no
+// candidate-selection skill, a different finding from having no forecasting skill.
 
 // slopeFailure names why the logistic fit did not converge.
 //
@@ -649,34 +360,4 @@ func reference(p betlog.Prediction, mode string) (float64, bool) {
 		return v, true
 	}
 	return pick(p.SBaseRate)
-}
-
-// powerNote exists because 112 rows in week one looks decisive and is not.
-func powerNote(n int) {
-	fmt.Printf("\n  POWER  %d committed positions (decision scenarios).\n", n)
-	// Committed positions, not raw rows: a forecaster abstaining freely puts far
-	// fewer over the season than 60/week suggested. The bands come from the
-	// corrected power table (make power-table), one-sided 5%.
-	switch {
-	case n < 120:
-		fmt.Printf("    Even a large edge (+0.15) is under 50%% detectable here. READ NOTHING\n")
-		fmt.Printf("    INTO THE SIGN YET.\n")
-	case n < 200:
-		fmt.Printf("    A +0.15 edge is ~55-60%% detectable; +0.10 is ~30%%, a coin flip or worse.\n")
-	case n < 340:
-		fmt.Printf("    A +0.15 edge approaches ~70%%; +0.10 is ~42%% and still not decidable.\n")
-	default:
-		fmt.Printf("    +0.15 reaches ~80%% (the week-18 decision point); +0.10 tops out near\n")
-		fmt.Printf("    50%% in a full season and +0.05 is undetectable — both still clear the bar\n")
-		fmt.Printf("    on the best sites, a real profitable-but-untestable regime.\n")
-	}
-	if len(scenariosNotWagerable) > 0 {
-		var names []string
-		for k := range scenariosNotWagerable {
-			names = append(names, k)
-		}
-		sort.Strings(names)
-		fmt.Printf("\n  NOT WAGERABLE  %s — score it, but do not decide on it.\n",
-			strings.Join(names, ", "))
-	}
 }
