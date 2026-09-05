@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"edge/internal/betlog"
@@ -193,164 +192,17 @@ func beliefsIngest(args []string) error {
 	if err != nil {
 		return err
 	}
-	if ff.InputPackSHA != sum {
-		return fmt.Errorf(
-			"beliefs: the forecast claims pack sha %s but %s hashes to %s — it was written "+
-				"against different facts than the ones on disk",
-			short(ff.InputPackSHA), *packPath, short(sum))
-	}
-	if ff.Season != pk.Season || ff.Week != pk.Week {
-		return fmt.Errorf("beliefs: the forecast is for %d week %d, the pack for %d week %d",
-			ff.Season, ff.Week, pk.Season, pk.Week)
-	}
-
-	byGame := map[string]packGame{}
-	for _, g := range pk.Games {
-		byGame[g.GameID] = g
-	}
-	c, err := scenario.LoadConditionals()
-	if err != nil {
-		return err
-	}
-	bel, err := scenario.LoadBelief()
-	if err != nil {
-		return err
-	}
-
-	// The flagged set, resolved before the loop so a prediction knows whether it
-	// was one of the candidates the forecaster would actually have bet.
-	flagged := map[string]bool{}
-	for _, f := range ff.Flagged {
-		flagged[f] = true
-	}
 
 	now := time.Now()
-	var tally falsifyTally
-	var onlyNarrative int
-	var ready []betlog.Prediction
-	var late []string
-	seen := map[string]bool{}
-
-	for _, p := range ff.Predictions {
-		g, ok := byGame[p.GameID]
-		if !ok {
-			return fmt.Errorf("beliefs: %s is not a game in this pack", p.GameID)
-		}
-		def, ok := pk.Definitions[p.Scenario]
-		if !ok {
-			return fmt.Errorf("beliefs: %q is not a scenario in this pack", p.Scenario)
-		}
-		team := board.CanonicalTeam(p.Team)
-		unit := "team"
-		if def.Basis == "total" {
-			unit = "game"
-		}
-		if unit == "game" && team != "" {
-			return fmt.Errorf(
-				"beliefs: %s is a property of the game, but %s carries team %q",
-				p.Scenario, p.GameID, p.Team)
-		}
-		if unit == "team" {
-			if team != board.CanonicalTeam(g.Away) && team != board.CanonicalTeam(g.Home) {
-				return fmt.Errorf("beliefs: %q is not a side of %s (%s at %s)",
-					p.Team, p.GameID, g.Away, g.Home)
-			}
-		}
-		key := p.GameID + "/" + team + "/" + p.Scenario
-		if seen[key] {
-			return fmt.Errorf(
-				"beliefs: %s appears twice in this file — a second opinion on the same claim "+
-					"is exactly the hindsight this log exists to prevent", key)
-		}
-		seen[key] = true
-
-		pred := betlog.Prediction{
-			Season: pk.Season, Week: pk.Week,
-			GameID: p.GameID, Team: team, Scenario: p.Scenario,
-			Belief: p.Belief, Confidence: p.Confidence,
-			Source: "prompt", Model: ff.Model, Prompt: ff.Prompt,
-			InputPack: *packPath, InputPackSHA: sum,
-			Kickoff: g.Kickoff, GeneratedAt: ff.GeneratedAt,
-			Abstained: p.Abstained, Flagged: flagged[key],
-			Claims: p.Claims,
-		}
-		// Rejection is decided HERE, by checking the reasons against the facts the
-		// forecaster was handed -- never taken from the file. This is the only
-		// thing that makes the survivors-versus-all comparison mean anything.
-		fr := falsifyPrediction(p, g, g.Home, g.Away)
-		tally.add(fr, len(p.Claims))
-		if fr.Reason != "" {
-			pred.Rejected, pred.RejectedReason = true, fr.Reason
-		}
-		if fr.OnlyUnverifiable(len(p.Claims)) {
-			onlyNarrative++
-		}
-		freezeReferences(&pred, pk, g, c, bel)
-
-		if err := pred.Validate(); err != nil {
-			return err
-		}
-		if !ff.GeneratedAt.Before(g.Kickoff) || !now.Before(g.Kickoff) {
-			late = append(late, key)
-			continue
-		}
-		ready = append(ready, pred)
+	res, err := runIngest(pk, ff, sum, *packPath, now, ingestOpts{dropLate: *dropLate, partial: *partial})
+	if err != nil {
+		return err
 	}
-
-	// Completeness. The contract is a forecast for EVERY row in the pack -- abstain
-	// where there is no read, never omit -- so a file missing rows is refused
-	// rather than scored on a self-selected subset. This is what stops a forecaster
-	// (or a truncated LLM response) from quietly steering the population onto the
-	// rows it does best on; `seen` was filled as each valid row was processed.
-	var missing []string
-	for _, g := range pk.Games {
-		for name, def := range pk.Definitions {
-			if def.Basis == "total" {
-				if k := g.GameID + "//" + name; !seen[k] {
-					missing = append(missing, k)
-				}
-				continue
-			}
-			for _, t := range []string{board.CanonicalTeam(g.Away), board.CanonicalTeam(g.Home)} {
-				if k := g.GameID + "/" + t + "/" + name; !seen[k] {
-					missing = append(missing, k)
-				}
-			}
-		}
-	}
-	if len(missing) > 0 && !*partial {
-		return fmt.Errorf(
-			"beliefs: the forecast is missing %d of the pack's rows (e.g. %s). The contract "+
-				"is a forecast for every row — abstain, do not omit — so a partial file is "+
-				"refused rather than scored on a self-selected subset. Pass -partial to accept "+
-				"it anyway (rehearsal only; the pre-registered run does not)",
-			len(missing), strings.Join(firstN(missing, 3), ", "))
-	}
-
-	if len(late) > 0 && !*dropLate {
-		return fmt.Errorf(
-			"beliefs: %d of %d predictions were made or ingested after kickoff (%s). "+
-				"A systematically late file is a broken process, not a data point — pass "+
-				"-drop-late if you mean to keep the rest, and the dropped count is recorded",
-			len(late), len(ff.Predictions), strings.Join(firstN(late, 3), ", "))
-	}
-
-	fmt.Printf("BELIEFS  %d week %d  from %s\n", pk.Season, pk.Week, ff.Model)
-	fmt.Printf("  pack     %s  (sha %s)\n", *packPath, short(sum))
-	fmt.Printf("  ready    %d\n", len(ready))
-	tally.report(len(ff.Predictions), onlyNarrative)
-	if len(late) > 0 {
-		fmt.Printf("  DROPPED  %d made after kickoff\n", len(late))
-	}
-	if len(missing) > 0 {
-		fmt.Printf("  PARTIAL  %d of the pack's rows are missing — accepted under -partial; "+
-			"the verdict rests on a self-selected subset\n", len(missing))
-	}
+	res.writeTerminal(*dry)
 	if *dry {
-		fmt.Printf("\n-n: nothing written\n")
 		return nil
 	}
-	for _, p := range ready {
+	for _, p := range res.ready {
 		if _, err := betlog.Record(*logPath, p, now); err != nil {
 			return err
 		}

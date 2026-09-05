@@ -70,6 +70,11 @@ type boardServer struct {
 	// joining them into one file would make either hard to read.
 	ledgerPath string
 
+	// beliefsDir holds the belief-probe packs and log: weekNN.input.json (and
+	// its pasteable weekNN.prompt.md, produced by `make belief-pack`) and
+	// log.jsonl. A sibling of the board dir, read by the beliefs view.
+	beliefsDir string
+
 	mu   sync.Mutex
 	docs map[int]*weekFile
 }
@@ -91,7 +96,11 @@ func newBoardServer(dir string) (*boardServer, error) {
 	if len(paths) == 0 {
 		return nil, fmt.Errorf("no week files in %s -- run `edgectl board scaffold` first", dir)
 	}
-	return &boardServer{dir: dir, betlogPath: defaultBetlog(), ledgerPath: defaultLedger(), docs: map[int]*weekFile{}}, nil
+	return &boardServer{
+		dir: dir, betlogPath: defaultBetlog(), ledgerPath: defaultLedger(),
+		beliefsDir: filepath.Join(filepath.Dir(dir), "beliefs"),
+		docs:       map[int]*weekFile{},
+	}, nil
 }
 
 func (s *boardServer) routes(mux *http.ServeMux) error {
@@ -111,6 +120,9 @@ func (s *boardServer) routes(mux *http.ServeMux) error {
 	mux.HandleFunc("/api/price", s.handlePrice)
 	mux.HandleFunc("/api/import/preview", s.handleImportPreview)
 	mux.HandleFunc("/api/import/apply", s.handleImportApply)
+	mux.HandleFunc("/api/beliefs/pack", s.handleBeliefsPack)
+	mux.HandleFunc("/api/beliefs/ingest", s.handleBeliefsIngest)
+	mux.HandleFunc("/api/beliefs/score", s.handleBeliefsScore)
 	return nil
 }
 

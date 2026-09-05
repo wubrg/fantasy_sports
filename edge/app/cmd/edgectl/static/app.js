@@ -39,6 +39,7 @@ const el = {
   funds: document.getElementById("funds"),
   book: document.getElementById("book"),
   rows: document.getElementById("rows"),
+  beliefs: document.getElementById("beliefs"),
   hint: document.getElementById("hint"),
   banner: document.getElementById("banner"),
   pasteToggle: document.getElementById("pasteToggle"),
@@ -50,7 +51,7 @@ const el = {
 };
 
 const state = load();
-if (!["bets", "log", "funds"].includes(state.view)) state.view = "enter";
+if (!["bets", "log", "funds", "beliefs"].includes(state.view)) state.view = "enter";
 let data = null;      // last /api/board payload
 let inputs = [];      // every input in tab order, for auto-advance
 
@@ -951,6 +952,7 @@ function syncView() {
   el.report.hidden = v !== "bets";
   el.betlog.hidden = v !== "log";
   el.funds.hidden = v !== "funds";
+  el.beliefs.hidden = v !== "beliefs";
   el.hint.hidden = v !== "enter";
   for (const b of el.views.querySelectorAll("button")) {
     b.classList.toggle("on", b.dataset.view === v);
@@ -958,6 +960,7 @@ function syncView() {
   if (v === "bets") loadReport();
   if (v === "log") loadLog();
   if (v === "funds") loadFunds();
+  if (v === "beliefs") loadBeliefs();
 }
 
 // Toggling a book re-runs the report over the new pool. Emptying it falls back
@@ -1099,6 +1102,162 @@ async function refresh(retried) {
     el.banner.hidden = false;
     el.banner.textContent = "could not load the board: " + e.message;
   }
+}
+
+// ---- beliefs view: the belief-probe weekly loop in the browser ----------
+
+function bpEsc(s) {
+  const d = document.createElement("div");
+  d.textContent = s == null ? "" : String(s);
+  return d.innerHTML;
+}
+
+function bpNum(x, dp = 4) {
+  return (typeof x === "number" && isFinite(x)) ? x.toFixed(dp) : "—";
+}
+
+async function loadBeliefs() {
+  el.beliefs.innerHTML = `
+    <section class="bp">
+      <div class="bp-head">
+        <h2>belief probe — week <span id="bpWeek">${state.week}</span></h2>
+        <span class="muted">pack generation stays <code>make belief-pack</code>; this reads it</span>
+      </div>
+      <div id="bpPrompt" class="bp-panel"><p class="muted">loading the pack…</p></div>
+      <div class="bp-panel">
+        <h3>paste the model's forecast</h3>
+        <textarea id="bpBlob" rows="6" spellcheck="false" placeholder='{"predictions":[ … ]}'></textarea>
+        <div class="bp-actions">
+          <button type="button" id="bpPreview">preview</button>
+          <button type="button" id="bpApply" disabled>apply to log</button>
+          <label class="muted"><input type="checkbox" id="bpPartial"> allow a partial file</label>
+        </div>
+        <div id="bpDiff"></div>
+      </div>
+      <div class="bp-panel">
+        <div class="bp-head"><h3>score</h3><button type="button" id="bpScoreBtn">load score</button></div>
+        <div id="bpScore"><p class="muted">scores settled weeks; run after games finish.</p></div>
+      </div>
+    </section>`;
+
+  const promptBox = document.getElementById("bpPrompt");
+  try {
+    const res = await fetch(BASE + "api/beliefs/pack?week=" + encodeURIComponent(state.week));
+    const p = await res.json();
+    if (!res.ok) throw new Error(p.error || ("HTTP " + res.status));
+    bpRenderPrompt(promptBox, p);
+  } catch (e) {
+    promptBox.innerHTML = `<p class="muted">no pack for week ${state.week}: ${bpEsc(e.message)}</p>`;
+  }
+
+  document.getElementById("bpPreview").addEventListener("click", () => bpIngest(false));
+  document.getElementById("bpApply").addEventListener("click", () => bpIngest(true));
+  document.getElementById("bpScoreBtn").addEventListener("click", bpLoadScore);
+}
+
+function bpRenderPrompt(box, p) {
+  const rows = (p.games || []).map(g => `<tr>
+    <td>${bpEsc(g.game_id)}</td><td>${bpEsc(g.away)}</td><td>${bpEsc(g.home)}</td>
+    <td>${g.total_line ?? "—"}</td><td>${g.spread_line ?? "—"}</td></tr>`).join("");
+  box.innerHTML = `
+    <div class="bp-head">
+      <h3>the pasteable prompt <span class="muted">sha ${bpEsc((p.sha || "").slice(0, 12))}</span></h3>
+      <button type="button" id="bpCopy">copy prompt</button>
+    </div>
+    <pre id="bpPromptText" class="bp-prompt">${bpEsc(p.prompt)}</pre>
+    <h3>slate</h3>
+    <table class="bp-table"><thead><tr><th>game</th><th>away</th><th>home</th><th>total</th><th>spread</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  document.getElementById("bpCopy").addEventListener("click", async (ev) => {
+    try {
+      await navigator.clipboard.writeText(p.prompt);
+      ev.target.textContent = "copied";
+      setTimeout(() => (ev.target.textContent = "copy prompt"), 1200);
+    } catch { ev.target.textContent = "copy failed"; }
+  });
+}
+
+async function bpIngest(apply) {
+  const diff = document.getElementById("bpDiff");
+  const blob = document.getElementById("bpBlob").value.trim();
+  if (!blob) { diff.innerHTML = `<p class="muted">paste a forecast first.</p>`; return; }
+  diff.innerHTML = `<p class="muted">checking the gates…</p>`;
+  try {
+    const res = await fetch(BASE + "api/beliefs/ingest", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        week: state.week, blob, apply,
+        partial: document.getElementById("bpPartial").checked,
+      }),
+    });
+    const r = await res.json();
+    if (!res.ok) {
+      diff.innerHTML = `<p class="bp-refuse">refused: ${bpEsc(r.error)}</p>`;
+      document.getElementById("bpApply").disabled = true;
+      return;
+    }
+    bpRenderIngest(diff, r.result, r.applied);
+    // Enable apply only after a clean preview; disable again once applied.
+    document.getElementById("bpApply").disabled = apply;
+  } catch (e) {
+    diff.innerHTML = `<p class="bp-refuse">could not ingest: ${bpEsc(e.message)}</p>`;
+  }
+}
+
+function bpRenderIngest(box, res, applied) {
+  const t = res.falsifier || {};
+  const late = (res.late || []).length, missing = (res.missing || []).length;
+  box.innerHTML = `
+    <div class="bp-ingest">
+      <p><strong>${applied ? "applied" : "preview"}</strong> — ${res.ready} ${applied ? "written" : "ready to write"}.</p>
+      <ul>
+        <li>claims: ${t.checked || 0} checked, ${t.unverifiable || 0} unverifiable, ${t.untyped || 0} untyped, ${t.deferred || 0} deferred</li>
+        ${t.falsified ? `<li class="bp-refuse">${t.falsified} falsified — contradict the pack, excluded from the edge score</li>` : ""}
+        ${res.only_narrative ? `<li>${res.only_narrative} rest only on unverifiable claims</li>` : ""}
+        ${late ? `<li>${late} after kickoff</li>` : ""}
+        ${missing ? `<li class="bp-refuse">${missing} rows missing — accepted under partial</li>` : ""}
+      </ul>
+    </div>`;
+}
+
+async function bpLoadScore() {
+  const box = document.getElementById("bpScore");
+  box.innerHTML = `<p class="muted">scoring…</p>`;
+  try {
+    const res = await fetch(BASE + "api/beliefs/score?from=1&to=18&vs=auto");
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
+    bpRenderScore(box, r);
+  } catch (e) {
+    box.innerHTML = `<p class="muted">could not score: ${bpEsc(e.message)}</p>`;
+  }
+}
+
+function bpRenderScore(box, s) {
+  if (s.notice) { box.innerHTML = `<p class="muted">${bpEsc(s.notice)}</p>`; return; }
+  const v = s.verdict || {};
+  let verdict = "not yet decidable", cls = "muted";
+  if (v.e1_decidable && v.e1_pass) { verdict = "PASS — beats every opponent"; cls = "bp-pass"; }
+  else if (v.e1_decidable) { verdict = "FAIL — loses to " + bpEsc(v.binding_opponent); cls = "bp-refuse"; }
+
+  const refRows = (s.by_reference || []).map(row => `<tr>
+    <td>${bpEsc(row.name)}${row.binding ? "" : " (floor)"}</td>
+    <td>${row.n}</td>
+    <td>${row.gain_undefined ? "—" : bpNum(row.gain, 5)}</td>
+    <td>[${bpNum(row.lo, 4)}, ${bpNum(row.hi, 4)}]</td></tr>`).join("");
+
+  const e2 = v.e2_wagers > 0
+    ? `E2 diagnostic: expected ROI ${bpNum(v.e2_edge, 4)} [${bpNum(v.e2_lo, 4)}, ${bpNum(v.e2_hi, 4)}] on ${v.e2_wagers} implied wagers <span class="muted">— a robustness check, not independent of E1</span>`
+    : `E2 diagnostic: no wagers implied yet`;
+
+  box.innerHTML = `
+    <div class="bp-verdict ${cls}">VERDICT — ${verdict}</div>
+    <p class="muted">the decision is E1 accuracy on ${(v.decision_scenarios || []).join(" and ")}, vs the hardest opponent.</p>
+    <h3>by reference <span class="muted">(each opponent on its own rows; one-sided 5%)</span></h3>
+    <table class="bp-table"><thead><tr><th>opponent</th><th>n</th><th>gain</th><th>95% one-sided</th></tr></thead>
+      <tbody>${refRows || `<tr><td colspan="4" class="muted">no reference rows yet</td></tr>`}</tbody></table>
+    <p>${e2}</p>
+    <p class="muted">Brier ${bpNum(s.calib && s.calib.Brier)} · reliability ${bpNum(s.calib && s.calib.Reliability)} · resolution ${bpNum(s.calib && s.calib.Resolution)} · ${s.positions} positions, ${s.abstained} abstained</p>`;
 }
 
 refresh();
