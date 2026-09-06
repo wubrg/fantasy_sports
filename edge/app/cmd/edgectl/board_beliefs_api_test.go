@@ -78,6 +78,33 @@ func TestBeliefsPackEndpoint(t *testing.T) {
 	}
 }
 
+// `make belief-pack` writes season-scoped, at beliefs/<season>/weekNN.*. The
+// handler must find that layout, not only the flat one.
+func TestBeliefsPackFindsSeasonScoped(t *testing.T) {
+	ts, srv, dir := beliefsTestServer(t)
+	// Remove the flat pack the fixture wrote and place it under a season dir.
+	os.Remove(filepath.Join(dir, "week01.input.json"))
+	os.Remove(filepath.Join(dir, "week01.prompt.md"))
+	seasonDir := filepath.Join(dir, "2026")
+	if err := os.MkdirAll(seasonDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeTestJSON(t, seasonDir, "week01.input.json", testPack(time.Now().Add(48*time.Hour)))
+	if err := os.WriteFile(filepath.Join(seasonDir, "week01.prompt.md"), []byte("# pack\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_ = srv
+
+	res, err := http.Get(ts.URL + "/api/beliefs/pack?week=1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		t.Fatalf("season-scoped pack not found: %d", res.StatusCode)
+	}
+}
+
 // completeForecast builds a forecast covering every row of the test pack, all
 // abstaining, bound to the pack's sha — the shape ingest accepts.
 func completeForecast(t *testing.T, beliefsDir string) forecastFile {

@@ -510,3 +510,11 @@ body {
 .bp-refuse { color: #d66; }
 .bp-verdict.bp-refuse { color: #d66; border-color: #d66; }
 .bp-ingest ul { margin: 0.3rem 0; padding-left: 1.1rem; font-size: 0.76rem; }
+
+/* help view */
+.help { max-width: 44rem; margin: 0 auto; padding: 0 0.75rem; line-height: 1.5; }
+.help h2 { margin: 1.2rem 0 0.4rem; font-size: 0.95rem; }
+.help ul, .help ol { padding-left: 1.2rem; }
+.help li { margin: 0.3rem 0; font-size: 0.82rem; }
+.help p { font-size: 0.82rem; }
+.help code { font-size: 0.78rem; }
