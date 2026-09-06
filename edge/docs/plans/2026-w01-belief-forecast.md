@@ -1,6 +1,6 @@
 ---
 title: "Belief probe — 2026 week 1 forecast run"
-doc_version: 1.0.0
+doc_version: 1.1.0
 status: IN PROGRESS — C1–C5 done, C6 blocked on §6 Q1
 date: 2026-09-06
 owner: wubrg
@@ -56,8 +56,15 @@ whole file when `input_pack_sha256` does not equal the sha of the `-pack` file o
 - a forecast echoing `e4465d9e…` ingests today, but claims to have been written against facts that
   differ in two base rates from the ones actually shown.
 
-Resolved in [ADR-003](../ADR-003-week01-binds-to-the-pack-as-pasted.md). **Open decision surfaced
-to the operator — see §6.**
+**Root cause, found after the forecast was written:** the committed pack is stale, not the pasted
+one. `beliefpack.py base_rates()` reads `base_rate_held_out` from the committed `belief.json`,
+which carries 0.3721 and 0.2648 — the pasted pack's numbers. The committed `week01.input.json`
+(2026-08-24) predates that fix and carries the in-sample 0.3243 / 0.3353. Per `beliefpack.py`'s own
+docstring, the in-sample number is worth ~30% of the target edge to a forecaster that does nothing
+but repeat it, which is why it was corrected.
+
+Resolved in [ADR-003](../ADR-003-week01-binds-to-the-pack-as-pasted.md): bind to the pasted pack.
+Operator confirmed 2026-09-06.
 
 ## 3. Plan
 
@@ -106,19 +113,20 @@ Full derivation in [ADR-004](../ADR-004-week01-forecast-method.md). In short:
 
 ## 6. OPEN DECISION — needs an operator answer before C6
 
-**Q1. Which pack sha does the week-1 forecast bind to?**
+**Q1. Which pack sha does the week-1 forecast bind to?** — **ANSWERED: (a), 2026-09-06.**
 
-- **(a) The pasted pack, `42bca9d8…`** *(taken as the default, ADR-003)*. Contract-faithful: the
-  prompt says echo the sha of the pack you were shown. Cost: it does not ingest until the matching
-  `week01.input.json` is committed (regenerate with `make belief-pack SEASON=2026 WEEK=1` and
-  confirm it hashes to `42bca9d8…`).
+- **(a) The pasted pack, `42bca9d8…`** *(chosen)*. Contract-faithful: the
+  prompt says echo the sha of the pack you were shown, and per §2 it is also the *correct* pack.
+  Cost: it does not ingest until the file hashing to `42bca9d8…` is committed **from the machine
+  that generated it** — a fresh regeneration cannot reproduce the sha, because the pack embeds its
+  own `generated_at` and the cache's `fetched_at`.
 - **(b) The committed pack, `e4465d9e…`**. Ingests today. Cost: the file asserts a binding to facts
   that were not the ones shown — a small lie in exactly the field the design uses to prevent
   after-the-fact substitution.
 - **(c) Both**, as two files. Cost: two entries per row in `log.jsonl` if both are ingested; the
   duplicate guard only fires *within* one file.
 
-**Q2. What goes in the `model` field?** The session's operating policy forbids writing a model
+**Q2. What goes in the `model` field?** — **ANSWERED: keep the neutral string, 2026-09-06.** The session's operating policy forbids writing a model
 identifier into artifacts pushed to a repository, but the output contract asks for "your name and
 version". Default taken: the neutral string `llm-forecaster/belief-v1`. If the log should carry the
 exact model string for the experiment's provenance, the operator sets it by hand — one field, one
@@ -154,13 +162,19 @@ the error §2 predicts. `go test ./...` in `edge/app` is green; no Go code was t
 
 - 2026-09-06 — C1–C5 complete in one session; file emitted, self-validated against the real ingest
   gate, committed and pushed. C6 blocked on Q1 (§6).
-- Next session, if Q1 is answered (a): `make belief-pack SEASON=2026 WEEK=1`, confirm the sha is
-  `42bca9d8…`, commit the pack, ingest before 2026-09-09 20:20 ET. If (b): re-run
-  `week01.forecast.build.py` with `PACK_SHA` and the two `BASE` entries switched to the committed
-  pack's, which changes only the 11 abstained placeholders.
+- 2026-09-06 — operator answered Q1 (a) and Q2 (keep neutral). Root cause of the pack discrepancy
+  found and recorded in ADR-003: the committed pack is the stale one.
+- **C6, for the machine holding the nflverse cache**, before 2026-09-09 20:20 ET:
+  1. `cp edge/beliefs/2026/week01.input.json` — the file whose sha is `42bca9d8…` — into the repo,
+     overwriting the stale 2026-08-24 pack, and commit it with its `week01.prompt.md`.
+  2. `edgectl beliefs ingest -file beliefs/2026/week01.forecast.json -pack beliefs/2026/week01.input.json`.
+  3. If that pack file no longer exists anywhere, the run cannot bind to `42bca9d8…` and Q1 has to
+     be reopened; re-running `week01.forecast.build.py` with `PACK_SHA` and the two `BASE` entries
+     switched to whatever pack is committed changes only the 11 abstained placeholders.
 
 ## 9. Changelog
 
 | version | date | change |
 |---|---|---|
+| 1.1.0 | 2026-09-06 | Root cause of the pack discrepancy found (committed pack is stale; the pasted one carries the held-out base rates from `belief.json`). Q1 and Q2 answered. C6 rewritten for the machine that holds the cache. |
 | 1.0.0 | 2026-09-06 | First issue. Records the request, the pasted-vs-committed pack discrepancy, the plan, the method summary, the emitted file's shape and its validation, and the two open decisions. |
