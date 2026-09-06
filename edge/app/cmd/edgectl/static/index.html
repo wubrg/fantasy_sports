@@ -38,6 +38,7 @@ if (!location.pathname.endsWith("/")) {
     <button type="button" data-view="log">log</button>
     <button type="button" data-view="funds">funds</button>
     <button type="button" data-view="beliefs">beliefs</button>
+    <button type="button" data-view="help" title="how this works">?</button>
   </div>
 </header>
 
@@ -49,6 +50,47 @@ if (!location.pathname.endsWith("/")) {
 <main id="betlog" hidden></main>
 <main id="funds" hidden></main>
 <main id="beliefs" hidden></main>
+
+<main id="help" hidden>
+  <section class="help">
+    <h2>what this is</h2>
+    <p>Two tools share one board. The first four tabs price and track <strong>real wagers</strong>;
+      the <strong>beliefs</strong> tab runs the <strong>belief probe</strong> — an experiment testing
+      whether a model's read on an NFL game beats the market, with no money involved.</p>
+
+    <h2>the wager board</h2>
+    <ul>
+      <li><strong>enter</strong> — the week's games and the prices you've entered. Pick a week and a
+        book at the top. On desktop you can paste a book's odds blob to fill prices at once.</li>
+      <li><strong>bets</strong> — what the tool thinks is worth backing this week, given your prices.</li>
+      <li><strong>log</strong> — every wager placed, and how it settled.</li>
+      <li><strong>funds</strong> — the bankroll and any bonus boosts.</li>
+    </ul>
+
+    <h2>the belief probe — the weekly loop</h2>
+    <p>The question: does an outside read on a <em>game script</em> (a shootout, an efficient offence)
+      beat the base rate by enough to matter? It's forward-only and scored honestly — most weeks it
+      will (correctly) say "not enough evidence yet."</p>
+    <ol>
+      <li><strong>Friday — generate the pack.</strong> On the machine, run
+        <code>make belief-pack SEASON=2026 WEEK=1</code>. This needs the data cache and Python, so it
+        stays a terminal step. It writes the week's facts and a pasteable prompt.</li>
+      <li><strong>Get a forecast.</strong> Open the <strong>beliefs</strong> tab, <em>copy prompt</em>,
+        paste it into your model, and get JSON back.</li>
+      <li><strong>Paste it back.</strong> Drop the JSON into the beliefs tab and hit <em>preview</em>:
+        it runs the gates (a bad hash, a late file, missing rows, or a claim that contradicts the
+        pack are all refused, with the reason shown). When it reads clean, <em>apply to log</em>.
+        Do this <strong>before kickoff</strong> — the log records what was believed in advance.</li>
+      <li><strong>Tuesday — settle and score.</strong> After the games, settle from data on the
+        machine, then <em>load score</em>. The verdict is <strong>E1 accuracy vs the hardest
+        opponent</strong> (the market, the incumbent model, and a line-only null — beating all of
+        them is the bar). <strong>E2</strong> is a profit-flavoured diagnostic, not a second gate.</li>
+    </ol>
+    <p class="muted">Why "hardest opponent": a forecast that only beats a weak reference has shown
+      nothing. Why E2 is only a diagnostic: with game-script-only data its wager is a re-expression of
+      the same accuracy E1 already measures, so it's a robustness check, not independent evidence.</p>
+  </section>
+</main>
 
 <!-- Desktop-only. A blob is copied from a book's odds page, which is not
      something you do on the phone the rest of this page is built for; the

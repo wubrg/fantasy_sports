@@ -40,6 +40,7 @@ const el = {
   book: document.getElementById("book"),
   rows: document.getElementById("rows"),
   beliefs: document.getElementById("beliefs"),
+  help: document.getElementById("help"),
   hint: document.getElementById("hint"),
   banner: document.getElementById("banner"),
   pasteToggle: document.getElementById("pasteToggle"),
@@ -51,7 +52,7 @@ const el = {
 };
 
 const state = load();
-if (!["bets", "log", "funds", "beliefs"].includes(state.view)) state.view = "enter";
+if (!["bets", "log", "funds", "beliefs", "help"].includes(state.view)) state.view = "enter";
 let data = null;      // last /api/board payload
 let inputs = [];      // every input in tab order, for auto-advance
 
@@ -953,6 +954,7 @@ function syncView() {
   el.betlog.hidden = v !== "log";
   el.funds.hidden = v !== "funds";
   el.beliefs.hidden = v !== "beliefs";
+  el.help.hidden = v !== "help";
   el.hint.hidden = v !== "enter";
   for (const b of el.views.querySelectorAll("button")) {
     b.classList.toggle("on", b.dataset.view === v);

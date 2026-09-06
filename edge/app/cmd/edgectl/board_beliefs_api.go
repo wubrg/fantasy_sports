@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -22,10 +23,24 @@ import (
 
 func (s *boardServer) beliefsLog() string { return filepath.Join(s.beliefsDir, "log.jsonl") }
 
+// packPaths resolves a week's pack. `make belief-pack` writes season-scoped, at
+// beliefs/<season>/weekNN.*, so this globs across season dirs and takes the
+// latest season for the week (the probe is forward-only, usually one live
+// season). It falls back to a flat beliefs/weekNN.* if that exists, so a
+// hand-placed pack still works.
 func (s *boardServer) packPaths(week int) (input, prompt string) {
 	stem := fmt.Sprintf("week%02d", week)
-	return filepath.Join(s.beliefsDir, stem+".input.json"),
-		filepath.Join(s.beliefsDir, stem+".prompt.md")
+	flat := filepath.Join(s.beliefsDir, stem+".input.json")
+	if _, err := os.Stat(flat); err == nil {
+		return flat, filepath.Join(s.beliefsDir, stem+".prompt.md")
+	}
+	matches, _ := filepath.Glob(filepath.Join(s.beliefsDir, "*", stem+".input.json"))
+	if len(matches) > 0 {
+		sort.Strings(matches) // "2025" < "2026": the last is the latest season
+		in := matches[len(matches)-1]
+		return in, filepath.Join(filepath.Dir(in), stem+".prompt.md")
+	}
+	return flat, filepath.Join(s.beliefsDir, stem+".prompt.md") // reported as not-found by the caller
 }
 
 // handleBeliefsPack returns the week's pasteable prompt and the slate, for the
