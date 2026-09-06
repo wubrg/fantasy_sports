@@ -1,6 +1,6 @@
 # ADR-006: The pack carries offseason context; preseason does not exist to carry
 
-**Status:** Proposed — pending the decisions in [the plan](./plans/2026-pack-offseason-context.md) §6
+**Status:** Accepted 2026-09-06. Tier 1 implemented; Tiers 2 and 3 deferred until after week 1
 **Date:** 2026-09-06
 **Deciders:** wubrg
 
@@ -61,3 +61,23 @@ nflverse publishes neither preseason play-by-play nor preseason snap counts.
 - **No injury data before week 1.** `injuries_2026.csv` returns 404 until the season starts, so the
   `injury` claim type stays deferred-and-unchecked for week 1 no matter what is adopted. Roster
   `status` (ACT/CUT/RES/DEV) is the nearest available substitute and is Tier 2, not this ADR.
+
+---
+
+## As built, 2026-09-06
+
+- `beliefpack.py` writes `coach`, `coach_is_new` and `rest_days` per team, and `div_game`, `roof`
+  and `surface` per game. `coach_is_new` compares against the **set** of coaches that team had in
+  the prior season, so a mid-season replacement is not miscounted as new the following year, and it
+  is `null` — not `false` — when the prior season is absent.
+- The pasteable prompt gains a `venue` column and a **STAFF** table, which states in the pack
+  itself that these are head coaches only.
+- `falsify.go` adjudicates a new `coaching` claim type. Clearing is deliberately more generous than
+  convicting: any mention of the pack's coach clears a claim, including a bare surname, while only
+  a full name can convict — so *"McCarthy replaces Tomlin"* passes. Surnames match with one edit
+  allowed, because `games.csv` currently spells Las Vegas's head coach "Kubliak" and a forecaster
+  who spells it correctly must not be convicted by a typo in the fact it is checked against.
+- Not done, deliberately: no new line in the ingest report. Coaching claims flow into the existing
+  `checked` counter, which is where a reader already looks.
+
+Measured effect on the week-1 file: **0 checked claims → 14**, with 0 rejected.

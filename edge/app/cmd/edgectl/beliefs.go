@@ -30,11 +30,20 @@ type packGame struct {
 	Kickoff    time.Time           `json:"kickoff"`
 	TotalLine  *float64            `json:"total_line"`
 	SpreadLine *float64            `json:"spread_line"`
+	DivGame    bool                `json:"div_game"`
+	Roof       string              `json:"roof"`
+	Surface    string              `json:"surface"`
 	Teams      map[string]packTeam `json:"teams"`
 }
 
 type packTeam struct {
-	PriorForm *struct {
+	// Coach is the head coach the pack showed the forecaster. Present from the
+	// week the pack format gained it; empty for older packs, which the falsifier
+	// treats as "not checkable here" rather than "no coach".
+	Coach      string `json:"coach"`
+	CoachIsNew *bool  `json:"coach_is_new"`
+	RestDays   *int   `json:"rest_days"`
+	PriorForm  *struct {
 		SuccessRatePrior float64 `json:"success_rate_prior"`
 		OffensePrior     float64 `json:"offense_prior"`
 		PriorGames       int     `json:"prior_games"`

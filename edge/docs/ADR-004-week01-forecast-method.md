@@ -84,3 +84,25 @@ not be vouched for are abstained rather than guessed (ADR-005).
   `belief.json` would measure nothing.
 - **Nudging every row a point or two off the base rate.** Perfectly calibrated, worth nothing, and
   the framework names it as the failure to avoid.
+
+---
+
+## Amendment, 2026-09-06 — v2, after the pack gained a STAFF block
+
+The four derivations are unchanged. What changed is the input to §3 and, for six games, the market
+numbers everything else is built on.
+
+- **Six games' lines had moved** between the pack the first forecast was written against and the
+  pack it now binds to. The generator no longer hardcodes the slate: it reads
+  `week01.input.json` and hashes it for the sha, so a line move cannot silently outlive a forecast
+  again.
+- **`pass_heavy` priors were re-set against the actual staffs** ([ADR-006](./ADR-006-pack-carries-offseason-context.md)).
+  Concretely: PIT 0.12 → 0.33 and CLE 0.28 → 0.33 (new head coaches with pass-leaning backgrounds),
+  SEA 0.15 → 0.24 (head coach retained, play-caller left), BAL and MIA withdrawn to abstentions
+  (defensive head coaches, unknown play-callers), and LV 0.16, NYG 0.19, JAX 0.30 promoted *out* of
+  abstention because their head coach is himself the play-caller.
+- **Confidence is capped at 0.45 wherever `coach_is_new` is true.** A first-week staff is a weaker
+  read than an established one whatever the prior says about the man, and the cap makes that
+  automatic rather than remembered.
+
+Four of eleven flags moved as a result: PIT, BAL ×2 and SEA out; LV, NYG, CAR, DET in.

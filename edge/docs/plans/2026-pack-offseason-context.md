@@ -1,7 +1,7 @@
 ---
 title: "Putting offseason context in the pack (and what is not available)"
-doc_version: 1.0.0
-status: PROPOSED — needs the decisions in §6 before any code changes
+doc_version: 1.1.0
+status: TIER 1 SHIPPED 2026-09-06 — Tiers 2 and 3 deferred to after week 1
 date: 2026-09-06
 owner: wubrg
 relates_to:
@@ -135,7 +135,18 @@ which does not exist until the season starts.
 4. **Scope creep against a three-day clock.** Week 1 kicks off 2026-09-09 20:20 ET. Tier 1 is a
    small change; Tiers 2 and 3 are not week-1 work.
 
-## 6. OPEN DECISIONS
+## 6. DECISIONS — answered 2026-09-06
+
+**Q3 → revise before kickoff.** Done: the week-1 forecast is re-emitted as v2, against a
+regenerated pack. Four flags withdrawn (PIT, BAL ×2, SEA), four added (LV, NYG, CAR, DET).
+
+**Q4 → Tier 1 now, Tiers 2 and 3 after week 1.** Done, as described in
+[ADR-006](../ADR-006-pack-carries-offseason-context.md)'s *As built*.
+
+**Q5 → no.** The ingest report is untouched; coaching claims flow into the existing `checked`
+counter.
+
+### The decisions as originally put
 
 **Q3. The week-1 forecast — revise or freeze?**
 - **(a) Revise before kickoff.** Fold the seven coach changes in, re-emit, re-commit. Legitimate:
@@ -155,10 +166,19 @@ fixed rather than quietly absorbed.
 
 ## 7. Tracker
 
-- 2026-09-06 — availability probed, findings recorded, nothing implemented. Blocked on Q3/Q4/Q5.
+- 2026-09-06 — availability probed, findings recorded, decisions taken, **Tier 1 shipped**:
+  `beliefpack.py` (coach, `coach_is_new`, rest, venue), the pasteable prompt (venue column + STAFF
+  table), `falsify.go` (`coaching` claim type, four new tests), and the corrected sentence in
+  `belief-probe.md`. Week-1 forecast re-emitted against the regenerated pack: 14 claims checked,
+  0 rejected.
+- **Next, after week 1 settles:** Tier 2 (roster status) and a decision on Tier 3 (depth charts,
+  47 MB — overturning a documented refusal in `nflverse.py`, so it needs its own argument).
+- Unresolved and worth naming: no coordinator table exists anywhere in the data. That is the gap
+  Seattle's row now sits in, and no tier above closes it.
 
 ## 8. Changelog
 
 | version | date | change |
 |---|---|---|
+| 1.1.0 | 2026-09-06 | Decisions answered; Tier 1 shipped and recorded. |
 | 1.0.0 | 2026-09-06 | First issue. Probes what preseason and offseason data exists, records that preseason does not exist at all while offseason does, documents the seven 2026 head-coach changes and the four flagged week-1 rows they undermine, and proposes a three-tier pack extension. |

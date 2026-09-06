@@ -1,6 +1,6 @@
 # ADR-003: The 2026 week-1 forecast binds to the pack as pasted, not the pack on disk
 
-**Status:** Accepted (operator confirmed 2026-09-06)
+**Status:** Superseded 2026-09-06 by regenerating the pack in-repo — see *Resolution* below
 **Date:** 2026-09-06
 **Deciders:** wubrg
 **Scope:** one forecast run (2026 week 1). Not a standing policy.
@@ -70,3 +70,22 @@ snapshot.
 - **Silently pick whichever ingests.** Rejected: it hides a real inconsistency in the pack pipeline,
   and the discrepancy in `pass_heavy` (0.2648 vs 0.3353) is large enough to matter to whoever
   reads the score later.
+
+---
+
+## Resolution, same day
+
+The dilemma dissolved once the cache was available: `games.csv` was the *only* missing input, so
+`make belief-pack SEASON=2026 WEEK=1` ran here and produced a pack that
+
+- carries the **held-out** base rates (0.3721 / 0.2648) — the pasted pack's numbers, confirming the
+  diagnosis above,
+- carries the **current** market, which mattered more than expected: six of sixteen games had moved
+  since 2026-08-24 (WAS@PHI total 47.5 → 44.5, NYJ@TEN spread 3.0 → 1.5, and four others), so the
+  pasted pack was stale on price as well as on base rate,
+- and is **committed**, so the forecast binds to a sha that exists in this repository.
+
+The week-1 forecast now echoes `2392b66a…`, the regenerated pack, and ingests. Neither `42bca9d8…`
+nor `e4465d9e…` is used. The decision recorded above — bind to the facts actually shown, never to
+whichever file happens to be on disk — is unchanged and was what forced the regeneration rather
+than a quiet substitution.

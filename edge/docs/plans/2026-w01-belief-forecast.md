@@ -1,7 +1,7 @@
 ---
 title: "Belief probe — 2026 week 1 forecast run"
-doc_version: 1.1.0
-status: IN PROGRESS — C1–C5 done, C6 blocked on §6 Q1
+doc_version: 2.0.0
+status: READY TO INGEST — v2 forecast binds to the committed pack; nothing blocking
 date: 2026-09-06
 owner: wubrg
 relates_to:
@@ -29,7 +29,13 @@ Verbatim shape of the prompt handed to the forecaster (full text is the operativ
 Row count: 16 `shootout` (game unit) + 32 each of `blowout_loss`, `pass_heavy`,
 `efficient_offense` (team unit) = **112 rows**. A file that omits rows is refused.
 
-## 2. The blocking discrepancy — the pasted pack is not the committed pack
+## 2. RESOLVED — the pack discrepancy, and what it was hiding
+
+> **Outcome:** neither pack is used. The week-1 pack was regenerated in-repo on 2026-09-06 and the
+> forecast binds to it (`2392b66a…`). It ingests. The history below is kept because the diagnosis
+> is what found the stale base rates *and* six moved lines.
+
+### The original discrepancy
 
 **The pack pasted into the session and the pack committed at
 `edge/beliefs/2026/week01.input.json` are different artifacts.**
@@ -72,6 +78,9 @@ Chunked so each chunk fits a small session.
 
 | # | chunk | output | status |
 |---|---|---|---|
+| C7 | Regenerate the pack in-repo once `games.csv` was fetchable; discover six moved lines | `week01.input.json` sha `2392b66a…` | DONE |
+| C8 | Tier 1 offseason context in the pack, prompt and falsifier (see [the other plan](./2026-pack-offseason-context.md)) | `beliefpack.py`, `falsify.go`, spec | DONE |
+| C9 | Re-forecast against the new pack, staff included | `week01.forecast.json` v2 | DONE |
 | C1 | Read the framework, the ingest/falsify code, the committed pack; establish what is checked and what is not | this document §2, §4 | DONE |
 | C2 | Record the run's assumptions as ADRs | ADR-003/004/005 | DONE |
 | C3 | Build the forecast generator: market-derived baselines + explicit per-row deviations | `beliefs/2026/week01.forecast.build.py` | DONE |
@@ -113,7 +122,10 @@ Full derivation in [ADR-004](../ADR-004-week01-forecast-method.md). In short:
 
 ## 6. OPEN DECISION — needs an operator answer before C6
 
-**Q1. Which pack sha does the week-1 forecast bind to?** — **ANSWERED: (a), 2026-09-06.**
+**Q1. Which pack sha does the week-1 forecast bind to?** — **CLOSED 2026-09-06: neither.** The pack
+was regenerated in-repo and the forecast binds to `2392b66a…`, which carries the held-out base
+rates *and* the current market. Answered (a) first; regeneration then made the choice moot in the
+right direction. See ADR-003's *Resolution*.
 
 - **(a) The pasted pack, `42bca9d8…`** *(chosen)*. Contract-faithful: the
   prompt says echo the sha of the pack you were shown, and per §2 it is also the *correct* pack.
@@ -139,24 +151,31 @@ line.
 | | count |
 |---|---|
 | rows | 112 (16 `shootout`, 32 each of the other three) |
-| abstained | 11 — 5 `pass_heavy` (ARI, JAX, LV, NYG, TEN), 6 `efficient_offense` (ARI, CLE, JAX, LV, NYG, TEN) |
-| flagged | 11 — 9 `pass_heavy`, 2 `efficient_offense` |
-| claims | 55, all `narrative`; 0 `form`/`market`/`schedule`, 0 `injury`/`usage` |
+| abstained | 10 — 4 `pass_heavy` (ARI, BAL, MIA, TEN), 6 `efficient_offense` (ARI, CLE, JAX, LV, NYG, TEN) |
+| flagged | 11 — 10 `pass_heavy`, 1 `efficient_offense` |
+| claims | 57 — **14 `coaching`, adjudicated at ingest**, 42 `narrative`, 1 `personnel`; 0 `form`/`market`/`schedule`, 0 `injury`/`usage` |
+
+The abstention set *moved* rather than shrank, which is the interesting part: the STAFF block
+promoted JAX, LV and NYG out of abstention (their new head coach is himself the play-caller) and
+pushed BAL and MIA into it (defensive head coaches, unknown play-callers). Knowing who the head
+coach is resolved three teams and disqualified two.
 
 **Validated against the real gate.** `edgectl beliefs ingest -n`, run on a scratch copy with the
 committed sha substituted so every check *except* the sha binding is exercised:
 
 ```
 BELIEFS  2026 week 1  from llm-forecaster/belief-v1
+  pack     beliefs/2026/week01.input.json  (sha 2392b66a1ccf…)
   ready    112
-  claims   0 checked, 55 unverifiable, 0 untyped, 0 deferred
-  NOTE     53 rest entirely on unverifiable claims — not wrong, but
+  claims   14 checked, 43 unverifiable, 0 untyped, 0 deferred
+  NOTE     40 rest entirely on unverifiable claims — not wrong, but
            they cannot be audited either way
 ```
 
-Nothing rejected, nothing untyped, no unit or kickoff violations. The unverifiable count is the
-predicted consequence of ADR-005, not a surprise. Run unmodified, ingest refuses on the sha, with
-the error §2 predicts. `go test ./...` in `edge/app` is green; no Go code was touched.
+Run against the **real committed pack**, no substitution: 112 ready, nothing rejected, nothing
+untyped, no unit or kickoff violations. The v1 run of this same command reported `0 checked, 55
+unverifiable` — the fourteen checked claims are the measured effect of ADR-006. `go vet`, `gofmt`
+and `go test ./...` in `edge/app` are green.
 
 ## 8. Progress / token-budget tracker
 
@@ -164,17 +183,19 @@ the error §2 predicts. `go test ./...` in `edge/app` is green; no Go code was t
   gate, committed and pushed. C6 blocked on Q1 (§6).
 - 2026-09-06 — operator answered Q1 (a) and Q2 (keep neutral). Root cause of the pack discrepancy
   found and recorded in ADR-003: the committed pack is the stale one.
-- **C6, for the machine holding the nflverse cache**, before 2026-09-09 20:20 ET:
-  1. `cp edge/beliefs/2026/week01.input.json` — the file whose sha is `42bca9d8…` — into the repo,
-     overwriting the stale 2026-08-24 pack, and commit it with its `week01.prompt.md`.
-  2. `edgectl beliefs ingest -file beliefs/2026/week01.forecast.json -pack beliefs/2026/week01.input.json`.
-  3. If that pack file no longer exists anywhere, the run cannot bind to `42bca9d8…` and Q1 has to
-     be reopened; re-running `week01.forecast.build.py` with `PACK_SHA` and the two `BASE` entries
-     switched to whatever pack is committed changes only the 11 abstained placeholders.
+- 2026-09-06 — pack regenerated, Tier 1 shipped, forecast re-emitted as v2 and validated against
+  the committed pack. **Nothing is blocking.**
+- **C6, the only step left**, before 2026-09-09 20:20 ET — drop `-n` to write the log:
+  `edgectl beliefs ingest -file beliefs/2026/week01.forecast.json -pack beliefs/2026/week01.input.json`
+- Regenerating the pack again before ingest would change its sha (it embeds `generated_at`) and
+  invalidate the forecast. If the lines move again and that matters more than the binding, re-run
+  `week01.forecast.build.py` afterwards — it reads the pack and re-hashes it, so the pair stays
+  consistent by construction.
 
 ## 9. Changelog
 
 | version | date | change |
 |---|---|---|
+| 2.0.0 | 2026-09-06 | v2 forecast. Pack regenerated in-repo (six lines had moved); staff context folded in per ADR-006; four flags withdrawn and four added; 14 claims now checked at ingest. Q1 closed by regeneration. |
 | 1.1.0 | 2026-09-06 | Root cause of the pack discrepancy found (committed pack is stale; the pasted one carries the held-out base rates from `belief.json`). Q1 and Q2 answered. C6 rewritten for the machine that holds the cache. |
 | 1.0.0 | 2026-09-06 | First issue. Records the request, the pasted-vs-committed pack discrepancy, the plan, the method summary, the emitted file's shape and its validation, and the two open decisions. |

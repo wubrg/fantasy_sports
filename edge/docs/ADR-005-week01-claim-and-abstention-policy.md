@@ -50,3 +50,22 @@ usage.
 - If the probe wants auditable claims from an LLM forecaster, the pack has to carry injury
   `report_status` and weekly usage, exactly as `falsify.go` already says. Until then this policy is
   the honest one.
+
+---
+
+## Amendment, 2026-09-06 — `coaching` claims, now that they are checked
+
+Rule 3 said claims would be `narrative` and `personnel` only, because nothing else could be
+supported. The pack now carries head coaches, so:
+
+- **Scheme reads are stated as `coaching` claims where a head coach is the evidence**, naming the
+  coach the pack gives. Fourteen of the file's claims are now adjudicated at ingest — against zero
+  before — and a wrong name voids its own prediction, which is the intended exposure.
+- **Rules 1 and 2 stand unchanged.** No `form`, `market` or `schedule` claims, and still no
+  `injury` or `usage`: `injuries_2026.csv` returns 404 until the season starts, so there remains
+  no verified injury fact to state.
+- **`personnel` is now reserved for coordinators**, who genuinely have no table — e.g. Seattle's
+  claim, which says the play-caller left while the head coach stayed. That is exactly the residue
+  the coach column cannot cover, and it is labelled as such rather than dressed up as checkable.
+
+Resulting tally: **14 checked, 43 unverifiable, 0 untyped, 0 deferred, 0 rejected.**

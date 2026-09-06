@@ -96,6 +96,26 @@ def schedule(season: int, week: int) -> list[dict]:
     return out
 
 
+def prior_season_coaches(season: int) -> dict:
+    """Every head coach who took a REG snap for each team in season-1.
+
+    A set per team, not a single name: a team that changed coach mid-season had
+    two, and calling the second one "new" the following year would be wrong.
+    Returns {} when the prior season is not in games.csv, which makes
+    coach_is_new None rather than False -- "not known" is not "not new".
+    """
+    path = F.CACHE / "games.csv"
+    out: dict[str, set] = {}
+    for r in csv.DictReader(path.open()):
+        if r["game_type"] != "REG" or int(F.num(r["season"])) != season - 1:
+            continue
+        for side in ("away", "home"):
+            name = r[f"{side}_coach"].strip()
+            if name:
+                out.setdefault(r[f"{side}_team"], set()).add(name)
+    return out
+
+
 def definitions_block() -> dict:
     """The predicates, so a reader can be refused when they change.
 
@@ -222,6 +242,7 @@ def pack(season: int, week: int) -> dict:
     """
     games = schedule(season, week)
     form, form_reason = prior_form(season, week)
+    prior = prior_season_coaches(season)
 
     out_games = []
     for g in games:
@@ -237,10 +258,37 @@ def pack(season: int, week: int) -> dict:
             # named, so the one place that converts it can be checked.
             "total_line": F.num(g["total_line"]) if g["total_line"].strip() else None,
             "spread_line": F.num(g["spread_line"]) if g["spread_line"].strip() else None,
+            # Where it is played and on how much rest. Cheap -- already in the
+            # row being read -- and the only game-level facts here that a
+            # forecaster cannot infer from the two lines.
+            "div_game": g["div_game"].strip() == "1",
+            "roof": g["roof"].strip() or None,
+            "surface": g["surface"].strip() or None,
             "teams": {},
         }
         for team in (away, home):
+            side = "home" if team == home else "away"
             t = {}
+            # The head coach, and whether he is new to this team this season.
+            #
+            # This was long documented as a fact the repository did not hold, in
+            # this file's own spec and in falsify.go, which is why `personnel`
+            # claims were unauditable. It is two columns of games.csv and has
+            # been there since 1999. Seven teams changed head coach for 2026 and
+            # a forecast written without it staked flagged rows on staffs that
+            # no longer existed -- so the omission was not harmless.
+            #
+            # Head coaches only. Pass rate over expectation is a coordinator's
+            # signature and no coordinator table exists in nflverse, so this
+            # narrows the guessing without ending it. Saying so here keeps the
+            # next reader from over-reading the field.
+            coach = g[f"{side}_coach"].strip()
+            if coach:
+                t["coach"] = coach
+                t["coach_is_new"] = (coach not in prior[team]) if prior.get(team) else None
+            rest = g[f"{side}_rest"].strip()
+            if rest:
+                t["rest_days"] = int(F.num(rest))
             if team in form:
                 t["prior_form"] = form[team]
             entry["teams"][team] = t
@@ -326,12 +374,31 @@ def render(p: dict, sha: str) -> str:
     L.append("")
     L.append(f"{p['spread_convention']}.")
     L.append("")
-    L.append("| game | away | home | kickoff | total | spread |")
-    L.append("|---|---|---|---|---|---|")
+    L.append("| game | away | home | kickoff | total | spread | venue |")
+    L.append("|---|---|---|---|---|---|---|")
     for g in p["games"]:
+        venue = ", ".join(x for x in (g.get("roof"), g.get("surface"),
+                                      "divisional" if g.get("div_game") else "") if x)
         L.append(f"| {g['game_id']} | {g['away']} | {g['home']} | {g['kickoff']} | "
                  f"{g['total_line'] if g['total_line'] is not None else '—'} | "
-                 f"{g['spread_line'] if g['spread_line'] is not None else '—'} |")
+                 f"{g['spread_line'] if g['spread_line'] is not None else '—'} | "
+                 f"{venue or '—'} |")
+    L.append("")
+    L.append("## STAFF — who is coaching, and who is new")
+    L.append("")
+    L.append("Head coaches only. Pass rate over expectation is called by a coordinator, and no "
+             "coordinator table exists in the data this pack is built from — so a team keeping "
+             "its head coach is **not** evidence that it kept its play-caller.")
+    L.append("")
+    L.append("| team | head coach | new to the team | rest days |")
+    L.append("|---|---|---|---|")
+    for g in p["games"]:
+        for team, t in g["teams"].items():
+            if "coach" not in t:
+                continue
+            isnew = {True: "**yes**", False: "no", None: "not known"}[t.get("coach_is_new")]
+            L.append(f"| {team} | {t['coach']} | {isnew} | "
+                     f"{t.get('rest_days', '—')} |")
     L.append("")
     L.append("## FORM — each team coming into this week, from earlier games only")
     L.append("")
