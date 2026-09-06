@@ -213,3 +213,77 @@ func TestParseClaimShape(t *testing.T) {
 		t.Error("an untyped string parsed as a claim")
 	}
 }
+
+// coachGame is a pack that carries the staff, as packs do from the week the
+// format gained the column.
+func coachGame() packGame {
+	g := testGame()
+	yes, no := true, false
+	g.Teams = map[string]packTeam{
+		"KC":  {Coach: "Andy Reid", CoachIsNew: &no},
+		"DEN": {Coach: "Mike McCarthy", CoachIsNew: &yes},
+	}
+	return g
+}
+
+func checkCoach(t *testing.T, claims ...string) falsifyResult {
+	t.Helper()
+	g := coachGame()
+	return falsifyPrediction(forecast{Claims: claims}, g, g.Home, g.Away)
+}
+
+// TestCoachingClaimIsFalsifiedOnlyByNamingTheWrongStaff. The failure this exists
+// to catch is a scheme read staked on a coach who left -- which is exactly what
+// the 2026 week-1 forecast did before the pack carried the column.
+func TestCoachingClaimIsFalsifiedOnlyByNamingTheWrongStaff(t *testing.T) {
+	for _, tc := range []struct {
+		name, claim string
+		wantReason  bool
+		wantChecked int
+	}{
+		{"wrong coach", "coaching: DEN — Sean Payton's offence throws early", true, 1},
+		{"right coach", "coaching: DEN — Mike McCarthy took over this season", false, 1},
+		{"names the predecessor too", "coaching: DEN — McCarthy replaces Sean Payton", false, 1},
+		{"surname only", "coaching: KC — Andy Reid still calls it", false, 1},
+		{"names nobody", "coaching: KC — kept the head coach, lost the coordinator", false, 0},
+		{"not a side of this game", "coaching: BUF — Sean McDermott", false, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := checkCoach(t, tc.claim)
+			if got := r.Reason != ""; got != tc.wantReason {
+				t.Fatalf("claim %q: falsified=%v (%s), want %v", tc.claim, got, r.Reason, tc.wantReason)
+			}
+			if r.Checked != tc.wantChecked {
+				t.Fatalf("claim %q: checked=%d, want %d", tc.claim, r.Checked, tc.wantChecked)
+			}
+		})
+	}
+}
+
+// TestCoachSurnameToleratesOneTypo. games.csv spells one 2026 head coach
+// "Kubliak". A forecaster spelling it correctly must not be convicted by a typo
+// in the fact it is being checked against.
+func TestCoachSurnameToleratesOneTypo(t *testing.T) {
+	g := testGame()
+	g.Teams = map[string]packTeam{"KC": {Coach: "Klint Kubliak"}, "DEN": {}}
+	r := falsifyPrediction(
+		forecast{Claims: []string{"coaching: KC — Klint Kubiak's wide-zone offence"}},
+		g, g.Home, g.Away)
+	if r.Reason != "" {
+		t.Fatalf("a one-character difference in the source spelling falsified a correct claim: %s", r.Reason)
+	}
+	if r.Checked != 1 {
+		t.Fatalf("checked=%d, want 1", r.Checked)
+	}
+}
+
+// TestCoachingClaimUnsupportedByAnOlderPack. A pack generated before the column
+// existed must make the claim unchecked, never false.
+func TestCoachingClaimUnsupportedByAnOlderPack(t *testing.T) {
+	g := testGame() // no Coach set
+	r := falsifyPrediction(
+		forecast{Claims: []string{"coaching: KC — Andy Reid"}}, g, g.Home, g.Away)
+	if r.Reason != "" || r.Checked != 0 || r.Unverifiable != 1 {
+		t.Fatalf("older pack: reason=%q checked=%d unverifiable=%d", r.Reason, r.Checked, r.Unverifiable)
+	}
+}

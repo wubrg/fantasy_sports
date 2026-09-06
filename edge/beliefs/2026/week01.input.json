@@ -1,16 +1,9 @@
 {
  "season": 2026,
  "week": 1,
- "generated_at": "2026-08-24T12:38:58Z",
+ "generated_at": "2026-09-06T20:13:03Z",
  "generated_by": "edge/model/analysis/beliefpack.py pack",
- "cache": {
-  "games.csv": {
-   "bytes": 2177175,
-   "fetched_at": "2026-08-20T13:07:43Z",
-   "sha256": "b4970da16bba2cc409ea40156516cab2b53f6e5a59553eb4005689d0f4cab6de",
-   "url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
-  }
- },
+ "cache": {},
  "definitions": {
   "shootout": {
    "basis": "total",
@@ -38,8 +31,8 @@
   }
  },
  "base_rates": {
-  "efficient_offense": 0.3243,
-  "pass_heavy": 0.3353,
+  "efficient_offense": 0.3721,
+  "pass_heavy": 0.2648,
   "shootout": 0.3378,
   "blowout_loss": 0.2617
  },
@@ -54,9 +47,20 @@
    "kickoff": "2026-09-09T20:20:00-04:00",
    "total_line": 44.5,
    "spread_line": 3.5,
+   "div_game": false,
+   "roof": "outdoors",
+   "surface": "fieldturf",
    "teams": {
-    "NE": {},
-    "SEA": {}
+    "NE": {
+     "coach": "Mike Vrabel",
+     "coach_is_new": false,
+     "rest_days": 7
+    },
+    "SEA": {
+     "coach": "Mike Macdonald",
+     "coach_is_new": false,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -66,9 +70,20 @@
    "kickoff": "2026-09-10T20:35:00-04:00",
    "total_line": 48.5,
    "spread_line": 3.5,
+   "div_game": true,
+   "roof": "dome",
+   "surface": "matrixturf",
    "teams": {
-    "SF": {},
-    "LA": {}
+    "SF": {
+     "coach": "Kyle Shanahan",
+     "coach_is_new": false,
+     "rest_days": 7
+    },
+    "LA": {
+     "coach": "Sean McVay",
+     "coach_is_new": false,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -78,9 +93,20 @@
    "kickoff": "2026-09-13T13:00:00-04:00",
    "total_line": 47.5,
    "spread_line": -2.5,
+   "div_game": false,
+   "roof": "outdoors",
+   "surface": "grass",
    "teams": {
-    "CHI": {},
-    "CAR": {}
+    "CHI": {
+     "coach": "Ben Johnson",
+     "coach_is_new": false,
+     "rest_days": 7
+    },
+    "CAR": {
+     "coach": "Dave Canales",
+     "coach_is_new": false,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -88,11 +114,22 @@
    "away": "TB",
    "home": "CIN",
    "kickoff": "2026-09-13T13:00:00-04:00",
-   "total_line": 51.5,
+   "total_line": 50.5,
    "spread_line": 3.5,
+   "div_game": false,
+   "roof": "outdoors",
+   "surface": "fieldturf",
    "teams": {
-    "TB": {},
-    "CIN": {}
+    "TB": {
+     "coach": "Todd Bowles",
+     "coach_is_new": false,
+     "rest_days": 7
+    },
+    "CIN": {
+     "coach": "Zac Taylor",
+     "coach_is_new": false,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -100,11 +137,22 @@
    "away": "NO",
    "home": "DET",
    "kickoff": "2026-09-13T13:00:00-04:00",
-   "total_line": 48.5,
+   "total_line": 49.5,
    "spread_line": 7.0,
+   "div_game": false,
+   "roof": "dome",
+   "surface": "fieldturf",
    "teams": {
-    "NO": {},
-    "DET": {}
+    "NO": {
+     "coach": "Kellen Moore",
+     "coach_is_new": false,
+     "rest_days": 7
+    },
+    "DET": {
+     "coach": "Dan Campbell",
+     "coach_is_new": false,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -114,9 +162,20 @@
    "kickoff": "2026-09-13T13:00:00-04:00",
    "total_line": 44.5,
    "spread_line": -1.5,
+   "div_game": false,
+   "roof": null,
+   "surface": "astroturf",
    "teams": {
-    "BUF": {},
-    "HOU": {}
+    "BUF": {
+     "coach": "Sean McDermott",
+     "coach_is_new": false,
+     "rest_days": 7
+    },
+    "HOU": {
+     "coach": "DeMeco Ryans",
+     "coach_is_new": false,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -126,9 +185,20 @@
    "kickoff": "2026-09-13T13:00:00-04:00",
    "total_line": 48.5,
    "spread_line": -3.5,
+   "div_game": false,
+   "roof": null,
+   "surface": "fieldturf",
    "teams": {
-    "BAL": {},
-    "IND": {}
+    "BAL": {
+     "coach": "Jesse Minter",
+     "coach_is_new": true,
+     "rest_days": 7
+    },
+    "IND": {
+     "coach": "Shane Steichen",
+     "coach_is_new": false,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -138,9 +208,20 @@
    "kickoff": "2026-09-13T13:00:00-04:00",
    "total_line": 40.5,
    "spread_line": 7.5,
+   "div_game": false,
+   "roof": "outdoors",
+   "surface": "grass",
    "teams": {
-    "CLE": {},
-    "JAX": {}
+    "CLE": {
+     "coach": "Todd Monken",
+     "coach_is_new": true,
+     "rest_days": 7
+    },
+    "JAX": {
+     "coach": "Liam Coen",
+     "coach_is_new": false,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -149,10 +230,21 @@
    "home": "PIT",
    "kickoff": "2026-09-13T13:00:00-04:00",
    "total_line": 42.5,
-   "spread_line": 3.0,
+   "spread_line": 3.5,
+   "div_game": false,
+   "roof": "outdoors",
+   "surface": "grass",
    "teams": {
-    "ATL": {},
-    "PIT": {}
+    "ATL": {
+     "coach": "Raheem Morris",
+     "coach_is_new": false,
+     "rest_days": 7
+    },
+    "PIT": {
+     "coach": "Mike McCarthy",
+     "coach_is_new": true,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -160,11 +252,22 @@
    "away": "NYJ",
    "home": "TEN",
    "kickoff": "2026-09-13T13:00:00-04:00",
-   "total_line": 38.5,
-   "spread_line": 3.0,
+   "total_line": 39.5,
+   "spread_line": 1.5,
+   "div_game": false,
+   "roof": "outdoors",
+   "surface": "grass",
    "teams": {
-    "NYJ": {},
-    "TEN": {}
+    "NYJ": {
+     "coach": "Aaron Glenn",
+     "coach_is_new": false,
+     "rest_days": 7
+    },
+    "TEN": {
+     "coach": "Robert Saleh",
+     "coach_is_new": true,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -174,9 +277,20 @@
    "kickoff": "2026-09-13T16:25:00-04:00",
    "total_line": 46.5,
    "spread_line": 10.5,
+   "div_game": false,
+   "roof": "dome",
+   "surface": "matrixturf",
    "teams": {
-    "ARI": {},
-    "LAC": {}
+    "ARI": {
+     "coach": "Jonathan Gannon",
+     "coach_is_new": false,
+     "rest_days": 7
+    },
+    "LAC": {
+     "coach": "Jim Harbaugh",
+     "coach_is_new": false,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -186,9 +300,20 @@
    "kickoff": "2026-09-13T16:25:00-04:00",
    "total_line": 40.5,
    "spread_line": 3.5,
+   "div_game": false,
+   "roof": "dome",
+   "surface": "grass",
    "teams": {
-    "MIA": {},
-    "LV": {}
+    "MIA": {
+     "coach": "Jeff Hafley",
+     "coach_is_new": true,
+     "rest_days": 7
+    },
+    "LV": {
+     "coach": "Klint Kubliak",
+     "coach_is_new": true,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -196,11 +321,22 @@
    "away": "GB",
    "home": "MIN",
    "kickoff": "2026-09-13T16:25:00-04:00",
-   "total_line": 45.5,
+   "total_line": 46.5,
    "spread_line": 1.5,
+   "div_game": true,
+   "roof": "dome",
+   "surface": "sportturf",
    "teams": {
-    "GB": {},
-    "MIN": {}
+    "GB": {
+     "coach": "Matt LaFleur",
+     "coach_is_new": false,
+     "rest_days": 7
+    },
+    "MIN": {
+     "coach": "Kevin O'Connell",
+     "coach_is_new": false,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -208,11 +344,22 @@
    "away": "WAS",
    "home": "PHI",
    "kickoff": "2026-09-13T16:25:00-04:00",
-   "total_line": 47.5,
-   "spread_line": 4.5,
+   "total_line": 44.5,
+   "spread_line": 5.5,
+   "div_game": true,
+   "roof": "outdoors",
+   "surface": "grass",
    "teams": {
-    "WAS": {},
-    "PHI": {}
+    "WAS": {
+     "coach": "Dan Quinn",
+     "coach_is_new": false,
+     "rest_days": 7
+    },
+    "PHI": {
+     "coach": "Nick Sirianni",
+     "coach_is_new": false,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -222,9 +369,20 @@
    "kickoff": "2026-09-13T20:20:00-04:00",
    "total_line": 48.5,
    "spread_line": -2.5,
+   "div_game": true,
+   "roof": "outdoors",
+   "surface": "fieldturf",
    "teams": {
-    "DAL": {},
-    "NYG": {}
+    "DAL": {
+     "coach": "Brian Schottenheimer",
+     "coach_is_new": false,
+     "rest_days": 7
+    },
+    "NYG": {
+     "coach": "John Harbaugh",
+     "coach_is_new": true,
+     "rest_days": 7
+    }
    }
   },
   {
@@ -234,9 +392,20 @@
    "kickoff": "2026-09-14T20:15:00-04:00",
    "total_line": 42.5,
    "spread_line": 3.0,
+   "div_game": true,
+   "roof": "outdoors",
+   "surface": "grass",
    "teams": {
-    "DEN": {},
-    "KC": {}
+    "DEN": {
+     "coach": "Sean Payton",
+     "coach_is_new": false,
+     "rest_days": 7
+    },
+    "KC": {
+     "coach": "Andy Reid",
+     "coach_is_new": false,
+     "rest_days": 7
+    }
    }
   }
  ]

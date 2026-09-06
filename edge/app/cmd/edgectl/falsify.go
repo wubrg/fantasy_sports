@@ -61,7 +61,15 @@ type claim struct {
 }
 
 // checkable types are the ones the pack can adjudicate today.
-var checkable = map[string]bool{"form": true, "market": true, "schedule": true}
+//
+// `coaching` joined them when the pack started carrying head coaches. It had
+// been documented here, and in belief-probe.md, as a fact this repository did
+// not hold -- which was false: games.csv has away_coach and home_coach for every
+// game since 1999, and it is the table beliefpack.py already opens. The cost of
+// that mistake was measured: seven teams changed head coach for 2026 and a
+// forecast written without the column staked flagged rows on staffs that no
+// longer existed.
+var checkable = map[string]bool{"form": true, "market": true, "schedule": true, "coaching": true}
 
 // deferred types are checkable in principle but not against anything edgectl
 // holds. It reads only the pack (facts come embedded or pack-supplied, never
@@ -201,6 +209,9 @@ func adjudicate(c claim, g packGame, home, away string) (why string, checked boo
 		}
 		return contradiction(c, named)
 
+	case "coaching":
+		return adjudicateCoaching(c, subj, g)
+
 	case "form":
 		t, ok := g.Teams[subj]
 		if !ok || t.PriorForm == nil {
@@ -218,7 +229,113 @@ func adjudicate(c claim, g packGame, home, away string) (why string, checked boo
 	return "", false
 }
 
+// adjudicateCoaching checks a claim about who is coaching a team.
+//
+// The rule is the conservative one this file uses everywhere: a claim is checked
+// only when it NAMES somebody, and falsified only when none of the people it
+// names is the coach the pack gave for that team. So:
+//
+//	"coaching: PIT — Arthur Smith's run-heavy identity"   falsified (wrong staff)
+//	"coaching: PIT — McCarthy took over from Tomlin"      passes (names him)
+//	"coaching: SEA — kept the head coach, lost the OC"    unchecked (names nobody)
+//
+// Naming a former coach is not itself an error -- describing a change requires
+// it -- so any mention of the current coach clears the claim.
+//
+// Surnames are matched with one edit allowed, because the source is a
+// hand-maintained CSV and it currently spells one 2026 head coach "Kubliak".
+// A forecaster who spells a name correctly must not be convicted by a typo in
+// the fact it is being checked against.
+func adjudicateCoaching(c claim, subj string, g packGame) (why string, checked bool) {
+	t, ok := g.Teams[subj]
+	if !ok || t.Coach == "" {
+		// Either the subject is not a side of this game, or the pack predates
+		// the coach column. Unsupported, not contradicted.
+		return "", false
+	}
+	named := reFullName.FindAllString(c.assertion, -1)
+	if len(named) == 0 {
+		return "", false
+	}
+	// Clearing is deliberately more generous than convicting. Any mention of the
+	// pack's coach anywhere in the assertion -- including a bare surname, which
+	// is how people actually write about coaches -- clears the claim, while only
+	// a full name can convict. "McCarthy replaces Sean Payton" is a true
+	// sentence about a staff change and must not be read as naming Payton.
+	want := lastWord(t.Coach)
+	for _, w := range strings.Fields(c.assertion) {
+		if editDistanceAtMostOne(normalizeName(w), want) {
+			return "", true
+		}
+	}
+	for _, n := range named {
+		if sameCoach(n, t.Coach) {
+			return "", true
+		}
+	}
+	return fmt.Sprintf("names %s as %s's coach, but the pack says %s",
+		named[0], subj, t.Coach), true
+}
+
+// sameCoach compares two people by surname, tolerating one typo.
+func sameCoach(a, b string) bool {
+	la, lb := lastWord(a), lastWord(b)
+	return la != "" && lb != "" && editDistanceAtMostOne(la, lb)
+}
+
+func lastWord(s string) string {
+	f := strings.Fields(s)
+	if len(f) == 0 {
+		return ""
+	}
+	return normalizeName(f[len(f)-1])
+}
+
+// normalizeName lowercases a word and strips what surrounds a name in prose:
+// punctuation, and the possessive that "Kubiak's offence" leaves attached.
+func normalizeName(w string) string {
+	w = strings.ToLower(strings.Trim(w, `.,;:!?()[]"'“”‘’`))
+	for _, poss := range []string{"'s", "’s"} {
+		if strings.HasSuffix(w, poss) {
+			w = strings.TrimSuffix(w, poss)
+			break
+		}
+	}
+	return strings.Trim(w, `.,;:!?()[]"'“”‘’`)
+}
+
+// editDistanceAtMostOne reports whether a and b are equal or one edit apart.
+// Cheaper and clearer than a full Levenshtein matrix, and one edit is all the
+// tolerance intended -- two would start matching different people.
+func editDistanceAtMostOne(a, b string) bool {
+	if a == b {
+		return true
+	}
+	if len(a) > len(b) {
+		a, b = b, a
+	}
+	if len(b)-len(a) > 1 {
+		return false
+	}
+	for i := 0; i < len(a); i++ {
+		if a[i] == b[i] {
+			continue
+		}
+		if len(a) == len(b) {
+			return a[i+1:] == b[i+1:] // one substitution
+		}
+		return a[i:] == b[i+1:] // one insertion into b
+	}
+	return true // b is a with one character appended
+}
+
 var (
+	// Two or more capitalised words in a row: a person's name as anyone writes
+	// one. A single capitalised word is deliberately not enough -- it matches
+	// team abbreviations, sentence openers and "Sunday" -- which keeps this from
+	// convicting a claim that named nobody.
+	reFullName = regexp.MustCompile(`\b[A-Z][a-zA-Z.'’-]+(?:\s+[A-Z][a-zA-Z.'’-]+)+\b`)
+
 	reTotal = regexp.MustCompile(`\btotal\b|\bo/?u\b|\bover/under\b`)
 	// "line" is deliberately NOT here: it is ambiguous between the total line and
 	// the spread, and binding it to the spread convicted a correctly-stated total

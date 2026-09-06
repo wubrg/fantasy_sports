@@ -1,0 +1,1143 @@
+{
+ "season": 2026,
+ "week": 1,
+ "input_pack": "beliefs/2026/week01.input.json",
+ "input_pack_sha256": "2392b66a1ccff90959ce5bc4c2226dfb1d61716b1505cf6cd99091c17b480675",
+ "model": "llm-forecaster/belief-v1",
+ "prompt": "belief-v1",
+ "generated_at": "2026-09-06T20:10:00Z",
+ "predictions": [
+  {
+   "game_id": "2026_01_NE_SEA",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.314,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_NE_SEA",
+   "team": "NE",
+   "scenario": "blowout_loss",
+   "belief": 0.391,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_NE_SEA",
+   "team": "NE",
+   "scenario": "pass_heavy",
+   "belief": 0.33,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": [
+    "narrative: NE — the offence has leaned on its young quarterback's volume rather than its run game"
+   ]
+  },
+  {
+   "game_id": "2026_01_NE_SEA",
+   "team": "NE",
+   "scenario": "efficient_offense",
+   "belief": 0.295,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_NE_SEA",
+   "team": "SEA",
+   "scenario": "blowout_loss",
+   "belief": 0.224,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_NE_SEA",
+   "team": "SEA",
+   "scenario": "pass_heavy",
+   "belief": 0.24,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": [
+    "personnel: SEA — the coordinator who set the prior season's run-leaning identity is now another team's head coach, so that identity is no longer safe to assume"
+   ]
+  },
+  {
+   "game_id": "2026_01_NE_SEA",
+   "team": "SEA",
+   "scenario": "efficient_offense",
+   "belief": 0.406,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_SF_LA",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.423,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_SF_LA",
+   "team": "SF",
+   "scenario": "blowout_loss",
+   "belief": 0.391,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_SF_LA",
+   "team": "SF",
+   "scenario": "pass_heavy",
+   "belief": 0.15,
+   "confidence": 0.65,
+   "abstained": false,
+   "claims": [
+    "coaching: SF — Kyle Shanahan's outside-zone offence has thrown below expectation in every year of his tenure"
+   ]
+  },
+  {
+   "game_id": "2026_01_SF_LA",
+   "team": "SF",
+   "scenario": "efficient_offense",
+   "belief": 0.382,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": [
+    "narrative: SF — the scheme is built for yards-on-schedule, which is what success rate measures"
+   ]
+  },
+  {
+   "game_id": "2026_01_SF_LA",
+   "team": "LA",
+   "scenario": "blowout_loss",
+   "belief": 0.224,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_SF_LA",
+   "team": "LA",
+   "scenario": "pass_heavy",
+   "belief": 0.28,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_SF_LA",
+   "team": "LA",
+   "scenario": "efficient_offense",
+   "belief": 0.51,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": [
+    "narrative: LA — quick-game passing with a high completion floor"
+   ]
+  },
+  {
+   "game_id": "2026_01_CHI_CAR",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.395,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_CHI_CAR",
+   "team": "CHI",
+   "scenario": "blowout_loss",
+   "belief": 0.245,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_CHI_CAR",
+   "team": "CHI",
+   "scenario": "pass_heavy",
+   "belief": 0.28,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_CHI_CAR",
+   "team": "CHI",
+   "scenario": "efficient_offense",
+   "belief": 0.463,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_CHI_CAR",
+   "team": "CAR",
+   "scenario": "blowout_loss",
+   "belief": 0.365,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_CHI_CAR",
+   "team": "CAR",
+   "scenario": "pass_heavy",
+   "belief": 0.17,
+   "confidence": 0.65,
+   "abstained": false,
+   "claims": [
+    "coaching: CAR — Dave Canales leans on early-down carries to protect his defence"
+   ]
+  },
+  {
+   "game_id": "2026_01_CHI_CAR",
+   "team": "CAR",
+   "scenario": "efficient_offense",
+   "belief": 0.332,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": [
+    "narrative: CAR — early-down run rate above what the personnel converts"
+   ]
+  },
+  {
+   "game_id": "2026_01_TB_CIN",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.48,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_TB_CIN",
+   "team": "TB",
+   "scenario": "blowout_loss",
+   "belief": 0.391,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_TB_CIN",
+   "team": "TB",
+   "scenario": "pass_heavy",
+   "belief": 0.35,
+   "confidence": 0.65,
+   "abstained": false,
+   "claims": [
+    "narrative: TB — pass-first identity with three-receiver personnel as the base"
+   ]
+  },
+  {
+   "game_id": "2026_01_TB_CIN",
+   "team": "TB",
+   "scenario": "efficient_offense",
+   "belief": 0.408,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_TB_CIN",
+   "team": "CIN",
+   "scenario": "blowout_loss",
+   "belief": 0.224,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_TB_CIN",
+   "team": "CIN",
+   "scenario": "pass_heavy",
+   "belief": 0.45,
+   "confidence": 0.65,
+   "abstained": false,
+   "claims": [
+    "coaching: CIN — Zac Taylor's offence has sat near the top of the league in pass rate over expectation for several seasons"
+   ]
+  },
+  {
+   "game_id": "2026_01_TB_CIN",
+   "team": "CIN",
+   "scenario": "efficient_offense",
+   "belief": 0.548,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": [
+    "narrative: CIN — high-volume, high-completion passing keeps the offence on schedule"
+   ]
+  },
+  {
+   "game_id": "2026_01_NO_DET",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.452,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_NO_DET",
+   "team": "NO",
+   "scenario": "blowout_loss",
+   "belief": 0.486,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_NO_DET",
+   "team": "NO",
+   "scenario": "pass_heavy",
+   "belief": 0.43,
+   "confidence": 0.65,
+   "abstained": false,
+   "claims": [
+    "coaching: NO — Kellen Moore's play-calling is pass-first, and this is the side expected to trail"
+   ]
+  },
+  {
+   "game_id": "2026_01_NO_DET",
+   "team": "NO",
+   "scenario": "efficient_offense",
+   "belief": 0.269,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": [
+    "narrative: NO — limited early-down run efficiency puts the offence behind the sticks"
+   ]
+  },
+  {
+   "game_id": "2026_01_NO_DET",
+   "team": "DET",
+   "scenario": "blowout_loss",
+   "belief": 0.159,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_NO_DET",
+   "team": "DET",
+   "scenario": "pass_heavy",
+   "belief": 0.17,
+   "confidence": 0.65,
+   "abstained": false,
+   "claims": [
+    "coaching: DET — Dan Campbell's two-back rushing identity, and the side expected to lead"
+   ]
+  },
+  {
+   "game_id": "2026_01_NO_DET",
+   "team": "DET",
+   "scenario": "efficient_offense",
+   "belief": 0.604,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": [
+    "narrative: DET — high-floor offence: success rate has run ahead of its points in each of the last two seasons"
+   ]
+  },
+  {
+   "game_id": "2026_01_BUF_HOU",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.314,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_BUF_HOU",
+   "team": "BUF",
+   "scenario": "blowout_loss",
+   "belief": 0.267,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_BUF_HOU",
+   "team": "BUF",
+   "scenario": "pass_heavy",
+   "belief": 0.22,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_BUF_HOU",
+   "team": "BUF",
+   "scenario": "efficient_offense",
+   "belief": 0.4,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": [
+    "narrative: BUF — quarterback scrambling converts would-be failures on early downs"
+   ]
+  },
+  {
+   "game_id": "2026_01_BUF_HOU",
+   "team": "HOU",
+   "scenario": "blowout_loss",
+   "belief": 0.34,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_BUF_HOU",
+   "team": "HOU",
+   "scenario": "pass_heavy",
+   "belief": 0.35,
+   "confidence": 0.65,
+   "abstained": false,
+   "claims": [
+    "narrative: HOU — drop-back offence with a limited early-down run game"
+   ]
+  },
+  {
+   "game_id": "2026_01_BUF_HOU",
+   "team": "HOU",
+   "scenario": "efficient_offense",
+   "belief": 0.288,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": [
+    "narrative: HOU — interior offensive-line issues cap the early-down floor"
+   ]
+  },
+  {
+   "game_id": "2026_01_BAL_IND",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.423,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_BAL_IND",
+   "team": "BAL",
+   "scenario": "blowout_loss",
+   "belief": 0.224,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_BAL_IND",
+   "team": "BAL",
+   "scenario": "pass_heavy",
+   "belief": 0.2648,
+   "confidence": 0.15,
+   "abstained": true,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_BAL_IND",
+   "team": "BAL",
+   "scenario": "efficient_offense",
+   "belief": 0.5,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: BAL — the roster that produced the league's best play-level efficiency is largely intact, but the staff that shaped it is not, so the read is held to a nudge"
+   ]
+  },
+  {
+   "game_id": "2026_01_BAL_IND",
+   "team": "IND",
+   "scenario": "blowout_loss",
+   "belief": 0.391,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_BAL_IND",
+   "team": "IND",
+   "scenario": "pass_heavy",
+   "belief": 0.18,
+   "confidence": 0.65,
+   "abstained": false,
+   "claims": [
+    "narrative: IND — a run-first identity around a workhorse back"
+   ]
+  },
+  {
+   "game_id": "2026_01_BAL_IND",
+   "team": "IND",
+   "scenario": "efficient_offense",
+   "belief": 0.352,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_CLE_JAX",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.218,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_CLE_JAX",
+   "team": "CLE",
+   "scenario": "blowout_loss",
+   "belief": 0.53,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": [
+    "narrative: CLE — an unsettled quarterback room gives the offence a low floor, which is how a game gets away early"
+   ]
+  },
+  {
+   "game_id": "2026_01_CLE_JAX",
+   "team": "CLE",
+   "scenario": "pass_heavy",
+   "belief": 0.36,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "coaching: CLE — Todd Monken is new as head coach, and his background is as a passing-game coordinator"
+   ]
+  },
+  {
+   "game_id": "2026_01_CLE_JAX",
+   "team": "CLE",
+   "scenario": "efficient_offense",
+   "belief": 0.3721,
+   "confidence": 0.15,
+   "abstained": true,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_CLE_JAX",
+   "team": "JAX",
+   "scenario": "blowout_loss",
+   "belief": 0.15,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_CLE_JAX",
+   "team": "JAX",
+   "scenario": "pass_heavy",
+   "belief": 0.27,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": [
+    "coaching: JAX — Liam Coen calls the offence himself and his install is pass-leaning"
+   ]
+  },
+  {
+   "game_id": "2026_01_CLE_JAX",
+   "team": "JAX",
+   "scenario": "efficient_offense",
+   "belief": 0.3721,
+   "confidence": 0.15,
+   "abstained": true,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_ATL_PIT",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.264,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_ATL_PIT",
+   "team": "ATL",
+   "scenario": "blowout_loss",
+   "belief": 0.391,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_ATL_PIT",
+   "team": "ATL",
+   "scenario": "pass_heavy",
+   "belief": 0.17,
+   "confidence": 0.65,
+   "abstained": false,
+   "claims": [
+    "narrative: ATL — the offence is organised around a bell-cow back on early downs"
+   ]
+  },
+  {
+   "game_id": "2026_01_ATL_PIT",
+   "team": "ATL",
+   "scenario": "efficient_offense",
+   "belief": 0.254,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_ATL_PIT",
+   "team": "PIT",
+   "scenario": "blowout_loss",
+   "belief": 0.224,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_ATL_PIT",
+   "team": "PIT",
+   "scenario": "pass_heavy",
+   "belief": 0.33,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "coaching: PIT — Mike McCarthy is new to Pittsburgh, and his offences have been pass-leaning from under centre, not the run-committed ones this roster last played in"
+   ]
+  },
+  {
+   "game_id": "2026_01_ATL_PIT",
+   "team": "PIT",
+   "scenario": "efficient_offense",
+   "belief": 0.37,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_NYJ_TEN",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.176,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides",
+    "narrative: NYJ — run-committed offence with a low explosive-play rate caps the combined-score upside"
+   ]
+  },
+  {
+   "game_id": "2026_01_NYJ_TEN",
+   "team": "NYJ",
+   "scenario": "blowout_loss",
+   "belief": 0.32,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": [
+    "narrative: NYJ — a run-committed, clock-shortening offence keeps games close by reducing possessions"
+   ]
+  },
+  {
+   "game_id": "2026_01_NYJ_TEN",
+   "team": "NYJ",
+   "scenario": "pass_heavy",
+   "belief": 0.16,
+   "confidence": 0.65,
+   "abstained": false,
+   "claims": [
+    "coaching: NYJ — Aaron Glenn's first season produced the league's most run-committed offence, by design rather than by game script"
+   ]
+  },
+  {
+   "game_id": "2026_01_NYJ_TEN",
+   "team": "NYJ",
+   "scenario": "efficient_offense",
+   "belief": 0.2,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": [
+    "narrative: NYJ — an offence with little passing-game explosiveness lives on second-and-long"
+   ]
+  },
+  {
+   "game_id": "2026_01_NYJ_TEN",
+   "team": "TEN",
+   "scenario": "blowout_loss",
+   "belief": 0.247,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": [
+    "narrative: NYJ — a run-committed, clock-shortening offence keeps games close by reducing possessions"
+   ]
+  },
+  {
+   "game_id": "2026_01_NYJ_TEN",
+   "team": "TEN",
+   "scenario": "pass_heavy",
+   "belief": 0.2648,
+   "confidence": 0.15,
+   "abstained": true,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_NYJ_TEN",
+   "team": "TEN",
+   "scenario": "efficient_offense",
+   "belief": 0.3721,
+   "confidence": 0.15,
+   "abstained": true,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_ARI_LAC",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.368,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_ARI_LAC",
+   "team": "ARI",
+   "scenario": "blowout_loss",
+   "belief": 0.582,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_ARI_LAC",
+   "team": "ARI",
+   "scenario": "pass_heavy",
+   "belief": 0.2648,
+   "confidence": 0.15,
+   "abstained": true,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_ARI_LAC",
+   "team": "ARI",
+   "scenario": "efficient_offense",
+   "belief": 0.3721,
+   "confidence": 0.15,
+   "abstained": true,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_ARI_LAC",
+   "team": "LAC",
+   "scenario": "blowout_loss",
+   "belief": 0.107,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_ARI_LAC",
+   "team": "LAC",
+   "scenario": "pass_heavy",
+   "belief": 0.11,
+   "confidence": 0.65,
+   "abstained": false,
+   "claims": [
+    "coaching: LAC — Jim Harbaugh's offences are gap-scheme and run-committed on early downs, at Michigan and since"
+   ]
+  },
+  {
+   "game_id": "2026_01_ARI_LAC",
+   "team": "LAC",
+   "scenario": "efficient_offense",
+   "belief": 0.573,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_MIA_LV",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.218,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_MIA_LV",
+   "team": "MIA",
+   "scenario": "blowout_loss",
+   "belief": 0.391,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_MIA_LV",
+   "team": "MIA",
+   "scenario": "pass_heavy",
+   "belief": 0.2648,
+   "confidence": 0.15,
+   "abstained": true,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_MIA_LV",
+   "team": "MIA",
+   "scenario": "efficient_offense",
+   "belief": 0.225,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_MIA_LV",
+   "team": "LV",
+   "scenario": "blowout_loss",
+   "belief": 0.224,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_MIA_LV",
+   "team": "LV",
+   "scenario": "pass_heavy",
+   "belief": 0.16,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "coaching: LV — Klint Kubiak, the play-caller behind Seattle's run-leaning prior season, takes over as head coach",
+    "narrative: LV — a wide-zone, play-action install throws below expectation on early downs"
+   ]
+  },
+  {
+   "game_id": "2026_01_MIA_LV",
+   "team": "LV",
+   "scenario": "efficient_offense",
+   "belief": 0.3721,
+   "confidence": 0.15,
+   "abstained": true,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_GB_MIN",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.368,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_GB_MIN",
+   "team": "GB",
+   "scenario": "blowout_loss",
+   "belief": 0.34,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_GB_MIN",
+   "team": "GB",
+   "scenario": "pass_heavy",
+   "belief": 0.2,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_GB_MIN",
+   "team": "GB",
+   "scenario": "efficient_offense",
+   "belief": 0.372,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_GB_MIN",
+   "team": "MIN",
+   "scenario": "blowout_loss",
+   "belief": 0.267,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_GB_MIN",
+   "team": "MIN",
+   "scenario": "pass_heavy",
+   "belief": 0.3,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_GB_MIN",
+   "team": "MIN",
+   "scenario": "efficient_offense",
+   "belief": 0.416,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_WAS_PHI",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.314,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_WAS_PHI",
+   "team": "WAS",
+   "scenario": "blowout_loss",
+   "belief": 0.445,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_WAS_PHI",
+   "team": "WAS",
+   "scenario": "pass_heavy",
+   "belief": 0.3,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_WAS_PHI",
+   "team": "WAS",
+   "scenario": "efficient_offense",
+   "belief": 0.264,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_WAS_PHI",
+   "team": "PHI",
+   "scenario": "blowout_loss",
+   "belief": 0.185,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_WAS_PHI",
+   "team": "PHI",
+   "scenario": "pass_heavy",
+   "belief": 0.12,
+   "confidence": 0.65,
+   "abstained": false,
+   "claims": [
+    "coaching: PHI — Nick Sirianni's staff has called run above expectation every season of his tenure, built on a short-yardage package no one else runs"
+   ]
+  },
+  {
+   "game_id": "2026_01_WAS_PHI",
+   "team": "PHI",
+   "scenario": "efficient_offense",
+   "belief": 0.483,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": [
+    "narrative: PHI — a short-yardage conversion package lifts success rate above what the scoreboard shows"
+   ]
+  },
+  {
+   "game_id": "2026_01_DAL_NYG",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.423,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides"
+   ]
+  },
+  {
+   "game_id": "2026_01_DAL_NYG",
+   "team": "DAL",
+   "scenario": "blowout_loss",
+   "belief": 0.245,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_DAL_NYG",
+   "team": "DAL",
+   "scenario": "pass_heavy",
+   "belief": 0.38,
+   "confidence": 0.65,
+   "abstained": false,
+   "claims": [
+    "narrative: DAL — pass-first offence around a veteran pocket quarterback"
+   ]
+  },
+  {
+   "game_id": "2026_01_DAL_NYG",
+   "team": "DAL",
+   "scenario": "efficient_offense",
+   "belief": 0.482,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_DAL_NYG",
+   "team": "NYG",
+   "scenario": "blowout_loss",
+   "belief": 0.365,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_DAL_NYG",
+   "team": "NYG",
+   "scenario": "pass_heavy",
+   "belief": 0.19,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "coaching: NYG — John Harbaugh's teams have played complementary, run-first football for two decades"
+   ]
+  },
+  {
+   "game_id": "2026_01_DAL_NYG",
+   "team": "NYG",
+   "scenario": "efficient_offense",
+   "belief": 0.3721,
+   "confidence": 0.15,
+   "abstained": true,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_DEN_KC",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.244,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": [
+    "narrative: league — week 1 offences open below their in-season efficiency, with no live-rep continuity and vanilla openers on both sides",
+    "narrative: DEN — defensive front and secondary that finished the prior season as the league's most disruptive pass defence"
+   ]
+  },
+  {
+   "game_id": "2026_01_DEN_KC",
+   "team": "DEN",
+   "scenario": "blowout_loss",
+   "belief": 0.348,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": [
+    "narrative: DEN — an elite defence compresses margin variance in both directions"
+   ]
+  },
+  {
+   "game_id": "2026_01_DEN_KC",
+   "team": "DEN",
+   "scenario": "pass_heavy",
+   "belief": 0.3,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_01_DEN_KC",
+   "team": "DEN",
+   "scenario": "efficient_offense",
+   "belief": 0.222,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": [
+    "narrative: DEN — the prior-season offence scored more than its play-level efficiency supported, with points coming off defence and field position"
+   ]
+  },
+  {
+   "game_id": "2026_01_DEN_KC",
+   "team": "KC",
+   "scenario": "blowout_loss",
+   "belief": 0.204,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": [
+    "narrative: DEN — an elite defence compresses margin variance in both directions"
+   ]
+  },
+  {
+   "game_id": "2026_01_DEN_KC",
+   "team": "KC",
+   "scenario": "pass_heavy",
+   "belief": 0.32,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": [
+    "coaching: KC — Andy Reid's quick game is the base offence, not the change-up"
+   ]
+  },
+  {
+   "game_id": "2026_01_DEN_KC",
+   "team": "KC",
+   "scenario": "efficient_offense",
+   "belief": 0.381,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  }
+ ],
+ "flagged": [
+  "2026_01_WAS_PHI/PHI/pass_heavy",
+  "2026_01_ARI_LAC/LAC/pass_heavy",
+  "2026_01_SF_LA/SF/pass_heavy",
+  "2026_01_MIA_LV/LV/pass_heavy",
+  "2026_01_NYJ_TEN/NYJ/pass_heavy",
+  "2026_01_DAL_NYG/NYG/pass_heavy",
+  "2026_01_CHI_CAR/CAR/pass_heavy",
+  "2026_01_NO_DET/DET/pass_heavy",
+  "2026_01_TB_CIN/CIN/pass_heavy",
+  "2026_01_NO_DET/NO/pass_heavy",
+  "2026_01_DEN_KC/DEN/efficient_offense"
+ ]
+}
