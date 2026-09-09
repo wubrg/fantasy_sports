@@ -438,3 +438,107 @@ func TestConvertBonus(t *testing.T) {
 		t.Error("a zero-face bonus bet should be rejected")
 	}
 }
+
+// TestBoostedProfit pins the winning payout of a profit-boosted cash bet.
+func TestBoostedProfit(t *testing.T) {
+	cases := []struct {
+		odds       American
+		stake, pct float64
+		want       float64
+	}{
+		{100, 50, 0.30, 65.00},   // 50 * 1.0 * 1.3
+		{-150, 50, 0.30, 43.3333}, // 50 * (2/3) * 1.3
+		{140, 50, 0.30, 91.00},   // 50 * 1.4 * 1.3
+	}
+	for _, c := range cases {
+		got, err := BoostedProfit(c.odds, c.stake, c.pct)
+		if err != nil {
+			t.Fatalf("%d: %v", c.odds, err)
+		}
+		if math.Abs(got-c.want) > 1e-3 {
+			t.Errorf("BoostedProfit(%d, %.0f, %.2f) = %.4f, want %.4f",
+				c.odds, c.stake, c.pct, got, c.want)
+		}
+	}
+}
+
+// TestBoostedBreakeven pins the reduced win rate and that it is always below
+// the unboosted breakeven.
+func TestBoostedBreakeven(t *testing.T) {
+	cases := []struct {
+		odds American
+		want float64
+	}{
+		{100, 0.434783},  // 1/(1+1.3*1)
+		{-150, 0.535714}, // 1/(1+1.3*(2/3))
+		{200, 0.277778},  // 1/(1+1.3*2)
+	}
+	for _, c := range cases {
+		got, err := BoostedBreakeven(c.odds, 0.30)
+		if err != nil {
+			t.Fatalf("%d: %v", c.odds, err)
+		}
+		if math.Abs(got-c.want) > 1e-5 {
+			t.Errorf("BoostedBreakeven(%d, .30) = %.6f, want %.6f", c.odds, got, c.want)
+		}
+		normal, _ := c.odds.Breakeven()
+		if got >= normal {
+			t.Errorf("%d: boosted breakeven %.4f must be below unboosted %.4f", c.odds, got, normal)
+		}
+	}
+}
+
+// TestBoostedCashDelta confirms the boost adds exactly pct·p·stake·(d−1) over
+// an unboosted cash bet — the boost's contribution, and nothing more.
+func TestBoostedCashDelta(t *testing.T) {
+	stake, pct := 50.0, 0.30
+	for _, odds := range []American{-200, -110, 100, 140, 300, 875} {
+		for _, p := range []float64{0.2, 0.45, 0.7} {
+			boosted, err := EVBoostedCash(p, odds, stake, pct)
+			if err != nil {
+				t.Fatalf("%d: %v", odds, err)
+			}
+			plain, _ := EVRealMoney(p, odds, stake)
+			b, _ := odds.ProfitMultiple()
+			want := pct * p * stake * b
+			if math.Abs((boosted-plain)-want) > 1e-9 {
+				t.Errorf("%d @ p=%.2f: delta %.6f, want pct·p·stake·b = %.6f",
+					odds, p, boosted-plain, want)
+			}
+		}
+	}
+}
+
+// TestBoostReliefShrinksOnLongshots encodes the claim that flips the advice:
+// a profit boost's breakeven relief is largest near even money and smallest on
+// longshots — so, unlike a bonus bet, it does NOT pull toward long odds.
+func TestBoostReliefShrinksOnLongshots(t *testing.T) {
+	relief := func(o American) float64 {
+		normal, _ := o.Breakeven()
+		boosted, _ := BoostedBreakeven(o, 0.30)
+		return normal - boosted
+	}
+	near := relief(100)   // even money
+	mid := relief(200)    // moderate dog
+	long := relief(875)   // longshot
+	if !(near > mid && mid > long) {
+		t.Errorf("relief should shrink with odds length: +100=%.4f +200=%.4f +875=%.4f",
+			near, mid, long)
+	}
+	if long <= 0 {
+		t.Errorf("relief must stay positive even on a longshot, got %.4f", long)
+	}
+}
+
+// TestBoostValidation rejects a non-positive or non-finite boost.
+func TestBoostValidation(t *testing.T) {
+	if _, err := BoostedBreakeven(100, 0); err == nil {
+		t.Error("a zero boost should be rejected")
+	}
+	if _, err := BoostedProfit(100, 50, -0.1); err == nil {
+		t.Error("a negative boost should be rejected")
+	}
+	if _, err := EVBoostedCash(0.5, 100, 50, math.NaN()); err == nil {
+		t.Error("a NaN boost should be rejected")
+	}
+}
