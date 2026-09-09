@@ -90,6 +90,88 @@ func EVBonusBet(p float64, odds American, stake float64) (float64, error) {
 	return p * stake * profit, nil
 }
 
+// validPct rejects a profit-boost multiplier that is not a positive real. A
+// boost of 0 is not a boost; a negative one is nonsense.
+func validPct(pct float64) error {
+	if !finite(pct) {
+		return errNotReal("boost pct", pct)
+	}
+	if pct <= 0 {
+		return fmt.Errorf("wager: boost pct %v must be positive (0.30 = a 30%% boost)", pct)
+	}
+	return nil
+}
+
+// BoostedProfit is the cash a winning profit-boosted wager pays out as profit:
+//
+//	stake·(d−1)·(1+pct)
+//
+// A profit boost multiplies the PROFIT, never the stake, and applies only on a
+// win. This is the number a cash bettor actually cares about — what the ticket
+// returns if it hits — as opposed to the bonus-bet-equivalent "value" of the
+// token in isolation.
+func BoostedProfit(odds American, stake, pct float64) (float64, error) {
+	if err := validStake(stake); err != nil {
+		return 0, err
+	}
+	if err := validPct(pct); err != nil {
+		return 0, err
+	}
+	profit, err := odds.ProfitMultiple()
+	if err != nil {
+		return 0, err
+	}
+	return stake * profit * (1 + pct), nil
+}
+
+// BoostedBreakeven is the true win probability at which a profit-boosted CASH
+// wager breaks even:
+//
+//	p* = 1 / (1 + (1+pct)·(d−1))
+//
+// Compare to Breakeven (= 1/d): the boost lowers the win rate you need. The
+// relief p*_unboosted − p*_boosted is largest near even money and shrinks on
+// longshots — the OPPOSITE of where a bonus bet's value concentrates. That is
+// the whole reason a profit boost on real money does not belong on a longshot:
+// unlike a bonus bet it risks the full stake, and the boost helps a coin-flip
+// far more than it helps a +875 dog.
+func BoostedBreakeven(odds American, pct float64) (float64, error) {
+	if err := validPct(pct); err != nil {
+		return 0, err
+	}
+	profit, err := odds.ProfitMultiple()
+	if err != nil {
+		return 0, err
+	}
+	return 1 / (1 + (1+pct)*profit), nil
+}
+
+// EVBoostedCash is the expected value of a cash wager whose PROFIT is boosted
+// by pct:
+//
+//	EV = p·stake·(d−1)·(1+pct) − (1−p)·stake
+//
+// Only the winning term is boosted; the losing −(1−p)·stake is untouched. That
+// asymmetry is exactly why a boost cannot rescue a bad bet — it sweetens the
+// win and does nothing for the downside. It differs from EVRealMoney by
+// precisely pct·p·stake·(d−1), the boost's contribution.
+func EVBoostedCash(p float64, odds American, stake, pct float64) (float64, error) {
+	if err := validProb(p); err != nil {
+		return 0, err
+	}
+	if err := validStake(stake); err != nil {
+		return 0, err
+	}
+	if err := validPct(pct); err != nil {
+		return 0, err
+	}
+	profit, err := odds.ProfitMultiple()
+	if err != nil {
+		return 0, err
+	}
+	return p*stake*profit*(1+pct) - (1-p)*stake, nil
+}
+
 // BonusConversionAtFairOdds is the closed form for a bonus bet priced fairly:
 //
 //	EV = stake · (1 − p)

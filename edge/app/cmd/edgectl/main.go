@@ -29,6 +29,8 @@ func main() {
 		err = marketCmd(os.Args[2:])
 	case "bonus":
 		err = bonusCmd(os.Args[2:])
+	case "boost":
+		err = boostCmd(os.Args[2:])
 	case "card":
 		err = cardCmd(os.Args[2:])
 	case "hitrate":
@@ -71,6 +73,13 @@ func usage() {
   edgectl bonus -odds <american> [-stake <amount>] [-p <true prob>]
         Bonus-bet (stake not returned) value. Without -p, reports the fair-odds
         conversion ceiling.
+
+  edgectl boost -odds <american> -pct <fraction> [-stake <amount>]
+                [-p <true prob>] [-min-odds <american>]
+        A PROFIT BOOST on a real cash wager (the cash lens). Reports the boosted
+        payout and the reduced breakeven win rate. Unlike a bonus bet the stake
+        is at risk, so the boost belongs on a bet you expect to win, not the
+        longest price -- the breakeven relief is largest near even money.
 
   edgectl card bonus [-target <rate>]
         The static bonus-bet reference card. Needs no data: a bonus bet is +EV
@@ -263,5 +272,103 @@ func bonusCmd(args []string) error {
 	}
 	fmt.Printf("\nvariance: this wins %.1f%% of the time. Over a handful of bets per\n", implied*100)
 	fmt.Printf("season the median outcome is zero regardless of EV.\n")
+	return nil
+}
+
+// boostCmd prices a PROFIT BOOST on a real cash wager — the cash lens.
+//
+// A profit boost is not a bonus bet. The stake is real and lost on a loss; only
+// the winning profit is multiplied. So the number that matters is the boosted
+// payout and the reduced breakeven win rate, not the bonus-bet-equivalent
+// "value" of the token (which maximises on longshots and treats the stake as
+// expendable). The breakeven relief here is largest near even money and smallest
+// on longshots, which is why a boost on real money belongs on a bet you expect
+// to win, not on a long price bought only to inflate the token.
+func boostCmd(args []string) error {
+	fs := flag.NewFlagSet("boost", flag.ExitOnError)
+	odds := fs.Int("odds", 0, "American price of the wager you'd place (required)")
+	pct := fs.Float64("pct", 0, "profit boost as a fraction, e.g. .3 for a 30% boost (required)")
+	stake := fs.Float64("stake", 1, "cash stake at risk")
+	p := fs.Float64("p", -1, "your true-probability estimate (optional)")
+	minOdds := fs.Int("min-odds", 0, "promo's minimum-odds floor, e.g. -200 (optional)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *odds == 0 {
+		return fmt.Errorf("-odds is required")
+	}
+	if *pct <= 0 {
+		return fmt.Errorf("-pct is required (e.g. -pct .3 for a 30%% boost)")
+	}
+	a := wager.American(*odds)
+
+	profit, err := a.ProfitMultiple()
+	if err != nil {
+		return err
+	}
+	boostedProfit, err := wager.BoostedProfit(a, *stake, *pct)
+	if err != nil {
+		return err
+	}
+	normalProfit := *stake * profit
+	normalBE, err := a.Breakeven()
+	if err != nil {
+		return err
+	}
+	boostedBE, err := wager.BoostedBreakeven(a, *pct)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("price          %+d\n", *odds)
+	fmt.Printf("cash stake     %.2f\n", *stake)
+	fmt.Printf("profit boost   %.0f%%\n", *pct*100)
+	fmt.Printf("\nIF IT WINS\n")
+	fmt.Printf("  normal profit    %8.2f\n", normalProfit)
+	fmt.Printf("  boosted profit   %8.2f   (+%.2f from the boost)\n",
+		boostedProfit, boostedProfit-normalProfit)
+	fmt.Printf("  total return     %8.2f\n", *stake+boostedProfit)
+	fmt.Printf("\nBREAKEVEN (true win rate needed to not lose money)\n")
+	fmt.Printf("  unboosted        %7.2f%%\n", normalBE*100)
+	fmt.Printf("  boosted          %7.2f%%   (the boost buys %.2f pts of margin)\n",
+		boostedBE*100, (normalBE-boostedBE)*100)
+
+	if *minOdds != 0 {
+		floor := wager.American(*minOdds)
+		fImp, err := floor.ImpliedRaw()
+		if err != nil {
+			return err
+		}
+		aImp, err := a.ImpliedRaw()
+		if err != nil {
+			return err
+		}
+		fmt.Printf("\nmin-odds %+d   ", *minOdds)
+		if aImp <= fImp+1e-9 {
+			fmt.Printf("ELIGIBLE (price is not shorter than the floor)\n")
+		} else {
+			fmt.Printf("BELOW FLOOR (%+d is shorter than %+d; the boost cannot attach)\n",
+				*odds, *minOdds)
+		}
+	}
+
+	if *p >= 0 {
+		boostedEV, err := wager.EVBoostedCash(*p, a, *stake, *pct)
+		if err != nil {
+			return err
+		}
+		plainEV, err := wager.EVRealMoney(*p, a, *stake)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("\np_true         %6.2f%%\n", *p*100)
+		fmt.Printf("  EV (boosted)     %+8.4f\n", boostedEV)
+		fmt.Printf("  EV (unboosted)   %+8.4f   (boost added %+.4f)\n",
+			plainEV, boostedEV-plainEV)
+	}
+
+	fmt.Printf("\nThis is the CASH lens: the stake is real and lost on a loss, so the boost\n")
+	fmt.Printf("belongs on a bet you expect to win, not the longest price. For the token's\n")
+	fmt.Printf("standalone (longshot-max) value instead: edgectl bonus -stake %.2f\n", *pct**stake)
 	return nil
 }
