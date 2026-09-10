@@ -67,7 +67,7 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 	// already booked. Summing EV across settled bets (as this once did) made the
 	// "expected" figure never move when a bet was settled -- it was answering
 	// neither question.
-	var open, openStaked, openEV, realized float64
+	var open, openStaked, openStakedCash, openStakedBonus, openEV, realized float64
 	for _, b := range bets {
 		res := string(b.Result)
 		if res == "" {
@@ -76,6 +76,13 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 		if res == "open" {
 			open++
 			openStaked += b.Bet.Stake
+			// Real money and a bonus bet are not the same exposure: a lost bonus
+			// bet costs no cash, so the two are summed apart.
+			if mustBankroll(b.Bet.Bankroll) == wager.BonusBet {
+				openStakedBonus += b.Bet.Stake
+			} else {
+				openStakedCash += b.Bet.Stake
+			}
 			if ev, err := wager.EV(mustBankroll(b.Bet.Bankroll), b.Bet.Predicted, b.Bet.Price, b.Bet.Stake); err == nil {
 				openEV += ev
 			}
@@ -99,7 +106,8 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 		// staked/ev keep their names but now carry OPEN semantics, so anything
 		// still reading them sees live exposure rather than an all-time sum.
 		"staked": openStaked, "ev": openEV,
-		"open_staked": openStaked, "open_ev": openEV, "realized": realized,
+		"open_staked": openStaked, "open_staked_cash": openStakedCash,
+		"open_staked_bonus": openStakedBonus, "open_ev": openEV, "realized": realized,
 	})
 }
 
