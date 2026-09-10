@@ -601,7 +601,8 @@ function renderLog(r) {
   }
   el.betlog.innerHTML = `
     <div class="scope">${r.count} recorded · ${Math.round(r.open)} open ·
-      ${money(r.staked)} staked · <b>${money(r.ev)}</b> expected</div>
+      ${money(r.open_staked ?? r.staked)} at risk · <b>${money(r.open_ev ?? r.ev)}</b> expected
+      · ${money(r.realized ?? 0)} realized</div>
     <section class="rep">
       ${r.entries.map(e => `<div class="logrow ${e.result}" data-id="${e.id}">
         <div class="sel">${e.selection}</div>
@@ -665,6 +666,7 @@ el.report.addEventListener("click", async (e) => {
     if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
     btn.textContent = "recorded";
     btn.classList.add("done");
+    loadLog(); // refresh the log figures now that a bet was added
   } catch (err) {
     btn.disabled = false;
     btn.textContent = "record";

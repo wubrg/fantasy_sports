@@ -62,7 +62,12 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	out := make([]logEntryJSON, 0, len(bets))
-	var open, staked, evTotal float64
+	// Two different questions, kept apart. openEV is the EXPECTED value of what
+	// is still live; it must fall to zero as bets settle. realized is the P&L
+	// already booked. Summing EV across settled bets (as this once did) made the
+	// "expected" figure never move when a bet was settled -- it was answering
+	// neither question.
+	var open, openStaked, openEV, realized float64
 	for _, b := range bets {
 		res := string(b.Result)
 		if res == "" {
@@ -70,10 +75,12 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 		}
 		if res == "open" {
 			open++
-		}
-		staked += b.Bet.Stake
-		if ev, err := wager.EV(mustBankroll(b.Bet.Bankroll), b.Bet.Predicted, b.Bet.Price, b.Bet.Stake); err == nil {
-			evTotal += ev
+			openStaked += b.Bet.Stake
+			if ev, err := wager.EV(mustBankroll(b.Bet.Bankroll), b.Bet.Predicted, b.Bet.Price, b.Bet.Stake); err == nil {
+				openEV += ev
+			}
+		} else {
+			realized += realizedPnL(b.Bet.Bankroll, b.Result, b.Bet.Price, b.Bet.Stake)
 		}
 		out = append(out, logEntryJSON{
 			ID: b.ID, Placed: b.Placed.Format("2006-01-02"),
@@ -88,9 +95,34 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 		out[i], out[j] = out[j], out[i]
 	}
 	writeJSON(w, map[string]any{
-		"path": path, "entries": out,
-		"count": len(out), "open": open, "staked": staked, "ev": evTotal,
+		"path": path, "entries": out, "count": len(out), "open": open,
+		// staked/ev keep their names but now carry OPEN semantics, so anything
+		// still reading them sees live exposure rather than an all-time sum.
+		"staked": openStaked, "ev": openEV,
+		"open_staked": openStaked, "open_ev": openEV, "realized": realized,
 	})
+}
+
+// realizedPnL is the cash already won or lost on a SETTLED wager. A won bet of
+// either kind books its profit (stake x the price's profit multiple); the
+// difference is the loss: real money loses the stake, a bonus bet loses nothing
+// because the stake was never the bettor's. Push and void are washes.
+func realizedPnL(bankroll string, result betlog.Result, price wager.American, stake float64) float64 {
+	switch result {
+	case betlog.Won:
+		pm, err := price.ProfitMultiple()
+		if err != nil {
+			return 0
+		}
+		return stake * pm
+	case betlog.Lost:
+		if mustBankroll(bankroll) == wager.BonusBet {
+			return 0
+		}
+		return -stake
+	default: // push, void, open
+		return 0
+	}
 }
 
 // mustBankroll falls back to a bonus bet, which is what every entry in this
