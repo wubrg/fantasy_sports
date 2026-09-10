@@ -602,7 +602,7 @@ function renderLog(r) {
   }
   el.betlog.innerHTML = `
     <div class="scope">${r.count} recorded · ${Math.round(r.open)} open ·
-      ${money(r.open_staked ?? r.staked)} at risk · <b>${money(r.open_ev ?? r.ev)}</b> expected
+      ${money(r.open_staked_cash ?? r.open_staked ?? r.staked)} cash · ${money(r.open_staked_bonus ?? 0)} bonus at risk · <b>${money(r.open_ev ?? r.ev)}</b> expected
       · ${money(r.realized ?? 0)} realized</div>
     <section class="rep">
       ${r.entries.map(e => `<div class="logrow ${e.result}" data-id="${e.id}">
