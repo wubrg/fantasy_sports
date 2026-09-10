@@ -801,15 +801,28 @@ function renderFunds(r) {
 
     <section class="rep">
       <h2>balances</h2>
-      ${bal.length ? bal.map(b => `<div class="dog">
+      ${bal.length ? (() => {
+        // Cash is money you can bet right now; a bonus or a boost is promo
+        // credit that only becomes money if a bet wins. Listing them together
+        // made a book with $20 cash and a $50 bonus read like $70 of funds, so
+        // the two are split and only cash carries a spendable total.
+        const row = b => `<div class="dog">
         <span class="team">${b.book}</span>
         <span class="price">${b.asset}</span>
         <span class="conv">${b.units ? b.units + " unit(s)" : m(b.amount)}</span>
         ${b.units ? "" : `<button type="button" class="fix" data-book="${b.book}"
           data-asset="${b.asset}" data-amt="${b.amount}">fix</button>`}
-      </div>`).join("") : `<p class="muted">Nothing recorded yet.</p>`}
-      <p class="muted">Amounts and units are not addable. A boost is a right to a
-      better price, not a sum of money.</p>
+      </div>`;
+        const cash = bal.filter(b => b.asset === "cash");
+        const promo = bal.filter(b => b.asset !== "cash");
+        const cashTotal = cash.reduce((s, b) => s + (Number(b.amount) || 0), 0);
+        return `<h3 class="sub">cash — <b>${m(cashTotal)}</b> available</h3>
+      ${cash.length ? cash.map(row).join("") : `<p class="muted">No spendable cash.</p>`}
+      <h3 class="sub">bonus &amp; promos</h3>
+      ${promo.length ? promo.map(row).join("") : `<p class="muted">None.</p>`}`;
+      })() : `<p class="muted">Nothing recorded yet.</p>`}
+      <p class="muted">Cash is what you can bet now; bonuses and boosts are promo
+      credit, counted apart. Amounts and units are not addable.</p>
     </section>
 
     <div id="boostbox"></div>
