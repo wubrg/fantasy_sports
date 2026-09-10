@@ -16,6 +16,9 @@
         <string>serve</string>
         <string>-addr</string>
         <string>:8085</string>
+        <!-- Drop DraftKings .har/.json captures here; the props tab reads them. -->
+        <string>-ingest-dir</string>
+        <string>/Users/adamwieberg/adori/Edge/ingest</string>
     </array>
 
     <!-- WorkingDirectory is load-bearing, not cosmetic: `board serve` defaults

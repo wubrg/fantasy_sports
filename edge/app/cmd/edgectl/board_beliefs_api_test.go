@@ -24,7 +24,7 @@ func beliefsTestServer(t *testing.T) (*httptest.Server, *boardServer, string) {
 	if err := writeDoc(filepath.Join(boardDir, "week01.yaml"), doc); err != nil {
 		t.Fatal(err)
 	}
-	srv, err := newBoardServer(boardDir)
+	srv, err := newBoardServer(boardDir, "")
 	if err != nil {
 		t.Fatal(err)
 	}
