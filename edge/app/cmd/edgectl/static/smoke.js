@@ -259,6 +259,7 @@ function tryFunds(what, payload) {
 
 tryFunds("renderFunds() with balances and an expiry", {
   path: "/x", balances: [
+    { book: "fanatics", asset: "cash", amount: 20, units: 0 },
     { book: "fanatics", asset: "bonus", amount: 37.5, units: 0 },
     { book: "fanatics", asset: "boost", amount: 0, units: 2 },
   ],
