@@ -36,6 +36,7 @@ const el = {
   views: document.getElementById("views"),
   report: document.getElementById("report"),
   betlog: document.getElementById("betlog"),
+  props: document.getElementById("props"),
   funds: document.getElementById("funds"),
   book: document.getElementById("book"),
   rows: document.getElementById("rows"),
@@ -52,7 +53,7 @@ const el = {
 };
 
 const state = load();
-if (!["bets", "log", "funds", "beliefs", "help"].includes(state.view)) state.view = "enter";
+if (!["bets", "log", "props", "funds", "beliefs", "help"].includes(state.view)) state.view = "enter";
 let data = null;      // last /api/board payload
 let inputs = [];      // every input in tab order, for auto-advance
 
@@ -768,6 +769,52 @@ function renderBoosts(r) {
   </section>`;
 }
 
+// ---- the props view -----------------------------------------------------
+// Reads whatever DraftKings captures sit in the ingest folder and prices them.
+// Nothing is uploaded through the page: the operator drops a .har into the
+// folder and hits reload, and the newest file's prices win.
+
+async function loadProps() {
+  el.props.innerHTML = `<p class="muted">reading the ingest folder…</p>`;
+  try {
+    const res = await fetch(BASE + "api/props");
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
+    renderProps(r);
+  } catch (e) {
+    el.props.innerHTML = `<p class="muted">could not read props: ${e.message}</p>`;
+  }
+}
+
+function renderProps(r) {
+  const groups = r.groups || [];
+  const head = `<div class="scope">
+    <button type="button" id="props-reload">reload</button>
+    ${r.as_of ? `prices as of ${r.as_of}` : "no captures yet"}${
+      r.sources && r.sources.length ? ` · ${r.sources.length} file(s)` : ""}${
+      r.note ? ` · ${r.note}` : ""}
+    <div class="muted">drop a DraftKings .har into ${r.dir || "the ingest folder"} and reload</div>
+  </div>`;
+  // A prop's milestone (100+) is already in its label; only append a separate
+  // line when it is not, so an over/under ("Over 249.5") reads right without
+  // doubling a "JSN 100+ 100".
+  const rows = g => g.rows.map(x => `<div class="dog">
+      <span class="team">${x.selection}${
+        x.line != null && !String(x.selection).includes(String(x.line)) ? " " + x.line : ""}</span>
+      <span class="price mono">${x.price > 0 ? "+" : ""}${x.price}</span>
+      <span class="conv">${pct(x.implied)} impl${
+        x.fair != null ? ` · fair ${pct(x.fair)}`
+        : x.boost_be != null ? ` · boost ${pct(x.boost_be)}` : ""}</span>
+      <span class="muted">${[x.event, x.market].filter(Boolean).join(" · ")}</span>
+    </div>`).join("");
+  el.props.innerHTML = head + (groups.length
+    ? groups.map(g => `<section class="rep"><h2>${g.category}</h2>${rows(g)}</section>`).join("")
+    : `<section class="rep"><p class="muted">Nothing to price yet. Save a DraftKings capture
+        (.har or its JSON) into the ingest folder and hit reload.</p></section>`);
+  const btn = document.getElementById("props-reload");
+  if (btn) btn.addEventListener("click", loadProps);
+}
+
 async function loadFunds() {
   el.funds.innerHTML = `<p class="muted">reading the bankroll\u2026</p>`;
   try {
@@ -967,6 +1014,7 @@ function syncView() {
   el.rows.hidden = v !== "enter";
   el.report.hidden = v !== "bets";
   el.betlog.hidden = v !== "log";
+  el.props.hidden = v !== "props";
   el.funds.hidden = v !== "funds";
   el.beliefs.hidden = v !== "beliefs";
   el.help.hidden = v !== "help";
@@ -976,6 +1024,7 @@ function syncView() {
   }
   if (v === "bets") loadReport();
   if (v === "log") loadLog();
+  if (v === "props") loadProps();
   if (v === "funds") loadFunds();
   if (v === "beliefs") loadBeliefs();
 }

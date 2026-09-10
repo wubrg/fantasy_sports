@@ -277,6 +277,31 @@ tryFunds("renderFunds() with an already-expired lot",
   { path: "/x", balances: [], expiring: [{ book: "dk", asset: "bonus", label: "bonus",
     at: "2026-08-01", in_hours: -400, expired: true }] });
 
+// ---- the props view -----------------------------------------------------
+function tryProps(what, payload) {
+  try {
+    sandbox.__p = payload;
+    inCtx("renderProps(__p)");
+    const html = inCtx("el.props.innerHTML");
+    if (html && html.length) ok(what); else fail(what + ": produced nothing");
+  } catch (e) { fail(`${what}: ${e.message}`); }
+}
+
+tryProps("renderProps() with priced groups", {
+  dir: "/ingest", as_of: "2026-09-10 15:13",
+  sources: [{ name: "dk.har", at: "2026-09-10 15:13" }],
+  groups: [
+    { category: "Game", rows: [
+      { event: "NE @ SEA", market: "Moneyline", selection: "NE Patriots",
+        price: 140, implied: 0.417, fair: 0.40 }] },
+    { category: "Receiving", rows: [
+      { event: "NE @ SEA", market: "JSN Receiving Yards", selection: "JSN 100+",
+        line: 100, price: 135, implied: 0.426, boost_be: 0.363 }] },
+  ],
+});
+tryProps("renderProps() with an empty ingest folder",
+  { dir: "/ingest", groups: [], sources: [] });
+
 // The frontier and allocation, which only appear once a bankroll exists.
 tryReport("renderReport() with a frontier and allocation",
   Object.assign({}, sampleReport, {

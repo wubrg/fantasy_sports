@@ -30,7 +30,7 @@ func newTestServer(t *testing.T) (*httptest.Server, string) {
 		t.Fatal(err)
 	}
 
-	srv, err := newBoardServer(dir)
+	srv, err := newBoardServer(dir, "")
 	if err != nil {
 		t.Fatal(err)
 	}

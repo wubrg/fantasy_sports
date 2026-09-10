@@ -34,11 +34,13 @@ func boardServe(args []string) error {
 	flags := flag.NewFlagSet("board serve", flag.ExitOnError)
 	addr := flags.String("addr", ":8085", "listen address")
 	dir := flags.String("dir", defaultBoardDir, "directory holding the week files")
+	ingestDir := flags.String("ingest-dir", defaultIngestDir(),
+		"folder to read DraftKings captures (.har/.json) from for the props tab")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
 
-	srv, err := newBoardServer(*dir)
+	srv, err := newBoardServer(*dir, *ingestDir)
 	if err != nil {
 		return err
 	}
@@ -75,6 +77,10 @@ type boardServer struct {
 	// log.jsonl. A sibling of the board dir, read by the beliefs view.
 	beliefsDir string
 
+	// ingestDir is the drop folder for DraftKings captures. The props tab reads
+	// the .har/.json files here on demand; nothing is uploaded through the GUI.
+	ingestDir string
+
 	mu   sync.Mutex
 	docs map[int]*weekFile
 }
@@ -88,7 +94,7 @@ type weekFile struct {
 	size int64
 }
 
-func newBoardServer(dir string) (*boardServer, error) {
+func newBoardServer(dir, ingestDir string) (*boardServer, error) {
 	paths, err := filepath.Glob(filepath.Join(dir, "week*.yaml"))
 	if err != nil {
 		return nil, err
@@ -99,6 +105,7 @@ func newBoardServer(dir string) (*boardServer, error) {
 	return &boardServer{
 		dir: dir, betlogPath: defaultBetlog(), ledgerPath: defaultLedger(),
 		beliefsDir: filepath.Join(filepath.Dir(dir), "beliefs"),
+		ingestDir:  ingestDir,
 		docs:       map[int]*weekFile{},
 	}, nil
 }
@@ -115,6 +122,7 @@ func (s *boardServer) routes(mux *http.ServeMux) error {
 	mux.HandleFunc("/api/place", s.handlePlace)
 	mux.HandleFunc("/api/settle", s.handleSettle)
 	mux.HandleFunc("/api/funds", s.handleFunds)
+	mux.HandleFunc("/api/props", s.handleProps)
 	mux.HandleFunc("/api/funds/adjust", s.handleAdjust)
 	mux.HandleFunc("/api/boosts", s.handleBoosts)
 	mux.HandleFunc("/api/price", s.handlePrice)
