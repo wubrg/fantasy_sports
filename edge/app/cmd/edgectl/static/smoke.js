@@ -217,7 +217,8 @@ try {
 // ---- the log view -------------------------------------------------------
 
 const sampleLog = {
-  path: "/Users/x/fanatics-bonus.jsonl", count: 2, open: 1, staked: 62.5, ev: 46.1,
+  path: "/Users/x/fanatics-bonus.jsonl", count: 2, open: 1,
+  staked: 12.5, ev: 8.0, open_staked: 12.5, open_ev: 8.0, realized: 195.0,
   entries: [
     { id: "a", placed: "2026-08-21", selection: "CAR ML + GB ML 2-leg parlay (Week 1)",
       price: 350, stake: 12.5, bankroll: "bonus bet", predicted: 0.2035, result: "open", narrative: "" },
