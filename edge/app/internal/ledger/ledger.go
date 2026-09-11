@@ -80,9 +80,10 @@ const (
 // deliberately *not* a closed set: nothing in replay requires an asset to be one
 // of these. See the package comment.
 const (
-	Cash  = "cash"
-	Bonus = "bonus"
-	Boost = "boost"
+	Cash    = "cash"
+	Bonus   = "bonus"
+	Boost   = "boost"
+	NoSweat = "nosweat"
 )
 
 // Result is how a wager finished. Mirrors betlog.Result on purpose: the two logs
@@ -308,6 +309,28 @@ type Lot struct {
 	// Boost is set only for lots that are boosts. Its presence is what makes the
 	// lot a unit lot; see Unit.
 	Boost *BoostSpec `json:"boost,omitempty"`
+
+	// NoSweat is set only for no-sweat tokens. Like Boost, its home is a unit
+	// lot (no Amount): the token is a contingent right -- refund-on-loss -- not
+	// a sum of money, so it is spent whole and never drawn down.
+	NoSweat *NoSweatSpec `json:"nosweat,omitempty"`
+}
+
+// NoSweatSpec is a "no-sweat" token: if a qualifying wager loses, its stake is
+// refunded as a bonus bet, up to MaxStake, in the given Market. It is deliberately
+// NOT a BoostSpec: a boost multiplies a winning profit and has a closed-form
+// value, while a no-sweat pays only on a LOSS and is worth P(lose) x the bonus it
+// refunds. There is no value method here for the same reason the ledger never
+// prices a boost as money -- it is a contingent right, tracked so it is not
+// forgotten, and realised by expiring the lot and granting the refund on a loss.
+type NoSweatSpec struct {
+	// MaxStake caps the stake the refund covers. 0 means the operator did not
+	// record a cap.
+	MaxStake float64 `json:"max_stake,omitempty"`
+	// Market restricts what the token may be used on: "atd", "ftd", "any", etc.
+	Market string `json:"market,omitempty"`
+	// Label is the promo's own name, for finding it again.
+	Label string `json:"label,omitempty"`
 }
 
 // Unit reports whether this lot is spent whole rather than drawn down.
@@ -329,12 +352,12 @@ func (l Lot) validate() error {
 	if l.Amount < 0 || math.IsNaN(l.Amount) || math.IsInf(l.Amount, 0) {
 		return fmt.Errorf("lot %q has amount %v; want a non-negative real number", l.ID, l.Amount)
 	}
-	if l.Amount == 0 && l.Boost == nil {
-		// A zero-amount lot with no boost is almost always a forgotten -amount
-		// flag. Accepting it would silently create a unit lot of "cash", which
-		// spends whole and cannot be drawn down: a very confusing balance to
-		// debug three weeks later.
-		return fmt.Errorf("lot %q has no amount and no boost; an asset must either carry a value or be a unit asset such as a boost", l.ID)
+	if l.Amount == 0 && l.Boost == nil && l.NoSweat == nil {
+		// A zero-amount lot with no boost and no no-sweat is almost always a
+		// forgotten -amount flag. Accepting it would silently create a unit lot
+		// of "cash", which spends whole and cannot be drawn down: a very
+		// confusing balance to debug three weeks later.
+		return fmt.Errorf("lot %q has no amount and no boost or no-sweat; an asset must either carry a value or be a unit asset such as a boost", l.ID)
 	}
 	if l.Amount != 0 && l.Boost != nil {
 		return fmt.Errorf("lot %q is a boost and also carries amount %v; a boost is not an amount, and pretending it is one is the mistake this type exists to prevent", l.ID, l.Amount)

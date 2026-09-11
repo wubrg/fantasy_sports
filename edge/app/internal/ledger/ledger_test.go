@@ -54,6 +54,31 @@ func expire(id string, when time.Duration, lot string) Event {
 	return e
 }
 
+// TestNoSweatTokenTracked pins that a no-sweat token is a unit lot: it holds no
+// money (a contingent refund-on-loss right), shows as a held unit so it is not
+// forgotten, and is spent whole when expired (used up on a losing wager).
+func TestNoSweatTokenTracked(t *testing.T) {
+	events := []Event{
+		grant("g1", 0, Lot{ID: "ns1", Book: "draftkings", Asset: NoSweat,
+			NoSweat: &NoSweatSpec{MaxStake: 10, Market: "atd", Label: "no-sweat atd"}}),
+	}
+	p := mustBalances(t, events, at(time.Minute))
+	if got := p.Units("draftkings", NoSweat); got != 1 {
+		t.Errorf("no-sweat should show as 1 held unit, got %d", got)
+	}
+	if got := p.Total("draftkings", NoSweat); got != 0 {
+		t.Errorf("a no-sweat is a unit, not a sum: Total = %v, want 0", got)
+	}
+
+	// Used up: the qualifying bet lost, the refund was granted separately, so the
+	// token is expired and no longer held.
+	events = append(events, expire("x1", 2*time.Minute, "ns1"))
+	p = mustBalances(t, events, at(3*time.Minute))
+	if got := p.Units("draftkings", NoSweat); got != 0 {
+		t.Errorf("after expiry the token should be gone, got %d units", got)
+	}
+}
+
 func mustBalances(t *testing.T, events []Event, asOf time.Time) Position {
 	t.Helper()
 	p, err := Balances(events, asOf)
