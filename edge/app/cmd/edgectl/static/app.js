@@ -38,6 +38,7 @@ const el = {
   betlog: document.getElementById("betlog"),
   props: document.getElementById("props"),
   funds: document.getElementById("funds"),
+  period: document.getElementById("period"),
   book: document.getElementById("book"),
   rows: document.getElementById("rows"),
   beliefs: document.getElementById("beliefs"),
@@ -53,7 +54,7 @@ const el = {
 };
 
 const state = load();
-if (!["bets", "log", "props", "funds", "beliefs", "help"].includes(state.view)) state.view = "enter";
+if (!["bets", "log", "props", "funds", "period", "beliefs", "help"].includes(state.view)) state.view = "enter";
 let data = null;      // last /api/board payload
 let inputs = [];      // every input in tab order, for auto-advance
 
@@ -815,6 +816,80 @@ function renderProps(r) {
   if (btn) btn.addEventListener("click", loadProps);
 }
 
+// ---- the period view ----------------------------------------------------
+// Funds show what is held right now; a weekly zero-out to the bank makes that a
+// poor record of how a week went. This view sums the week's flows instead:
+// money in and out of the bank, realized P&L on what settled, what was staked,
+// and what is still open \u2014 the same ledger replayed over a window, not a
+// snapshot (see ledger.Period). The window for a week comes from the schedule.
+
+async function loadPeriod() {
+  el.period.innerHTML = `<p class="muted">summing the week\u2026</p>`;
+  const wk = state.periodWeek ? `?week=${state.periodWeek}` : "";
+  try {
+    const res = await fetch(BASE + "api/period" + wk);
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || res.status);
+    state.periodWeek = r.week;
+    save();
+    renderPeriod(r);
+  } catch (e) {
+    el.period.innerHTML = `<p class="muted">could not read the period: ${e.message}</p>`;
+  }
+}
+
+function renderPeriod(r) {
+  const opts = (r.weeks || []).map(w =>
+    `<option value="${w}"${w === r.week ? " selected" : ""}>Week ${w}</option>`).join("");
+  const head = `<div class="scope">
+    <select id="period-week">${opts}</select>
+    <span class="muted">${r.start} \u2192 ${r.end}</span>
+  </div>`;
+
+  const line = (label, val) =>
+    `<div class="dog"><span class="team">${label}</span>` +
+    `<span class="price mono">${money(val)}</span></div>`;
+
+  const gap = r.net_to_bank - r.realized_net;
+  el.period.innerHTML = head + `
+    <section class="rep">
+      <h2>capital \u2014 real money moved with your bank</h2>
+      ${line("deposited", r.deposits)}
+      ${line("withdrawn", r.withdrawals)}
+      ${line("net to bank", r.net_to_bank)}
+    </section>
+    <section class="rep">
+      <h2>betting \u2014 realized on wagers settled this week</h2>
+      ${line("cash", r.realized_cash)}
+      ${line("bonus won", r.realized_bonus)}
+      ${line("realized net", r.realized_net)}
+    </section>
+    <section class="rep">
+      <h2>staked \u2014 placed this week</h2>
+      ${line("cash", r.staked_cash)}
+      ${line("bonus", r.staked_bonus)}
+    </section>
+    <section class="rep">
+      <h2>open at week end \u2014 carried forward, not in the P&amp;L</h2>
+      ${line("cash", r.open_staked_cash)}
+      ${line("bonus", r.open_staked_bonus)}
+    </section>
+    <section class="rep">
+      <h2>reconcile</h2>
+      <p class="muted">net to bank ${money(r.net_to_bank)} vs realized net ${money(r.realized_net)}
+      (gap ${money(gap)}). open stake and parked bonus explain a gap; anything
+      past that is a mis-logged event worth finding \u2014 the log replays, so it is
+      findable.</p>
+    </section>`;
+
+  const sel = document.getElementById("period-week");
+  if (sel) sel.addEventListener("change", () => {
+    state.periodWeek = Number(sel.value);
+    save();
+    loadPeriod();
+  });
+}
+
 async function loadFunds() {
   el.funds.innerHTML = `<p class="muted">reading the bankroll\u2026</p>`;
   try {
@@ -1016,6 +1091,7 @@ function syncView() {
   el.betlog.hidden = v !== "log";
   el.props.hidden = v !== "props";
   el.funds.hidden = v !== "funds";
+  el.period.hidden = v !== "period";
   el.beliefs.hidden = v !== "beliefs";
   el.help.hidden = v !== "help";
   el.hint.hidden = v !== "enter";
@@ -1026,6 +1102,7 @@ function syncView() {
   if (v === "log") loadLog();
   if (v === "props") loadProps();
   if (v === "funds") loadFunds();
+  if (v === "period") loadPeriod();
   if (v === "beliefs") loadBeliefs();
 }
 

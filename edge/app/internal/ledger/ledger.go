@@ -980,6 +980,163 @@ func Balances(events []Event, asOf time.Time) (Position, error) {
 	return s.position(asOf), nil
 }
 
+// Report is the money that flowed through the bankroll during a window, derived
+// by replaying the ledger. Like a Position it is never stored; unlike a Position
+// it sums flows over [Start, End) instead of snapshotting one moment.
+//
+// Its reason to exist is the weekly zero-out. An operator who withdraws to the
+// bank every week has a book balance that resets to nothing and so tells them
+// nothing about how the week went. A Position cannot answer "what did this week
+// cost or make"; only a sum of the week's flows can.
+//
+// Cash and bonus are kept apart for the same reason Balance keeps amount and
+// units apart. A bonus stake was never the operator's money: a lost bonus bet is
+// not a loss, and a won one returns profit only. Adding the two P&L lines would
+// make each of them a small lie in a different direction.
+type Report struct {
+	Start, End time.Time
+
+	Deposits    float64 // real money in during the window
+	Withdrawals float64 // real money out during the window
+
+	StakedCash  float64 // cash committed to wagers placed in the window
+	StakedBonus float64 // bonus committed to wagers placed in the window
+
+	// Realized P&L on wagers that SETTLED in the window, regardless of when they
+	// were placed -- a bet struck last week and graded this week lands here.
+	// Cash-funded: returns minus the cash stake. Bonus-funded: returns only,
+	// because the stake was the book's money and losing it costs nothing.
+	RealizedCash  float64
+	RealizedBonus float64
+
+	// Still committed and unsettled at End: carried into the next period rather
+	// than folded into this one's P&L, so a bank reconciliation is not thrown off
+	// by a bet that has not graded yet.
+	OpenStakedCash  float64
+	OpenStakedBonus float64
+}
+
+// RealizedNet is the period's realized P&L, cash result and bonus winnings together.
+func (r Report) RealizedNet() float64 { return r.RealizedCash + r.RealizedBonus }
+
+// ExternalNet is real money out minus in: what the window handed back to the
+// bank. When the book is zeroed at both ends of the window it should equal
+// RealizedNet less anything still open or parked as bonus; a larger gap than
+// those explain is a mis-logged event worth chasing, which is the reconciliation
+// this report is for.
+func (r Report) ExternalNet() float64 { return r.Withdrawals - r.Deposits }
+
+// Period sums the bankroll's flows over [start, end) by replaying the log.
+//
+// It first replays the whole prefix to end with Balances, which validates every
+// event and surfaces any impossible state (an overspend, a double-settle) as an
+// error -- the window fold below trusts the stream because that pass vetted it,
+// and reads the open commitments straight off that same position. The fold then
+// walks the events once in time order: it tracks every lot's asset and every
+// wager's stake from the beginning (so a settle can find its stake even when the
+// placement fell in an earlier window) and accumulates a flow only when the
+// event's own time lands inside the window.
+func Period(events []Event, start, end time.Time) (Report, error) {
+	if !end.After(start) {
+		return Report{}, fmt.Errorf("period end %s is not after start %s", end.Format(time.RFC3339), start.Format(time.RFC3339))
+	}
+
+	posAtEnd, err := Balances(events, end)
+	if err != nil {
+		return Report{}, err
+	}
+	rep := Report{Start: start, End: end}
+	for _, c := range posAtEnd.Committed {
+		if c.Unit {
+			continue // a boost or no-sweat at risk is a right, not staked money
+		}
+		if c.Asset == Bonus {
+			rep.OpenStakedBonus += c.Amount
+		} else {
+			rep.OpenStakedCash += c.Amount
+		}
+	}
+
+	ordered := make([]Event, len(events))
+	copy(ordered, events)
+	sort.SliceStable(ordered, func(i, j int) bool { return ordered[i].Time.Before(ordered[j].Time) })
+
+	lotAsset := map[string]string{} // lot id -> asset, so a place/withdraw knows its funding
+	type stake struct{ cash, bonus float64 }
+	stakes := map[string]*stake{} // wager id -> its cash/bonus stake, built across all windows
+
+	in := func(t time.Time) bool { return !t.Before(start) && t.Before(end) }
+
+	for _, e := range ordered {
+		if !e.Time.Before(end) {
+			break // events at or after end cannot affect a [start, end) window
+		}
+		switch e.Kind {
+		case KindDeposit, KindGrant, KindConvert:
+			if e.Creates != nil {
+				id := e.Creates.ID
+				if id == "" {
+					id = e.ID // create() falls back to the event id; mirror it
+				}
+				lotAsset[id] = e.Creates.Asset
+				if e.Kind == KindDeposit && e.Creates.Asset == Cash && in(e.Time) {
+					rep.Deposits += e.Creates.Amount
+				}
+			}
+		case KindWithdraw:
+			if in(e.Time) && lotAsset[e.Lot] != Bonus {
+				rep.Withdrawals += e.Amount // cash out; an unknown lot defaults to cash
+			}
+		case KindPlace:
+			a := lotAsset[e.Lot]
+			st := stakes[e.Wager]
+			if st == nil {
+				st = &stake{}
+				stakes[e.Wager] = st
+			}
+			switch a {
+			case Bonus:
+				st.bonus += e.Amount
+				if in(e.Time) {
+					rep.StakedBonus += e.Amount
+				}
+			case Cash:
+				st.cash += e.Amount
+				if in(e.Time) {
+					rep.StakedCash += e.Amount
+				}
+			}
+			// A unit lot (boost, no-sweat) places with Amount 0 and a non-cash,
+			// non-bonus asset; it contributes to neither total, as intended.
+		case KindSettle:
+			if in(e.Time) {
+				var cashStake, bonusStake float64
+				if st := stakes[e.Wager]; st != nil {
+					cashStake, bonusStake = st.cash, st.bonus
+				}
+				var ret float64
+				if e.Returns != nil && e.Returns.Asset == Cash {
+					ret = e.Returns.Amount
+				}
+				switch {
+				case cashStake > 0:
+					rep.RealizedCash += ret - cashStake
+				case bonusStake > 0:
+					rep.RealizedBonus += ret
+				}
+			}
+			if e.Returns != nil {
+				id := e.Returns.ID
+				if id == "" {
+					id = e.ID
+				}
+				lotAsset[id] = e.Returns.Asset // so a later withdrawal of it resolves
+			}
+		}
+	}
+	return rep, nil
+}
+
 // Expiring lists the open lots that die within the window, soonest first.
 //
 // This is the function the package exists for. Every meaningful loss in the
