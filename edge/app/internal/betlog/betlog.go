@@ -93,6 +93,11 @@ type Bet struct {
 	Bankroll  string         `json:"bankroll"`
 	Stake     float64        `json:"stake"`
 
+	// Week is the NFL week this wager is FOR, so a bet is attributed to the week
+	// it was struck for rather than the date it happened to be logged. Optional:
+	// entries written before it existed carry zero and fall back to their date.
+	Week int `json:"week,omitempty"`
+
 	Scenario       string `json:"scenario,omitempty"`
 	ScenarioSource string `json:"scenario_source,omitempty"`
 

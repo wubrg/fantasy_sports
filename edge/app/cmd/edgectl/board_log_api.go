@@ -154,6 +154,10 @@ type placeReq struct {
 	// book's balance so the bankroll follows the bet; without it the wager is
 	// still recorded and the balance simply is not touched.
 	Book string `json:"book"`
+	// Week is the NFL week this wager is FOR. The board sends the week it is
+	// showing; the period report attributes the bet by it rather than by the
+	// date it was logged. Zero (unsent) leaves the bet untagged.
+	Week int `json:"week"`
 }
 
 func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
@@ -190,6 +194,7 @@ func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
 		Stake:     req.Stake,
 		Predicted: req.Predicted,
 		Narrative: req.Narrative,
+		Week:      req.Week,
 	}
 	// Book is deliberately left empty. betlog rejects an unknown book, and
 	// while Fanatics is now recorded in wager.Book, the campaign's existing
@@ -217,6 +222,7 @@ func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
 	// can share one, which is how a stake spanning two lots stays one wager.
 	for _, ev := range draws {
 		ev.Wager = id
+		ev.Week = req.Week
 		if err := ledger.AppendFile(s.ledgerPath, ev); err != nil {
 			// The bet is already recorded, so this cannot be undone by
 			// refusing. Say what is inconsistent rather than pretending.

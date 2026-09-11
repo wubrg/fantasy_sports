@@ -68,7 +68,7 @@ func (s *boardServer) handlePeriod(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	rep, err := ledger.Period(events, start, end)
+	rep, err := ledger.Period(events, week, start, end)
 	if err != nil {
 		// A log that will not replay is a real problem, not an empty period.
 		httpError(w, http.StatusConflict, "the bankroll log does not replay: "+err.Error())

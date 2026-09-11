@@ -408,6 +408,12 @@ type Event struct {
 	// this actually cost" unanswerable.
 	Wager string `json:"wager,omitempty"`
 
+	// Week is the NFL week this wager is FOR, set on a place. It is what the
+	// period report attributes by, so a bet logged early or graded late still
+	// lands in the right week rather than in whatever window its timestamp fell
+	// in. Zero means untagged, and the report falls back to the place date.
+	Week int `json:"week,omitempty"`
+
 	// Result and Returns describe a settlement. Returns is what the book
 	// actually handed back, and it is recorded rather than derived on purpose: a
 	// push returns the stake for cash, returns the token at DraftKings, and
@@ -1036,41 +1042,49 @@ func (r Report) ExternalNet() float64 { return r.Withdrawals - r.Deposits }
 // wager's stake from the beginning (so a settle can find its stake even when the
 // placement fell in an earlier window) and accumulates a flow only when the
 // event's own time lands inside the window.
-func Period(events []Event, start, end time.Time) (Report, error) {
+func Period(events []Event, week int, start, end time.Time) (Report, error) {
 	if !end.After(start) {
 		return Report{}, fmt.Errorf("period end %s is not after start %s", end.Format(time.RFC3339), start.Format(time.RFC3339))
 	}
-
-	posAtEnd, err := Balances(events, end)
-	if err != nil {
+	// Validate the whole log, not just the prefix: a wager tagged to this week
+	// may settle after the window, and an impossible state anywhere must still
+	// fail loud rather than yield a plausible-looking partial report.
+	if _, err := Balances(events, time.Time{}); err != nil {
 		return Report{}, err
 	}
+
 	rep := Report{Start: start, End: end}
-	for _, c := range posAtEnd.Committed {
-		if c.Unit {
-			continue // a boost or no-sweat at risk is a right, not staked money
-		}
-		if c.Asset == Bonus {
-			rep.OpenStakedBonus += c.Amount
-		} else {
-			rep.OpenStakedCash += c.Amount
-		}
-	}
+	in := func(t time.Time) bool { return !t.Before(start) && t.Before(end) }
 
 	ordered := make([]Event, len(events))
 	copy(ordered, events)
 	sort.SliceStable(ordered, func(i, j int) bool { return ordered[i].Time.Before(ordered[j].Time) })
 
-	lotAsset := map[string]string{} // lot id -> asset, so a place/withdraw knows its funding
-	type stake struct{ cash, bonus float64 }
-	stakes := map[string]*stake{} // wager id -> its cash/bonus stake, built across all windows
-
-	in := func(t time.Time) bool { return !t.Before(start) && t.Before(end) }
-
-	for _, e := range ordered {
-		if !e.Time.Before(end) {
-			break // events at or after end cannot affect a [start, end) window
+	// A wager is the unit of attribution: all of its stake and P&L belong to one
+	// week, so it is gathered whole here and bucketed once, below. Deposits and
+	// withdrawals are capital rather than wagers and stay bucketed by date.
+	type agg struct {
+		cash, bonus float64   // stake by funding source
+		wk          int       // explicit week tag, 0 if none
+		placed      time.Time // earliest place, the timestamp fallback keys on
+		hasPlace    bool
+		settled     bool
+		returns     float64 // cash handed back at settlement
+	}
+	wagers := map[string]*agg{}
+	order := []string{} // deterministic iteration
+	get := func(id string) *agg {
+		w := wagers[id]
+		if w == nil {
+			w = &agg{}
+			wagers[id] = w
+			order = append(order, id)
 		}
+		return w
+	}
+
+	lotAsset := map[string]string{} // lot id -> asset, so a place/withdraw knows its funding
+	for _, e := range ordered {
 		switch e.Kind {
 		case KindDeposit, KindGrant, KindConvert:
 			if e.Creates != nil {
@@ -1088,50 +1102,64 @@ func Period(events []Event, start, end time.Time) (Report, error) {
 				rep.Withdrawals += e.Amount // cash out; an unknown lot defaults to cash
 			}
 		case KindPlace:
-			a := lotAsset[e.Lot]
-			st := stakes[e.Wager]
-			if st == nil {
-				st = &stake{}
-				stakes[e.Wager] = st
-			}
-			switch a {
+			w := get(e.Wager)
+			switch lotAsset[e.Lot] {
 			case Bonus:
-				st.bonus += e.Amount
-				if in(e.Time) {
-					rep.StakedBonus += e.Amount
-				}
+				w.bonus += e.Amount
 			case Cash:
-				st.cash += e.Amount
-				if in(e.Time) {
-					rep.StakedCash += e.Amount
-				}
+				w.cash += e.Amount
 			}
 			// A unit lot (boost, no-sweat) places with Amount 0 and a non-cash,
-			// non-bonus asset; it contributes to neither total, as intended.
-		case KindSettle:
-			if in(e.Time) {
-				var cashStake, bonusStake float64
-				if st := stakes[e.Wager]; st != nil {
-					cashStake, bonusStake = st.cash, st.bonus
-				}
-				var ret float64
-				if e.Returns != nil && e.Returns.Asset == Cash {
-					ret = e.Returns.Amount
-				}
-				switch {
-				case cashStake > 0:
-					rep.RealizedCash += ret - cashStake
-				case bonusStake > 0:
-					rep.RealizedBonus += ret
-				}
+			// non-bonus asset; it adds to neither total, as intended.
+			if e.Week != 0 {
+				w.wk = e.Week
 			}
+			if !w.hasPlace || e.Time.Before(w.placed) {
+				w.placed, w.hasPlace = e.Time, true
+			}
+		case KindSettle:
+			w := get(e.Wager)
+			w.settled = true
 			if e.Returns != nil {
+				if e.Returns.Asset == Cash {
+					w.returns += e.Returns.Amount
+				}
 				id := e.Returns.ID
 				if id == "" {
 					id = e.ID
 				}
 				lotAsset[id] = e.Returns.Asset // so a later withdrawal of it resolves
 			}
+		}
+	}
+
+	// Bucket each wager whole. It belongs to this period if its tag names the
+	// reported week; an untagged wager (legacy, or logged without a week) falls
+	// back to whether it was placed inside the window.
+	for _, id := range order {
+		w := wagers[id]
+		if !w.hasPlace {
+			continue // a settle with no matching place moves no staked money here
+		}
+		var belongs bool
+		if week > 0 && w.wk != 0 {
+			belongs = w.wk == week
+		} else {
+			belongs = in(w.placed)
+		}
+		if !belongs {
+			continue
+		}
+		rep.StakedCash += w.cash
+		rep.StakedBonus += w.bonus
+		switch {
+		case w.settled && w.cash > 0:
+			rep.RealizedCash += w.returns - w.cash
+		case w.settled && w.bonus > 0:
+			rep.RealizedBonus += w.returns
+		case !w.settled:
+			rep.OpenStakedCash += w.cash
+			rep.OpenStakedBonus += w.bonus
 		}
 	}
 	return rep, nil
