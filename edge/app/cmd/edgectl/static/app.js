@@ -648,6 +648,11 @@ el.report.addEventListener("click", async (e) => {
   const stake = Number(prompt("Stake for " + p.teams.join(" + ") + "?", suggested));
   if (!stake || stake <= 0) return;
 
+  // The week is confirmed explicitly at submit, defaulting to the board's
+  // current week. It is what the period report attributes the bet by, so a bet
+  // logged early or graded late still lands in the week it was struck for.
+  const week = Number(prompt("NFL week this bet is FOR?", lastReport.week)) || lastReport.week;
+
   btn.disabled = true;
   btn.textContent = "recording…";
   try {
@@ -657,7 +662,7 @@ el.report.addEventListener("click", async (e) => {
       body: JSON.stringify({
         selection: p.teams.join(" + ") + " (Week " + lastReport.week + ")",
         price: p.price, stake: stake, predicted: p.true_prob,
-        bankroll: "bonus bet", book: p.book,
+        bankroll: "bonus bet", book: p.book, week: week,
         narrative: "Placed from the board at " + lastReport.book + ", week " +
           lastReport.week + ". Conversion " + pct(p.conversion) +
           ". predicted is the product of the de-vigged leg probabilities, not a " +
@@ -859,18 +864,18 @@ function renderPeriod(r) {
       ${line("net to bank", r.net_to_bank)}
     </section>
     <section class="rep">
-      <h2>betting \u2014 realized on wagers settled this week</h2>
+      <h2>betting \u2014 realized on this week's wagers (graded)</h2>
       ${line("cash", r.realized_cash)}
       ${line("bonus won", r.realized_bonus)}
       ${line("realized net", r.realized_net)}
     </section>
     <section class="rep">
-      <h2>staked \u2014 placed this week</h2>
+      <h2>staked \u2014 this week's wagers</h2>
       ${line("cash", r.staked_cash)}
       ${line("bonus", r.staked_bonus)}
     </section>
     <section class="rep">
-      <h2>open at week end \u2014 carried forward, not in the P&amp;L</h2>
+      <h2>still open \u2014 this week's wagers not yet graded</h2>
       ${line("cash", r.open_staked_cash)}
       ${line("bonus", r.open_staked_bonus)}
     </section>

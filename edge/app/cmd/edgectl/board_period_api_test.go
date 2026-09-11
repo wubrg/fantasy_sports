@@ -113,6 +113,45 @@ func TestHandlePeriodReportsWeek(t *testing.T) {
 	}
 }
 
+func TestHandlePeriodHonorsWeekTag(t *testing.T) {
+	dir := t.TempDir()
+	wk(t, dir, 1, "2026-01-08T13:00") // window [2026-01-06, 2026-01-13)
+	wk(t, dir, 2, "2026-01-15T13:00")
+
+	ledgerPath := filepath.Join(t.TempDir(), "bankroll.jsonl")
+	// A week-1 bet logged the week before its window opens. By date it would
+	// fall in the prior period; its tag must pull it into week 1 anyway.
+	for _, e := range []ledger.Event{
+		{Kind: ledger.KindDeposit, ID: "d1", Time: localTime(t, "2026-01-02T10:00"),
+			Creates: &ledger.Lot{ID: "c", Book: "fanduel", Asset: ledger.Cash, Amount: 100}},
+		{Kind: ledger.KindPlace, ID: "p1", Time: localTime(t, "2026-01-02T12:00"),
+			Lot: "c", Wager: "w1", Amount: 40, Week: 1},
+		{Kind: ledger.KindSettle, ID: "s1", Time: localTime(t, "2026-01-03T20:00"),
+			Wager: "w1", Result: ledger.Won,
+			Returns: &ledger.Lot{ID: "r1", Book: "fanduel", Asset: ledger.Cash, Amount: 100}},
+	} {
+		if err := ledger.AppendFile(ledgerPath, e); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	srv := &boardServer{dir: dir, ledgerPath: ledgerPath}
+	rr := httptest.NewRecorder()
+	srv.handlePeriod(rr, httptest.NewRequest("GET", "/api/period?week=1", nil))
+	if rr.Code != 200 {
+		t.Fatalf("status %d: %s", rr.Code, rr.Body.String())
+	}
+	var r periodResp
+	if err := json.Unmarshal(rr.Body.Bytes(), &r); err != nil {
+		t.Fatalf("bad json: %v", err)
+	}
+	// The stake and P&L are attributed to week 1 by the tag, though the deposit
+	// (untagged capital) fell before the window and is not counted.
+	if math.Abs(r.StakedCash-40) > 1e-9 || math.Abs(r.RealizedCash-60) > 1e-9 {
+		t.Errorf("tagged wk1 bet not attributed: staked_cash=%.2f realized_cash=%.2f, want 40 and 60", r.StakedCash, r.RealizedCash)
+	}
+}
+
 func TestHandlePeriodRejectsUnknownWeek(t *testing.T) {
 	dir := t.TempDir()
 	wk(t, dir, 1, "2026-01-08T13:00")

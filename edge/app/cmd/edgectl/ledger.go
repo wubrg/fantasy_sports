@@ -124,6 +124,7 @@ func ledgerAdd(args []string) error {
 	lot := fs.String("lot", "", "id of an existing lot to draw from (withdraw, convert, place, expire)")
 	id := fs.String("id", "", "id for the lot this event creates (default: the event id)")
 	wagerID := fs.String("wager", "", "wager id tying a place to its settle; use the betlog id")
+	weekNo := fs.Int("week", 0, "place only: the NFL week this wager is FOR (the period report attributes by it)")
 	result := fs.String("result", "", "settle only: won, lost, push or void")
 	returns := fs.Float64("returns", 0, "settle only: amount handed back by the book")
 	returnsAsset := fs.String("returns-asset", ledger.Cash, "settle only: asset the returns arrive as")
@@ -210,7 +211,7 @@ func ledgerAdd(args []string) error {
 	case ledger.KindWithdraw:
 		e.Amount = *amount
 	case ledger.KindPlace:
-		e.Wager, e.Amount = *wagerID, *amount
+		e.Wager, e.Amount, e.Week = *wagerID, *amount, *weekNo
 	case ledger.KindExpire:
 		// nothing further: an expiry takes whatever is left of the lot
 	case ledger.KindSettle:
@@ -445,6 +446,7 @@ func ledgerPeriod(args []string) error {
 	now := time.Now()
 	var start, end time.Time
 	var label string
+	targetWeek := 0 // 0 in a custom window: attribution then keys only on dates
 	switch {
 	case *fromS != "" || *toS != "":
 		if *fromS == "" || *toS == "" {
@@ -463,6 +465,7 @@ func ledgerPeriod(args []string) error {
 		if start, end, err = weekWindow(*dir, *week); err != nil {
 			return err
 		}
+		targetWeek = *week
 		label = fmt.Sprintf("Week %d", *week)
 	default:
 		return fmt.Errorf("give -week N, or -from and -to together")
@@ -472,7 +475,7 @@ func ledgerPeriod(args []string) error {
 	if err != nil {
 		return err
 	}
-	rep, err := ledger.Period(events, start, end)
+	rep, err := ledger.Period(events, targetWeek, start, end)
 	if err != nil {
 		return err
 	}
@@ -535,16 +538,16 @@ func printPeriod(r ledger.Report, label string) {
 	fmt.Printf("    withdrawn     %10.2f\n", r.Withdrawals)
 	fmt.Printf("    net to bank   %10.2f\n\n", r.ExternalNet())
 
-	fmt.Printf("  BETTING — realized on wagers settled this window\n")
+	fmt.Printf("  BETTING — realized on this week's wagers (graded)\n")
 	fmt.Printf("    cash          %10.2f\n", r.RealizedCash)
 	fmt.Printf("    bonus won     %10.2f\n", r.RealizedBonus)
 	fmt.Printf("    realized net  %10.2f\n\n", r.RealizedNet())
 
-	fmt.Printf("  STAKED — committed on wagers placed this window\n")
+	fmt.Printf("  STAKED — this week's wagers\n")
 	fmt.Printf("    cash          %10.2f\n", r.StakedCash)
 	fmt.Printf("    bonus         %10.2f\n\n", r.StakedBonus)
 
-	fmt.Printf("  OPEN AT PERIOD END — carried forward, not in the P&L above\n")
+	fmt.Printf("  STILL OPEN — this week's wagers not yet graded, not in the P&L above\n")
 	fmt.Printf("    cash          %10.2f\n", r.OpenStakedCash)
 	fmt.Printf("    bonus         %10.2f\n\n", r.OpenStakedBonus)
 
