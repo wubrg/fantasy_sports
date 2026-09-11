@@ -130,6 +130,8 @@ func ledgerAdd(args []string) error {
 	boostMax := fs.Float64("boost-max", 0, "profit boost: maximum stake it applies to")
 	boostMinOdds := fs.Int("boost-min-odds", 0, "profit boost: minimum American price it may be used on")
 	boostCash := fs.Bool("boost-needs-cash", false, "profit boost: requires a real-money stake (it will not attach to a bonus bet)")
+	nosweatMax := fs.Float64("nosweat-max", 0, "grant a no-sweat token: the stake it refunds (as a bonus) on a loss")
+	nosweatMarket := fs.String("nosweat-market", "", "no-sweat token: the market it applies to (atd, ftd, any)")
 
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -172,6 +174,17 @@ func ledgerAdd(args []string) error {
 			}
 			if l.Asset == "" {
 				l.Asset = ledger.Boost
+			}
+		}
+		if *nosweatMax > 0 || *nosweatMarket != "" {
+			label := strings.TrimSpace("no-sweat " + *nosweatMarket)
+			l.NoSweat = &ledger.NoSweatSpec{
+				MaxStake: *nosweatMax,
+				Market:   *nosweatMarket,
+				Label:    label,
+			}
+			if l.Asset == "" {
+				l.Asset = ledger.NoSweat
 			}
 		}
 		return &l, nil
@@ -235,6 +248,14 @@ func ledgerAdd(args []string) error {
 		fmt.Printf("  lot %s — %s %s", lotID, e.Creates.Book, e.Creates.Asset)
 		if e.Creates.Boost != nil {
 			fmt.Printf(" %.0f%% boost", e.Creates.Boost.Percent*100)
+		} else if ns := e.Creates.NoSweat; ns != nil {
+			fmt.Printf(" no-sweat token")
+			if ns.Market != "" {
+				fmt.Printf(" (%s)", ns.Market)
+			}
+			if ns.MaxStake > 0 {
+				fmt.Printf(", max %.0f", ns.MaxStake)
+			}
 		} else {
 			fmt.Printf(" %.2f", e.Creates.Amount)
 		}
@@ -362,6 +383,8 @@ func ledgerExpiring(args []string) error {
 		value := fmt.Sprintf("%.2f", e.Lot.Amount)
 		if e.Lot.Boost != nil {
 			value = fmt.Sprintf("%.0f%% boost", e.Lot.Boost.Percent*100)
+		} else if e.Lot.NoSweat != nil {
+			value = "no-sweat"
 		}
 		deadline := fmt.Sprintf("%s (%s)", e.At.Local().Format("Mon 2006-01-02 15:04"), humanLeft(e.In))
 		if e.Expired() {
