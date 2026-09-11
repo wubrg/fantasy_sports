@@ -42,6 +42,12 @@ func place(id string, when time.Duration, lot, wagerID string, amount float64) E
 	return e
 }
 
+func withdraw(id string, when time.Duration, lot string, amount float64) Event {
+	e := ev(id, when, KindWithdraw)
+	e.Lot, e.Amount = lot, amount
+	return e
+}
+
 func settle(id string, when time.Duration, wagerID string, r Result, returns *Lot) Event {
 	e := ev(id, when, KindSettle)
 	e.Wager, e.Result, e.Returns = wagerID, r, returns

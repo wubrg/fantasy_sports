@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"edge/internal/board"
 	"edge/internal/ledger"
 	"edge/internal/wager"
 )
@@ -37,7 +38,7 @@ func shortLot(id string) string {
 
 func ledgerCmd(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("ledger needs a mode: add, balances or expiring")
+		return fmt.Errorf("ledger needs a mode: add, balances, expiring or period")
 	}
 	switch args[0] {
 	case "add":
@@ -46,8 +47,10 @@ func ledgerCmd(args []string) error {
 		return ledgerBalances(args[1:])
 	case "expiring":
 		return ledgerExpiring(args[1:])
+	case "period":
+		return ledgerPeriod(args[1:])
 	default:
-		return fmt.Errorf("unknown ledger mode %q (want add, balances or expiring)", args[0])
+		return fmt.Errorf("unknown ledger mode %q (want add, balances, expiring or period)", args[0])
 	}
 }
 
@@ -422,6 +425,138 @@ func ledgerExpiring(args []string) error {
 	}
 	fmt.Printf("\n  every meaningful loss in the last campaign was a deadline, not a bad price.\n")
 	return nil
+}
+
+// ledgerPeriod reports the bankroll's flows over a window: what a week cost or
+// made, apart from what happens to be sitting in the book. It exists because the
+// operator zeroes out to the bank weekly, so a point-in-time balance says nothing
+// about how the week went -- only a sum of the week's flows can.
+func ledgerPeriod(args []string) error {
+	fs := flag.NewFlagSet("ledger period", flag.ExitOnError)
+	path := fs.String("file", defaultLedgerPath(), "path to the bankroll log")
+	week := fs.Int("week", 0, "NFL week to report; its window is read from the schedule")
+	fromS := fs.String("from", "", "window start (date/datetime/RFC3339); overrides -week")
+	toS := fs.String("to", "", "window end; use with -from")
+	dir := fs.String("dir", defaultBoardDir, "directory of weekNN.yaml files, for -week")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	now := time.Now()
+	var start, end time.Time
+	var label string
+	switch {
+	case *fromS != "" || *toS != "":
+		if *fromS == "" || *toS == "" {
+			return fmt.Errorf("-from and -to must be given together")
+		}
+		var err error
+		if start, err = parseWhen(*fromS, now); err != nil {
+			return err
+		}
+		if end, err = parseWhen(*toS, now); err != nil {
+			return err
+		}
+		label = "custom window"
+	case *week > 0:
+		var err error
+		if start, end, err = weekWindow(*dir, *week); err != nil {
+			return err
+		}
+		label = fmt.Sprintf("Week %d", *week)
+	default:
+		return fmt.Errorf("give -week N, or -from and -to together")
+	}
+
+	events, err := ledger.Load(*path)
+	if err != nil {
+		return err
+	}
+	rep, err := ledger.Period(events, start, end)
+	if err != nil {
+		return err
+	}
+	printPeriod(rep, label)
+	return nil
+}
+
+// weekWindow derives a reporting window for an NFL week from the schedule. It
+// runs from the Tuesday on or before the week's first kickoff to the Tuesday on
+// or before the next week's first kickoff: NFL weeks roll over on Tuesday, so a
+// Wednesday deposit made to fund the slate is counted with the slate it funds.
+// When the next week's file is missing (the final week loaded), the window is
+// one week long.
+func weekWindow(dir string, week int) (start, end time.Time, err error) {
+	doc, err := loadWeekDoc(dir, week)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	first := doc.FirstKickoff()
+	if first.IsZero() {
+		return time.Time{}, time.Time{}, fmt.Errorf("week %d has no parseable kickoff in %s, so its window cannot be bounded", week, dir)
+	}
+	start = tuesdayOnOrBefore(first)
+
+	if next, nerr := loadWeekDoc(dir, week+1); nerr == nil {
+		if nf := next.FirstKickoff(); !nf.IsZero() {
+			end = tuesdayOnOrBefore(nf)
+		}
+	}
+	if end.IsZero() {
+		end = start.AddDate(0, 0, 7)
+	}
+	return start, end, nil
+}
+
+func loadWeekDoc(dir string, week int) (*board.Doc, error) {
+	f, err := os.Open(filepath.Join(dir, fmt.Sprintf("week%02d.yaml", week)))
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return board.Parse(f)
+}
+
+// tuesdayOnOrBefore returns local midnight on the Tuesday on or before t.
+func tuesdayOnOrBefore(t time.Time) time.Time {
+	day := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	back := (int(day.Weekday()) - int(time.Tuesday) + 7) % 7
+	return day.AddDate(0, 0, -back)
+}
+
+func printPeriod(r ledger.Report, label string) {
+	fmt.Printf("PERIOD  %s  (%s → %s)\n\n",
+		label,
+		r.Start.Local().Format("Mon 2006-01-02"),
+		r.End.Local().Format("Mon 2006-01-02"))
+
+	fmt.Printf("  CAPITAL — real money moved with your bank\n")
+	fmt.Printf("    deposited     %10.2f\n", r.Deposits)
+	fmt.Printf("    withdrawn     %10.2f\n", r.Withdrawals)
+	fmt.Printf("    net to bank   %10.2f\n\n", r.ExternalNet())
+
+	fmt.Printf("  BETTING — realized on wagers settled this window\n")
+	fmt.Printf("    cash          %10.2f\n", r.RealizedCash)
+	fmt.Printf("    bonus won     %10.2f\n", r.RealizedBonus)
+	fmt.Printf("    realized net  %10.2f\n\n", r.RealizedNet())
+
+	fmt.Printf("  STAKED — committed on wagers placed this window\n")
+	fmt.Printf("    cash          %10.2f\n", r.StakedCash)
+	fmt.Printf("    bonus         %10.2f\n\n", r.StakedBonus)
+
+	fmt.Printf("  OPEN AT PERIOD END — carried forward, not in the P&L above\n")
+	fmt.Printf("    cash          %10.2f\n", r.OpenStakedCash)
+	fmt.Printf("    bonus         %10.2f\n\n", r.OpenStakedBonus)
+
+	// Reconciliation. On a book zeroed to the bank at both ends of the window,
+	// net-to-bank equals realized net once open stake and parked bonus are
+	// accounted for. A larger gap than those explain is a mis-logged event --
+	// and because the log replays, it is findable rather than merely suspected.
+	gap := r.ExternalNet() - r.RealizedNet()
+	fmt.Printf("  RECONCILE\n")
+	fmt.Printf("    net to bank %.2f  vs  realized net %.2f   (gap %.2f)\n", r.ExternalNet(), r.RealizedNet(), gap)
+	fmt.Printf("    open stake (%.2f cash) and parked bonus explain a gap; anything past that\n", r.OpenStakedCash)
+	fmt.Printf("    is a mis-logged event worth finding.\n")
 }
 
 // humanLeft renders a duration the way a deadline is actually read: hours when

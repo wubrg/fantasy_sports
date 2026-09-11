@@ -122,6 +122,7 @@ func (s *boardServer) routes(mux *http.ServeMux) error {
 	mux.HandleFunc("/api/place", s.handlePlace)
 	mux.HandleFunc("/api/settle", s.handleSettle)
 	mux.HandleFunc("/api/funds", s.handleFunds)
+	mux.HandleFunc("/api/period", s.handlePeriod)
 	mux.HandleFunc("/api/props", s.handleProps)
 	mux.HandleFunc("/api/funds/adjust", s.handleAdjust)
 	mux.HandleFunc("/api/boosts", s.handleBoosts)

@@ -193,6 +193,28 @@ func (d *Doc) BettableBooks() []string {
 	return out
 }
 
+// FirstKickoff is when the earliest game of this week starts.
+//
+// The period report anchors a week's window to it: the reporting week begins on
+// the Tuesday on or before the first kickoff, so a Wednesday deposit made to
+// fund the slate is counted with the slate it funds rather than with the week
+// before. Games with an unparseable kickoff are skipped, as in LastKickoff.
+func (d *Doc) FirstKickoff() time.Time {
+	var first time.Time
+	for _, g := range d.Games {
+		t, err := time.ParseInLocation("2006-01-02T15:04", g.Kickoff, time.Local)
+		if err != nil {
+			if t, err = time.ParseInLocation("2006-01-02", g.Kickoff, time.Local); err != nil {
+				continue
+			}
+		}
+		if first.IsZero() || t.Before(first) {
+			first = t
+		}
+	}
+	return first
+}
+
 // LastKickoff is when the final game of this week starts.
 //
 // It is the point after which nothing here can be bet, so it is what an

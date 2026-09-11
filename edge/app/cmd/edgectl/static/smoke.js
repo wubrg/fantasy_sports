@@ -303,6 +303,35 @@ tryProps("renderProps() with priced groups", {
 tryProps("renderProps() with an empty ingest folder",
   { dir: "/ingest", groups: [], sources: [] });
 
+// ---- the period view ----------------------------------------------------
+function tryPeriod(what, payload) {
+  try {
+    sandbox.__pd = payload;
+    inCtx("renderPeriod(__pd)");
+    const html = inCtx("el.period.innerHTML");
+    if (html && html.length) ok(what); else fail(what + ": produced nothing");
+  } catch (e) { fail(`${what}: ${e.message}`); }
+}
+
+tryPeriod("renderPeriod() with a week's flows", {
+  week: 1, start: "2026-09-08", end: "2026-09-15", weeks: [1, 2],
+  deposits: 100, withdrawals: 80, net_to_bank: -20,
+  realized_cash: 60, realized_bonus: 0, realized_net: 60,
+  staked_cash: 70, staked_bonus: 50,
+  open_staked_cash: 30, open_staked_bonus: 0,
+});
+// Go emits null for an empty slice; the week selector must survive it.
+tryPeriod("renderPeriod() with a null week list", {
+  week: 1, start: "2026-09-08", end: "2026-09-15", weeks: null,
+  deposits: 0, withdrawals: 0, net_to_bank: 0,
+  realized_cash: 0, realized_bonus: 0, realized_net: 0,
+  staked_cash: 0, staked_bonus: 0, open_staked_cash: 0, open_staked_bonus: 0,
+});
+
+inCtx('state.view = "period"; syncView(); 0');
+ok("syncView() switches to the period view");
+inCtx('state.view = "enter"; syncView(); 0');
+
 // The frontier and allocation, which only appear once a bankroll exists.
 tryReport("renderReport() with a frontier and allocation",
   Object.assign({}, sampleReport, {
