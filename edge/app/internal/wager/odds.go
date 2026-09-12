@@ -12,6 +12,7 @@ package wager
 import (
 	"errors"
 	"fmt"
+	"math"
 )
 
 // ErrNoData is returned when a computation is asked for without the inputs it
@@ -85,6 +86,34 @@ func (a American) ImpliedRaw() (float64, error) {
 // numerically identical to ImpliedRaw and exists so calling code reads as the
 // question it is actually asking.
 func (a American) Breakeven() (float64, error) { return a.ImpliedRaw() }
+
+// AmericanFromDecimal converts a decimal price back to American, rounded to the
+// nearest whole number a book would post. Used when combining legs into a
+// parlay: the product of decimals is exact, but the reported price should read
+// like a price. A decimal of exactly 1 (or less) is not a real price and errors
+// rather than returning a certainty.
+func AmericanFromDecimal(dec float64) (American, error) {
+	if !finite(dec) || dec <= 1 {
+		return 0, fmt.Errorf("wager: decimal %v is not a real price (needs > 1)", dec)
+	}
+	var a float64
+	if dec >= 2 {
+		a = (dec - 1) * 100
+	} else {
+		a = -100 / (dec - 1)
+	}
+	// Round to nearest integer; a half rounds away from zero so the sign is kept.
+	if a >= 0 {
+		a = math.Floor(a + 0.5)
+	} else {
+		a = math.Ceil(a - 0.5)
+	}
+	out := American(a)
+	if err := out.validate(); err != nil {
+		return 0, err
+	}
+	return out, nil
+}
 
 // Market is a two-sided market. Both prices are required: vig cannot be
 // measured from one side alone.
