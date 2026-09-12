@@ -31,6 +31,10 @@ func main() {
 		err = bonusCmd(os.Args[2:])
 	case "boost":
 		err = boostCmd(os.Args[2:])
+	case "ladder":
+		err = ladderCmd(os.Args[2:])
+	case "parlay":
+		err = parlayCmd(os.Args[2:])
 	case "card":
 		err = cardCmd(os.Args[2:])
 	case "hitrate":
@@ -80,6 +84,22 @@ func usage() {
         payout and the reduced breakeven win rate. Unlike a bonus bet the stake
         is at risk, so the boost belongs on a bet you expect to win, not the
         longest price -- the breakeven relief is largest near even money.
+
+  edgectl ladder -rungs "<american>,..." -stake <amount>
+                 [-mode free-roll|flat|weighted|max-ev] [-weights w:w:..]
+                 [-p "p,p,.."] [-floor <n>] [-roll-on <n>]
+        Stake a nested milestone ladder (one player/stat at rising thresholds).
+        The rungs nest, so this shapes a payoff curve over one outcome; it does
+        not diversify. Default free-roll sizes the floor rung to recover the
+        whole stake and rides the remainder above it. Prints the payoff band by
+        band, and (with -p) the EV and P(profit). Splitting never changes EV.
+
+  edgectl parlay -legs "<american>:<game>[:<label>],..." -total <amount>
+                 [-rr "2,3"] [-p "p,p,.."] [-book <american>]
+        Price a parlay or round robin of INDEPENDENT (cross-game) legs. Every
+        leg needs a game tag; two legs sharing a game are correlated and are
+        refused -- build those as an SGP at the book. -rr sets combo size(s);
+        with -p, reports EV and the exact outcome distribution by legs won.
 
   edgectl card bonus [-target <rate>]
         The static bonus-bet reference card. Needs no data: a bonus bet is +EV
