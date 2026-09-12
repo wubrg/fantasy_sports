@@ -126,6 +126,7 @@ func (s *boardServer) routes(mux *http.ServeMux) error {
 	mux.HandleFunc("/api/props", s.handleProps)
 	mux.HandleFunc("/api/funds/adjust", s.handleAdjust)
 	mux.HandleFunc("/api/boosts", s.handleBoosts)
+	mux.HandleFunc("/api/funds/expire", s.handleExpire)
 	mux.HandleFunc("/api/price", s.handlePrice)
 	mux.HandleFunc("/api/import/preview", s.handleImportPreview)
 	mux.HandleFunc("/api/import/apply", s.handleImportApply)

@@ -395,6 +395,7 @@ func (s *boardServer) withdrawFrom(book, asset string, amount float64, pos ledge
 
 type boostJSON struct {
 	ID        string  `json:"id"`
+	Kind      string  `json:"kind"` // "boost" or "nosweat"
 	Book      string  `json:"book"`
 	Label     string  `json:"label"`
 	Percent   float64 `json:"percent"`
@@ -438,18 +439,32 @@ func (s *boardServer) handleBoosts(w http.ResponseWriter, r *http.Request) {
 
 	var out []boostJSON
 	for _, l := range pos.Lots {
-		if l.Boost == nil {
+		var row boostJSON
+		switch {
+		case l.Boost != nil:
+			b := *l.Boost
+			v500, _ := b.Value(500, ledger.TypicalHold)
+			row = boostJSON{
+				ID: l.ID, Kind: "boost", Book: l.Book, Label: b.Label, Percent: b.Percent,
+				MaxStake: b.MaxStake, MinOdds: int(b.MinOdds), Market: b.Market,
+				NeedsCash: b.RequiresCashStake,
+				Ceiling:   b.Ceiling(ledger.TypicalHold), At500: v500,
+				Chase:      b.WorthChasing(),
+				Restricted: b.Restricted(),
+			}
+		case l.NoSweat != nil:
+			ns := *l.NoSweat
+			// A no-sweat is a refund-on-loss right, not a profit multiplier, so it
+			// has no ceiling/chase ranking; it is listed so it can be seen and
+			// deleted. Its value is contingent (P(lose) x refund) and deliberately
+			// not priced as a number here.
+			row = boostJSON{
+				ID: l.ID, Kind: "nosweat", Book: l.Book, Label: ns.Label,
+				MaxStake: ns.MaxStake, Market: ns.Market,
+				Restricted: ns.Market != "" && ns.Market != "any",
+			}
+		default:
 			continue
-		}
-		b := *l.Boost
-		v500, _ := b.Value(500, ledger.TypicalHold)
-		row := boostJSON{
-			ID: l.ID, Book: l.Book, Label: b.Label, Percent: b.Percent,
-			MaxStake: b.MaxStake, MinOdds: int(b.MinOdds), Market: b.Market,
-			NeedsCash: b.RequiresCashStake,
-			Ceiling:   b.Ceiling(ledger.TypicalHold), At500: v500,
-			Chase:      b.WorthChasing(),
-			Restricted: b.Restricted(),
 		}
 		if l.Expires != nil {
 			row.Expires = l.Expires.Format("2006-01-02")
@@ -468,6 +483,7 @@ func (s *boardServer) handleBoosts(w http.ResponseWriter, r *http.Request) {
 }
 
 type addBoostReq struct {
+	Kind      string  `json:"kind"` // "boost" (default) or "nosweat"
 	Book      string  `json:"book"`
 	Label     string  `json:"label"`
 	Percent   float64 `json:"percent"`
@@ -488,6 +504,38 @@ func (s *boardServer) addBoost(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusBadRequest, "which book granted it?")
 		return
 	}
+	if req.Market == "" {
+		req.Market = "any"
+	}
+
+	// A no-sweat token is a different instrument: a refund-on-loss right, not a
+	// profit multiplier. It has no percent, only a max stake it refunds. Recorded
+	// as a unit lot with a NoSweatSpec so it stays out of the deployable balance.
+	if strings.EqualFold(req.Kind, "nosweat") {
+		if req.MaxStake <= 0 {
+			httpError(w, http.StatusBadRequest, "a no-sweat needs the stake it refunds (its max)")
+			return
+		}
+		spec := ledger.NoSweatSpec{MaxStake: req.MaxStake, Market: req.Market, Label: req.Label}
+		lot := ledger.Lot{Book: req.Book, Asset: ledger.NoSweat, NoSweat: &spec}
+		if strings.TrimSpace(req.Expires) != "" {
+			t, err := time.ParseInLocation("2006-01-02", strings.TrimSpace(req.Expires), time.Local)
+			if err != nil {
+				httpError(w, http.StatusBadRequest, "expires: want a date like 2026-08-26")
+				return
+			}
+			lot.Expires = &t
+		}
+		now := time.Now()
+		e := ledger.Event{Kind: "grant", ID: ledger.NewID(now, req.Book+"-nosweat"), Time: now, Creates: &lot}
+		if err := ledger.AppendFile(s.ledgerPath, e); err != nil {
+			httpError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		writeJSON(w, map[string]any{"ok": true, "id": e.ID, "kind": "nosweat"})
+		return
+	}
+
 	if req.Percent <= 0 {
 		httpError(w, http.StatusBadRequest, "percent must be positive (0.5 for a 50% boost)")
 		return
@@ -503,9 +551,6 @@ func (s *boardServer) addBoost(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusBadRequest,
 			"a boost with no stake cap cannot be valued; enter the promo's maximum wager")
 		return
-	}
-	if req.Market == "" {
-		req.Market = "any"
 	}
 
 	spec := ledger.BoostSpec{
@@ -539,4 +584,50 @@ func (s *boardServer) addBoost(w http.ResponseWriter, r *http.Request) {
 		"ceiling": spec.Ceiling(ledger.TypicalHold),
 		"chase":   spec.WorthChasing(),
 	})
+}
+
+type expireReq struct {
+	ID string `json:"id"`
+}
+
+// handleExpire deletes a promo (or any lot) by recording an expire event for it.
+// The ledger is append-only, so "delete" is an expire: the lot dies and drops
+// out of the balance, but the grant and the expiry both stay on the record. A
+// mistaken boost and a token that lapsed unused are the same event here, which
+// is correct -- both mean "this is no longer available".
+func (s *boardServer) handleExpire(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		httpError(w, http.StatusMethodNotAllowed, "POST required")
+		return
+	}
+	var req expireReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httpError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if strings.TrimSpace(req.ID) == "" {
+		httpError(w, http.StatusBadRequest, "which lot id?")
+		return
+	}
+	now := time.Now()
+	e := ledger.Event{
+		Kind: "expire", ID: ledger.NewID(now, "expire-"+req.ID), Time: now,
+		Lot: strings.TrimSpace(req.ID), Note: "removed from the board",
+	}
+	// Replay with the new event before writing: expiring a lot that does not
+	// exist (or was already spent) is an error the log must refuse, not absorb.
+	existing, err := ledger.Load(s.ledgerPath)
+	if err != nil && !os.IsNotExist(err) {
+		httpError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if _, err := ledger.Balances(append(append([]ledger.Event{}, existing...), e), time.Time{}); err != nil {
+		httpError(w, http.StatusConflict, err.Error())
+		return
+	}
+	if err := ledger.AppendFile(s.ledgerPath, e); err != nil {
+		httpError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, map[string]any{"ok": true, "expired": req.ID})
 }

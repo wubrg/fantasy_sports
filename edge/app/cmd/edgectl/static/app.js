@@ -732,15 +732,23 @@ async function loadBoosts() {
 }
 
 function renderBoosts(r) {
-  const b = r.boosts || [];
-  if (!b.length) {
+  const all = r.boosts || [];
+  const boosts = all.filter(x => x.kind !== "nosweat");
+  const nosweats = all.filter(x => x.kind === "nosweat");
+  if (!all.length) {
     return `<section class="rep"><h2>profit boosts</h2>
       <p class="muted">None recorded. Worth entering only the ones worth planning
       around \u2014 a small token on a bet you already want is just ticked in the
       slip.</p></section>`;
   }
-  const chase = b.filter(x => x.chase);
-  const rest = b.filter(x => !x.chase);
+  const chase = boosts.filter(x => x.chase);
+  const rest = boosts.filter(x => !x.chase);
+  const del = (x) => `<button type="button" class="promo-del" data-id="${x.id}" title="delete">\u00d7</button>`;
+  const tags = (x) => `${x.restricted ? `<span class="tag mkt">${x.market}</span>` : ""}
+      ${x.min_odds ? `<span class="tag when">${x.min_odds > 0 ? "+" : ""}${x.min_odds} or longer</span>` : ""}
+      ${x.needs_cash ? `<span class="tag">cash only</span>` : ""}
+      ${x.expires ? `<span class="tag when">${x.in_hours < 48
+        ? x.in_hours + "h" : Math.round(x.in_hours / 24) + "d"}</span>` : ""}`;
   // The equivalent face value, not just the ceiling. They are the same number,
   // but "a $12 bonus bet" says what the ranking MEANS in a unit already
   // understood, where "$12 max" reads as a cap and explains nothing.
@@ -748,11 +756,13 @@ function renderBoosts(r) {
       <span class="team">${x.book}</span>
       <span class="price">${Math.round(x.percent * 100)}% \u00d7 ${money(x.max_stake)}</span>
       <span class="conv">= a ${money(x.ceiling)} bonus bet</span>
-      ${x.restricted ? `<span class="tag mkt">${x.market}</span>` : ""}
-      ${x.min_odds ? `<span class="tag when">${x.min_odds > 0 ? "+" : ""}${x.min_odds} or longer</span>` : ""}
-      ${x.needs_cash ? `<span class="tag">cash only</span>` : ""}
-      ${x.expires ? `<span class="tag when">${x.in_hours < 48
-        ? x.in_hours + "h" : Math.round(x.in_hours / 24) + "d"}</span>` : ""}
+      ${tags(x)}${del(x)}
+    </div>`;
+  const nsrow = (x) => `<div class="dog">
+      <span class="team">${x.book}</span>
+      <span class="price">no-sweat \u2014 refunds ${money(x.max_stake)}</span>
+      <span class="conv">stake back as bonus on a loss</span>
+      ${tags(x)}${del(x)}
     </div>`;
 
   return `<section class="rep">
@@ -764,6 +774,11 @@ function renderBoosts(r) {
       <p class="muted">Under ${money(r.floor)} at their best. Not worthless \u2014 apply one
       to a wager you already want \u2014 but not worth building a bet around. A
       market-restricted one still points at a market you would otherwise not price.</p>`
+      : ""}
+    ${nosweats.length ? `<h2 style="margin-top:.7rem">no-sweat tokens</h2>
+      ${nosweats.map(nsrow).join("")}
+      <p class="muted">A no-sweat is a refund-on-loss right, not a balance: worth
+      P(lose) \u00d7 the refund, and best spent on a longshot where that loss is likely.</p>`
       : ""}
     <p class="muted">A boost pays <b>percent \u00d7 stake \u00d7 (1 \u2212 raw) \u00f7 (1 + hold)</b>
     and a bonus bet pays <b>face \u00d7 (1 \u2212 raw) \u00f7 (1 + hold)</b> \u2014 the same instrument
@@ -974,13 +989,26 @@ function renderFunds(r) {
         <input id="b-pct" inputmode="decimal" placeholder="50 (%)">
         <input id="b-max" inputmode="decimal" placeholder="max stake 25">
         <input id="b-min" inputmode="tel" placeholder="min line -200">
-        <input id="b-mkt" placeholder="market: any, atd, ftd">
+        <select id="b-mkt"><option value="any">any market</option><option value="sgp">SGP</option></select>
         <input id="b-exp" placeholder="expires 2026-09-14">
         <label class="chk"><input type="checkbox" id="b-cash"> needs cash</label>
         <button type="button" id="b-add">add</button>
       </div>
       <p class="muted">A boost is a unit, not a balance: spent whole, and never
       counted as money you can wager.</p>
+    </section>
+
+    <section class="rep">
+      <h2>declare a no-sweat token</h2>
+      <div class="fundform">
+        <select id="n-book">${books.map(x => `<option>${x}</option>`).join("")}</select>
+        <input id="n-max" inputmode="decimal" placeholder="refunds up to 10">
+        <select id="n-mkt"><option value="any">any market</option><option value="sgp">SGP</option><option value="atd">ATD</option><option value="ftd">FTD</option></select>
+        <input id="n-exp" placeholder="expires 2026-09-14">
+        <button type="button" id="n-add">add</button>
+      </div>
+      <p class="muted">A no-sweat refunds your stake as a bonus if the bet loses —
+      a contingent right, not money. Enter the stake it covers.</p>
     </section>`;
 
   // Correcting a balance appends a compensating entry rather than editing
@@ -1022,7 +1050,29 @@ function renderFunds(r) {
 
   loadBoosts().then((html) => {
     const box = document.getElementById("boostbox");
-    if (box) box.innerHTML = html;
+    if (!box) return;
+    box.innerHTML = html;
+    // Deleting a promo records an expire event (the ledger is append-only, so a
+    // delete is a death). Confirmed, because it cannot be un-clicked cleanly.
+    for (const btn of box.querySelectorAll(".promo-del")) {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Delete this promo? It is recorded as expired (removed).")) return;
+        btn.disabled = true;
+        try {
+          const res = await fetch(BASE + "api/funds/expire", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: btn.dataset.id }),
+          });
+          const body = await res.json();
+          if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+          loadFunds();
+        } catch (e) {
+          btn.disabled = false;
+          alert("not deleted: " + e.message);
+        }
+      });
+    }
   });
 
   const badd = document.getElementById("b-add");
@@ -1059,6 +1109,33 @@ function renderFunds(r) {
       loadFunds();
     } catch (e) {
       badd.disabled = false;
+      alert("not recorded: " + e.message);
+    }
+  });
+
+  const nadd = document.getElementById("n-add");
+  if (nadd) nadd.addEventListener("click", async () => {
+    const max = Number(document.getElementById("n-max").value);
+    if (!max || max <= 0) { alert("how much does it refund? e.g. 10"); return; }
+    nadd.disabled = true;
+    try {
+      const res = await fetch(BASE + "api/boosts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "nosweat",
+          book: document.getElementById("n-book").value,
+          max_stake: max,
+          market: document.getElementById("n-mkt").value,
+          expires: document.getElementById("n-exp").value.trim(),
+          label: "no-sweat",
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+      loadFunds();
+    } catch (e) {
+      nadd.disabled = false;
       alert("not recorded: " + e.message);
     }
   });
