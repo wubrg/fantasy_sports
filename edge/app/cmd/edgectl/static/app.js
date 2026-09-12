@@ -594,14 +594,74 @@ async function loadLog() {
   }
 }
 
+// betEntryForm is the free-form bet entry: a prop, a single, anything. It posts
+// to the same /api/place the board's record button uses, so a hand-typed prop is
+// recorded exactly like a board-placed parlay. With a book the stake is drawn
+// from the ledger (bonus bet -> bonus, real money -> cash); "log only" records
+// the bet without touching the bankroll, for a book not tracked there.
+function betEntryForm() {
+  const books = ["— log only", "fanatics", "draftkings", "fanduel", "bet365", "betmgm", "caesars"];
+  const wk = (state && state.week) || 1;
+  return `<section class="rep">
+    <h2>enter a bet</h2>
+    <div class="fundform">
+      <input id="e-sel" placeholder="selection, e.g. Marvin Harrison Jr. ATD">
+      <input id="e-price" inputmode="tel" placeholder="odds +240">
+      <input id="e-stake" inputmode="decimal" placeholder="stake 0.50">
+      <select id="e-bank"><option value="bonus bet">bonus bet</option><option value="real money">real money</option></select>
+      <select id="e-book">${books.map(b => `<option>${b}</option>`).join("")}</select>
+      <input id="e-week" inputmode="numeric" value="${wk}" title="NFL week">
+      <button type="button" id="e-add">log bet</button>
+    </div>
+    <p class="muted">Any single or prop. With a book the stake is drawn from it
+    (bonus bet → bonus, real money → cash); "log only" records the bet without
+    touching the bankroll.</p>
+  </section>`;
+}
+
+function wireBetEntry() {
+  const btn = document.getElementById("e-add");
+  if (!btn) return;
+  btn.addEventListener("click", async () => {
+    const sel = document.getElementById("e-sel").value.trim();
+    const price = Number(document.getElementById("e-price").value);
+    const stake = Number(document.getElementById("e-stake").value);
+    if (!sel) { alert("what's the selection?"); return; }
+    if (!price || Math.abs(price) < 100) { alert("odds as American, e.g. +240 or -150"); return; }
+    if (!stake || stake <= 0) { alert("stake?"); return; }
+    let book = document.getElementById("e-book").value;
+    if (book.startsWith("—")) book = "";
+    btn.disabled = true;
+    try {
+      const res = await fetch(BASE + "api/place", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          selection: sel, price, stake,
+          bankroll: document.getElementById("e-bank").value,
+          book, week: Number(document.getElementById("e-week").value) || 0,
+          narrative: "Entered from the log tab.",
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+      loadLog();
+    } catch (e) {
+      btn.disabled = false;
+      alert("not logged: " + e.message);
+    }
+  });
+}
+
 function renderLog(r) {
   if (!r.entries.length) {
-    el.betlog.innerHTML = `<section class="rep"><h2>no bets recorded</h2>
-      <p class="muted">Nothing in ${r.path} yet. Place a wager from the bets tab and
-      it lands here.</p></section>`;
+    el.betlog.innerHTML = betEntryForm() + `<section class="rep"><h2>no bets recorded</h2>
+      <p class="muted">Nothing in ${r.path} yet. Enter one above, or place a wager from
+      the bets tab.</p></section>`;
+    wireBetEntry();
     return;
   }
-  el.betlog.innerHTML = `
+  el.betlog.innerHTML = betEntryForm() + `
     <div class="scope">${r.count} recorded · ${Math.round(r.open)} open ·
       ${money(r.open_staked_cash ?? r.open_staked ?? r.staked)} cash · ${money(r.open_staked_bonus ?? 0)} bonus at risk · <b>${money(r.open_ev ?? r.ev)}</b> expected
       · ${money(r.realized ?? 0)} realized</div>
@@ -627,6 +687,7 @@ function renderLog(r) {
       fact. Settle with <span class="mono">edgectl log settle</span>, score with
       <span class="mono">edgectl log score</span>.</p>
     </section>`;
+  wireBetEntry();
 }
 
 // Recording sends the numbers the report DISPLAYED, not a reference to the
