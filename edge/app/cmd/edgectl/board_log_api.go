@@ -207,7 +207,7 @@ func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
 	// no betlog entry, so the operator retries and nothing is lost. The
 	// reverse -- log the bet, then fail to debit -- leaves a prediction with
 	// no funding behind it, and the two logs disagree with no record of why.
-	draws, drawErr := s.debit(req.Book, req.Stake)
+	draws, drawErr := s.debit(req.Book, assetForBankroll(req.Bankroll), req.Stake)
 	if drawErr != nil {
 		httpError(w, http.StatusConflict, drawErr.Error())
 		return
@@ -303,7 +303,16 @@ func (s *boardServer) handleSettle(w http.ResponseWriter, r *http.Request) {
 // opt-in, and a board can be used without one -- so its absence is not an
 // error. An insufficient balance IS: it means the operator believes they hold
 // money they do not, and that is worth stopping for.
-func (s *boardServer) debit(book string, stake float64) ([]ledger.Event, error) {
+// assetForBankroll maps a betlog bankroll to the ledger asset a place should
+// draw from: a bonus bet spends bonus, everything else spends cash.
+func assetForBankroll(bankroll string) string {
+	if strings.EqualFold(strings.TrimSpace(bankroll), "bonus bet") {
+		return ledger.Bonus
+	}
+	return ledger.Cash
+}
+
+func (s *boardServer) debit(book, asset string, stake float64) ([]ledger.Event, error) {
 	if strings.TrimSpace(book) == "" {
 		return nil, nil
 	}
@@ -311,7 +320,7 @@ func (s *boardServer) debit(book string, stake float64) ([]ledger.Event, error) 
 		return nil, nil
 	}
 	now := time.Now()
-	draws, err := s.drawFrom(book, stake)
+	draws, err := s.drawFrom(book, asset, stake)
 	if err != nil {
 		return nil, err
 	}

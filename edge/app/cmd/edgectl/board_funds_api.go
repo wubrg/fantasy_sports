@@ -195,7 +195,12 @@ func (s *boardServer) fundsFor(books []string) (map[string]float64, error) {
 // money: spending a balance that lasts a year while one expiring on Tuesday
 // sits untouched is how a bankroll leaks without any single decision looking
 // wrong.
-func (s *boardServer) drawFrom(book string, stake float64) ([]ledger.Event, error) {
+// drawFrom builds the place events that spend `stake` from `book`, taking only
+// lots of `asset` (cash for a real-money bet, bonus for a bonus bet). Filtering
+// by asset is what keeps a bonus bet from silently eating cash, or the reverse —
+// the two are not interchangeable, and a place that drew the wrong one would
+// misreport both the wager and the balance.
+func (s *boardServer) drawFrom(book, asset string, stake float64) ([]ledger.Event, error) {
 	events, err := ledger.Load(s.ledgerPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -211,7 +216,7 @@ func (s *boardServer) drawFrom(book string, stake float64) ([]ledger.Event, erro
 
 	var open []ledger.Lot
 	for _, l := range pos.Lots {
-		if l.Book == book && !l.Unit() && l.Amount > 0 {
+		if l.Book == book && l.Asset == asset && !l.Unit() && l.Amount > 0 {
 			open = append(open, l)
 		}
 	}
@@ -234,7 +239,7 @@ func (s *boardServer) drawFrom(book string, stake float64) ([]ledger.Event, erro
 	}
 	if total+1e-9 < stake {
 		return nil, fmt.Errorf(
-			"%s holds %.2f, which will not cover a %.2f stake", book, total, stake)
+			"%s holds %.2f of %s, which will not cover a %.2f stake", book, total, asset, stake)
 	}
 
 	var out []ledger.Event
