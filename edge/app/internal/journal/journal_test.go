@@ -103,15 +103,127 @@ func TestPlace_appliesBoost(t *testing.T) {
 		t.Fatalf("Place: %v", err)
 	}
 
+	// A boost applied to a wager is consumed as a KindPlace of the boost lot tied
+	// to that wager (a commitment), not a KindExpire ("died unused").
 	evs, _ := ledger.Load(lg)
-	sawExpire := false
+	sawBoostPlace := false
 	for _, e := range evs {
-		if e.Kind == ledger.KindExpire && e.Lot == "fan-boost" && e.Wager == id {
-			sawExpire = true
+		if e.Kind == ledger.KindPlace && e.Lot == "fan-boost" && e.Wager == id {
+			sawBoostPlace = true
+		}
+		if e.Kind == ledger.KindExpire && e.Lot == "fan-boost" {
+			t.Fatalf("boost was expired, not placed: %+v", e)
 		}
 	}
-	if !sawExpire {
-		t.Fatal("boost lot was not expired against the wager")
+	if !sawBoostPlace {
+		t.Fatal("boost lot was not placed against the wager")
+	}
+	// The boost lot is consumed: it is no longer a live lot.
+	pos, err := ledger.Balances(evs, now)
+	if err != nil {
+		t.Fatalf("Balances: %v", err)
+	}
+	for _, l := range pos.Lots {
+		if l.ID == "fan-boost" {
+			t.Fatal("boost lot should have been consumed by the place")
+		}
+	}
+}
+
+// A RequiresCashStake boost applied to a bonus bet must be refused before any
+// write: no betlog entry, and the boost lot is not consumed.
+func TestPlace_cashStakeBoostOnBonusBetFails(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	grant(t, lg, "fan-bonus", "fanatics", ledger.Bonus, 50)
+	boost := ledger.Event{
+		Kind: ledger.KindGrant, ID: "fan-boost", Time: grantTime,
+		Creates: &ledger.Lot{ID: "fan-boost", Book: "fanatics", Asset: ledger.Boost,
+			Boost: &ledger.BoostSpec{Percent: 0.5, MaxStake: 50, MinOdds: -200, RequiresCashStake: true}},
+	}
+	if err := ledger.AppendFile(lg, boost); err != nil {
+		t.Fatalf("grant boost: %v", err)
+	}
+
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+	_, err := Place(bl, lg, PlaceRequest{
+		Bet:        betlog.Bet{Selection: "Barkley ATD", Price: wager.American(-115), Bankroll: "bonus bet", Stake: 50, Week: 1},
+		Book:       "fanatics",
+		BoostLotID: "fan-boost",
+	}, now)
+	if err == nil {
+		t.Fatal("expected a RequiresCashStake boost on a bonus bet to be refused")
+	}
+
+	// No betlog entry written.
+	if _, statErr := os.Stat(bl); !os.IsNotExist(statErr) {
+		if b, _ := os.ReadFile(bl); strings.TrimSpace(string(b)) != "" {
+			t.Fatalf("betlog should be empty after a refused boost, got: %s", b)
+		}
+	}
+	// The boost lot is not consumed: still a live lot.
+	evs, _ := ledger.Load(lg)
+	for _, e := range evs {
+		if (e.Kind == ledger.KindPlace || e.Kind == ledger.KindExpire) && e.Lot == "fan-boost" {
+			t.Fatalf("boost lot must not be consumed by a refused place: %+v", e)
+		}
+	}
+	pos, err := ledger.Balances(evs, now)
+	if err != nil {
+		t.Fatalf("Balances: %v", err)
+	}
+	live := false
+	for _, l := range pos.Lots {
+		if l.ID == "fan-boost" {
+			live = true
+		}
+	}
+	if !live {
+		t.Fatal("boost lot should still be live after a refused place")
+	}
+}
+
+// A RequiresCashStake boost applied to a CASH bet succeeds and is consumed as a
+// place tied to the wager.
+func TestPlace_cashStakeBoostOnCashBetSucceeds(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	grant(t, lg, "fan-cash", "fanatics", ledger.Cash, 50)
+	boost := ledger.Event{
+		Kind: ledger.KindGrant, ID: "fan-boost", Time: grantTime,
+		Creates: &ledger.Lot{ID: "fan-boost", Book: "fanatics", Asset: ledger.Boost,
+			Boost: &ledger.BoostSpec{Percent: 0.5, MaxStake: 50, MinOdds: -200, RequiresCashStake: true}},
+	}
+	if err := ledger.AppendFile(lg, boost); err != nil {
+		t.Fatalf("grant boost: %v", err)
+	}
+
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+	id, err := Place(bl, lg, PlaceRequest{
+		Bet:        betlog.Bet{Selection: "Barkley ATD", Price: wager.American(-115), Bankroll: "real money", Stake: 50, Week: 1},
+		Book:       "fanatics",
+		BoostLotID: "fan-boost",
+	}, now)
+	if err != nil {
+		t.Fatalf("Place: %v", err)
+	}
+
+	evs, _ := ledger.Load(lg)
+	sawBoostPlace := false
+	for _, e := range evs {
+		if e.Kind == ledger.KindPlace && e.Lot == "fan-boost" && e.Wager == id {
+			sawBoostPlace = true
+		}
+	}
+	if !sawBoostPlace {
+		t.Fatal("boost lot was not placed against the cash wager")
+	}
+	pos, err := ledger.Balances(evs, now)
+	if err != nil {
+		t.Fatalf("Balances: %v", err)
+	}
+	for _, l := range pos.Lots {
+		if l.ID == "fan-boost" {
+			t.Fatal("boost lot should have been consumed")
+		}
 	}
 }
 
@@ -242,5 +354,115 @@ func TestSettle_predictionWithoutLedgerPlace(t *testing.T) {
 	// Settling must not error even though there is no ledger place to settle.
 	if err := Settle(bl, lg, id, betlog.Lost, nil, "", now); err != nil {
 		t.Fatalf("Settle prediction-only: %v", err)
+	}
+}
+
+// settleReturns returns the Returns lot from the ledger settle event for a
+// wager, or nil if there is none.
+func settleReturns(t *testing.T, ledgerPath, id string) *ledger.Lot {
+	t.Helper()
+	evs, err := ledger.Load(ledgerPath)
+	if err != nil {
+		t.Fatalf("ledger.Load: %v", err)
+	}
+	for _, e := range evs {
+		if e.Kind == ledger.KindSettle && e.Wager == id {
+			return e.Returns
+		}
+	}
+	t.Fatalf("no ledger settle for %s", id)
+	return nil
+}
+
+// A WON cash bet settled with returns=nil (the GUI path) books a returns lot of
+// stake + profit, as cash, at the book the stake was placed from.
+func TestSettle_computesReturnsForWonCashBet(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	grant(t, lg, "dk-cash", "draftkings", ledger.Cash, 100)
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+	id, err := Place(bl, lg, PlaceRequest{
+		Bet:  betlog.Bet{Selection: "Barkley ATD", Price: wager.American(150), Bankroll: "real money", Stake: 50, Week: 1},
+		Book: "draftkings",
+	}, now)
+	if err != nil {
+		t.Fatalf("Place: %v", err)
+	}
+
+	if err := Settle(bl, lg, id, betlog.Won, nil, "scored", now); err != nil {
+		t.Fatalf("Settle: %v", err)
+	}
+
+	r := settleReturns(t, lg, id)
+	if r == nil {
+		t.Fatal("expected a computed returns lot on a won cash bet")
+	}
+	// +150 -> profit multiple 1.5; stake 50 back + 75 profit = 125.
+	if r.Amount != 125 {
+		t.Fatalf("returns amount = %v, want 125 (stake 50 + profit 75)", r.Amount)
+	}
+	if r.Asset != ledger.Cash {
+		t.Fatalf("returns asset = %q, want cash", r.Asset)
+	}
+	if r.Book != "draftkings" {
+		t.Fatalf("returns book = %q, want draftkings", r.Book)
+	}
+}
+
+// A WON bonus bet settled with returns=nil books profit only (the bonus stake
+// is not returned), as cash.
+func TestSettle_computesReturnsForWonBonusBet(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	grant(t, lg, "dk-bonus", "draftkings", ledger.Bonus, 50)
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+	id, err := Place(bl, lg, PlaceRequest{
+		Bet:  betlog.Bet{Selection: "Barkley ATD", Price: wager.American(200), Bankroll: "bonus bet", Stake: 50, Week: 1},
+		Book: "draftkings",
+	}, now)
+	if err != nil {
+		t.Fatalf("Place: %v", err)
+	}
+
+	if err := Settle(bl, lg, id, betlog.Won, nil, "scored", now); err != nil {
+		t.Fatalf("Settle: %v", err)
+	}
+
+	r := settleReturns(t, lg, id)
+	if r == nil {
+		t.Fatal("expected a computed returns lot on a won bonus bet")
+	}
+	// +200 -> profit multiple 2.0; profit only = 50 * 2 = 100 (stake not returned).
+	if r.Amount != 100 {
+		t.Fatalf("returns amount = %v, want 100 (profit only)", r.Amount)
+	}
+	if r.Asset != ledger.Cash {
+		t.Fatalf("returns asset = %q, want cash", r.Asset)
+	}
+}
+
+// An explicit non-nil returns (the CLI -returns path) is written unchanged, not
+// recomputed.
+func TestSettle_explicitReturnsUsedUnchanged(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	grant(t, lg, "dk-cash", "draftkings", ledger.Cash, 100)
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+	id, err := Place(bl, lg, PlaceRequest{
+		Bet:  betlog.Bet{Selection: "Barkley ATD", Price: wager.American(150), Bankroll: "real money", Stake: 50, Week: 1},
+		Book: "draftkings",
+	}, now)
+	if err != nil {
+		t.Fatalf("Place: %v", err)
+	}
+
+	want := &ledger.Lot{ID: "manual-returns", Book: "draftkings", Asset: ledger.Cash, Amount: 200}
+	if err := Settle(bl, lg, id, betlog.Won, want, "manual", now); err != nil {
+		t.Fatalf("Settle: %v", err)
+	}
+
+	r := settleReturns(t, lg, id)
+	if r == nil {
+		t.Fatal("expected the explicit returns lot")
+	}
+	if r.Amount != 200 || r.ID != "manual-returns" {
+		t.Fatalf("explicit returns not used unchanged: %+v", r)
 	}
 }
