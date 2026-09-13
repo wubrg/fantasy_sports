@@ -79,6 +79,63 @@ func Place(betlogPath, ledgerPath string, req PlaceRequest, now time.Time) (stri
 	return id, nil
 }
 
+// Settle records an outcome for a wager. It appends the betlog settle and, when
+// an at-risk ledger place exists for the wager, a ledger settle too. A wager
+// recorded without a book has no ledger place; settling it touches only the
+// betlog. Double settles are refused: the betlog folds the last outcome on top,
+// so a second tap could quietly flip a result.
+func Settle(betlogPath, ledgerPath string, id string, result betlog.Result, returns *ledger.Lot, note string, now time.Time) error {
+	if strings.TrimSpace(id) == "" {
+		return fmt.Errorf("journal: which bet? an id is required")
+	}
+	bets, err := betlog.Load(betlogPath)
+	if err != nil {
+		return err
+	}
+	found := false
+	for _, b := range bets {
+		if b.ID != id {
+			continue
+		}
+		found = true
+		if b.Result != "" && b.Result != betlog.Open {
+			return fmt.Errorf("%s is already settled as %q; settling again would append a second outcome", id, b.Result)
+		}
+	}
+	if !found {
+		return fmt.Errorf("no bet with id %s", id)
+	}
+
+	if err := betlog.Settle(betlogPath, id, result, note); err != nil {
+		return err
+	}
+
+	// Only write a ledger settle if a place for this wager exists.
+	if _, statErr := os.Stat(ledgerPath); statErr == nil {
+		evs, err := ledger.Load(ledgerPath)
+		if err != nil {
+			return err
+		}
+		hasPlace := false
+		for _, e := range evs {
+			if e.Kind == ledger.KindPlace && e.Wager == id {
+				hasPlace = true
+				break
+			}
+		}
+		if hasPlace {
+			settle := ledger.Event{
+				Kind: ledger.KindSettle, ID: ledger.NewID(now, "settle-"+id), Time: now,
+				Wager: id, Result: ledger.Result(result), Returns: returns, Note: note,
+			}
+			if err := ledger.AppendFile(ledgerPath, settle); err != nil {
+				return fmt.Errorf("betlog was settled but the ledger settle failed: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
 // validateBoostLot confirms a boost lot named by id is still live and belongs
 // to book, before anything is written. Mirrors draw()'s validate-then-write
 // discipline: without this check, a stale, already-consumed, or nonexistent

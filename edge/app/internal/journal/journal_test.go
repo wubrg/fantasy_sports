@@ -189,3 +189,58 @@ func TestPlace_boostLotWrongBookFails(t *testing.T) {
 		}
 	}
 }
+
+func TestSettle_writesBothAndGuardsDoubleSettle(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	grant(t, lg, "dk-bonus", "draftkings", ledger.Bonus, 10)
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+	id, err := Place(bl, lg, PlaceRequest{
+		Bet:  betlog.Bet{Selection: "Barkley ATD", Price: wager.American(-115), Bankroll: "bonus bet", Stake: 4, Week: 1},
+		Book: "draftkings",
+	}, now)
+	if err != nil {
+		t.Fatalf("Place: %v", err)
+	}
+
+	if err := Settle(bl, lg, id, betlog.Won, nil, "scored", now); err != nil {
+		t.Fatalf("Settle: %v", err)
+	}
+
+	// Betlog shows settled.
+	bets, _ := betlog.Load(bl)
+	if bets[0].Result != betlog.Won {
+		t.Fatalf("betlog result = %q, want won", bets[0].Result)
+	}
+	// Ledger has a settle tied to the wager.
+	evs, _ := ledger.Load(lg)
+	sawSettle := false
+	for _, e := range evs {
+		if e.Kind == ledger.KindSettle && e.Wager == id {
+			sawSettle = true
+		}
+	}
+	if !sawSettle {
+		t.Fatal("ledger settle not written")
+	}
+
+	// Second settle is refused.
+	if err := Settle(bl, lg, id, betlog.Lost, nil, "oops", now); err == nil {
+		t.Fatal("expected double-settle to be refused")
+	}
+}
+
+func TestSettle_predictionWithoutLedgerPlace(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	// A bet recorded with no book -> no ledger place exists.
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+	id, err := Place(bl, lg, PlaceRequest{
+		Bet: betlog.Bet{Selection: "pure prediction", Price: wager.American(200), Bankroll: "bonus bet", Stake: 1, Week: 1},
+	}, now)
+	if err != nil {
+		t.Fatalf("Place: %v", err)
+	}
+	// Settling must not error even though there is no ledger place to settle.
+	if err := Settle(bl, lg, id, betlog.Lost, nil, "", now); err != nil {
+		t.Fatalf("Settle prediction-only: %v", err)
+	}
+}
