@@ -132,3 +132,60 @@ func TestPlace_insufficientBalanceWritesNothing(t *testing.T) {
 		}
 	}
 }
+
+func TestPlace_unknownBoostLotFails(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	grant(t, lg, "fan-cash", "fanatics", ledger.Cash, 50)
+
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+	_, err := Place(bl, lg, PlaceRequest{
+		Bet:        betlog.Bet{Selection: "Barkley ATD", Price: wager.American(-115), Bankroll: "real money", Stake: 50, Week: 1},
+		Book:       "fanatics",
+		BoostLotID: "no-such-boost",
+	}, now)
+	if err == nil {
+		t.Fatal("expected an error for a nonexistent boost lot")
+	}
+
+	if _, statErr := os.Stat(bl); !os.IsNotExist(statErr) {
+		if b, _ := os.ReadFile(bl); strings.TrimSpace(string(b)) != "" {
+			t.Fatalf("betlog should be empty after a bad boost, got: %s", b)
+		}
+	}
+	evs, _ := ledger.Load(lg)
+	for _, e := range evs {
+		if e.Kind == ledger.KindExpire {
+			t.Fatalf("no expire event should have been written for an unknown boost lot: %+v", e)
+		}
+	}
+}
+
+func TestPlace_boostLotWrongBookFails(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	grant(t, lg, "dk-cash", "draftkings", ledger.Cash, 50)
+	boost := ledger.Event{
+		Kind: ledger.KindGrant, ID: "fan-boost", Time: grantTime,
+		Creates: &ledger.Lot{ID: "fan-boost", Book: "fanatics", Asset: ledger.Boost,
+			Boost: &ledger.BoostSpec{Percent: 0.3, MaxStake: 50, MinOdds: -200, RequiresCashStake: true}},
+	}
+	if err := ledger.AppendFile(lg, boost); err != nil {
+		t.Fatalf("grant boost: %v", err)
+	}
+
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+	_, err := Place(bl, lg, PlaceRequest{
+		Bet:        betlog.Bet{Selection: "Barkley ATD", Price: wager.American(-115), Bankroll: "real money", Stake: 50, Week: 1},
+		Book:       "draftkings",
+		BoostLotID: "fan-boost",
+	}, now)
+	if err == nil {
+		t.Fatal("expected an error for a boost lot from a different book")
+	}
+
+	evs, _ := ledger.Load(lg)
+	for _, e := range evs {
+		if e.Kind == ledger.KindExpire {
+			t.Fatalf("no expire event should have been written for a cross-book boost: %+v", e)
+		}
+	}
+}

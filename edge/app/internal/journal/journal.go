@@ -46,6 +46,12 @@ func Place(betlogPath, ledgerPath string, req PlaceRequest, now time.Time) (stri
 		return "", err
 	}
 
+	if strings.TrimSpace(req.BoostLotID) != "" {
+		if err := validateBoostLot(ledgerPath, req.BoostLotID, req.Book, now); err != nil {
+			return "", err
+		}
+	}
+
 	id, err := betlog.PlaceBet(betlogPath, req.Bet)
 	if err != nil {
 		return "", err
@@ -71,6 +77,32 @@ func Place(betlogPath, ledgerPath string, req PlaceRequest, now time.Time) (stri
 	}
 
 	return id, nil
+}
+
+// validateBoostLot confirms a boost lot named by id is still live and belongs
+// to book, before anything is written. Mirrors draw()'s validate-then-write
+// discipline: without this check, a stale, already-consumed, or nonexistent
+// BoostLotID would let Place return success while appending an unappliable
+// KindExpire line into the append-only ledger, breaking every future replay of
+// that file.
+func validateBoostLot(ledgerPath, id, book string, now time.Time) error {
+	events, err := ledger.Load(ledgerPath)
+	if err != nil {
+		return err
+	}
+	pos, err := ledger.Balances(events, now)
+	if err != nil {
+		return err
+	}
+	for _, l := range pos.Lots {
+		if l.ID == id {
+			if l.Book != book {
+				return fmt.Errorf("boost lot %q belongs to %s, not %s: a boost cannot be applied to a wager at a different book", id, l.Book, book)
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("boost lot %q is not a live lot in the ledger (already consumed, expired, or never granted)", id)
 }
 
 // draw builds the ledger place events for a stake, oldest-deadline lot first.
