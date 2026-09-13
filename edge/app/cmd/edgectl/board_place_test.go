@@ -2,13 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"edge/internal/betlog"
+	"edge/internal/journal"
 	"edge/internal/ledger"
+	"edge/internal/wager"
 )
 
 // TestPlaceDrawsMatchingAsset is the reason /api/place became asset-aware: a
@@ -45,8 +49,11 @@ func TestPlaceDrawsMatchingAsset(t *testing.T) {
 		}
 		var m map[string]any
 		json.Unmarshal(rr.Body.Bytes(), &m)
-		if m["debited"] != true {
-			t.Fatalf("place %s: expected debited true, got %v", bankroll, m["debited"])
+		if m["ok"] != true {
+			t.Fatalf("place %s: expected ok true, got %v", bankroll, m["ok"])
+		}
+		if id, _ := m["id"].(string); id == "" {
+			t.Fatalf("place %s: expected a non-empty id, got %v", bankroll, m["id"])
 		}
 	}
 
@@ -82,4 +89,78 @@ func mustBal(t *testing.T, srv *boardServer) ledger.Position {
 		t.Fatal(err)
 	}
 	return pos
+}
+
+// TestPlace_GUIandCoreAgree pins the whole point of the consolidation: a bet
+// entered through the GUI's /api/place handler lands on disk identically to the
+// same bet placed through journal.Place directly. If the handler ever drifts
+// from the shared core -- a field dropped, a price coerced differently -- the
+// betlogs diverge and this fails.
+func TestPlace_GUIandCoreAgree(t *testing.T) {
+	dir := t.TempDir()
+
+	// GUI side: a board server on its own temp logs, driven over HTTP through
+	// the same routes the browser hits. Temp paths keep it off the real
+	// defaultBetlog() the production server would use.
+	guiBet := filepath.Join(dir, "gui-bet.jsonl")
+	guiLedger := filepath.Join(dir, "gui-ledger.jsonl")
+	srv := &boardServer{betlogPath: guiBet, ledgerPath: guiLedger}
+	mux := http.NewServeMux()
+	if err := srv.routes(mux); err != nil {
+		t.Fatal(err)
+	}
+	ts := httptest.NewServer(mux)
+	t.Cleanup(ts.Close)
+
+	body := map[string]any{
+		"selection": "Bijan Robinson 60+ rush yds (-115)", "price": -115,
+		"stake": 25.0, "bankroll": "real money", "predicted": 0.58,
+		"narrative": "volume favorite", "week": 1,
+	}
+	code, out := post(t, ts, "/api/place", body)
+	if code != 200 {
+		t.Fatalf("POST /api/place = %d: %v", code, out)
+	}
+	if out["ok"] != true {
+		t.Fatalf("place response missing ok:true: %v", out)
+	}
+	if id, _ := out["id"].(string); id == "" {
+		t.Fatalf("place response missing a non-empty id: %v", out)
+	}
+
+	// Core side: the identical inputs through journal.Place on a second pair of
+	// temp files. No book, so no ledger draw -- the GUI request carries no book
+	// either, so the two are placed under matching conditions.
+	coreBet := filepath.Join(dir, "core-bet.jsonl")
+	coreLedger := filepath.Join(dir, "core-ledger.jsonl")
+	b := betlog.Bet{
+		Selection: "Bijan Robinson 60+ rush yds (-115)", Price: wager.American(-115),
+		Bankroll: "real money", Stake: 25, Predicted: 0.58,
+		Narrative: "volume favorite", Week: 1,
+	}
+	if _, err := journal.Place(coreBet, coreLedger, journal.PlaceRequest{Bet: b}, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+
+	guiBets, err := betlog.Load(guiBet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	coreBets, err := betlog.Load(coreBet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(guiBets) != 1 || len(coreBets) != 1 {
+		t.Fatalf("expected one bet in each log, got gui=%d core=%d", len(guiBets), len(coreBets))
+	}
+	g, c := guiBets[0].Bet, coreBets[0].Bet
+	if g.Selection != c.Selection {
+		t.Errorf("selection: gui %q vs core %q", g.Selection, c.Selection)
+	}
+	if g.Price != c.Price {
+		t.Errorf("price: gui %v vs core %v", g.Price, c.Price)
+	}
+	if g.Stake != c.Stake {
+		t.Errorf("stake: gui %v vs core %v", g.Stake, c.Stake)
+	}
 }
