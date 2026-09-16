@@ -130,15 +130,25 @@ func Settle(betlogPath, ledgerPath string, id string, result betlog.Result, retu
 		// Resolve each lot's book from the events that created it, so a returns lot
 		// can be booked to the same place the stake was drawn from. betlog does not
 		// record the book, so it must come from the ledger.
+		//
+		// A lot is born two ways: a deposit/grant/convert mints it via Creates, and
+		// a winning settle pays it out via Returns. Both must be mapped -- a stake
+		// drawn from earlier winnings references a Returns-created lot, and missing
+		// that leaves the computed returns lot with no book (the settle then fails).
 		bookByLot := map[string]string{}
-		for _, e := range evs {
-			if e.Creates != nil {
-				lid := e.Creates.ID
-				if lid == "" {
-					lid = e.ID
-				}
-				bookByLot[lid] = e.Creates.Book
+		record := func(l *ledger.Lot, eventID string) {
+			if l == nil {
+				return
 			}
+			lid := l.ID
+			if lid == "" {
+				lid = eventID
+			}
+			bookByLot[lid] = l.Book
+		}
+		for _, e := range evs {
+			record(e.Creates, e.ID)
+			record(e.Returns, e.ID)
 		}
 		hasPlace := false
 		placeBook := ""
