@@ -23,7 +23,7 @@ func boardReport(args []string) error {
 	fs := flag.NewFlagSet("board report", flag.ExitOnError)
 	dir := fs.String("dir", defaultBoardDir, "directory holding the week files")
 	week := fs.Int("week", 0, "week to report on (required)")
-	book := fs.String("book", "", "which book's prices to read (required unless -books)")
+	book := fs.String("book", "", "which book's prices to read (default draftkings)")
 	books := fs.String("books", "", "several books, pooled: fanatics,bet365 (a ticket still lives at one)")
 	stake := fs.Float64("stake", 25, "bonus bet face value, when not deploying a bankroll")
 	funds := fs.Float64("funds", 0, "bankroll to deploy at -book; with this, stake is derived rather than given")
@@ -495,29 +495,6 @@ func matchup(l board.GameLine) string {
 func price(a wager.American) string { return fmt.Sprintf("%+d", a) }
 
 func money(v float64) string { return fmt.Sprintf("$%.2f", v) }
-
-// coverageTable lists what each book actually has for a week, so the answer to
-// "which book?" is on screen instead of being guessed at.
-func coverageTable(doc *board.Doc, week int) string {
-	cov := doc.Coverage()
-	total := len(doc.Games)
-	var b strings.Builder
-	fmt.Fprintf(&b, "\n  week %02d has %d games. Prices on hand:\n\n", week, total)
-	for _, bk := range board.Books {
-		note := ""
-		switch {
-		case bk == board.Consensus:
-			note = "  (reference only -- not a book you can bet)"
-		case cov[bk] == 0:
-			note = "  (nothing entered)"
-		case cov[bk] < total:
-			note = "  (partial)"
-		}
-		fmt.Fprintf(&b, "    %-12s %2d/%d%s\n", bk, cov[bk], total, note)
-	}
-	fmt.Fprintf(&b, "\n  e.g. edgectl board report -week %d -book fanatics\n", week)
-	return b.String()
-}
 
 // splitCSV turns a comma list into trimmed, non-empty entries.
 func splitCSV(v string) []string {
