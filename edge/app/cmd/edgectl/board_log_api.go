@@ -156,6 +156,9 @@ type placeReq struct {
 	// showing; the period report attributes the bet by it rather than by the
 	// date it was logged. Zero (unsent) leaves the bet untagged.
 	Week int `json:"week"`
+	// Boost is an optional boost lot id to apply to this wager; the core
+	// validates and consumes it.
+	Boost string `json:"boost"`
 }
 
 func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
@@ -204,7 +207,7 @@ func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
 	// the safe order: a failed debit leaves no betlog entry, so the two logs can
 	// never disagree with no record of why.
 	id, err := journal.Place(s.betlogPath, s.ledgerPath, journal.PlaceRequest{
-		Bet: b, Book: req.Book,
+		Bet: b, Book: req.Book, BoostLotID: req.Boost,
 	}, time.Now())
 	if err != nil {
 		httpError(w, http.StatusConflict, err.Error())
