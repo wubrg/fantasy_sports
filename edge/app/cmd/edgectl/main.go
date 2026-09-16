@@ -53,6 +53,8 @@ func main() {
 		err = boardCmd(os.Args[2:])
 	case "ledger":
 		err = ledgerCmd(os.Args[2:])
+	case "bet":
+		err = betCmd(os.Args[2:])
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -168,6 +170,13 @@ func usage() {
         Balances are replayed from the log rather than stored, so -as-of answers
         what you held on a past date. expiring is the one that earns its keep —
         every meaningful loss last campaign was a deadline, not a bad price.
+
+  edgectl bet place|settle [-betlog ~/fanatics-bonus.jsonl] [-ledger ~/bankroll.jsonl]
+        The blessed way to strike or settle a wager: one call writes the betlog
+        and the bankroll together, so the two can never disagree. place debits
+        the named -book (and consumes a -boost lot); settle records the outcome
+        and any -returns. Raw "ledger add -kind place" is the low-level escape
+        hatch that touches the ledger only.
 
   edgectl log list|settle|score -file <path>
         The calibration log. Predictions are recorded before the outcome and

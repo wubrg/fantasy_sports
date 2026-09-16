@@ -116,7 +116,7 @@ func firstNonEmpty(vs ...string) string {
 func ledgerAdd(args []string) error {
 	fs := flag.NewFlagSet("ledger add", flag.ExitOnError)
 	path := fs.String("file", defaultLedgerPath(), "path to the bankroll log")
-	kind := fs.String("kind", "", "deposit, withdraw, grant, convert, place, settle or expire (required)")
+	kind := fs.String("kind", "", "deposit, withdraw, grant, convert, place, settle or expire (required; 'place' writes the ledger ONLY — use 'edgectl bet place' to also record the betlog)")
 	book := fs.String("book", "", "sportsbook holding the asset")
 	asset := fs.String("asset", "", "asset type: cash, bonus, boost — or any other name you need")
 	amount := fs.Float64("amount", 0, "amount of the asset")
