@@ -466,3 +466,48 @@ func TestSettle_explicitReturnsUsedUnchanged(t *testing.T) {
 		t.Fatalf("explicit returns not used unchanged: %+v", r)
 	}
 }
+
+// A stake drawn from earlier winnings (a lot created by a prior settle's
+// Returns, not a grant) must still resolve its book, so a won bet funded from
+// winnings books its returns correctly rather than failing on an empty book.
+func TestSettle_returnsBookResolvesFromWinningsLot(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	grant(t, lg, "dk-seed", "draftkings", ledger.Cash, 10)
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+
+	// Bet 1: win a cash bet -> pays out a winnings (Returns) cash lot at draftkings.
+	id1, err := Place(bl, lg, PlaceRequest{
+		Bet:  betlog.Bet{Selection: "seed win", Price: wager.American(100), Bankroll: "real money", Stake: 10, Week: 1},
+		Book: "draftkings",
+	}, now)
+	if err != nil {
+		t.Fatalf("Place bet1: %v", err)
+	}
+	if err := Settle(bl, lg, id1, betlog.Won, nil, "", now); err != nil {
+		t.Fatalf("Settle bet1: %v", err)
+	}
+
+	// Bet 2: stake it from that winnings lot (draftkings cash is now the payout,
+	// not the consumed grant) and win.
+	id2, err := Place(bl, lg, PlaceRequest{
+		Bet:  betlog.Bet{Selection: "spend winnings", Price: wager.American(100), Bankroll: "real money", Stake: 10, Week: 1},
+		Book: "draftkings",
+	}, now)
+	if err != nil {
+		t.Fatalf("Place bet2: %v", err)
+	}
+	if err := Settle(bl, lg, id2, betlog.Won, nil, "", now); err != nil {
+		t.Fatalf("Settle bet2 (winnings-sourced stake): %v", err)
+	}
+
+	r := settleReturns(t, lg, id2)
+	if r == nil {
+		t.Fatal("expected computed returns on the winnings-sourced won bet")
+	}
+	if r.Book != "draftkings" {
+		t.Fatalf("returns book = %q, want draftkings (resolved from a Returns-created lot)", r.Book)
+	}
+	if r.Amount != 20 {
+		t.Fatalf("returns amount = %v, want 20", r.Amount)
+	}
+}
