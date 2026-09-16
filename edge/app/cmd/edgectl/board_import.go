@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"edge/internal/board"
 )
@@ -20,7 +21,7 @@ func boardImport(args []string) error {
 	flags := flag.NewFlagSet("board import", flag.ExitOnError)
 	dir := flags.String("dir", defaultBoardDir, "directory holding the week files")
 	week := flags.Int("week", 0, "week to import into (required)")
-	book := flags.String("book", "", "book to write, e.g. fanatics (required)")
+	book := flags.String("book", board.DefaultBook, "book to write (default draftkings)")
 	file := flags.String("file", "", "file holding the blob (default: stdin)")
 	dry := flags.Bool("n", false, "show the diff and write nothing")
 	if err := flags.Parse(args); err != nil {
@@ -29,8 +30,8 @@ func boardImport(args []string) error {
 	if *week <= 0 {
 		return fmt.Errorf("-week is required")
 	}
-	if *book == "" {
-		return fmt.Errorf("-book is required (one of: %v)", board.Books)
+	if !slices.Contains(board.Books, *book) {
+		return fmt.Errorf("unknown book %q (one of: %v)", *book, board.Books)
 	}
 
 	blob, err := readBlob(*file)

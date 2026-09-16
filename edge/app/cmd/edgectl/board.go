@@ -18,7 +18,7 @@ const defaultSchedule = "../model/data/raw/games.csv"
 
 func boardCmd(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("board needs a mode: 'scaffold', 'validate', 'report', 'serve' or 'import'")
+		return fmt.Errorf("board needs a mode: 'scaffold', 'validate', 'report', 'serve', 'import' or 'mirror'")
 	}
 	switch args[0] {
 	case "scaffold":
@@ -31,8 +31,10 @@ func boardCmd(args []string) error {
 		return boardServe(args[1:])
 	case "import":
 		return boardImport(args[1:])
+	case "mirror":
+		return boardMirror(args[1:])
 	default:
-		return fmt.Errorf("unknown board mode %q (want 'scaffold', 'validate', 'report', 'serve' or 'import')", args[0])
+		return fmt.Errorf("unknown board mode %q (want 'scaffold', 'validate', 'report', 'serve', 'import' or 'mirror')", args[0])
 	}
 }
 
