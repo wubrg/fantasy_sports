@@ -676,6 +676,7 @@ function wireBetEntry() {
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
       loadLog();
+      loadBoostOptions(); // a consumed boost should drop off the dropdown
     } catch (e) {
       btn.disabled = false;
       alert("not logged: " + e.message);
@@ -1002,14 +1003,14 @@ function renderPeriod(r) {
 }
 
 async function loadFunds() {
-  el.funds.innerHTML = `<p class="muted">reading the bankroll\u2026</p>`;
+  el.funds.innerHTML = `<p class="muted">reading boosts\u2026</p>`;
   try {
     const res = await fetch(BASE + "api/funds");
     const r = await res.json();
     if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
     renderFunds(r);
   } catch (e) {
-    el.funds.innerHTML = `<p class="muted">could not read the bankroll: ${e.message}</p>`;
+    el.funds.innerHTML = `<p class="muted">could not read boosts: ${e.message}</p>`;
   }
 }
 
