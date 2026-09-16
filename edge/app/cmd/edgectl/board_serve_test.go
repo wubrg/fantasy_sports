@@ -228,3 +228,25 @@ func TestServeImportPreviewThenApply(t *testing.T) {
 		t.Errorf("mismatched blob: got %d %v, want 400", code, body)
 	}
 }
+
+func TestServeReportDefaultsToDraftKings(t *testing.T) {
+	ts, _ := newTestServer(t) // existing helper at board_serve_test.go:16 (seeds a 2-game week 1, serves it; ts auto-closes via t.Cleanup)
+	// No ?book / ?books — the report must default to draftkings, not consensus.
+	res, err := http.Get(ts.URL + "/api/report?week=1")
+	if err != nil {
+		t.Fatalf("GET /api/report: %v", err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		t.Fatalf("status = %d, want 200", res.StatusCode)
+	}
+	var out struct {
+		Book string `json:"book"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&out); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if out.Book != "draftkings" {
+		t.Fatalf("report book = %q, want draftkings", out.Book)
+	}
+}
