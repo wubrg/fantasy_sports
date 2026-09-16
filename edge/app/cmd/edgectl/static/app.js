@@ -39,7 +39,6 @@ const el = {
   props: document.getElementById("props"),
   funds: document.getElementById("funds"),
   period: document.getElementById("period"),
-  book: document.getElementById("book"),
   rows: document.getElementById("rows"),
   beliefs: document.getElementById("beliefs"),
   help: document.getElementById("help"),
@@ -68,7 +67,10 @@ function load() {
   try { s = JSON.parse(localStorage.getItem(STORE) || "{}"); } catch (e) { s = {}; }
   return {
     week: Number(s.week) || 1,
-    book: s.book || "fanatics",
+    // The board prices one book: DraftKings. The selector that used to switch
+    // books is gone, so this is pinned rather than remembered -- render() and
+    // saveRow() read it and always send draftkings to /api/price.
+    book: "draftkings",
   };
 }
 
@@ -1285,17 +1287,6 @@ el.views.addEventListener("click", (e) => {
 el.week.addEventListener("change", () => {
   state.week = Number(el.week.value); save(); refresh();
 });
-el.book.addEventListener("change", () => {
-  state.book = el.book.value; save();
-  // Both views are book-scoped, so whichever is showing has to follow the
-  // selector. Rebuilding the hidden one as well would fetch a report nobody
-  // is looking at.
-  // Changing the entry book resets the pool to it. Leaving a stale pool behind
-  // would mean the bets tab quietly reporting on books the header no longer
-  // names.
-  state.books = [state.book];
-  if (state.view === "bets") loadReport(); else render();
-});
 
 
 function fillSelect(sel, values, current, label) {
@@ -1371,11 +1362,10 @@ async function refresh(retried) {
     syncView();
 
     state.week = fillSelect(el.week, data.weeks, data.week, (w) => "Week " + w) * 1;
-    // consensus is a generated reference column, not a book you can bet or
-    // edit, so it is never offered as a target.
-    const books = data.books.filter((b) => b !== "consensus");
-    state.book = fillSelect(el.book, books, state.book, (b) => b);
-        save();
+    // state.book is pinned to draftkings (see load); there is no book selector
+    // to populate. data.books still carries every book for the report's chip
+    // pool and the consensus reference column render() reads.
+    save();
     render();
   } catch (e) {
     // A remembered week whose file has since been removed would otherwise
