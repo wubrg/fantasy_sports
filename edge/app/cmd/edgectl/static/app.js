@@ -612,6 +612,7 @@ function betEntryForm() {
       <input id="e-stake" inputmode="decimal" placeholder="stake 0.50">
       <select id="e-bank"><option value="bonus bet">bonus bet</option><option value="real money">real money</option></select>
       <select id="e-book">${books.map(b => `<option>${b}</option>`).join("")}</select>
+      <select id="e-boost"><option value="">— no boost</option></select>
       <input id="e-week" inputmode="numeric" value="${wk}" title="NFL week">
       <button type="button" id="e-add">log bet</button>
     </div>
@@ -624,6 +625,32 @@ function betEntryForm() {
 function wireBetEntry() {
   const btn = document.getElementById("e-add");
   if (!btn) return;
+  const boostSel = document.getElementById("e-boost");
+  const bookSel = document.getElementById("e-book");
+  let allBoosts = [];
+  async function loadBoostOptions() {
+    try {
+      const res = await fetch(BASE + "api/boosts");
+      const r = await res.json();
+      allBoosts = (r && r.boosts) || [];
+    } catch (e) { allBoosts = []; }
+    fillBoostOptions();
+  }
+  function fillBoostOptions() {
+    if (!boostSel) return;
+    let book = bookSel ? bookSel.value : "";
+    if (book.startsWith("—")) book = "";
+    const opts = ['<option value="">— no boost</option>'];
+    for (const b of allBoosts) {
+      if (b.kind !== "boost") continue; // no-sweat tokens are a different flow
+      if (book && b.book !== book) continue;
+      const label = `${b.book} ${b.label || (Math.round((b.percent || 0) * 100) + "% boost")}`;
+      opts.push(`<option value="${b.id}">${label}</option>`);
+    }
+    boostSel.innerHTML = opts.join("");
+  }
+  if (bookSel) bookSel.addEventListener("change", fillBoostOptions);
+  loadBoostOptions();
   btn.addEventListener("click", async () => {
     const sel = document.getElementById("e-sel").value.trim();
     const price = Number(document.getElementById("e-price").value);
@@ -642,6 +669,7 @@ function wireBetEntry() {
           selection: sel, price, stake,
           bankroll: document.getElementById("e-bank").value,
           book, week: Number(document.getElementById("e-week").value) || 0,
+          boost: (document.getElementById("e-boost") || {}).value || "",
           narrative: "Entered from the log tab.",
         }),
       });
