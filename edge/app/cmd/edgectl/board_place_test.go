@@ -78,6 +78,64 @@ func TestPlaceDrawsMatchingAsset(t *testing.T) {
 	}
 }
 
+// TestPlace_appliesBoostFromRequest confirms a boost lot id sent with a place
+// request is threaded through to journal.Place, which validates and consumes
+// it against the resulting wager.
+func TestPlace_appliesBoostFromRequest(t *testing.T) {
+	dir := t.TempDir()
+	lg := filepath.Join(dir, "bank.jsonl")
+	// Seed a draftkings cash lot and a draftkings boost lot.
+	must := func(e ledger.Event) {
+		if err := ledger.AppendFile(lg, e); err != nil {
+			t.Fatal(err)
+		}
+	}
+	must(ledger.Event{Kind: ledger.KindGrant, ID: "dk-cash", Time: time.Now(),
+		Creates: &ledger.Lot{ID: "dk-cash", Book: "draftkings", Asset: ledger.Cash, Amount: 50}})
+	must(ledger.Event{Kind: ledger.KindGrant, ID: "dk-boost", Time: time.Now(),
+		Creates: &ledger.Lot{ID: "dk-boost", Book: "draftkings", Asset: ledger.Boost,
+			Boost: &ledger.BoostSpec{Percent: 0.2, MaxStake: 50, MinOdds: -300}}})
+
+	// newBoardServer always resolves to defaultLedger()/defaultBetlog() -- it
+	// takes no ledger path argument -- so, as with TestPlaceDrawsMatchingAsset
+	// above, the server is built directly with the temp paths this test needs.
+	srv := &boardServer{ledgerPath: lg, betlogPath: filepath.Join(dir, "betlog.jsonl")}
+	mux := http.NewServeMux()
+	if err := srv.routes(mux); err != nil {
+		t.Fatal(err)
+	}
+	ts := httptest.NewServer(mux)
+	t.Cleanup(ts.Close)
+
+	code, body := post(t, ts, "/api/place", map[string]any{
+		"selection": "MHJ ATD", "price": -110, "stake": 10,
+		"bankroll": "real money", "book": "draftkings", "week": 1,
+		"boost": "dk-boost",
+	})
+	if code != 200 {
+		t.Fatalf("place status %d: %v", code, body)
+	}
+	id, _ := body["id"].(string)
+	if id == "" {
+		t.Fatal("no wager id returned")
+	}
+
+	// The boost lot must have been consumed as a ledger place tied to the wager.
+	evs, err := ledger.Load(lg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	consumed := false
+	for _, e := range evs {
+		if e.Kind == ledger.KindPlace && e.Lot == "dk-boost" && e.Wager == id {
+			consumed = true
+		}
+	}
+	if !consumed {
+		t.Fatal("boost lot was not consumed against the wager")
+	}
+}
+
 func mustBal(t *testing.T, srv *boardServer) ledger.Position {
 	t.Helper()
 	events, err := ledger.Load(srv.ledgerPath)

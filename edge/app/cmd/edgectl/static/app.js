@@ -612,6 +612,7 @@ function betEntryForm() {
       <input id="e-stake" inputmode="decimal" placeholder="stake 0.50">
       <select id="e-bank"><option value="bonus bet">bonus bet</option><option value="real money">real money</option></select>
       <select id="e-book">${books.map(b => `<option>${b}</option>`).join("")}</select>
+      <select id="e-boost"><option value="">— no boost</option></select>
       <input id="e-week" inputmode="numeric" value="${wk}" title="NFL week">
       <button type="button" id="e-add">log bet</button>
     </div>
@@ -624,6 +625,32 @@ function betEntryForm() {
 function wireBetEntry() {
   const btn = document.getElementById("e-add");
   if (!btn) return;
+  const boostSel = document.getElementById("e-boost");
+  const bookSel = document.getElementById("e-book");
+  let allBoosts = [];
+  async function loadBoostOptions() {
+    try {
+      const res = await fetch(BASE + "api/boosts");
+      const r = await res.json();
+      allBoosts = (r && r.boosts) || [];
+    } catch (e) { allBoosts = []; }
+    fillBoostOptions();
+  }
+  function fillBoostOptions() {
+    if (!boostSel) return;
+    let book = bookSel ? bookSel.value : "";
+    if (book.startsWith("—")) book = "";
+    const opts = ['<option value="">— no boost</option>'];
+    for (const b of allBoosts) {
+      if (b.kind !== "boost") continue; // no-sweat tokens are a different flow
+      if (book && b.book !== book) continue;
+      const label = `${b.book} ${b.label || (Math.round((b.percent || 0) * 100) + "% boost")}`;
+      opts.push(`<option value="${b.id}">${label}</option>`);
+    }
+    boostSel.innerHTML = opts.join("");
+  }
+  if (bookSel) bookSel.addEventListener("change", fillBoostOptions);
+  loadBoostOptions();
   btn.addEventListener("click", async () => {
     const sel = document.getElementById("e-sel").value.trim();
     const price = Number(document.getElementById("e-price").value);
@@ -642,12 +669,14 @@ function wireBetEntry() {
           selection: sel, price, stake,
           bankroll: document.getElementById("e-bank").value,
           book, week: Number(document.getElementById("e-week").value) || 0,
+          boost: (document.getElementById("e-boost") || {}).value || "",
           narrative: "Entered from the log tab.",
         }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
       loadLog();
+      loadBoostOptions(); // a consumed boost should drop off the dropdown
     } catch (e) {
       btn.disabled = false;
       alert("not logged: " + e.message);
@@ -974,21 +1003,19 @@ function renderPeriod(r) {
 }
 
 async function loadFunds() {
-  el.funds.innerHTML = `<p class="muted">reading the bankroll\u2026</p>`;
+  el.funds.innerHTML = `<p class="muted">reading boosts\u2026</p>`;
   try {
     const res = await fetch(BASE + "api/funds");
     const r = await res.json();
     if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
     renderFunds(r);
   } catch (e) {
-    el.funds.innerHTML = `<p class="muted">could not read the bankroll: ${e.message}</p>`;
+    el.funds.innerHTML = `<p class="muted">could not read boosts: ${e.message}</p>`;
   }
 }
 
 function renderFunds(r) {
-  const m = money;
   const books = (data && data.books) || ["fanatics"];
-  const bal = r.balances || [];
   const exp = r.expiring || [];
 
   el.funds.innerHTML = `
@@ -1004,46 +1031,11 @@ function renderFunds(r) {
       price. This is the part of a bankroll worth looking at.</p>
     </section>` : ""}
 
-    <section class="rep">
-      <h2>balances</h2>
-      ${bal.length ? (() => {
-        // Cash is money you can bet right now; a bonus or a boost is promo
-        // credit that only becomes money if a bet wins. Listing them together
-        // made a book with $20 cash and a $50 bonus read like $70 of funds, so
-        // the two are split and only cash carries a spendable total.
-        const row = b => `<div class="dog">
-        <span class="team">${b.book}</span>
-        <span class="price">${b.asset}</span>
-        <span class="conv">${b.units ? b.units + " unit(s)" : m(b.amount)}</span>
-        ${b.units ? "" : `<button type="button" class="fix" data-book="${b.book}"
-          data-asset="${b.asset}" data-amt="${b.amount}">fix</button>`}
-      </div>`;
-        const cash = bal.filter(b => b.asset === "cash");
-        const promo = bal.filter(b => b.asset !== "cash");
-        const cashTotal = cash.reduce((s, b) => s + (Number(b.amount) || 0), 0);
-        return `<h3 class="sub">cash — <b>${m(cashTotal)}</b> available</h3>
-      ${cash.length ? cash.map(row).join("") : `<p class="muted">No spendable cash.</p>`}
-      <h3 class="sub">bonus &amp; promos</h3>
-      ${promo.length ? promo.map(row).join("") : `<p class="muted">None.</p>`}`;
-      })() : `<p class="muted">Nothing recorded yet.</p>`}
-      <p class="muted">Cash is what you can bet now; bonuses and boosts are promo
-      credit, counted apart. Amounts and units are not addable.</p>
-    </section>
-
     <div id="boostbox"></div>
 
-    <section class="rep">
-      <h2>declare funds</h2>
-      <div class="fundform">
-        <select id="f-book">${books.map(b => `<option>${b}</option>`).join("")}</select>
-        <select id="f-asset"><option>bonus</option><option>cash</option><option>fancash</option></select>
-        <input id="f-amt" inputmode="decimal" placeholder="50.00">
-        <input id="f-exp" inputmode="numeric" placeholder="expires 2026-08-26">
-        <button type="button" id="f-add">add</button>
-      </div>
-      <p class="muted">Recorded as a grant, so the balance stays derived from what
-      arrived and what has been spent since.</p>
-    </section>
+    <p class="muted">Cash and bonus balances live in <code>edgectl ledger
+    balances</code> — the money accounting moved to the CLI by design. This
+    view holds only the boosts and no-sweat tokens on hand.</p>
 
     <section class="rep">
       <h2>declare a boost</h2>
@@ -1073,43 +1065,6 @@ function renderFunds(r) {
       <p class="muted">A no-sweat refunds your stake as a bonus if the bet loses —
       a contingent right, not money. Enter the stake it covers.</p>
     </section>`;
-
-  // Correcting a balance appends a compensating entry rather than editing
-  // one. A log you cannot fix gets abandoned the first time a number is
-  // fat-fingered; a log you can edit cannot answer "what did I hold on the
-  // 20th", which is the only reason to keep one. So a mistake and its
-  // correction both stay on the record.
-  //
-  // You state what the balance SHOULD be and the difference is derived --
-  // asking for a delta would mean doing arithmetic against the number you
-  // have just discovered you got wrong.
-  for (const f of el.funds.querySelectorAll(".fix")) {
-    f.addEventListener("click", async () => {
-      const cur = Number(f.dataset.amt);
-      const raw = prompt(
-        `Correct balance for ${f.dataset.book} ${f.dataset.asset}?\n` +
-        `Recorded as ${m(cur)}. Enter what it actually is.`, cur.toFixed(2));
-      if (raw === null) return;
-      const target = Number(raw);
-      if (Number.isNaN(target) || target < 0) { alert("not an amount"); return; }
-      f.disabled = true;
-      try {
-        const res = await fetch(BASE + "api/funds/adjust", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            book: f.dataset.book, asset: f.dataset.asset, target: target,
-          }),
-        });
-        const body = await res.json();
-        if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
-        loadFunds();
-      } catch (e) {
-        f.disabled = false;
-        alert("not corrected: " + e.message);
-      }
-    });
-  }
 
   loadBoosts().then((html) => {
     const box = document.getElementById("boostbox");
@@ -1199,31 +1154,6 @@ function renderFunds(r) {
       loadFunds();
     } catch (e) {
       nadd.disabled = false;
-      alert("not recorded: " + e.message);
-    }
-  });
-
-  const btn = document.getElementById("f-add");
-  if (btn) btn.addEventListener("click", async () => {
-    const amt = Number(document.getElementById("f-amt").value);
-    if (!amt || amt <= 0) { alert("amount?"); return; }
-    btn.disabled = true;
-    try {
-      const res = await fetch(BASE + "api/funds", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          book: document.getElementById("f-book").value,
-          asset: document.getElementById("f-asset").value,
-          amount: amt,
-          expires: document.getElementById("f-exp").value.trim(),
-        }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
-      loadFunds();
-    } catch (e) {
-      btn.disabled = false;
       alert("not recorded: " + e.message);
     }
   });
