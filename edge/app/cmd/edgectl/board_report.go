@@ -76,14 +76,14 @@ func boardReport(args []string) error {
 		return err
 	}
 
-	// -book is required rather than defaulting.
+	// -book defaults to DraftKings rather than being required.
 	//
 	// It used to default to consensus, which is prefilled from the schedule and
 	// so is always complete -- meaning the tool produced a confident-looking
-	// report even when not one real price had been entered. Defaulting to the
-	// one column that is never empty is the most misleading possible default.
+	// report even when not one real price had been entered. DraftKings is the
+	// operator's standing price source, so it stands in for consensus now.
 	if len(bookList) == 0 {
-		return fmt.Errorf("-book or -books is required\n%s", coverageTable(doc, *week))
+		bookList = []string{board.DefaultBook}
 	}
 
 	obj, err := board.ParseObjective(*objective)

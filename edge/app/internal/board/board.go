@@ -81,6 +81,12 @@ var Books = []string{
 // place you can bet.
 const Consensus = "consensus"
 
+// DefaultBook is the book the tools read when none is named. DraftKings is the
+// operator's standing price source and stands in for consensus when computing
+// edge/EV; a genuine consensus column still exists but is filled only when
+// multi-book prices are pulled, which is not routine.
+const DefaultBook = "draftkings"
+
 // Parse reads a week file.
 func Parse(r io.Reader) (*Doc, error) {
 	dec := yaml.NewDecoder(r)

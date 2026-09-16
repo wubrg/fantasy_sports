@@ -150,7 +150,7 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 		if b := q.Get("book"); b != "" {
 			books = []string{b}
 		} else {
-			books = []string{board.Consensus}
+			books = []string{board.DefaultBook}
 		}
 	}
 	shots := 4
