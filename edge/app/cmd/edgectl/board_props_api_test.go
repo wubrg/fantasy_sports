@@ -96,3 +96,20 @@ func TestHandlePropsEmptyAndUnconfigured(t *testing.T) {
 		t.Errorf("empty folder should yield no groups, got %d", len(r.Groups))
 	}
 }
+
+func TestCaptureWeek(t *testing.T) {
+	cases := map[string]int{
+		"dk_week2_tnf.har":        2,
+		"dk_wk3_sunday.har":       3,
+		"dk_w1_early.json":        1,
+		"dk_week10_mnf.har":       10, // full number, not week-1
+		"showdown_week2.har":      2,  // the w's in "showdown" have no trailing digit
+		"draftkings_2026_det.har": 0,  // no week/wk/w token before the digits
+		"props.har":               0,
+	}
+	for name, want := range cases {
+		if got := captureWeek(name); got != want {
+			t.Errorf("captureWeek(%q) = %d, want %d", name, got, want)
+		}
+	}
+}

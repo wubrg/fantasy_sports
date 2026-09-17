@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"time"
@@ -11,6 +12,21 @@ import (
 	"edge/internal/oddspull"
 	"edge/internal/wager"
 )
+
+// captureWeekRe pulls an NFL week out of an ingest capture's filename, e.g.
+// "dk_week2_tnf.har" -> 2. It matches week / wk / w immediately followed by the
+// number (leading zeros allowed), so a capture named for a week is scoped to it;
+// a filename with no such token returns 0 and shows in every week.
+var captureWeekRe = regexp.MustCompile(`(?i)(?:week|wk|w)0*(\d+)`)
+
+func captureWeek(name string) int {
+	m := captureWeekRe.FindStringSubmatch(name)
+	if m == nil {
+		return 0
+	}
+	n, _ := strconv.Atoi(m[1])
+	return n
+}
 
 // The props tab reads DraftKings captures the operator drops into an ingest
 // folder and prices them. Nothing is uploaded through the browser: the operator
@@ -54,6 +70,10 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// An optional ?week scopes the tab to captures named for that week; a capture
+	// with no week token in its name is shown regardless.
+	week, _ := strconv.Atoi(r.URL.Query().Get("week"))
+
 	// Oldest first, so a newer capture of the same market overwrites the older
 	// one and the tab shows the latest price.
 	type fileAt struct {
@@ -76,6 +96,11 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 	var sources []map[string]string
 	var newest time.Time
 	for _, f := range files {
+		if week > 0 {
+			if cw := captureWeek(filepath.Base(f.path)); cw != 0 && cw != week {
+				continue // a capture named for a different week
+			}
+		}
 		data, err := os.ReadFile(f.path)
 		if err != nil {
 			continue
@@ -150,7 +175,7 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 		asOf = newest.Format("2006-01-02 15:04")
 	}
 	writeJSON(w, map[string]any{
-		"dir": s.ingestDir, "groups": groups, "sources": sources,
+		"dir": s.ingestDir, "week": week, "groups": groups, "sources": sources,
 		"boost_pct": defaultBoostPct, "as_of": asOf, "note": note,
 	})
 }

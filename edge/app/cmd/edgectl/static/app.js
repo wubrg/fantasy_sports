@@ -890,7 +890,7 @@ function renderBoosts(r) {
 async function loadProps() {
   el.props.innerHTML = `<p class="muted">reading the ingest folder…</p>`;
   try {
-    const res = await fetch(BASE + "api/props");
+    const res = await fetch(BASE + "api/props?week=" + encodeURIComponent(state.week));
     const r = await res.json();
     if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
     renderProps(r);
@@ -1217,6 +1217,7 @@ el.views.addEventListener("click", (e) => {
 el.week.addEventListener("change", () => {
   state.week = Number(el.week.value); save(); refresh();
   if (state.view === "log") loadLog(); // the log is scoped to the selected week
+  if (state.view === "props") loadProps(); // props captures are scoped by filename week
 });
 
 
