@@ -1066,10 +1066,11 @@ func Period(events []Event, week int, start, end time.Time) (Report, error) {
 	type agg struct {
 		cash, bonus float64   // stake by funding source
 		wk          int       // explicit week tag, 0 if none
-		placed      time.Time // earliest place, the timestamp fallback keys on
+		placed      time.Time // earliest place, the fallback key for an open untagged wager
 		hasPlace    bool
 		settled     bool
-		returns     float64 // cash handed back at settlement
+		settledAt   time.Time // when it resolved; the fallback key for a settled untagged wager
+		returns     float64   // cash handed back at settlement
 	}
 	wagers := map[string]*agg{}
 	order := []string{} // deterministic iteration
@@ -1120,6 +1121,7 @@ func Period(events []Event, week int, start, end time.Time) (Report, error) {
 		case KindSettle:
 			w := get(e.Wager)
 			w.settled = true
+			w.settledAt = e.Time
 			if e.Returns != nil {
 				if e.Returns.Asset == Cash {
 					w.returns += e.Returns.Amount
@@ -1133,18 +1135,25 @@ func Period(events []Event, week int, start, end time.Time) (Report, error) {
 		}
 	}
 
-	// Bucket each wager whole. It belongs to this period if its tag names the
-	// reported week; an untagged wager (legacy, or logged without a week) falls
-	// back to whether it was placed inside the window.
+	// Bucket each wager whole. A wager belongs to the football week it is FOR,
+	// which its week tag names directly. An untagged wager (legacy, or logged
+	// without a week) is attributed by when it SETTLES -- the week its games
+	// were played -- rather than when it was placed: an opt-in token struck in
+	// August but graded on a Week 1 Sunday is a Week 1 result, not an August
+	// one. An untagged wager still open has no settlement yet, so it falls back
+	// to its place time as the only key available.
 	for _, id := range order {
 		w := wagers[id]
 		if !w.hasPlace {
 			continue // a settle with no matching place moves no staked money here
 		}
 		var belongs bool
-		if week > 0 && w.wk != 0 {
+		switch {
+		case week > 0 && w.wk != 0:
 			belongs = w.wk == week
-		} else {
+		case w.settled:
+			belongs = in(w.settledAt)
+		default:
 			belongs = in(w.placed)
 		}
 		if !belongs {
