@@ -25,7 +25,22 @@ const (
 	// downside term. A bonus bet is positive EV on *any* market; the only
 	// question is how much of its face value converts to cash.
 	BonusBet
+
+	// NoSweat is a "no-sweat" / "bet-and-get" cash wager: the stake is real
+	// money, returned with profit on a win, but on a loss it comes back as a
+	// free bet rather than cash. That refund is worth less than its face -- only
+	// the profit portion converts, and imperfectly -- so the true downside is a
+	// fraction (1 - NoSweatConversion) of the stake, not the whole of it and not
+	// zero. It sits between RealMoney and BonusBet.
+	NoSweat
 )
+
+// NoSweatConversion is the share of a lost no-sweat stake that comes back as
+// usable value through the free-bet refund. edgectl's bonus math puts realised
+// free-bet conversion at 60-80% of face; 0.70 is the middle of that band and the
+// project standard. A losing no-sweat therefore costs (1 - NoSweatConversion) of
+// its stake in cash.
+const NoSweatConversion = 0.70
 
 func (b Bankroll) String() string {
 	switch b {
@@ -33,13 +48,15 @@ func (b Bankroll) String() string {
 		return "real money"
 	case BonusBet:
 		return "bonus bet"
+	case NoSweat:
+		return "no-sweat"
 	default:
 		return fmt.Sprintf("Bankroll(%d)", int(b))
 	}
 }
 
 func (b Bankroll) validate() error {
-	if b == RealMoney || b == BonusBet {
+	if b == RealMoney || b == BonusBet || b == NoSweat {
 		return nil
 	}
 	return fmt.Errorf("wager: unknown bankroll %d", int(b))
@@ -54,6 +71,9 @@ func EV(b Bankroll, p float64, odds American, stake float64) (float64, error) {
 	}
 	if b == BonusBet {
 		return EVBonusBet(p, odds, stake)
+	}
+	if b == NoSweat {
+		return EVNoSweat(p, odds, stake)
 	}
 	return EVRealMoney(p, odds, stake)
 }

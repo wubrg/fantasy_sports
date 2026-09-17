@@ -611,7 +611,7 @@ function betEntryForm() {
       <input id="e-price" inputmode="tel" placeholder="odds +240">
       <input id="e-stake" inputmode="decimal" placeholder="stake 0.50">
       <input id="e-pred" inputmode="decimal" placeholder="win % (opt)" title="your win-probability belief, e.g. 55">
-      <select id="e-bank"><option value="bonus bet">bonus bet</option><option value="real money">real money</option></select>
+      <select id="e-bank"><option value="bonus bet">bonus bet</option><option value="real money">real money</option><option value="no-sweat">no-sweat</option></select>
       <select id="e-book">${books.map(b => `<option>${b}</option>`).join("")}</select>
       <select id="e-boost"><option value="">— no boost</option></select>
       <input id="e-week" inputmode="numeric" value="${wk}" title="NFL week">
