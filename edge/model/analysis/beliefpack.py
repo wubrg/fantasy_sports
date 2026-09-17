@@ -116,6 +116,51 @@ def prior_season_coaches(season: int) -> dict:
     return out
 
 
+STAFF_DIR = Path(__file__).parent.parent.parent / "beliefs"
+
+
+def staff_table(season: int) -> dict:
+    """The season's coaching staff, from the tracked beliefs/staff-<season>.csv.
+
+    nflverse carries head coaches but no coordinator or play-caller table -- long
+    the pack's single largest gap, since pass rate over expectation is the
+    play-caller's signature, not the head coach's. This file supplies head_coach,
+    oc, dc and playcaller per team, hand-maintained and verified against real
+    sources. It is the source of truth for the head coach too, overriding the
+    games.csv column, so a correction lives in one tracked place rather than in
+    the gitignored cache.
+
+    The play-caller is the head coach or the OC by definition, so a row whose
+    playcaller is neither is a data error and raises here rather than shipping.
+    Returns {} when the file is absent, which leaves the pack on the games.csv
+    head coach and no coordinators -- the pre-staff-file behaviour.
+    """
+    path = STAFF_DIR / f"staff-{season}.csv"
+    if not path.exists():
+        return {}
+    out = {}
+    for r in csv.DictReader(path.open()):
+        team = r["team"].strip()
+        row = {k: r[k].strip() for k in ("head_coach", "oc", "dc", "playcaller")}
+        if row["playcaller"] not in (row["head_coach"], row["oc"]):
+            raise SystemExit(
+                f"staff-{season}.csv: {team} play-caller {row['playcaller']!r} is "
+                f"neither the head coach ({row['head_coach']!r}) nor the OC "
+                f"({row['oc']!r}); fix the row."
+            )
+        out[team] = row
+    return out
+
+
+def staff_provenance(season: int) -> dict:
+    """The sha of the staff file the pack embedded, so a staff edit shows as a diff."""
+    path = STAFF_DIR / f"staff-{season}.csv"
+    if not path.exists():
+        return {}
+    return {"file": f"beliefs/staff-{season}.csv",
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
 def definitions_block() -> dict:
     """The predicates, so a reader can be refused when they change.
 
@@ -243,6 +288,7 @@ def pack(season: int, week: int) -> dict:
     games = schedule(season, week)
     form, form_reason = prior_form(season, week)
     prior = prior_season_coaches(season)
+    staff = staff_table(season)
 
     out_games = []
     for g in games:
@@ -282,10 +328,18 @@ def pack(season: int, week: int) -> dict:
             # signature and no coordinator table exists in nflverse, so this
             # narrows the guessing without ending it. Saying so here keeps the
             # next reader from over-reading the field.
-            coach = g[f"{side}_coach"].strip()
+            # The staff file is the source of truth for the head coach; the
+            # games.csv column is the fallback when no staff file exists. Newness
+            # is still measured against last season's coaches from games.csv.
+            st = staff.get(team)
+            coach = st["head_coach"] if st else g[f"{side}_coach"].strip()
             if coach:
                 t["coach"] = coach
                 t["coach_is_new"] = (coach not in prior[team]) if prior.get(team) else None
+            if st:
+                t["playcaller"] = st["playcaller"]
+                t["oc"] = st["oc"]
+                t["dc"] = st["dc"]
             rest = g[f"{side}_rest"].strip()
             if rest:
                 t["rest_days"] = int(F.num(rest))
@@ -300,6 +354,7 @@ def pack(season: int, week: int) -> dict:
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "generated_by": "edge/model/analysis/beliefpack.py pack",
         "cache": cache_provenance(["games.csv", f"play_by_play_{season}.csv.gz"]),
+        "staff_source": staff_provenance(season),
         "definitions": definitions_block(),
         "base_rates": base_rates(),
         "spread_convention": "spread_line is the home team's expected margin; "
@@ -384,20 +439,27 @@ def render(p: dict, sha: str) -> str:
                  f"{g['spread_line'] if g['spread_line'] is not None else '—'} | "
                  f"{venue or '—'} |")
     L.append("")
-    L.append("## STAFF — who is coaching, and who is new")
+    L.append("## STAFF — who is coaching, who calls the offence, and who is new")
     L.append("")
-    L.append("Head coaches only. Pass rate over expectation is called by a coordinator, and no "
-             "coordinator table exists in the data this pack is built from — so a team keeping "
-             "its head coach is **not** evidence that it kept its play-caller.")
+    L.append("Head coach, offensive and defensive coordinator, and the **play-caller** — the "
+             "offensive-minded head coach where he calls it, otherwise the OC. Pass rate over "
+             "expectation is the play-caller's signature, so a change of head coach matters most "
+             "when it changed who calls the offence: read the play-caller column, not the head "
+             "coach's, for `pass_heavy`. **new to the team** is the head coach only.")
     L.append("")
-    L.append("| team | head coach | new to the team | rest days |")
-    L.append("|---|---|---|---|")
+    L.append("Coordinator and play-caller names are supplied context; they are **not** auto-checked "
+             "at ingest yet, so a `coaching` claim is still verified only against the head coach the "
+             "pack names. Do not restate these names as a checked claim.")
+    L.append("")
+    L.append("| team | head coach | play-caller | OC | DC | new to the team | rest days |")
+    L.append("|---|---|---|---|---|---|---|")
     for g in p["games"]:
         for team, t in g["teams"].items():
             if "coach" not in t:
                 continue
             isnew = {True: "**yes**", False: "no", None: "not known"}[t.get("coach_is_new")]
-            L.append(f"| {team} | {t['coach']} | {isnew} | "
+            L.append(f"| {team} | {t['coach']} | {t.get('playcaller', '—')} | "
+                     f"{t.get('oc', '—')} | {t.get('dc', '—')} | {isnew} | "
                      f"{t.get('rest_days', '—')} |")
     L.append("")
     L.append("## FORM — each team coming into this week, from earlier games only")
