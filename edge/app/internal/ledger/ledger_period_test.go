@@ -15,10 +15,10 @@ func placeWk(id string, when time.Duration, lot, wagerID string, amount float64,
 }
 
 // TestPeriodReport walks a two-week campaign with untagged bets, so attribution
-// falls back to the place date. The load-bearing case is the straddle: a bet
-// placed in week one but graded in week two belongs to week one whole — its
-// stake AND its P&L — because a wager is attributed to the week it was struck
-// for, not split across the boundary it happens to settle on.
+// falls back to the SETTLEMENT date — the week a wager's games were played. The
+// load-bearing case is the straddle: a bet placed in week one but graded in week
+// two belongs to week two whole — its stake AND its P&L — because an untagged
+// wager is attributed to the week it settles for, not the week it was struck.
 func TestPeriodReport(t *testing.T) {
 	day := 24 * time.Hour
 	events := []Event{
@@ -45,19 +45,22 @@ func TestPeriodReport(t *testing.T) {
 	}
 	wantReport(t, "week 1", week1, Report{
 		Deposits: 100, Withdrawals: 80,
-		StakedCash: 70, StakedBonus: 50, // p1 40 + p3 30 cash; p2 50 bonus
-		// w1 won 100-40=60; w2 bonus lost; w3 placed this week counts here too,
-		// graded 60-30=30, even though it settled in the next window.
-		RealizedCash: 90, RealizedBonus: 0,
+		StakedCash: 40, StakedBonus: 50, // p1 40 cash; p2 50 bonus (p3 settles in week 2)
+		// w1 won 100-40=60; w2 bonus lost. w3 was placed this week but settles in
+		// week 2, so its stake and P&L are attributed there, not here.
+		RealizedCash: 60, RealizedBonus: 0,
 	})
 
 	week2, err := Period(events, 0, at(7*day), at(14*day))
 	if err != nil {
 		t.Fatalf("week 2: %v", err)
 	}
-	// Nothing was placed in week two, so nothing is attributed to it — not even
-	// the straddle's settlement, which belongs to the week it was struck.
-	wantReport(t, "week 2", week2, Report{})
+	// The straddle settled in week two, so under settle-week attribution its whole
+	// stake and P&L land here — the week its games were played — even though it was
+	// placed in week one.
+	wantReport(t, "week 2", week2, Report{
+		StakedCash: 30, RealizedCash: 30, // w3 won 60-30
+	})
 
 	if got := week1.ExternalNet(); math.Abs(got-(-20)) > 1e-9 {
 		t.Errorf("week 1 ExternalNet: got %.2f, want -20 (withdrew 80, deposited 100)", got)
@@ -66,6 +69,28 @@ func TestPeriodReport(t *testing.T) {
 	if _, err := Period(events, 0, at(7*day), at(7*day)); err == nil {
 		t.Error("expected an error for an end that does not follow start")
 	}
+}
+
+// TestPeriodUntaggedAttributesBySettle is the opt-in-token case that motivated
+// settle-week attribution: a bonus bet struck a month before the season (no week
+// tag) but graded on the reported week's Sunday belongs to that week — the week
+// its game was played — not to the window it was placed in, where under the old
+// place-date fallback it vanished from every week's P&L entirely.
+func TestPeriodUntaggedAttributesBySettle(t *testing.T) {
+	day := 24 * time.Hour
+	events := []Event{
+		grant("g", -30*day, Lot{ID: "bon", Book: "fanatics", Asset: Bonus, Amount: 50}),
+		place("p", -30*day, "bon", "w", 50), // placed a month before the window
+		// ...but graded inside week 1's window: a +390 winner, $195 cash back.
+		settle("s", 2*day, "w", Won, &Lot{ID: "r", Book: "fanatics", Asset: Cash, Amount: 195}),
+	}
+	wk1, err := Period(events, 0, at(0), at(7*day))
+	if err != nil {
+		t.Fatalf("period: %v", err)
+	}
+	wantReport(t, "settle-in-window", wk1, Report{
+		StakedBonus: 50, RealizedBonus: 195, // the won bonus's cash returns land in week 1
+	})
 }
 
 // TestPeriodAttributesByTag is the reason the tag exists: a bet logged early for
