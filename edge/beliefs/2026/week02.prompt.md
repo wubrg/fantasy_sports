@@ -167,7 +167,7 @@ So: abstain freely, commit where you have a reason, and make the reason checkabl
 
 ## THE PACK — the facts your forecast is bound to
 
-pack_sha256: 9cca280e9b3691fe38829039433590ec7dca529d505650cfddac81299cecf111
+pack_sha256: d8d4181c5298b0048cc96fa72c641ac72ad7227f84ee4e54dd2015599bf9f802
 Echo this sha back in your output. It binds your forecast to exactly these facts.
 
 ## BASE — how often each scenario happens to anyone

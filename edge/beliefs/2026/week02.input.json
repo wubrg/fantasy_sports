@@ -1,7 +1,7 @@
 {
  "season": 2026,
  "week": 2,
- "generated_at": "2026-09-17T15:26:41Z",
+ "generated_at": "2026-09-17T15:32:03Z",
  "generated_by": "edge/model/analysis/beliefpack.py pack",
  "cache": {
   "games.csv": {
