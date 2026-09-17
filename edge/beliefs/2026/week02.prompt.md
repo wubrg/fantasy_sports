@@ -1,59 +1,5 @@
----
-title: "Belief Probe — operative template"
-status: OPERATIVE — this is the version to paste into a model
-derived_from:
-  - ../plans/prompt-then-validate.md
-  - ../../model/FINDINGS.md
-  - ./urps-wager-engine.md
----
+# BELIEF PACK — 2026 week 2
 
-# Belief Probe (operative)
-
-> **This is the version to paste into a model.** It is a sibling to
-> [`urps-wager-engine.md`](./urps-wager-engine.md), not a replacement: that one prices a wager,
-> this one forecasts a game script and nothing else.
-
-## What it is for
-
-`P(hit) = q·s + r·(1−s)`. The fitted grid supplies `q` and `r`.
-[FINDINGS §16](../../model/FINDINGS.md) measured the ceiling on `s`: replace it with the truth and
-the screened tail strategy earns **+7% to +18%** at a 6% hold, where the fitted belief model
-**loses 10–25%** on the same wagers. Everything between those numbers is what a better `s` is
-worth, and it is the only part of this project still worth working on.
-
-The bar is explicit and it is not large:
-
-```
-s_you − s_book  >  P_book × hold / (q − r)      →  +0.03 to +0.16 on a good site
-```
-
-This document asks a model for `s`, in a form that can be scored. It asks for nothing else.
-
-## Why this deviates from the wager engine
-
-Four differences, each with a reason, so the two documents do not look contradictory.
-
-| # | Wager engine | Here | Why |
-|---|---|---|---|
-| 1 | Outside knowledge banned outright | **Permitted, as typed claims** | The ban exists to stop invented *prices*. This asks for no prices. A model restricted to the cache is competing with `belief.json` on identical inputs and would add nothing by construction — outside knowledge is the entire point. It is fenced by claim typing instead. |
-| 2 | Produces wagers | **Produces probabilities** | The belief is the only half that needs proving, and proving it needs no prop prices — which this repository still does not collect. |
-| 3 | Discusses the props it likes | **Must forecast every row** | A scored set the forecaster chose is a set it can cherry-pick. Silence on the hard games is how a mediocre record looks excellent. |
-| 4 | Output is prose | **Output is strict JSON** | It is machine-ingested, hash-bound to its inputs, and refused on any unknown field. |
-
-## Timing, which is not optional
-
-The forecast must exist **before the first kickoff**. `edgectl beliefs ingest` checks two clocks —
-the `generated_at` you write and the wall clock at ingest — and refuses the whole file if either is
-late. Neither is proof; the only external evidence is the commit that carried the file, pushed
-before kickoff. See [ADR-002](../ADR-002-belief-log-tracked-in-git.md).
-
----
-
-<!-- BEGIN OPERATIVE PROMPT — beliefpack.py render() lifts everything between
-     these markers verbatim into the pasteable week??.prompt.md, so the file a
-     forecaster is handed and the document reviewed here cannot drift. Editing
-     the block edits the prompt; renaming or removing the markers makes the pack
-     fail loudly rather than emit an instruction-less file. -->
 ## SYSTEM PROMPT: THE BELIEF PROBE
 
 **ROLE:** You are forecasting NFL game scripts. You are not selecting wagers, not naming players,
@@ -216,89 +162,89 @@ base rate everywhere is perfectly calibrated and worth nothing, and one that dis
 the wrong direction is worse than one that says nothing.
 
 So: abstain freely, commit where you have a reason, and make the reason checkable.
-<!-- END OPERATIVE PROMPT -->
 
 ---
 
-## What the pack gained, and what it cost
+## THE PACK — the facts your forecast is bound to
 
-The pack carried no staff information until the 2026 week-1 run demonstrated the price. This
-document and `falsify.go` both said `personnel` claims were unauditable because *"there is no
-depth-chart or coaching table in this repository"*. That was false about the repository's own
-cache: `games.csv` has `away_coach` and `home_coach` for every game since 1999, and
-`beliefpack.py` already opens it for two of the four base rates.
+pack_sha256: 9cca280e9b3691fe38829039433590ec7dca529d505650cfddac81299cecf111
+Echo this sha back in your output. It binds your forecast to exactly these facts.
 
-Seven teams changed head coach for 2026. A forecast written without the column staked four of its
-eleven flagged rows on staffs that no longer existed. See
-[ADR-006](../ADR-006-pack-carries-offseason-context.md).
+## BASE — how often each scenario happens to anyone
 
-Two things this deliberately does **not** do:
+| scenario | definition | base rate |
+|---|---|---|
+| shootout | total > 50 (per game) | 0.3378 |
+| blowout_loss | margin < -7 (per team) | 0.2617 |
+| pass_heavy | offense_proe > 3 (per team) | 0.2648 |
+| efficient_offense | success_rate > 0.46 (per team) | 0.3721 |
 
-- **No preseason.** There is none to add: `games.csv` holds no preseason rows at all, and nflverse
-  publishes no preseason play-by-play or snap counts. A `preseason` claim type would be a checker
-  that can never check, which this document rejects everywhere else.
-- **No coordinators.** They do not exist in the data. The `STAFF` block says so in the pack itself
-  rather than letting a reader assume a head coach implies a play-caller.
+## SLATE and MARKET
 
-The honest cost: a fact in the pack is a fact you no longer get credit for knowing. This narrows
-what "outside knowledge" means in the measurement, in exchange for claims that can be audited at
-all.
+spread_line is the home team's expected margin; positive means the home side is favoured.
 
-## The tier trap
+| game | away | home | kickoff | total | spread | venue |
+|---|---|---|---|---|---|---|
+| 2026_02_DET_BUF | DET | BUF | 2026-09-17T20:15:00-04:00 | 51.5 | 3.0 | outdoors, a_turf |
+| 2026_02_CAR_ATL | CAR | ATL | 2026-09-20T13:00:00-04:00 | 42.5 | 1.5 | fieldturf, divisional |
+| 2026_02_NO_BAL | NO | BAL | 2026-09-20T13:00:00-04:00 | 46.5 | 7.5 | outdoors, grass |
+| 2026_02_MIN_CHI | MIN | CHI | 2026-09-20T13:00:00-04:00 | 45.5 | 3.0 | outdoors, grass, divisional |
+| 2026_02_CIN_HOU | CIN | HOU | 2026-09-20T13:00:00-04:00 | 45.5 | 2.5 | astroturf |
+| 2026_02_PIT_NE | PIT | NE | 2026-09-20T13:00:00-04:00 | 43.5 | 4.5 | outdoors, fieldturf |
+| 2026_02_GB_NYJ | GB | NYJ | 2026-09-20T13:00:00-04:00 | 42.5 | -5.5 | outdoors, fieldturf |
+| 2026_02_CLE_TB | CLE | TB | 2026-09-20T13:00:00-04:00 | 42.5 | 6.5 | outdoors, grass |
+| 2026_02_PHI_TEN | PHI | TEN | 2026-09-20T13:00:00-04:00 | 42.5 | -5.5 | outdoors, grass |
+| 2026_02_JAX_DEN | JAX | DEN | 2026-09-20T16:05:00-04:00 | 43.5 | 3.0 | outdoors, grass |
+| 2026_02_LV_LAC | LV | LAC | 2026-09-20T16:05:00-04:00 | 42.5 | 9.5 | dome, matrixturf, divisional |
+| 2026_02_SEA_ARI | SEA | ARI | 2026-09-20T16:25:00-04:00 | — | — | grass, divisional |
+| 2026_02_WAS_DAL | WAS | DAL | 2026-09-20T16:25:00-04:00 | 51.5 | 4.5 | matrixturf, divisional |
+| 2026_02_MIA_SF | MIA | SF | 2026-09-20T16:25:00-04:00 | 45.5 | 12.5 | outdoors, grass |
+| 2026_02_IND_KC | IND | KC | 2026-09-20T20:20:00-04:00 | 47.5 | 6.5 | outdoors, grass |
+| 2026_02_NYG_LA | NYG | LA | 2026-09-21T20:15:00-04:00 | — | — | dome, matrixturf |
 
-The corpus ([`edge-of-vigor.md`](./edge-of-vigor.md) §Confidence Tiers) defines Tier 1/2/3 as
-**+5 / +10 / +15 percentage points on the wager's probability**. This document asks for `s`, which
-is a different quantity. They convert by `(q − r)`:
+## STAFF — who is coaching, who calls the offence, and who is new
 
-```
-P(hit) edge  =  (q − r) × s edge
-```
+Head coach, offensive and defensive coordinator, and the **play-caller** — the offensive-minded head coach where he calls it, otherwise the OC. Pass rate over expectation is the play-caller's signature, so a change of head coach matters most when it changed who calls the offence: read the play-caller column, not the head coach's, for `pass_heavy`. **new to the team** is the head coach only.
 
-At a good deep site — `q − r` ≈ 0.136, `P_book` ≈ 0.095 — the wager needs a **+0.57pp** edge on
-`P(hit)`, which is a fifth of Tier 1, and that is an `s` edge of **+0.042**.
+Coordinator and play-caller names are supplied context; they are **not** auto-checked at ingest yet, so a `coaching` claim is still verified only against the head coach the pack names. Do not restate these names as a checked claim.
 
-**The corpus's tiers, if they are real at all, are far more than sufficient.** A reader fluent in
-tiers will otherwise supply a number in the wrong currency and overstate their edge by an order of
-magnitude.
+| team | head coach | play-caller | OC | DC | new to the team | rest days |
+|---|---|---|---|---|---|---|
+| DET | Dan Campbell | Drew Petzing | Drew Petzing | Kelvin Sheppard | no | 4 |
+| BUF | Joe Brady | Joe Brady | Pete Carmichael Jr. | Jim Leonhard | **yes** | 4 |
+| CAR | Dave Canales | Brad Idzik | Brad Idzik | Ejiro Evero | no | 7 |
+| ATL | Kevin Stefanski | Tommy Rees | Tommy Rees | Jeff Ulbrich | **yes** | 7 |
+| NO | Kellen Moore | Kellen Moore | Doug Nussmeier | Brandon Staley | no | 7 |
+| BAL | Jesse Minter | Declan Doyle | Declan Doyle | Anthony Weaver | **yes** | 7 |
+| MIN | Kevin O'Connell | Kevin O'Connell | Wes Phillips | Brian Flores | no | 7 |
+| CHI | Ben Johnson | Ben Johnson | Press Taylor | Dennis Allen | no | 7 |
+| CIN | Zac Taylor | Zac Taylor | Dan Pitcher | Al Golden | no | 7 |
+| HOU | DeMeco Ryans | Nick Caley | Nick Caley | Matt Burke | no | 7 |
+| PIT | Mike McCarthy | Mike McCarthy | Brian Angelichio | Patrick Graham | **yes** | 7 |
+| NE | Mike Vrabel | Josh McDaniels | Josh McDaniels | Zak Kuhr | no | 11 |
+| GB | Matt LaFleur | Matt LaFleur | Adam Stenavich | Jonathan Gannon | no | 7 |
+| NYJ | Aaron Glenn | Frank Reich | Frank Reich | Brian Duker | no | 7 |
+| CLE | Todd Monken | Todd Monken | Travis Switzer | Mike Rutenberg | **yes** | 7 |
+| TB | Todd Bowles | Zac Robinson | Zac Robinson | Todd Bowles | no | 7 |
+| PHI | Nick Sirianni | Sean Mannion | Sean Mannion | Vic Fangio | no | 7 |
+| TEN | Robert Saleh | Brian Daboll | Brian Daboll | Gus Bradley | **yes** | 7 |
+| JAX | Liam Coen | Liam Coen | Grant Udinski | Anthony Campanile | no | 7 |
+| DEN | Sean Payton | Davis Webb | Davis Webb | Vance Joseph | no | 6 |
+| LV | Klint Kubiak | Klint Kubiak | Andrew Janocko | Rob Leonard | **yes** | 7 |
+| LAC | Jim Harbaugh | Mike McDaniel | Mike McDaniel | Chris O'Leary | no | 7 |
+| SEA | Mike Macdonald | Brian Fleury | Brian Fleury | Aden Durde | no | 11 |
+| ARI | Mike LaFleur | Mike LaFleur | Nathaniel Hackett | Nick Rallis | **yes** | 7 |
+| WAS | Dan Quinn | David Blough | David Blough | Daronte Jones | no | 7 |
+| DAL | Brian Schottenheimer | Brian Schottenheimer | Klayton Adams | Christian Parker | no | 7 |
+| MIA | Jeff Hafley | Bobby Slowik | Bobby Slowik | Sean Duggan | **yes** | 7 |
+| SF | Kyle Shanahan | Kyle Shanahan | Klay Kubiak | Raheem Morris | no | 10 |
+| IND | Shane Steichen | Shane Steichen | Jim Bob Cooter | Lou Anarumo | no | 7 |
+| KC | Andy Reid | Andy Reid | Eric Bieniemy | Steve Spagnuolo | no | 6 |
+| NYG | John Harbaugh | Matt Nagy | Matt Nagy | Dennard Wilson | **yes** | 8 |
+| LA | Sean McVay | Sean McVay | Nathan Scheelhaase | Chris Shula | no | 11 |
 
-## How it is scored
+## FORM — each team coming into this week, from earlier games only
 
-`edgectl beliefs score`, on settled weeks only. Reliability and resolution are reported separately
-and neither substitutes for the other; a base-rate forecaster scores perfectly on the first and zero
-on the second.
+**No prior form this week:** week 2: prior form needs 3 earlier games, so none exists before week 4.
 
-The primary endpoint is **E1: is the forecast more accurate than every opponent that exists?**
-`beliefs score` scores each opponent on its own rows, never pooled — the market where there is one,
-the incumbent model from week 4, and, for the two scenarios with no market line, a **line-only
-logistic**, `P(scenario)` fitted on nothing but the posted total and spread. That last one is the
-honest null: the numbers it uses are already in your pack, so beating it is the only version of "an
-outside read added something" that means what it says. **The hardest of these opponents binds** — a
-forecaster that beats the incumbent but loses to the line fails, because the line is one of the
-opponents it must beat. The base rate is shown as a non-binding floor.
-
-> **Pre-registration amendment, 2026-09-04.** E1 was originally "paired Brier gain, pooled over
-> positions", scored against a single auto-picked reference. That pooled the reference types and,
-> once prior form existed, scored the two PROE scenarios against the incumbent — which the line
-> model beats with no football knowledge. E1 is now the conjunction above: beat every opponent, the
-> hardest binds. The amendment is made with the log still empty (no data has been observed), which
-> is when a pre-registration can still be corrected.
-
-**E2 is a diagnostic, not a second gate.** It asks whether the wagers the forecast implies would have
-profited: for the wagerable scenarios the tool freezes the best validated site's `q` and `r` at
-ingest, turns your `s` and the reference's into prop prices `P = q·s + r·(1−s)`, and counts a row as
-a wager only where your price clears the book's *after its hold*. But the probe collects **no prop** —
-a wager settles on the same game-script outcome that drives E1, so E2 is a re-expression of E1, not
-independent evidence. It was originally registered as a co-equal "both must pass" claim; that was a
-promise game-script-only data cannot keep, so it is reported as a robustness check with an honest
-interval (each wager settled by a real Bernoulli draw, not its mean, which the review showed made the
-plug-in interval ~5× too tight). Its point estimate is the **expected** ROI per unit staked assuming
-the frozen site is exactly right — comparable in units to [FINDINGS §16](../../model/FINDINGS.md)'s
-+7% to +18%, but not a realised track record.
-
-That is why the instructions above ask you to **abstain freely and commit where you have a reason**.
-A forecast nudged a point or two off the base rate everywhere is more accurate and produces nothing
-to bet.
-
-Rejected predictions are logged and settled anyway, so survivors can be scored against the whole
-set on identical outcomes. That measures what the falsifier is worth, which a bare rejection count
-cannot.
+This is not a gap you should fill by guessing. It is a real absence, and the weeks it happens in are the ones where nobody — you, the model, or the market — has much to go on.
