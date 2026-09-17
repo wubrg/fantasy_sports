@@ -587,7 +587,7 @@ function renderReport(r) {
 async function loadLog() {
   el.betlog.innerHTML = `<p class="muted">reading the log…</p>`;
   try {
-    const res = await fetch(BASE + "api/log");
+    const res = await fetch(BASE + "api/log?week=" + encodeURIComponent(state.week));
     const r = await res.json();
     if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
     renderLog(r);
@@ -686,14 +686,14 @@ function wireBetEntry() {
 
 function renderLog(r) {
   if (!r.entries.length) {
-    el.betlog.innerHTML = betEntryForm() + `<section class="rep"><h2>no bets recorded</h2>
-      <p class="muted">Nothing in ${r.path} yet. Enter one above, or place a wager from
+    el.betlog.innerHTML = betEntryForm() + `<section class="rep"><h2>no bets ${r.week ? "for week " + r.week : "recorded"}</h2>
+      <p class="muted">Nothing ${r.week ? "logged for week " + r.week : "in " + r.path} yet. Enter one above, or place a wager from
       the bets tab.</p></section>`;
     wireBetEntry();
     return;
   }
   el.betlog.innerHTML = betEntryForm() + `
-    <div class="scope">${r.count} recorded · ${Math.round(r.open)} open ·
+    <div class="scope">${r.week ? "week " + r.week + " · " : ""}${r.count} recorded · ${Math.round(r.open)} open ·
       ${money(r.open_staked_cash ?? r.open_staked ?? r.staked)} cash · ${money(r.open_staked_bonus ?? 0)} bonus at risk · <b>${money(r.open_ev ?? r.ev)}</b> expected
       · ${money(r.realized ?? 0)} realized</div>
     <section class="rep">
@@ -1216,6 +1216,7 @@ el.views.addEventListener("click", (e) => {
 
 el.week.addEventListener("change", () => {
   state.week = Number(el.week.value); save(); refresh();
+  if (state.view === "log") loadLog(); // the log is scoped to the selected week
 });
 
 

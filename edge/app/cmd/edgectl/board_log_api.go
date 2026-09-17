@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"edge/internal/betlog"
@@ -43,6 +44,7 @@ type logEntryJSON struct {
 	Predicted float64 `json:"predicted"`
 	Result    string  `json:"result"`
 	Narrative string  `json:"narrative"`
+	Week      int     `json:"week"`
 }
 
 func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
@@ -59,6 +61,11 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// An optional ?week filters the log to the bets FOR that NFL week, so the
+	// listing and its at-risk/realized figures both scope to the week the header
+	// selector is on. week 0 (absent) shows every bet.
+	week, _ := strconv.Atoi(r.URL.Query().Get("week"))
+
 	out := make([]logEntryJSON, 0, len(bets))
 	// Two different questions, kept apart. openEV is the EXPECTED value of what
 	// is still live; it must fall to zero as bets settle. realized is the P&L
@@ -67,6 +74,9 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 	// neither question.
 	var open, openStaked, openStakedCash, openStakedBonus, openEV, realized float64
 	for _, b := range bets {
+		if week > 0 && b.Bet.Week != week {
+			continue // not this week's wager
+		}
 		res := string(b.Result)
 		if res == "" {
 			res = "open"
@@ -91,7 +101,7 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 			ID: b.ID, Placed: b.Placed.Format("2006-01-02"),
 			Selection: b.Bet.Selection, Price: int(b.Bet.Price), Stake: b.Bet.Stake,
 			Bankroll: b.Bet.Bankroll, Predicted: b.Bet.Predicted,
-			Result: res, Narrative: b.Bet.Narrative,
+			Result: res, Narrative: b.Bet.Narrative, Week: b.Bet.Week,
 		})
 	}
 	// Newest first: the log is read to check what was just recorded far more
@@ -100,7 +110,7 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 		out[i], out[j] = out[j], out[i]
 	}
 	writeJSON(w, map[string]any{
-		"path": path, "entries": out, "count": len(out), "open": open,
+		"path": path, "week": week, "entries": out, "count": len(out), "open": open,
 		// staked/ev keep their names but now carry OPEN semantics, so anything
 		// still reading them sees live exposure rather than an all-time sum.
 		"staked": openStaked, "ev": openEV,
