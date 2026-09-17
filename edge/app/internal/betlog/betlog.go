@@ -69,10 +69,12 @@ func ParseBankroll(s string) (wager.Bankroll, error) {
 		return wager.RealMoney, nil
 	case "bonus bet":
 		return wager.BonusBet, nil
+	case "no-sweat":
+		return wager.NoSweat, nil
 	}
 	return wager.RealMoney, fmt.Errorf(
-		"betlog: %q is not a recognised bankroll (want %q or %q)",
-		s, wager.RealMoney.String(), wager.BonusBet.String())
+		"betlog: %q is not a recognised bankroll (want %q, %q or %q)",
+		s, wager.RealMoney.String(), wager.BonusBet.String(), wager.NoSweat.String())
 }
 
 // settleable reports whether a result is one a settlement may record. Load
@@ -443,12 +445,15 @@ func Score(bets []Settled, filter func(Settled) bool) (Calibration, error) {
 		if err != nil {
 			return Calibration{}, fmt.Errorf("betlog: bet %s: %w", b.ID, err)
 		}
-		bonus := bankroll == wager.BonusBet
 		switch {
 		case b.Result == Won:
 			c.Profit += stake * profit
-		case bonus:
+		case bankroll == wager.BonusBet:
 			// A losing bonus bet costs nothing in cash.
+		case bankroll == wager.NoSweat:
+			// A losing no-sweat refunds the stake as a free bet, so only the
+			// part that does not convert is a cash loss.
+			c.Profit -= (1 - wager.NoSweatConversion) * stake
 		default:
 			c.Profit -= stake
 		}

@@ -40,6 +40,37 @@ func TestProfitabilityMatrix(t *testing.T) {
 	}
 }
 
+// TestNoSweatBetweenCashAndBonus pins the no-sweat EV standard: the win term is
+// a cash wager's, the loss term is only the part of the stake the refund does
+// not convert. It must sit strictly between real money (full downside) and a
+// bonus bet (no downside), and route correctly through EV.
+func TestNoSweatBetweenCashAndBonus(t *testing.T) {
+	// p=0.5, +100 (profit multiple 1), stake 10.
+	// real  = 0.5*10 - 0.5*10        = 0
+	// bonus = 0.5*10                 = 5
+	// sweat = 0.5*10 - 0.5*0.3*10    = 3.5  (conversion 0.70)
+	real, _ := EVRealMoney(0.5, 100, 10)
+	bonus, _ := EVBonusBet(0.5, 100, 10)
+	sweat, err := EVNoSweat(0.5, 100, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !closeTo(sweat, 3.5, tol) {
+		t.Errorf("EVNoSweat = %+.4f, want 3.5", sweat)
+	}
+	if !(real < sweat && sweat < bonus) {
+		t.Errorf("no-sweat %.4f must sit between real %.4f and bonus %.4f", sweat, real, bonus)
+	}
+	// EV must dispatch NoSweat to the same result.
+	viaEV, err := EV(NoSweat, 0.5, 100, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !closeTo(viaEV, sweat, tol) {
+		t.Errorf("EV(NoSweat) = %+.4f, EVNoSweat = %+.4f — dispatch drifted", viaEV, sweat)
+	}
+}
+
 // TestKeyTakeaways pins the three headline claims of edge-of-vigor.md p.9.
 func TestKeyTakeaways(t *testing.T) {
 	// "Heavy Favorites Kill ROI: even if you are 65% sure, -200 still loses

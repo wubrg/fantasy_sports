@@ -36,7 +36,7 @@ func betPlace(args []string) error {
 	price := fs.Int("price", 0, "American price of the wager (required)")
 	stake := fs.Float64("stake", 0, "stake (required)")
 	book := fs.String("book", "", "sportsbook the bet is placed at")
-	bankroll := fs.String("bankroll", "bonus", "bankroll: cash or bonus")
+	bankroll := fs.String("bankroll", "bonus", "bankroll: cash, bonus or no-sweat")
 	boost := fs.String("boost", "", "boost lot id to apply and consume")
 	week := fs.Int("week", 0, "the NFL week this wager is FOR")
 	narrative := fs.String("narrative", "", "free-text note")
@@ -45,8 +45,11 @@ func betPlace(args []string) error {
 		return err
 	}
 	bank := "bonus bet"
-	if *bankroll == "cash" {
+	switch *bankroll {
+	case "cash":
 		bank = "real money"
+	case "no-sweat", "nosweat", "no sweat":
+		bank = "no-sweat"
 	}
 	id, err := journal.Place(*betlogPath, *ledgerPath, journal.PlaceRequest{
 		Bet: betlog.Bet{

@@ -90,6 +90,29 @@ func EVBonusBet(p float64, odds American, stake float64) (float64, error) {
 	return p * stake * profit, nil
 }
 
+// EVNoSweat is the expected value of a no-sweat (bet-and-get) cash wager.
+//
+//	EV = p·stake·(d−1) − (1−p)·(1−NoSweatConversion)·stake
+//
+// The win term is a cash wager's: real stake, real profit. The loss term is
+// reduced, not removed: the stake comes back as a free bet, so only the part
+// that does not convert -- (1−NoSweatConversion)·stake -- is a genuine cash
+// loss. It reduces to EVRealMoney at conversion 0 and to EVBonusBet's downside
+// (none) at conversion 1, and sits between them for any real book's refund.
+func EVNoSweat(p float64, odds American, stake float64) (float64, error) {
+	if err := validProb(p); err != nil {
+		return 0, err
+	}
+	if err := validStake(stake); err != nil {
+		return 0, err
+	}
+	profit, err := odds.ProfitMultiple()
+	if err != nil {
+		return 0, err
+	}
+	return p*stake*profit - (1-p)*(1-NoSweatConversion)*stake, nil
+}
+
 // validPct rejects a profit-boost multiplier that is not a positive real. A
 // boost of 0 is not a boost; a negative one is nonsense.
 func validPct(pct float64) error {

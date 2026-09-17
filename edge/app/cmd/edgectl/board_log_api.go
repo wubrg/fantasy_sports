@@ -94,10 +94,15 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 			openStaked += b.Bet.Stake
 			openPayout += payout
 			// Real money and a bonus bet are not the same exposure: a lost bonus
-			// bet costs no cash, so the two are summed apart.
-			if mustBankroll(b.Bet.Bankroll) == wager.BonusBet {
+			// bet costs no cash, and a lost no-sweat costs only the part of its
+			// stake the refund does not convert -- so each is summed by what is
+			// genuinely at risk, not by nominal stake.
+			switch mustBankroll(b.Bet.Bankroll) {
+			case wager.BonusBet:
 				openStakedBonus += b.Bet.Stake
-			} else {
+			case wager.NoSweat:
+				openStakedCash += (1 - wager.NoSweatConversion) * b.Bet.Stake
+			default:
 				openStakedCash += b.Bet.Stake
 			}
 			if ev, err := wager.EV(mustBankroll(b.Bet.Bankroll), b.Bet.Predicted, b.Bet.Price, b.Bet.Stake); err == nil {
@@ -143,8 +148,12 @@ func realizedPnL(bankroll string, result betlog.Result, price wager.American, st
 		}
 		return stake * pm
 	case betlog.Lost:
-		if mustBankroll(bankroll) == wager.BonusBet {
+		switch mustBankroll(bankroll) {
+		case wager.BonusBet:
 			return 0
+		case wager.NoSweat:
+			// The stake refunds as a free bet; only the unconverted part is lost.
+			return -(1 - wager.NoSweatConversion) * stake
 		}
 		return -stake
 	default: // push, void, open
