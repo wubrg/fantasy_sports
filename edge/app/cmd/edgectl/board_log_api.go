@@ -45,6 +45,7 @@ type logEntryJSON struct {
 	Result    string  `json:"result"`
 	Narrative string  `json:"narrative"`
 	Week      int     `json:"week"`
+	Payout    float64 `json:"payout"` // profit a win pays: stake x profit multiple
 }
 
 func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +73,7 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 	// already booked. Summing EV across settled bets (as this once did) made the
 	// "expected" figure never move when a bet was settled -- it was answering
 	// neither question.
-	var open, openStaked, openStakedCash, openStakedBonus, openEV, realized float64
+	var open, openStaked, openStakedCash, openStakedBonus, openEV, openPayout, realized float64
 	for _, b := range bets {
 		if week > 0 && b.Bet.Week != week {
 			continue // not this week's wager
@@ -81,9 +82,17 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 		if res == "" {
 			res = "open"
 		}
+		// Potential payout: the profit a win pays (stake x the price's profit
+		// multiple), the same for cash and a bonus bet. Deterministic -- no belief
+		// needed -- so it is always meaningful, unlike EV.
+		var payout float64
+		if pm, err := b.Bet.Price.ProfitMultiple(); err == nil {
+			payout = b.Bet.Stake * pm
+		}
 		if res == "open" {
 			open++
 			openStaked += b.Bet.Stake
+			openPayout += payout
 			// Real money and a bonus bet are not the same exposure: a lost bonus
 			// bet costs no cash, so the two are summed apart.
 			if mustBankroll(b.Bet.Bankroll) == wager.BonusBet {
@@ -102,6 +111,7 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 			Selection: b.Bet.Selection, Price: int(b.Bet.Price), Stake: b.Bet.Stake,
 			Bankroll: b.Bet.Bankroll, Predicted: b.Bet.Predicted,
 			Result: res, Narrative: b.Bet.Narrative, Week: b.Bet.Week,
+			Payout: payout,
 		})
 	}
 	// Newest first: the log is read to check what was just recorded far more
@@ -115,7 +125,8 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 		// still reading them sees live exposure rather than an all-time sum.
 		"staked": openStaked, "ev": openEV,
 		"open_staked": openStaked, "open_staked_cash": openStakedCash,
-		"open_staked_bonus": openStakedBonus, "open_ev": openEV, "realized": realized,
+		"open_staked_bonus": openStakedBonus, "open_ev": openEV,
+		"open_payout": openPayout, "realized": realized,
 	})
 }
 

@@ -40,6 +40,7 @@ func betPlace(args []string) error {
 	boost := fs.String("boost", "", "boost lot id to apply and consume")
 	week := fs.Int("week", 0, "the NFL week this wager is FOR")
 	narrative := fs.String("narrative", "", "free-text note")
+	predicted := fs.Float64("predicted", 0, "your win-probability belief in [0,1]; drives the log's EV")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -50,7 +51,7 @@ func betPlace(args []string) error {
 	id, err := journal.Place(*betlogPath, *ledgerPath, journal.PlaceRequest{
 		Bet: betlog.Bet{
 			Selection: *selection, Price: wager.American(*price), Bankroll: bank,
-			Stake: *stake, Week: *week, Narrative: *narrative,
+			Stake: *stake, Week: *week, Narrative: *narrative, Predicted: *predicted,
 		},
 		Book: *book, BoostLotID: *boost,
 	}, time.Now())
