@@ -610,6 +610,7 @@ function betEntryForm() {
       <input id="e-sel" placeholder="selection, e.g. Marvin Harrison Jr. ATD">
       <input id="e-price" inputmode="tel" placeholder="odds +240">
       <input id="e-stake" inputmode="decimal" placeholder="stake 0.50">
+      <input id="e-pred" inputmode="decimal" placeholder="win % (opt)" title="your win-probability belief, e.g. 55">
       <select id="e-bank"><option value="bonus bet">bonus bet</option><option value="real money">real money</option></select>
       <select id="e-book">${books.map(b => `<option>${b}</option>`).join("")}</select>
       <select id="e-boost"><option value="">— no boost</option></select>
@@ -660,13 +661,17 @@ function wireBetEntry() {
     if (!stake || stake <= 0) { alert("stake?"); return; }
     let book = document.getElementById("e-book").value;
     if (book.startsWith("—")) book = "";
+    // Belief is optional and entered as a percent (55) or a fraction (0.55);
+    // normalize to [0,1]. Blank leaves it 0, which just omits the EV column.
+    let predicted = Number(document.getElementById("e-pred").value) || 0;
+    if (predicted > 1) predicted /= 100;
     btn.disabled = true;
     try {
       const res = await fetch(BASE + "api/place", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          selection: sel, price, stake,
+          selection: sel, price, stake, predicted,
           bankroll: document.getElementById("e-bank").value,
           book, week: Number(document.getElementById("e-week").value) || 0,
           boost: (document.getElementById("e-boost") || {}).value || "",
@@ -692,9 +697,13 @@ function renderLog(r) {
     wireBetEntry();
     return;
   }
+  // EV is only meaningful when a belief was recorded; with predicted 0 it just
+  // reads back minus the stake. "To win" is the deterministic potential profit
+  // on what is still open, and is always shown.
+  const hasPred = r.entries.some(e => e.result === "open" && e.predicted > 0);
   el.betlog.innerHTML = betEntryForm() + `
     <div class="scope">${r.week ? "week " + r.week + " · " : ""}${r.count} recorded · ${Math.round(r.open)} open ·
-      ${money(r.open_staked_cash ?? r.open_staked ?? r.staked)} cash · ${money(r.open_staked_bonus ?? 0)} bonus at risk · <b>${money(r.open_ev ?? r.ev)}</b> expected
+      ${money(r.open_staked_cash ?? r.open_staked ?? r.staked)} cash · ${money(r.open_staked_bonus ?? 0)} bonus at risk · <b>${money(r.open_payout ?? 0)}</b> to win${hasPred ? ` · ${money(r.open_ev ?? r.ev)} expected` : ""}
       · ${money(r.realized ?? 0)} realized</div>
     <section class="rep">
       ${r.entries.map(e => `<div class="logrow ${e.result}" data-id="${e.id}">
@@ -702,7 +711,8 @@ function renderLog(r) {
         <div class="meta">
           <span class="mono">${e.price > 0 ? "+" : ""}${e.price}</span>
           <span class="muted">${money(e.stake)} ${e.bankroll}</span>
-          <span class="muted">pred ${(e.predicted * 100).toFixed(1)}%</span>
+          <span class="muted">to win ${money(e.payout ?? 0)}</span>
+          ${e.predicted > 0 ? `<span class="muted">pred ${(e.predicted * 100).toFixed(1)}%</span>` : ""}
           <span class="res">${e.result}</span>
           <span class="when muted">${e.placed}</span>
         </div>

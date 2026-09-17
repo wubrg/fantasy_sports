@@ -34,12 +34,28 @@ func TestHandleLogSplitsAtRiskByBankroll(t *testing.T) {
 		OpenStaked      float64 `json:"open_staked"`
 		OpenStakedCash  float64 `json:"open_staked_cash"`
 		OpenStakedBonus float64 `json:"open_staked_bonus"`
+		OpenPayout      float64 `json:"open_payout"`
+		Entries         []struct {
+			Selection string  `json:"selection"`
+			Payout    float64 `json:"payout"`
+		} `json:"entries"`
 	}
 	if err := json.Unmarshal(rr.Body.Bytes(), &r); err != nil {
 		t.Fatal(err)
 	}
 	if r.OpenStakedCash != 30 || r.OpenStakedBonus != 50 || r.OpenStaked != 80 {
 		t.Errorf("cash=%v bonus=%v total=%v, want 30/50/80", r.OpenStakedCash, r.OpenStakedBonus, r.OpenStaked)
+	}
+	// To-win: -110 on 30 pays 30*(100/110)=27.27; +300 on 50 pays 150. The
+	// aggregate is the sum of the two, independent of any belief.
+	if math.Abs(r.OpenPayout-177.2727) > 1e-3 {
+		t.Errorf("open_payout=%.4f, want ~177.27", r.OpenPayout)
+	}
+	want := map[string]float64{"cash bet": 27.2727, "bonus bet": 150}
+	for _, e := range r.Entries {
+		if math.Abs(e.Payout-want[e.Selection]) > 1e-3 {
+			t.Errorf("%q payout=%.4f, want %.4f", e.Selection, e.Payout, want[e.Selection])
+		}
 	}
 }
 
