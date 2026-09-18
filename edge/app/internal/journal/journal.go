@@ -22,6 +22,13 @@ type PlaceRequest struct {
 	Bet        betlog.Bet
 	Book       string
 	BoostLotID string
+	// Deposit, when true, funds this wager with a matching grant: before the
+	// debit, a grant of the stake in the bankroll's asset (cash or bonus) is
+	// appended to Book, so a bet can be logged against fresh funds without a
+	// separate declare step. A self-funded bet nets to zero on the book (grant
+	// +stake, debit -stake) while leaving any prior balance untouched. Ignored
+	// when Book is empty (a "log only" wager touches no balance to fund).
+	Deposit bool
 }
 
 // AssetForBankroll maps a betlog bankroll to the ledger asset a place draws
@@ -39,6 +46,22 @@ func AssetForBankroll(bankroll string) string {
 func Place(betlogPath, ledgerPath string, req PlaceRequest, now time.Time) (string, error) {
 	if req.Bet.Stake <= 0 {
 		return "", fmt.Errorf("journal: stake must be positive")
+	}
+
+	// Optional funding deposit: record the stake arriving before it is drawn, so
+	// the debit below has a balance to spend. Appended first because draw replays
+	// the ledger from disk and must see it. Left in place if a later step fails --
+	// the money was genuinely deposited even if the bet did not record.
+	if req.Deposit && strings.TrimSpace(req.Book) != "" {
+		asset := AssetForBankroll(req.Bet.Bankroll)
+		dep := ledger.Event{
+			Kind: ledger.KindGrant, ID: ledger.NewID(now, req.Book+"-deposit"), Time: now,
+			Creates: &ledger.Lot{Book: req.Book, Asset: asset, Amount: req.Bet.Stake},
+			Note:    "deposit to fund " + req.Bet.Selection,
+		}
+		if err := ledger.AppendFile(ledgerPath, dep); err != nil {
+			return "", fmt.Errorf("the funding deposit could not be recorded: %w", err)
+		}
 	}
 
 	draws, err := draw(ledgerPath, req.Book, AssetForBankroll(req.Bet.Bankroll), req.Bet.Stake, now)

@@ -222,3 +222,46 @@ func TestPlace_GUIandCoreAgree(t *testing.T) {
 		t.Errorf("stake: gui %v vs core %v", g.Stake, c.Stake)
 	}
 }
+
+// TestPlaceWithDeposit verifies the opt-in funding deposit: with no prior
+// balance, deposit:true self-funds the wager (a grant of the stake precedes the
+// debit) so /api/place succeeds and the book nets to zero -- while the same
+// place without a deposit and no balance is refused.
+func TestPlaceWithDeposit(t *testing.T) {
+	dir := t.TempDir()
+	srv := &boardServer{
+		ledgerPath: filepath.Join(dir, "bankroll.jsonl"),
+		betlogPath: filepath.Join(dir, "betlog.jsonl"),
+	}
+	body, _ := json.Marshal(map[string]any{
+		"selection": "Nabers over (-115)", "price": -115, "stake": 25,
+		"bankroll": "real money", "book": "fanatics", "week": 2, "deposit": true,
+	})
+	rr := httptest.NewRecorder()
+	srv.handlePlace(rr, httptest.NewRequest("POST", "/api/place", strings.NewReader(string(body))))
+	if rr.Code != 200 {
+		t.Fatalf("deposit place: status %d: %s", rr.Code, rr.Body.String())
+	}
+	evs, err := ledger.Load(srv.ledgerPath)
+	if err != nil {
+		t.Fatalf("ledger.Load: %v", err)
+	}
+	pos, err := ledger.Balances(evs, time.Now())
+	if err != nil {
+		t.Fatalf("Balances: %v", err)
+	}
+	if got := pos.Total("fanatics", ledger.Cash); got != 0 {
+		t.Fatalf("self-funded bet should net 0 cash, got %v", got)
+	}
+
+	// Same place, no balance, no deposit -> refused (insufficient funds).
+	body2, _ := json.Marshal(map[string]any{
+		"selection": "Nabers over (-115)", "price": -115, "stake": 25,
+		"bankroll": "real money", "book": "draftkings", "week": 2,
+	})
+	rr2 := httptest.NewRecorder()
+	srv.handlePlace(rr2, httptest.NewRequest("POST", "/api/place", strings.NewReader(string(body2))))
+	if rr2.Code == 200 {
+		t.Fatalf("place with no balance and no deposit should fail, got 200")
+	}
+}
