@@ -189,6 +189,11 @@ type placeReq struct {
 	// Boost is an optional boost lot id to apply to this wager; the core
 	// validates and consumes it.
 	Boost string `json:"boost"`
+	// Deposit, when true, funds the wager with a matching grant of the stake
+	// (in the bankroll's asset) to Book before the debit -- so a bet can be
+	// logged against fresh funds without a separate declare step. No effect
+	// without a book.
+	Deposit bool `json:"deposit"`
 }
 
 func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
@@ -237,7 +242,7 @@ func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
 	// the safe order: a failed debit leaves no betlog entry, so the two logs can
 	// never disagree with no record of why.
 	id, err := journal.Place(s.betlogPath, s.ledgerPath, journal.PlaceRequest{
-		Bet: b, Book: req.Book, BoostLotID: req.Boost,
+		Bet: b, Book: req.Book, BoostLotID: req.Boost, Deposit: req.Deposit,
 	}, time.Now())
 	if err != nil {
 		httpError(w, http.StatusConflict, err.Error())

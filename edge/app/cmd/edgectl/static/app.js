@@ -615,11 +615,14 @@ function betEntryForm() {
       <select id="e-book">${books.map(b => `<option>${b}</option>`).join("")}</select>
       <select id="e-boost"><option value="">— no boost</option></select>
       <input id="e-week" inputmode="numeric" value="${wk}" title="NFL week">
+      <label class="chk"><input type="checkbox" id="e-deposit"> deposit stake to fund it</label>
       <button type="button" id="e-add">log bet</button>
     </div>
     <p class="muted">Any single or prop. With a book the stake is drawn from it
     (bonus bet → bonus, real money → cash); "log only" records the bet without
-    touching the bankroll.</p>
+    touching the bankroll. Tick <em>deposit stake to fund it</em> to add a matching
+    deposit of that asset to the book first, so the bet logs against fresh funds
+    (your existing balance is left untouched).</p>
   </section>`;
 }
 
@@ -675,6 +678,7 @@ function wireBetEntry() {
           bankroll: document.getElementById("e-bank").value,
           book, week: Number(document.getElementById("e-week").value) || 0,
           boost: (document.getElementById("e-boost") || {}).value || "",
+          deposit: !!(document.getElementById("e-deposit") || {}).checked && !!book,
           narrative: "Entered from the log tab.",
         }),
       });

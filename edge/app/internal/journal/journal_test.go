@@ -80,6 +80,74 @@ func TestPlace_writesBetlogAndDebitsLedger(t *testing.T) {
 	}
 }
 
+func TestPlace_depositFundsTheWager(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+
+	// No prior balance. Without a deposit this would fail (insufficient funds);
+	// with Deposit it self-funds: a grant of the stake precedes the debit.
+	id, err := Place(bl, lg, PlaceRequest{
+		Bet:     betlog.Bet{Selection: "Nabers over", Price: wager.American(-115), Bankroll: "real money", Stake: 25, Week: 2},
+		Book:    "fanatics",
+		Deposit: true,
+	}, now)
+	if err != nil {
+		t.Fatalf("Place with deposit: %v", err)
+	}
+	if bets, err := betlog.Load(bl); err != nil || len(bets) != 1 || bets[0].ID != id {
+		t.Fatalf("betlog missing the funded bet: %+v (%v)", bets, err)
+	}
+
+	// Self-funded: grant +25 then debit -25 nets to zero cash on the book.
+	evs, err := ledger.Load(lg)
+	if err != nil {
+		t.Fatalf("ledger.Load: %v", err)
+	}
+	pos, err := ledger.Balances(evs, now)
+	if err != nil {
+		t.Fatalf("Balances: %v", err)
+	}
+	if got := pos.Total("fanatics", ledger.Cash); got != 0 {
+		t.Fatalf("self-funded bet should net 0 cash, got %v", got)
+	}
+	// The deposit is a grant of the stake; the debit is a place tied to the wager.
+	var granted, placed float64
+	for _, e := range evs {
+		if e.Kind == ledger.KindGrant && e.Creates != nil && e.Creates.Asset == ledger.Cash {
+			granted += e.Creates.Amount
+		}
+		if e.Kind == ledger.KindPlace && e.Wager == id {
+			placed += e.Amount
+		}
+	}
+	if granted != 25 || placed != 25 {
+		t.Fatalf("expected deposit 25 and debit 25, got grant %v / place %v", granted, placed)
+	}
+}
+
+func TestPlace_depositPreservesPriorBalance(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	grant(t, lg, "fan-bonus", "fanatics", ledger.Bonus, 30) // existing balance
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+
+	// A funded bonus bet: the deposit covers the stake, so the prior $30 stays.
+	if _, err := Place(bl, lg, PlaceRequest{
+		Bet:     betlog.Bet{Selection: "Chase ATD", Price: wager.American(120), Bankroll: "bonus bet", Stake: 5, Week: 2},
+		Book:    "fanatics",
+		Deposit: true,
+	}, now); err != nil {
+		t.Fatalf("Place with deposit: %v", err)
+	}
+	evs, _ := ledger.Load(lg)
+	pos, err := ledger.Balances(evs, now)
+	if err != nil {
+		t.Fatalf("Balances: %v", err)
+	}
+	if got := pos.Total("fanatics", ledger.Bonus); got != 30 {
+		t.Fatalf("prior balance should be untouched at 30, got %v", got)
+	}
+}
+
 func TestPlace_appliesBoost(t *testing.T) {
 	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
 	grant(t, lg, "fan-cash", "fanatics", ledger.Cash, 50)
