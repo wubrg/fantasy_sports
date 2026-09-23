@@ -26,10 +26,18 @@ type Commitment struct {
 //
 // Settled wagers are skipped: a resolved bet no longer ties up anything.
 //
+// week scopes commitments to the board being reported on. A team plays every
+// week, so a bet's free-text Selection matching a team code on THIS week's
+// board proves nothing on its own -- the same code matches every week that
+// team plays. A bet explicitly tagged with a different week (b.Bet.Week != 0)
+// is skipped outright regardless of what teams its text mentions; only an
+// untagged (legacy) bet falls back to the team-name heuristic below. Pass 0 to
+// disable the tag check and fall back to the heuristic for every bet.
+//
 // A missing log is not an error. Most boards are read before anything has been
 // placed, and refusing to report until a log exists would make the common case
 // the broken one.
-func PlacedCommitments(logPath string, doc *board.Doc) ([]Commitment, []string, error) {
+func PlacedCommitments(logPath string, doc *board.Doc, week int) ([]Commitment, []string, error) {
 	bets, err := betlog.Load(logPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -44,6 +52,9 @@ func PlacedCommitments(logPath string, doc *board.Doc) ([]Commitment, []string, 
 	for _, b := range bets {
 		if b.Result != "" && b.Result != betlog.Open {
 			continue
+		}
+		if week > 0 && b.Bet.Week != 0 && b.Bet.Week != week {
+			continue // explicitly tagged for a different week
 		}
 		found := doc.TeamsMentioned(b.Bet.Selection)
 		if len(found) == 0 {

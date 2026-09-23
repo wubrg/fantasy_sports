@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -428,6 +429,26 @@ type addBoostReq struct {
 	Market    string  `json:"market"`
 	NeedsCash bool    `json:"needs_cash"`
 	Expires   string  `json:"expires"`
+	// Week is the NFL week this promo was seen/granted for. A promo carries a
+	// weekly cadence far more often than a hand-typed date -- most are declared
+	// and gone within the week they were seen -- so when Expires is blank and
+	// Week is given, the boost auto-expires at that week's own boundary (the
+	// Tuesday on or before the following week's first kickoff, same window
+	// weekWindow already computes for the period report) instead of lingering
+	// indefinitely. An explicit Expires always wins over Week, for the rarer
+	// promo (a deposit match, a season-long offer) that outlives one week.
+	Week int `json:"week"`
+}
+
+// weekEndExpiry is the boundary a week-tagged promo auto-expires at: the same
+// [start, end) window weekWindow computes for the period report, so a boost
+// and the report that explains where it went agree on when the week ended.
+func weekEndExpiry(dir string, week int) (*time.Time, error) {
+	_, end, err := weekWindow(dir, week)
+	if err != nil {
+		return nil, err
+	}
+	return &end, nil
 }
 
 func (s *boardServer) addBoost(w http.ResponseWriter, r *http.Request) {
@@ -461,6 +482,13 @@ func (s *boardServer) addBoost(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			lot.Expires = &t
+		} else if req.Week > 0 {
+			exp, err := weekEndExpiry(s.dir, req.Week)
+			if err != nil {
+				httpError(w, http.StatusBadRequest, "week "+strconv.Itoa(req.Week)+": "+err.Error())
+				return
+			}
+			lot.Expires = exp
 		}
 		now := time.Now()
 		e := ledger.Event{Kind: "grant", ID: ledger.NewID(now, req.Book+"-nosweat"), Time: now, Creates: &lot}
@@ -505,6 +533,13 @@ func (s *boardServer) addBoost(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		lot.Expires = &t
+	} else if req.Week > 0 {
+		exp, err := weekEndExpiry(s.dir, req.Week)
+		if err != nil {
+			httpError(w, http.StatusBadRequest, "week "+strconv.Itoa(req.Week)+": "+err.Error())
+			return
+		}
+		lot.Expires = exp
 	}
 
 	now := time.Now()

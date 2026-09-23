@@ -179,7 +179,7 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 	var committed []Commitment
 	var excl []string
 	if q.Get("ignore_log") != "1" {
-		c, teams, err := PlacedCommitments(s.betlogPath, wf.doc)
+		c, teams, err := PlacedCommitments(s.betlogPath, wf.doc, week)
 		if err != nil {
 			httpError(w, http.StatusInternalServerError, err.Error())
 			return

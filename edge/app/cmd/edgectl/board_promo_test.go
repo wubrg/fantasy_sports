@@ -91,3 +91,63 @@ func TestPromoGrantListDelete(t *testing.T) {
 		t.Error("expiring a nonexistent lot should fail")
 	}
 }
+
+// TestBoostWeekAutoExpiry covers the week-scoped promo lifecycle: a boost
+// declared with a week tag and no explicit expires date auto-expires at that
+// week's own boundary (the same window weekWindow computes for the period
+// report), and an explicit expires date still overrides it.
+func TestBoostWeekAutoExpiry(t *testing.T) {
+	dir := t.TempDir()
+	wk(t, dir, 2, "2026-09-14T13:00")
+	wk(t, dir, 3, "2026-09-21T13:00")
+	led := filepath.Join(t.TempDir(), "bankroll.jsonl")
+	srv := &boardServer{dir: dir, ledgerPath: led}
+
+	do := func(body string) map[string]any {
+		rr := httptest.NewRecorder()
+		srv.handleBoosts(rr, httptest.NewRequest("POST", "/x", strings.NewReader(body)))
+		if rr.Code != 200 {
+			t.Fatalf("boosts: status %d: %s", rr.Code, rr.Body.String())
+		}
+		var m map[string]any
+		if err := json.Unmarshal(rr.Body.Bytes(), &m); err != nil {
+			t.Fatalf("bad json: %v", err)
+		}
+		return m
+	}
+
+	do(`{"book":"fanatics","percent":0.2,"max_stake":50,"week":2}`)
+	do(`{"kind":"nosweat","book":"fanatics","max_stake":10,"week":2}`)
+	// An explicit expires date wins over the week tag.
+	do(`{"book":"draftkings","percent":0.5,"max_stake":25,"week":2,"expires":"2026-12-25"}`)
+
+	_, wantEnd, err := weekWindow(dir, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	srv.handleBoosts(rr, httptest.NewRequest("GET", "/api/boosts", nil))
+	var list struct {
+		Boosts []struct {
+			Book    string `json:"book"`
+			Expires string `json:"expires"`
+		} `json:"boosts"`
+	}
+	json.Unmarshal(rr.Body.Bytes(), &list)
+	if len(list.Boosts) != 3 {
+		t.Fatalf("expected 3 promos, got %d", len(list.Boosts))
+	}
+	for _, b := range list.Boosts {
+		switch b.Book {
+		case "fanatics":
+			if b.Expires != wantEnd.Format("2006-01-02") {
+				t.Errorf("%s: expires = %q, want week 2's end %q", b.Book, b.Expires, wantEnd.Format("2006-01-02"))
+			}
+		case "draftkings":
+			if b.Expires != "2026-12-25" {
+				t.Errorf("draftkings: expires = %q, want the explicit override 2026-12-25", b.Expires)
+			}
+		}
+	}
+}

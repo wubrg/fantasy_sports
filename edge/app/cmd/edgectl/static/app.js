@@ -416,6 +416,7 @@ function renderLog(r) {
         ${e.result === "open" ? `<div class="settle">
           ${["won", "lost", "push", "void"].map(x =>
             `<button type="button" data-res="${x}" data-id="${e.id}">${x}</button>`).join("")}
+          <button type="button" class="repriced" data-id="${e.id}" title="settle at a price the book recomputed, e.g. an SGP leg voided by an injury">repriced…</button>
         </div>` : ""}
       </div>`).join("")}
     </section>
@@ -482,19 +483,37 @@ el.report.addEventListener("click", async (e) => {
 
 // Settling appends an outcome; it never edits the prediction. A result that
 // could rewrite the number predicted would make the whole log worthless, so
-// the only thing these buttons can send is an id and an outcome.
+// the only thing these buttons can send is an id, an outcome, and -- for a
+// wager the book itself repriced -- what it actually paid.
 el.betlog.addEventListener("click", async (e) => {
-  const btn = e.target.closest(".settle button");
+  const repriced = e.target.closest(".settle button.repriced");
+  const btn = repriced || e.target.closest(".settle button");
   if (!btn) return;
-  const res = btn.dataset.res;
-  if (!confirm(`Settle as ${res.toUpperCase()}? This cannot be undone from here.`)) return;
+
+  let res, settledPrice = 0, note = "settled from the board";
+  if (repriced) {
+    // A leg voided out of a parlay (an injury) leaves the book paying a
+    // different price than the one quoted at placement. This does not rewrite
+    // that original quote -- it records what settlement actually paid, the
+    // same thing the CLI's -settled-price already does.
+    res = (prompt("Settle as won, lost, push or void?", "won") || "").trim().toLowerCase();
+    if (!["won", "lost", "push", "void"].includes(res)) return;
+    const priceStr = prompt("Price the book actually recomputed this to (American odds, e.g. +110 or -150):");
+    if (priceStr === null) return;
+    settledPrice = Number(priceStr.replace(/^\+/, ""));
+    if (!settledPrice || !Number.isFinite(settledPrice)) { alert("that doesn't look like an American price"); return; }
+    note = "settled from the board (repriced: " + (settledPrice > 0 ? "+" : "") + settledPrice + ")";
+  } else {
+    res = btn.dataset.res;
+    if (!confirm(`Settle as ${res.toUpperCase()}? This cannot be undone from here.`)) return;
+  }
 
   for (const b of btn.parentElement.querySelectorAll("button")) b.disabled = true;
   try {
     const r = await fetch(BASE + "api/settle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: btn.dataset.id, result: res, note: "settled from the board" }),
+      body: JSON.stringify({ id: btn.dataset.id, result: res, settled_price: settledPrice, note: note }),
     });
     const body = await r.json();
     if (!r.ok) throw new Error(body.error || ("HTTP " + r.status));
@@ -831,12 +850,14 @@ function renderFunds(r) {
         <input id="b-max" inputmode="decimal" placeholder="max stake 25">
         <input id="b-min" inputmode="tel" placeholder="min line -200">
         <select id="b-mkt"><option value="any">any market</option><option value="sgp">SGP</option></select>
-        <input id="b-exp" placeholder="expires 2026-09-14">
+        <input id="b-exp" placeholder="expires (optional; default week ${state.week}'s end)">
         <label class="chk"><input type="checkbox" id="b-cash"> needs cash</label>
         <button type="button" id="b-add">add</button>
       </div>
       <p class="muted">A boost is a unit, not a balance: spent whole, and never
-      counted as money you can wager.</p>
+      counted as money you can wager. Leave expires blank to auto-expire at the
+      end of week ${state.week} (the banner's week); type a date only for one
+      that outlives this week.</p>
     </section>
 
     <section class="rep">
@@ -845,11 +866,12 @@ function renderFunds(r) {
         <select id="n-book">${books.map(x => `<option>${x}</option>`).join("")}</select>
         <input id="n-max" inputmode="decimal" placeholder="refunds up to 10">
         <select id="n-mkt"><option value="any">any market</option><option value="sgp">SGP</option><option value="atd">ATD</option><option value="ftd">FTD</option></select>
-        <input id="n-exp" placeholder="expires 2026-09-14">
+        <input id="n-exp" placeholder="expires (optional; default week ${state.week}'s end)">
         <button type="button" id="n-add">add</button>
       </div>
       <p class="muted">A no-sweat refunds your stake as a bonus if the bet loses —
-      a contingent right, not money. Enter the stake it covers.</p>
+      a contingent right, not money. Enter the stake it covers. Leave expires
+      blank to auto-expire at the end of week ${state.week}.</p>
     </section>`;
 
   loadBoosts().then((html) => {
@@ -900,6 +922,9 @@ function renderFunds(r) {
           market: document.getElementById("b-mkt").value.trim() || "any",
           min_odds: Number(document.getElementById("b-min").value) || 0,
           expires: document.getElementById("b-exp").value.trim(),
+          // Blank expires + the banner's week auto-expires this at week's end;
+          // an explicit expires date above still overrides it.
+          week: state.week,
           needs_cash: document.getElementById("b-cash").checked,
           label: Math.round(pct100) + "% boost",
         }),
@@ -932,6 +957,7 @@ function renderFunds(r) {
           max_stake: max,
           market: document.getElementById("n-mkt").value,
           expires: document.getElementById("n-exp").value.trim(),
+          week: state.week,
           label: "no-sweat",
         }),
       });
