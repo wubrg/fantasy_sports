@@ -101,7 +101,7 @@ func boardReport(args []string) error {
 	excl := splitCSV(*exclude)
 	var committed []Commitment
 	if !*ignoreLog {
-		c, teams, err := PlacedCommitments(*logPath, doc)
+		c, teams, err := PlacedCommitments(*logPath, doc, *week)
 		if err != nil {
 			return fmt.Errorf("reading %s: %w\n"+
 				"pass -ignore-log to report without it", *logPath, err)

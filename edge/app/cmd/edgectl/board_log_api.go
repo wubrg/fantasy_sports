@@ -255,16 +255,27 @@ type settleReq struct {
 	ID     string `json:"id"`
 	Result string `json:"result"`
 	Note   string `json:"note"`
+	// SettledPrice is what the book actually recomputed a wager's price to at
+	// settlement -- e.g. a same-game parlay repriced after one leg voided out
+	// from under it (an injury). It does not rewrite the bet's originally
+	// quoted price (that stays frozen, same as ever); it is new information
+	// recorded AT settlement, the same thing the CLI's `-settled-price` already
+	// does. Optional: zero/omitted settles against the original quote,
+	// unchanged from before this field existed.
+	SettledPrice int `json:"settled_price"`
 }
 
 // handleSettle records an outcome against an already-logged prediction.
 //
 // Settling APPENDS; it never rewrites the bet. That is the property the whole
 // log turns on -- a prediction that could be edited after the result is known
-// is not a prediction -- and it is why this endpoint takes an id and a result
-// and nothing else. There is deliberately no way here to correct a price or a
-// predicted probability: if one of those is wrong, the honest repair is a note
-// on the record, not a quiet overwrite.
+// is not a prediction. There is deliberately no way here to correct the
+// ORIGINAL price or predicted probability: if one of those is wrong, the
+// honest repair is a note on the record, not a quiet overwrite. SettledPrice
+// is a different thing -- what the book actually paid, which is not knowable
+// until settlement -- and recording it here is what lets a repriced SGP (a
+// leg voided by an injury, the rest still live) settle against its REAL
+// payout instead of the stale original quote.
 func (s *boardServer) handleSettle(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		httpError(w, http.StatusMethodNotAllowed, "POST required")
@@ -280,11 +291,17 @@ func (s *boardServer) handleSettle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var settledPrice *wager.American
+	if req.SettledPrice != 0 {
+		p := wager.American(req.SettledPrice)
+		settledPrice = &p
+	}
+
 	// journal.Settle appends the betlog outcome and, when an at-risk ledger
 	// place exists for this wager, the ledger settle too -- so the bankroll
 	// clears alongside the prediction. It refuses a double settle, since the
 	// betlog folds the last outcome on top and a second tap could flip a result.
-	if err := journal.Settle(s.betlogPath, s.ledgerPath, req.ID, betlog.Result(req.Result), nil, nil, nil, req.Note, time.Now()); err != nil {
+	if err := journal.Settle(s.betlogPath, s.ledgerPath, req.ID, betlog.Result(req.Result), settledPrice, nil, nil, req.Note, time.Now()); err != nil {
 		httpError(w, http.StatusConflict, err.Error())
 		return
 	}
