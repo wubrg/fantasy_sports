@@ -408,10 +408,12 @@ type Event struct {
 	// this actually cost" unanswerable.
 	Wager string `json:"wager,omitempty"`
 
-	// Week is the NFL week this wager is FOR, set on a place. It is what the
-	// period report attributes by, so a bet logged early or graded late still
-	// lands in the right week rather than in whatever window its timestamp fell
-	// in. Zero means untagged, and the report falls back to the place date.
+	// Week is the NFL week this event is FOR -- set on a place, and optionally
+	// on a deposit or withdraw too. It is what the period report attributes by,
+	// so an event logged early, graded late, or (for a withdraw) settling up a
+	// week that already ended still lands in the right week rather than in
+	// whatever window its timestamp fell in. Zero means untagged, and the
+	// report falls back to the event's own timestamp.
 	Week int `json:"week,omitempty"`
 
 	// Result and Returns describe a settlement. Returns is what the book
@@ -1055,6 +1057,20 @@ func Period(events []Event, week int, start, end time.Time) (Report, error) {
 
 	rep := Report{Start: start, End: end}
 	in := func(t time.Time) bool { return !t.Before(start) && t.Before(end) }
+	// belongsTo is the same week-tag-first, timestamp-fallback rule the wager
+	// bucketing below already uses (see the loop's own comment). Deposits and
+	// withdrawals need it too: a Tuesday zero-out settles up the week that just
+	// ended, but its own timestamp falls at the START of the FOLLOWING week's
+	// window (the Tuesday boundary is where one window ends and the next
+	// begins), so bucketing it by raw timestamp alone put a withdrawal of last
+	// week's winnings into next week's report. An explicit tag overrides that;
+	// an untagged (legacy) event still falls back to its timestamp, unchanged.
+	belongsTo := func(t time.Time, evWeek int) bool {
+		if week > 0 && evWeek != 0 {
+			return evWeek == week
+		}
+		return in(t)
+	}
 
 	ordered := make([]Event, len(events))
 	copy(ordered, events)
@@ -1094,12 +1110,12 @@ func Period(events []Event, week int, start, end time.Time) (Report, error) {
 					id = e.ID // create() falls back to the event id; mirror it
 				}
 				lotAsset[id] = e.Creates.Asset
-				if e.Kind == KindDeposit && e.Creates.Asset == Cash && in(e.Time) {
+				if e.Kind == KindDeposit && e.Creates.Asset == Cash && belongsTo(e.Time, e.Week) {
 					rep.Deposits += e.Creates.Amount
 				}
 			}
 		case KindWithdraw:
-			if in(e.Time) && lotAsset[e.Lot] != Bonus {
+			if belongsTo(e.Time, e.Week) && lotAsset[e.Lot] != Bonus {
 				rep.Withdrawals += e.Amount // cash out; an unknown lot defaults to cash
 			}
 		case KindPlace:
