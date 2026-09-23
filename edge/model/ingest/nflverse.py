@@ -5,7 +5,7 @@ nflverse is an open data project that publishes NFL data as flat files on
 GitHub releases. Nothing here scrapes anything; these are files distributed to
 be downloaded.
 
-Three tables are pulled:
+Four tables are pulled:
 
     games.csv                 schedules, and crucially the CLOSING SPREAD AND
                               TOTAL for every game back to 1999. This is what
@@ -26,6 +26,27 @@ Three tables are pulled:
                               RATE OVER EXPECTED -- tendency with game script
                               already divided out, which raw pass rate cannot
                               give you. Gzipped, ~19 MB a season.
+    ngs_rushing.csv.gz         Next Gen Stats rushing, per player-week, ALL
+                              seasons in one file (unlike every table above,
+                              which is split per season). Fetched for
+                              rush_yards_over_expected -- Next Gen Stats' own
+                              model of expected rush yards given ball carrier
+                              speed, defenders in the box and time to line of
+                              scrimmage, subtracted from actual. Summed across
+                              a team's rushers in a week and averaged over
+                              prior games, this is RUSH YARDS OVER EXPECTED
+                              (RAOE), analysis/raoe.py's team-week
+                              rushing-efficiency analogue to PROE. ~330 KB
+                              total, not per season -- there is also a set of
+                              ngs_<yr>_rushing.csv.gz per-season files in the
+                              same release, but the 2024 one was checked and
+                              found frozen at 465 bytes (four preseason rows,
+                              never updated for the regular season) while the
+                              combined file carries the full season -- so the
+                              combined file is the one fetched here, and the
+                              per-season ones are left alone as an unreliable
+                              legacy artifact of the release, not a bug in this
+                              script.
 
 Coverage, established by probing the releases rather than assumed:
 
@@ -36,11 +57,19 @@ Coverage, established by probing the releases rather than assumed:
                             that far back is a separate question from whether
                             the file exists, and is checked by analysis/proe.py
                             rather than assumed here.
+    ngs_rushing.csv.gz       2016-2026 rows in the one file (checked directly:
+                            6169 rows, season column ranges 2016-2026). There
+                            is genuinely no earlier Next Gen Stats tracking
+                            data -- 2016 is where the sensor coverage starts,
+                            not an artifact of this fetch.
 
 That snap-counts gap is real and load-bearing. Pro-Football-Reference's snap
 data begins in 2012, so any analysis depending on snap share is limited to
 2012 forward, while target share reaches back to 2005. A missing snap file for
-2005-2011 is expected and is not an error; a missing one for 2012+ is.
+2005-2011 is expected and is not an error; a missing one for 2012+ is. The
+ngs_rushing gap is the same shape: RAOE is simply unavailable before 2016, and
+analysis/raoe.py must say so (by filtering on the season column) rather than
+compute a rate over zero prior games.
 
 There is an older `player_stats_<yr>.csv` release still up. It stops at 2024
 and is superseded by stats_player_week, which covers the full range under one
@@ -69,6 +98,10 @@ from pathlib import Path
 
 RELEASES = "https://github.com/nflverse/nflverse-data/releases/download"
 GAMES_URL = "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
+# The combined, all-seasons file -- see the module docstring for why this one
+# is fetched instead of the per-season ngs_<yr>_rushing.csv.gz files that also
+# exist in the same release.
+NGS_RUSHING_URL = f"{RELEASES}/nextgen_stats/ngs_rushing.csv.gz"
 
 # Earliest season each table covers. Requesting earlier is not an error; the
 # season is skipped with a note.
@@ -166,8 +199,13 @@ def want(name: str, url: str, manifest: dict, force: bool) -> bool:
 
 
 def targets(first: int, last: int) -> list[tuple[str, str]]:
-    """(cache name, url) pairs for the requested seasons."""
-    out = [("games.csv", GAMES_URL)]
+    """(cache name, url) pairs for the requested seasons.
+
+    ngs_rushing.csv.gz is fetched unconditionally, like games.csv, rather than
+    per season in the loop below: it is one file covering every season, so a
+    2005-2025 request and a 2024-only request both just want the same fetch.
+    """
+    out = [("games.csv", GAMES_URL), ("ngs_rushing.csv.gz", NGS_RUSHING_URL)]
     for season in range(first, last + 1):
         for table in ("stats_player_week", "snap_counts", "play_by_play", "injuries"):
             if season < FIRST_SEASON[table]:
