@@ -14,6 +14,13 @@ func placeWk(id string, when time.Duration, lot, wagerID string, amount float64,
 	return e
 }
 
+// withdrawWk is withdraw() with an explicit NFL-week tag.
+func withdrawWk(id string, when time.Duration, lot string, amount float64, week int) Event {
+	e := withdraw(id, when, lot, amount)
+	e.Week = week
+	return e
+}
+
 // TestPeriodReport walks a two-week campaign with untagged bets, so attribution
 // falls back to the SETTLEMENT date — the week a wager's games were played. The
 // load-bearing case is the straddle: a bet placed in week one but graded in week
@@ -123,6 +130,38 @@ func TestPeriodAttributesByTag(t *testing.T) {
 	wantReport(t, "week 2 includes a wk2-tagged bet", wk2, Report{
 		StakedCash: 20, RealizedCash: 30, // 50 returned - 20 stake
 	})
+}
+
+// TestPeriodWithdrawAttributesByTag is the Tuesday zero-out: settling up a
+// week's winnings happens right at the boundary between that week's window
+// and the next one, so an untagged withdraw's own timestamp lands in the
+// FOLLOWING week by date -- exactly the case a bug report surfaced live. A
+// week tag must override that and put the withdrawal back where the money
+// was actually won.
+func TestPeriodWithdrawAttributesByTag(t *testing.T) {
+	day := 24 * time.Hour
+	events := []Event{
+		deposit("d", 0, Lot{ID: "c", Book: "fanduel", Asset: Cash, Amount: 100}),
+		placeWk("p", time.Hour, "c", "w1bet", 20, 1),
+		settle("s", 2*time.Hour, "w1bet", Won, &Lot{ID: "r", Book: "fanduel", Asset: Cash, Amount: 50}),
+		// The zero-out itself: timestamped at the start of week 2's window (the
+		// Tuesday boundary), but explicitly tagged as week 1's business.
+		withdrawWk("w", 7*day, "r", 50, 1),
+	}
+
+	wk1, err := Period(events, 1, at(0), at(7*day))
+	if err != nil {
+		t.Fatalf("week 1: %v", err)
+	}
+	wantReport(t, "week 1 includes its own wk1-tagged withdrawal despite the timestamp falling outside its window",
+		wk1, Report{Deposits: 100, StakedCash: 20, RealizedCash: 30, Withdrawals: 50})
+
+	wk2, err := Period(events, 2, at(7*day), at(14*day))
+	if err != nil {
+		t.Fatalf("week 2: %v", err)
+	}
+	wantReport(t, "week 2 excludes a wk1-tagged withdrawal despite the timestamp falling inside its window",
+		wk2, Report{})
 }
 
 // wantReport asserts the flow buckets of a period, naming any that disagree.

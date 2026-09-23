@@ -124,7 +124,7 @@ func ledgerAdd(args []string) error {
 	lot := fs.String("lot", "", "id of an existing lot to draw from (withdraw, convert, place, expire)")
 	id := fs.String("id", "", "id for the lot this event creates (default: the event id)")
 	wagerID := fs.String("wager", "", "wager id tying a place to its settle; use the betlog id")
-	weekNo := fs.Int("week", 0, "place only: the NFL week this wager is FOR (the period report attributes by it)")
+	weekNo := fs.Int("week", 0, "the NFL week this event is FOR (place, deposit, grant, convert or withdraw; the period report attributes by it over its own timestamp)")
 	result := fs.String("result", "", "settle only: won, lost, push or void")
 	returns := fs.Float64("returns", 0, "settle only: amount handed back by the book")
 	returnsAsset := fs.String("returns-asset", ledger.Cash, "settle only: asset the returns arrive as")
@@ -203,6 +203,7 @@ func ledgerAdd(args []string) error {
 			return err
 		}
 		e.Creates = l
+		e.Week = *weekNo
 		if k == ledger.KindConvert {
 			// -amount describes the destination for a create, but a convert also
 			// has to say how much of the source it takes. They are equal by the
@@ -211,7 +212,10 @@ func ledgerAdd(args []string) error {
 			e.Amount = *amount
 		}
 	case ledger.KindWithdraw:
-		e.Amount = *amount
+		// -week matters most here: a Tuesday zero-out settles up the week that
+		// just ended, but happens right at that week's boundary, so its own
+		// timestamp would otherwise land it in the FOLLOWING week's report.
+		e.Amount, e.Week = *amount, *weekNo
 	case ledger.KindPlace:
 		e.Wager, e.Amount, e.Week = *wagerID, *amount, *weekNo
 	case ledger.KindExpire:

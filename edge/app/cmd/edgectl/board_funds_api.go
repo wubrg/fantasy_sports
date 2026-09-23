@@ -195,6 +195,15 @@ type adjustReq struct {
 	Asset  string  `json:"asset"`
 	Target float64 `json:"target"`
 	Note   string  `json:"note"`
+	// Week is the NFL week this correction is FOR, same field and same
+	// attribution rule as a wager (see ledger.Event.Week). It matters most for
+	// a Tuesday zero-out: that withdrawal is settling up the week that just
+	// ended, but happens right at the boundary where that week's period-report
+	// window ends and the next one begins, so its own timestamp would
+	// otherwise land it in the wrong week's report. Zero leaves the event
+	// untagged, falling back to its timestamp -- unchanged from before this
+	// field existed.
+	Week int `json:"week"`
 }
 
 // handleAdjust corrects a balance to what it should be.
@@ -261,7 +270,7 @@ func (s *boardServer) handleAdjust(w http.ResponseWriter, r *http.Request) {
 		e := ledger.Event{
 			Kind: "grant", ID: ledger.NewID(now, req.Book+"-correction"), Time: now,
 			Creates: &ledger.Lot{Book: req.Book, Asset: req.Asset, Amount: delta},
-			Note:    note,
+			Note:    note, Week: req.Week,
 		}
 		if err := ledger.AppendFile(s.ledgerPath, e); err != nil {
 			httpError(w, http.StatusBadRequest, err.Error())
@@ -284,6 +293,7 @@ func (s *boardServer) handleAdjust(w http.ResponseWriter, r *http.Request) {
 		e.ID = ledger.NewID(now, req.Book+"-correction")
 		e.Time = now
 		e.Note = note
+		e.Week = req.Week
 		if err := ledger.AppendFile(s.ledgerPath, e); err != nil {
 			httpError(w, http.StatusInternalServerError, err.Error())
 			return

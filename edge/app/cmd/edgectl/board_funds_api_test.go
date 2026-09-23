@@ -99,3 +99,79 @@ func TestZeroCashViaAdjustIsAWithdrawalNotALoss(t *testing.T) {
 		t.Errorf("RealizedCash = %.2f, want 0 -- zeroing must not read as a loss", rep.RealizedCash)
 	}
 }
+
+// TestZeroCashWithWeekTagLandsInThatWeeksReport is the bug this covers: a
+// Tuesday zero-out settles up the week that just ended, but the button is
+// pressed at the START of the FOLLOWING week's window (that's what "Tuesday"
+// means -- it's the boundary). Without a week tag, the withdrawal's own
+// timestamp puts it in the wrong week's report. With one, it goes where the
+// operator says the money actually belongs, regardless of when the button was
+// pressed.
+func TestZeroCashWithWeekTagLandsInThatWeeksReport(t *testing.T) {
+	dir := t.TempDir()
+	// Week 1's window is anchored well in the past, so "now" (whenever this
+	// test actually runs) falls outside it -- reproducing the real shape of
+	// the bug, where the zero-out happens well after the week it settles.
+	wk(t, dir, 1, time.Now().Add(-10*24*time.Hour).Format("2006-01-02T15:04"))
+	led := filepath.Join(t.TempDir(), "bankroll.jsonl")
+	srv := &boardServer{dir: dir, ledgerPath: led}
+
+	do := func(handler, method, body string) (int, map[string]any) {
+		t.Helper()
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(method, "/x", strings.NewReader(body))
+		switch handler {
+		case "funds":
+			srv.handleFunds(rr, req)
+		case "adjust":
+			srv.handleAdjust(rr, req)
+		}
+		var m map[string]any
+		if rr.Body.Len() > 0 {
+			if err := json.Unmarshal(rr.Body.Bytes(), &m); err != nil {
+				t.Fatalf("%s: bad json: %v (%s)", handler, err, rr.Body.String())
+			}
+		}
+		return rr.Code, m
+	}
+
+	if code, body := do("funds", "POST", `{"book":"fanatics","asset":"cash","amount":50}`); code != 200 {
+		t.Fatalf("deposit: %d %v", code, body)
+	}
+	// Zero out NOW, but tag it as week 1's business -- exactly what the
+	// funds-tab button does when the operator answers its week prompt.
+	if code, body := do("adjust", "POST",
+		`{"book":"fanatics","asset":"cash","target":0,"week":1,"note":"week 1 zero-out to the bank"}`); code != 200 {
+		t.Fatalf("adjust: %d %v", code, body)
+	}
+
+	events, err := ledger.Load(led)
+	if err != nil {
+		t.Fatal(err)
+	}
+	start, end, err := weekWindow(dir, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rep1, err := ledger.Period(events, 1, start, end)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rep1.Withdrawals != 50 {
+		t.Errorf("week 1's report: Withdrawals = %.2f, want 50 -- the tag should override the timestamp", rep1.Withdrawals)
+	}
+
+	// Asking for week 2 over a window that DOES contain "now" (the
+	// withdrawal's real timestamp) must still exclude it, since it is
+	// explicitly tagged to week 1 -- the tag wins over the timestamp both
+	// ways, not just the way that happens to help.
+	now := time.Now()
+	rep2, err := ledger.Period(events, 2, now.Add(-time.Hour), now.Add(time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rep2.Withdrawals != 0 {
+		t.Errorf("week 2's report (window containing \"now\"): Withdrawals = %.2f, want 0 -- a week-1-tagged event must not leak into week 2's report", rep2.Withdrawals)
+	}
+}

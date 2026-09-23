@@ -1089,13 +1089,20 @@ function renderFunds(r) {
     btn.addEventListener("click", async () => {
       const book = btn.dataset.book;
       const amt = money(Number(btn.dataset.amount));
-      if (!confirm(`Zero out ${book}'s cash (${amt})? This withdraws it to the bank and cannot be undone from here.`)) return;
+      // Confirmed explicitly at submit, same as the week a placed bet is FOR
+      // (see the "record" handler above): a Tuesday zero-out settles up the
+      // week that just ended, but happens right at that week's boundary, so
+      // the banner's current week is not a safe default to apply silently --
+      // ask, defaulting to the banner, and let the operator correct it to the
+      // week the money actually came from.
+      const week = Number(prompt(`Zero out ${book}'s cash (${amt}) — which NFL week does this settle up?`, state.week)) || state.week;
+      if (!confirm(`Zero out ${book}'s cash (${amt}) as week ${week}? This withdraws it to the bank and cannot be undone from here.`)) return;
       btn.disabled = true;
       try {
         const res = await fetch(BASE + "api/funds/adjust", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ book: book, asset: "cash", target: 0, note: "Tuesday zero-out to the bank" }),
+          body: JSON.stringify({ book: book, asset: "cash", target: 0, week: week, note: `week ${week} zero-out to the bank` }),
         });
         const body = await res.json();
         if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
