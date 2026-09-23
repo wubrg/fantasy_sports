@@ -100,6 +100,36 @@ func TestParseGenericOU(t *testing.T) {
 	}
 }
 
+// TestParseDKPerEventEndpointSplitAcrossResponses covers a real capture that
+// broke event resolution entirely: DraftKings' per-event endpoint (as opposed
+// to the bulk controldata one TestParseDKSportscontent covers) never sends a
+// top-level "events" array -- not even in the response that carries the
+// moneyline -- and a browsing session hits it once per market category, so
+// the team names (on the moneyline response's own selections) and the props
+// that need them (on nine OTHER responses) never share one JSON body. A live
+// capture came back with the moneyline correctly tagged and 524 of 624
+// outcomes -- every prop -- carrying an empty Event, which is what sent both
+// the props tab's "event unknown" grouping and the board sync's empty diff.
+func TestParseDKPerEventEndpointSplitAcrossResponses(t *testing.T) {
+	data := []byte(`{"log":{"entries":[
+      {"response":{"content":{"text":"{\"markets\":[{\"id\":\"M1\",\"eventId\":\"34118180\",\"name\":\"Moneyline\"}],\"selections\":[{\"marketId\":\"M1\",\"label\":\"ATL Falcons\",\"outcomeType\":\"Away\",\"participants\":[{\"type\":\"Team\",\"name\":\"ATL Falcons\"}],\"displayOdds\":{\"american\":\"+210\"}},{\"marketId\":\"M1\",\"label\":\"GB Packers\",\"outcomeType\":\"Home\",\"participants\":[{\"type\":\"Team\",\"name\":\"GB Packers\"}],\"displayOdds\":{\"american\":\"-258\"}}]}"}}},
+      {"response":{"content":{"text":"{\"markets\":[{\"id\":\"M2\",\"eventId\":\"34118180\",\"name\":\"Anytime TD Scorer\"}],\"selections\":[{\"marketId\":\"M2\",\"label\":\"Bijan Robinson\",\"participants\":[{\"type\":\"Player\",\"name\":\"Bijan Robinson\"}],\"displayOdds\":{\"american\":\"+150\"}}]}"}}}
+    ]}}`)
+	out, err := Parse(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(out) != 3 {
+		t.Fatalf("got %d outcomes, want 3", len(out))
+	}
+	for _, o := range out {
+		if o.Event != "ATL Falcons @ GB Packers" {
+			t.Errorf("selection %q: Event = %q, want the moneyline response's teams joined by eventId, "+
+				"even though the prop's own response never mentioned a team", o.Selection, o.Event)
+		}
+	}
+}
+
 func TestParseNoOdds(t *testing.T) {
 	if _, err := Parse([]byte(`{"user":{"name":"x"},"total":42}`)); err == nil {
 		t.Error("a body with no american odds must be an error, not empty success")
