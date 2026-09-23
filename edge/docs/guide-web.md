@@ -39,8 +39,10 @@ balances aren't touched, and aren't meant to be.
 While here, declare whatever fresh budget or boost is in hand for the new week — a deposit, a
 matched bonus, a promo credit — using the **declare a boost** / **declare a no-sweat token** forms
 lower on the funds tab. Leave the expiry field blank and it auto-expires at the end of whichever week
-number you type in; that's the Tuesday-before-next-kickoff boundary, the same one the period report
-uses, so a boost and the report explaining where it went agree on when the week closed.
+the banner is currently showing (there's no separate week field to fill in — it just follows the
+banner); that's the Tuesday-before-next-kickoff boundary, the same one the period report uses, so a
+boost and the report explaining where it went agree on when the week closed. Type an explicit date
+into the expiry field instead for the rarer promo that should outlive one week.
 
 ## Wednesday — resolve the log, get ready for Thursday
 

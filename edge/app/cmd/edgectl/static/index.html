@@ -87,8 +87,9 @@ if (!location.pathname.endsWith("/")) {
         balance.</li>
       <li><strong>funds</strong> — cash, bonus and no-sweat balances, an expiring-soon list, and forms
         to declare a boost or a no-sweat token. Leaving a promo's expiry blank auto-expires it at the
-        end of whatever NFL week you tag it with (the Tuesday-on-or-before-kickoff boundary the period
-        report also uses); type an explicit date only for the rarer promo that outlives one week. Each
+        end of whichever week the banner is currently on (the Tuesday-on-or-before-kickoff boundary
+        the period report also uses); type an explicit date only for the rarer promo that outlives
+        one week. Each
         book holding cash gets a <em>zero out</em> button — it withdraws that book's cash balance to
         the bank in one tap (the same event <span class="mono">edgectl ledger add -kind withdraw</span>
         would record), meant for a Tuesday reset once last week's winnings are actually pulled out.
