@@ -153,6 +153,34 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 			books = []string{board.DefaultBook}
 		}
 	}
+	// consensus is the schedule's closing line, priced for every game the
+	// moment a week is scaffolded -- pooling it makes an entirely unbettable
+	// week look fully recommended. The CLI still allows it explicitly
+	// (`board report -book consensus`, a deliberate preview-off-the-schedule
+	// move by someone who typed it on purpose); the low-friction chip UI here
+	// must not let a stale client-side selection carry it in silently. It is
+	// dropped rather than rejected, since a client whose cached book pool
+	// still includes it (from before this existed) should recover on its own
+	// next request rather than break; extraNotes says so instead of leaving
+	// the drop invisible.
+	var extraNotes []string
+	{
+		kept := books[:0:0]
+		for _, b := range books {
+			if b == board.Consensus {
+				continue
+			}
+			kept = append(kept, b)
+		}
+		if len(kept) < len(books) {
+			extraNotes = append(extraNotes, "consensus is the schedule's reference line, not "+
+				"a book you can bet -- it was dropped from the requested pool")
+			books = kept
+		}
+	}
+	if len(books) == 0 {
+		books = []string{board.DefaultBook}
+	}
 	shots := 4
 	if v, err := strconv.Atoi(q.Get("shots")); err == nil && v > 0 && v <= 12 {
 		shots = v
@@ -226,7 +254,7 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 		Week: a.Week, Book: a.Book, Target: a.Target, Floor: int(a.Floor),
 		Priced: len(a.Lines), Total: len(a.Lines) + len(a.Missing),
 		AvgConv: a.Set.AvgConversion, AnyHit: a.Set.AnyHit, Unfille: a.Set.Unfilled,
-		Notes: a.Problems, Provisional: a.Provisional, Missing: len(a.Missing),
+		Notes: append(extraNotes, a.Problems...), Provisional: a.Provisional, Missing: len(a.Missing),
 		Committed:   toCommitJSON(committed),
 		PricedBooks: a.PricedBooks,
 		Books:       books,
