@@ -409,5 +409,32 @@ tryBoosts("renderBoosts() keeps ceiling order against headline percentage", { fl
     chase: false, restricted: true },
 ]});
 
+// ---- the bets-tab calculator ---------------------------------------------
+//
+// renderReport() already appends calcPanel() and calls wireCalcPanel() on
+// every run above, so a ReferenceError in either would already have failed
+// every tryReport() case. These are additional, targeted checks: the panel's
+// markup carries the ids wireCalcPanel binds to, and wiring it up against a
+// stubbed /api/hitrate and /api/parlay/combine does not throw.
+
+try {
+  const html = inCtx("calcPanel()");
+  const wantIds = ["c-values", "c-line", "c-side", "c-price", "c-hitrate-go",
+    "c-legs", "c-leg-add", "c-parlay-go", "c-parlay-sel", "c-parlay-price",
+    "c-parlay-stake", "c-parlay-log"];
+  const missing = wantIds.filter((id) => !html.includes(`id="${id}"`));
+  if (missing.length) fail(`calcPanel() is missing ids: ${missing.join(", ")}`);
+  else ok("calcPanel() carries every id wireCalcPanel binds to");
+} catch (e) {
+  fail("calcPanel() threw: " + e.message);
+}
+
+try {
+  inCtx('el.report.innerHTML = calcPanel(); wireCalcPanel(); 0');
+  ok("wireCalcPanel() runs without throwing against the stub DOM");
+} catch (e) {
+  fail("wireCalcPanel() threw: " + e.message);
+}
+
 console.log(failures ? `\n${failures} failure(s)` : "\nall smoke checks passed");
 process.exit(failures ? 1 : 0);
