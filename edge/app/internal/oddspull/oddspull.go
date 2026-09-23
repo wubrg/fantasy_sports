@@ -43,11 +43,9 @@ func Parse(data []byte) ([]Outcome, error) {
 
 	var out []Outcome
 	if bodies := harBodies(root); bodies != nil {
-		for _, b := range bodies {
-			extractAny(b, &out)
-		}
+		extractMany(bodies, &out)
 	} else {
-		extractAny(root, &out)
+		extractMany([]any{root}, &out)
 	}
 
 	out = dedup(out)
@@ -102,39 +100,98 @@ func harBodies(root any) []any {
 	return out
 }
 
-// extractAny dispatches on shape: DraftKings' current normalised sportscontent
-// API (separate events/markets/selections arrays joined by id) vs the older
-// nested shape any generic walker can handle.
-func extractAny(body any, out *[]Outcome) {
-	if m, ok := body.(map[string]any); ok {
-		_, hasSel := m["selections"].([]any)
-		_, hasMkt := m["markets"].([]any)
-		if hasSel && hasMkt {
-			extractDKSportscontent(m, out)
-			return
+// extractMany dispatches each body on shape: DraftKings' current normalised
+// sportscontent API (separate events/markets/selections arrays joined by id)
+// vs the older nested shape any generic walker can handle.
+//
+// All DK-sportscontent bodies in the batch are extracted TOGETHER, not one at
+// a time, because DraftKings' event-scoped endpoint (as opposed to the bulk
+// one) splits one game across many separate requests -- game lines in one,
+// each prop category in its own -- and only the game-lines response ever
+// carries the team names an event needs to be identified by. A HAR capturing
+// a browsing session mixes exactly these: one request with the moneyline and
+// nine more with nothing but props. Extracting each body in isolation is what
+// left every prop's event blank; joining them by eventId across the whole
+// batch is what fixes it.
+func extractMany(bodies []any, out *[]Outcome) {
+	var dk []map[string]any
+	for _, b := range bodies {
+		if m, ok := b.(map[string]any); ok {
+			_, hasSel := m["selections"].([]any)
+			_, hasMkt := m["markets"].([]any)
+			if hasSel && hasMkt {
+				dk = append(dk, m)
+				continue
+			}
 		}
+		extractGeneric(b, "", out)
 	}
-	extractGeneric(body, "", out)
+	if len(dk) > 0 {
+		extractDKSportscontent(dk, out)
+	}
 }
 
-// extractDKSportscontent joins the three arrays. selection.marketId -> market
-// {name,eventId}; market.eventId -> event.name. Price is displayOdds.american;
-// line is points; a player prop names its player in participants.
-func extractDKSportscontent(m map[string]any, out *[]Outcome) {
+// extractDKSportscontent joins the three arrays across every body in the
+// batch. selection.marketId -> market {name,eventId}; market.eventId ->
+// event.name. Price is displayOdds.american; line is points; a player prop
+// names its player in participants.
+func extractDKSportscontent(bodies []map[string]any, out *[]Outcome) {
 	events := map[string]string{}
-	for _, e := range asList(m["events"]) {
-		em, _ := e.(map[string]any)
-		if id, ok := em["id"].(string); ok {
-			events[id] = str(em["name"])
-		}
-	}
 	markets := map[string]map[string]any{}
-	for _, mk := range asList(m["markets"]) {
-		mm, _ := mk.(map[string]any)
-		if id, ok := mm["id"].(string); ok {
-			markets[id] = mm
+	for _, m := range bodies {
+		for _, e := range asList(m["events"]) {
+			em, _ := e.(map[string]any)
+			if id, ok := em["id"].(string); ok {
+				events[id] = str(em["name"])
+			}
+		}
+		for _, mk := range asList(m["markets"]) {
+			mm, _ := mk.(map[string]any)
+			if id, ok := mm["id"].(string); ok {
+				markets[id] = mm
+			}
 		}
 	}
+
+	// A per-event capture (DraftKings' eventSubcategory endpoint, as opposed to
+	// the bulk controldata one the events array above comes from) carries no
+	// top-level "events" array at all -- only a numeric eventId on each
+	// market, with no name anywhere. The team names are still there, just on
+	// the moneyline/spread selections' own participants (outcomeType
+	// "Away"/"Home", a Team participant) rather than a separate event record.
+	// A fallback "AWAY @ HOME" is built from whichever selections actually
+	// name a side and shared, by eventId, across every selection in the WHOLE
+	// batch for that game -- a prop or a total has no participants of its own,
+	// and often isn't even in the same response as the game lines that do.
+	fallbackAway := map[string]string{}
+	fallbackHome := map[string]string{}
+	for _, m := range bodies {
+		for _, s := range asList(m["selections"]) {
+			sel, ok := s.(map[string]any)
+			if !ok {
+				continue
+			}
+			eventID := str(markets[str(sel["marketId"])]["eventId"])
+			if eventID == "" {
+				continue
+			}
+			if name := teamName(sel); name != "" {
+				switch str(sel["outcomeType"]) {
+				case "Away":
+					fallbackAway[eventID] = name
+				case "Home":
+					fallbackHome[eventID] = name
+				}
+			}
+		}
+	}
+
+	for _, m := range bodies {
+		extractDKSelections(m, markets, events, fallbackAway, fallbackHome, out)
+	}
+}
+
+func extractDKSelections(m map[string]any, markets map[string]map[string]any, events, fallbackAway, fallbackHome map[string]string, out *[]Outcome) {
 	for _, s := range asList(m["selections"]) {
 		sel, ok := s.(map[string]any)
 		if !ok {
@@ -152,7 +209,13 @@ func extractDKSportscontent(m map[string]any, out *[]Outcome) {
 				mname = str(mt["name"])
 			}
 		}
-		event := events[str(mk["eventId"])]
+		eventID := str(mk["eventId"])
+		event := events[eventID]
+		if event == "" {
+			if away, home := fallbackAway[eventID], fallbackHome[eventID]; away != "" && home != "" {
+				event = away + " @ " + home
+			}
+		}
 
 		var line *float64
 		if p, ok := toFloat(sel["points"]); ok {
@@ -221,6 +284,19 @@ func playerName(sel map[string]any) string {
 	for _, p := range asList(sel["participants"]) {
 		pm, _ := p.(map[string]any)
 		if str(pm["type"]) == "Player" {
+			return str(pm["name"])
+		}
+	}
+	return ""
+}
+
+// teamName returns a selection's team participant's name (e.g. "ATL
+// Falcons"), or "" for a selection with no team participant -- a prop or a
+// total, which is priced on a player or neither side.
+func teamName(sel map[string]any) string {
+	for _, p := range asList(sel["participants"]) {
+		pm, _ := p.(map[string]any)
+		if str(pm["type"]) == "Team" {
 			return str(pm["name"])
 		}
 	}
