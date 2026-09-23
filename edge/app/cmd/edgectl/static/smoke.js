@@ -240,6 +240,20 @@ tryFunds("renderFunds() with balances and an expiry", {
   expiring: [{ book: "fanatics", asset: "bonus", label: "bonus",
                at: "2026-08-26", in_hours: 30, expired: false }],
 });
+// A cash balance must render a zero-out button; bonus/boost must not (only
+// cash is a "withdraw to the bank" balance -- zeroing was built for that, and
+// nothing else here is real, withdrawable money).
+try {
+  sandbox.__f = { path: "/x", balances: [
+    { book: "fanatics", asset: "cash", amount: 20, units: 0 },
+    { book: "fanatics", asset: "bonus", amount: 37.5, units: 0 },
+  ], expiring: [] };
+  inCtx("renderFunds(__f)");
+  const html = inCtx("el.funds.innerHTML");
+  const zeroButtons = (html.match(/class="zero-book"/g) || []).length;
+  if (zeroButtons === 1) ok("renderFunds() shows one zero-out button, for cash only");
+  else fail(`renderFunds() zero-out buttons = ${zeroButtons}, want 1 (cash only, not bonus)`);
+} catch (e) { fail("renderFunds() zero-out button check threw: " + e.message); }
 tryFunds("renderFunds() with an empty bankroll",
   { path: "/x", balances: [], expiring: [] });
 // Go emits null for an empty slice, which is not the same as [].
