@@ -159,15 +159,7 @@ func (d *Doc) PlanImport(pairs []PastePair, book, market string) ([]ImportChange
 	// away side first, but a page that lists the home team first is a
 	// consistent, recognisable shape rather than a corrupted one, and since a
 	// team plays at most once a week the reversed match is unambiguous.
-	type slot struct {
-		id       string
-		reversed bool
-	}
-	index := map[[2]string]slot{}
-	for id, g := range d.Games {
-		index[[2]string{g.Away, g.Home}] = slot{id, false}
-		index[[2]string{g.Home, g.Away}] = slot{id, true}
-	}
+	index := d.teamIndex()
 
 	var changes []ImportChange
 	seen := map[string]string{}
