@@ -97,72 +97,16 @@ func TestServeStaticAndBoard(t *testing.T) {
 	}
 }
 
-func TestServePriceRoundTrip(t *testing.T) {
-	ts, path := newTestServer(t)
-
-	code, body := post(t, ts, "/api/price", priceRequest{
-		Week: 1, GameID: "2026_01_SF_LA", Book: "fanatics", Market: "ml", Value: "+150/-175"})
-	if code != 200 {
-		t.Fatalf("save: %d %v", code, body)
-	}
-	if body["value"] != "+150/-175" {
-		t.Errorf("stored %v", body["value"])
-	}
-
-	// It must be on disk immediately, not on a flush timer: the whole design
-	// assumes the page can be closed at any moment.
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(raw), "+150/-175") {
-		t.Errorf("price not persisted:\n%s", raw)
-	}
-
-	// An empty value erases rather than erroring.
-	code, body = post(t, ts, "/api/price", priceRequest{
-		Week: 1, GameID: "2026_01_SF_LA", Book: "fanatics", Market: "ml", Value: ""})
-	if code != 200 || body["value"] != "" {
-		t.Fatalf("erase: %d %v", code, body)
-	}
-}
-
-func TestServePriceRejections(t *testing.T) {
-	ts, _ := newTestServer(t)
-	cases := []struct {
-		name string
-		req  priceRequest
-	}{
-		{"garbage", priceRequest{1, "2026_01_SF_LA", "fanatics", "ml", "abc"}},
-		{"one side", priceRequest{1, "2026_01_SF_LA", "fanatics", "ml", "150"}},
-		{"impossible price", priceRequest{1, "2026_01_SF_LA", "fanatics", "ml", "+150/-4"}},
-		{"no line", priceRequest{1, "2026_01_SF_LA", "fanatics", "spread", "-110/-110"}},
-		{"unknown game", priceRequest{1, "2026_01_XX_YY", "fanatics", "ml", "+150/-175"}},
-		{"consensus", priceRequest{1, "2026_01_SF_LA", "consensus", "ml", "+150/-175"}},
-		{"unknown book", priceRequest{1, "2026_01_SF_LA", "nope", "ml", "+150/-175"}},
-		{"unknown market", priceRequest{1, "2026_01_SF_LA", "fanatics", "puckline", "+150/-175"}},
-	}
-	for _, c := range cases {
-		code, body := post(t, ts, "/api/price", c.req)
-		if code != http.StatusBadRequest {
-			t.Errorf("%s: got %d, want 400 (%v)", c.name, code, body)
-			continue
-		}
-		// The message has to name what was wrong; the field keeps the text and
-		// shows this, so "invalid input" would be useless.
-		if s, _ := body["error"].(string); s == "" {
-			t.Errorf("%s: 400 with no message", c.name)
-		}
-	}
-}
-
 func TestServeRereadsFileChangedUnderneath(t *testing.T) {
 	// The board is also a text file the operator edits by hand. A cached copy
 	// that ignored that would silently revert those edits on the next save.
 	ts, path := newTestServer(t)
 
-	if _, body := post(t, ts, "/api/price", priceRequest{
-		Week: 1, GameID: "2026_01_SF_LA", Book: "fanatics", Market: "ml", Value: "+150/-175"}); body["ok"] != true {
+	// Seed a price through the import-apply endpoint -- the enter tab and its
+	// direct /api/price write are gone; every write now goes through a
+	// preview-then-apply sync, the same as the props tab's board sync.
+	if _, body := post(t, ts, "/api/import/apply", importRequest{
+		Week: 1, Book: "fanatics", Blob: "SF +150, LAR -175"}); body["ok"] != true {
 		t.Fatalf("seed save failed: %v", body)
 	}
 

@@ -3,7 +3,7 @@ MODEL  := model
 PY     := python3
 DEMO_LOG := /tmp/edgectl-demo.jsonl
 
-.PHONY: help build check test vet fmt fmt-check lint clean \
+.PHONY: help build check test vet fmt fmt-check lint clean list \
 	board board-check board-report \
 	data data-status data-clean \
 	fit fit-residuals fit-conditionals fit-belief fit-line-model power-table verify-model lag findings \
@@ -43,6 +43,9 @@ test: ## Run go test ./...
 
 vet fmt fmt-check lint clean:
 	$(MAKE) -C $(APP) $@
+
+list: ## List available targets
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_.-]+:.*?## /{printf "  %-26s %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
 
 ## --- Line board ---
 
