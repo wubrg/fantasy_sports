@@ -382,7 +382,7 @@ func TestSettle_writesBothAndGuardsDoubleSettle(t *testing.T) {
 		t.Fatalf("Place: %v", err)
 	}
 
-	if err := Settle(bl, lg, id, betlog.Won, nil, "scored", now); err != nil {
+	if err := Settle(bl, lg, id, betlog.Won, nil, nil, nil, "scored", now); err != nil {
 		t.Fatalf("Settle: %v", err)
 	}
 
@@ -404,7 +404,7 @@ func TestSettle_writesBothAndGuardsDoubleSettle(t *testing.T) {
 	}
 
 	// Second settle is refused.
-	if err := Settle(bl, lg, id, betlog.Lost, nil, "oops", now); err == nil {
+	if err := Settle(bl, lg, id, betlog.Lost, nil, nil, nil, "oops", now); err == nil {
 		t.Fatal("expected double-settle to be refused")
 	}
 }
@@ -420,7 +420,7 @@ func TestSettle_predictionWithoutLedgerPlace(t *testing.T) {
 		t.Fatalf("Place: %v", err)
 	}
 	// Settling must not error even though there is no ledger place to settle.
-	if err := Settle(bl, lg, id, betlog.Lost, nil, "", now); err != nil {
+	if err := Settle(bl, lg, id, betlog.Lost, nil, nil, nil, "", now); err != nil {
 		t.Fatalf("Settle prediction-only: %v", err)
 	}
 }
@@ -456,7 +456,7 @@ func TestSettle_computesReturnsForWonCashBet(t *testing.T) {
 		t.Fatalf("Place: %v", err)
 	}
 
-	if err := Settle(bl, lg, id, betlog.Won, nil, "scored", now); err != nil {
+	if err := Settle(bl, lg, id, betlog.Won, nil, nil, nil, "scored", now); err != nil {
 		t.Fatalf("Settle: %v", err)
 	}
 
@@ -490,7 +490,7 @@ func TestSettle_computesReturnsForWonBonusBet(t *testing.T) {
 		t.Fatalf("Place: %v", err)
 	}
 
-	if err := Settle(bl, lg, id, betlog.Won, nil, "scored", now); err != nil {
+	if err := Settle(bl, lg, id, betlog.Won, nil, nil, nil, "scored", now); err != nil {
 		t.Fatalf("Settle: %v", err)
 	}
 
@@ -522,7 +522,7 @@ func TestSettle_explicitReturnsUsedUnchanged(t *testing.T) {
 	}
 
 	want := &ledger.Lot{ID: "manual-returns", Book: "draftkings", Asset: ledger.Cash, Amount: 200}
-	if err := Settle(bl, lg, id, betlog.Won, want, "manual", now); err != nil {
+	if err := Settle(bl, lg, id, betlog.Won, nil, nil, want, "manual", now); err != nil {
 		t.Fatalf("Settle: %v", err)
 	}
 
@@ -551,7 +551,7 @@ func TestSettle_returnsBookResolvesFromWinningsLot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Place bet1: %v", err)
 	}
-	if err := Settle(bl, lg, id1, betlog.Won, nil, "", now); err != nil {
+	if err := Settle(bl, lg, id1, betlog.Won, nil, nil, nil, "", now); err != nil {
 		t.Fatalf("Settle bet1: %v", err)
 	}
 
@@ -564,7 +564,7 @@ func TestSettle_returnsBookResolvesFromWinningsLot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Place bet2: %v", err)
 	}
-	if err := Settle(bl, lg, id2, betlog.Won, nil, "", now); err != nil {
+	if err := Settle(bl, lg, id2, betlog.Won, nil, nil, nil, "", now); err != nil {
 		t.Fatalf("Settle bet2 (winnings-sourced stake): %v", err)
 	}
 

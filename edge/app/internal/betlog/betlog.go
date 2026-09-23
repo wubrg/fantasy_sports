@@ -87,6 +87,21 @@ func (r Result) settleable() bool {
 // excluded from calibration: no prediction was tested.
 func (r Result) Counts() bool { return r == Won || r == Lost }
 
+// Leg is one component of a same-game parlay (or any multi-leg wager) whose
+// combined price and stake are recorded on the enclosing Bet. Legs is purely
+// additive detail about what makes up that combined price -- Bet.Selection,
+// Bet.Price and Bet.Stake keep meaning "the wager as a whole" regardless of
+// whether Legs is set.
+type Leg struct {
+	Selection string         `json:"selection"`
+	Price     wager.American `json:"price"`
+	// Result is won/lost/push/void; empty means the leg is still open. This is
+	// independent of Bet's own Result (recorded via Settle): a leg can void
+	// while the combined wager it belongs to settles won, lost, pushed, or
+	// void based on what the book actually paid on the rest of the parlay.
+	Result Result `json:"result,omitempty"`
+}
+
 // Bet is the prediction, recorded before the outcome is known.
 type Bet struct {
 	Selection string         `json:"selection"`
@@ -94,6 +109,11 @@ type Bet struct {
 	Book      wager.Book     `json:"book,omitempty"`
 	Bankroll  string         `json:"bankroll"`
 	Stake     float64        `json:"stake"`
+
+	// Legs records what makes up a multi-leg (e.g. same-game parlay) wager.
+	// Optional and purely additive: a single-leg bet leaves it nil and behaves
+	// exactly as it always has.
+	Legs []Leg `json:"legs,omitempty"`
 
 	// Week is the NFL week this wager is FOR, so a bet is attributed to the week
 	// it was struck for rather than the date it happened to be logged. Optional:
@@ -134,6 +154,15 @@ type Entry struct {
 	Prediction *Prediction `json:"prediction,omitempty"`
 	Result     Result      `json:"result,omitempty"`
 	Note       string      `json:"note,omitempty"`
+
+	// SettledPrice, when set on a settlement entry, is the price the book
+	// actually recomputed the combined wager to -- e.g. after voiding one leg
+	// out of a same-game parlay and repricing the rest. When nil, Bet.Price
+	// (the price originally quoted at placement) is the realized price.
+	SettledPrice *wager.American `json:"settled_price,omitempty"`
+	// LegResults, when set on a settlement entry, records what happened to
+	// each leg of a multi-leg wager.
+	LegResults []Leg `json:"leg_results,omitempty"`
 }
 
 // Settled is a bet joined to its outcome.
@@ -143,6 +172,11 @@ type Settled struct {
 	Bet      Bet
 	Result   Result
 	SettleAt time.Time
+
+	// SettledPrice and LegResults carry forward whatever Settle recorded --
+	// see Entry.SettledPrice and Entry.LegResults.
+	SettledPrice *wager.American
+	LegResults   []Leg
 }
 
 // seq disambiguates identifiers minted within the same nanosecond tick.
@@ -238,11 +272,20 @@ func PlaceBet(path string, b Bet) (string, error) {
 }
 
 // Settle appends an outcome for a previously recorded bet.
-func Settle(path, id string, r Result, note string) error {
+//
+// settledPrice and legResults are optional detail for a multi-leg (e.g.
+// same-game parlay) wager: settledPrice is the price the book actually
+// recomputed the combined wager to after a leg voided, and legResults records
+// what happened to each leg. Both are nil for an ordinary single-leg bet, and
+// omitting them leaves Score using Bet.Price exactly as it always has.
+func Settle(path, id string, r Result, settledPrice *wager.American, legResults []Leg, note string) error {
 	if !r.Counts() && r != Pushed && r != Void {
 		return fmt.Errorf("betlog: %q is not a settleable result", r)
 	}
-	return Append(path, Entry{Kind: KindSettle, ID: id, Time: time.Now(), Result: r, Note: note})
+	return Append(path, Entry{
+		Kind: KindSettle, ID: id, Time: time.Now(), Result: r,
+		SettledPrice: settledPrice, LegResults: legResults, Note: note,
+	})
 }
 
 // record is one folded entry of the stream, before it is projected into a
@@ -251,14 +294,16 @@ func Settle(path, id string, r Result, note string) error {
 // twice -- are properties of the STREAM, not of what a record happens to mean.
 // There is exactly one implementation of them, and both projections share it.
 type record struct {
-	ID       string
-	Kind     Kind
-	Time     time.Time
-	Bet      *Bet
-	Pred     *Prediction
-	Result   Result
-	SettleAt time.Time
-	Note     string
+	ID           string
+	Kind         Kind
+	Time         time.Time
+	Bet          *Bet
+	Pred         *Prediction
+	Result       Result
+	SettleAt     time.Time
+	Note         string
+	SettledPrice *wager.American
+	LegResults   []Leg
 }
 
 // scan folds the event stream and enforces its integrity, without knowing what
@@ -333,6 +378,8 @@ func scan(path string) (recs []record, order []string, skipped map[Kind]int, err
 			r.Result = en.Result
 			r.SettleAt = en.Time
 			r.Note = en.Note
+			r.SettledPrice = en.SettledPrice
+			r.LegResults = en.LegResults
 		default:
 			skipped[en.Kind]++
 		}
@@ -382,7 +429,8 @@ func Load(path string) ([]Settled, error) {
 					"cannot be scored as wagers — read it with `edgectl beliefs score`", path)
 		}
 		out = append(out, Settled{ID: r.ID, Placed: r.Time, Bet: *r.Bet,
-			Result: r.Result, SettleAt: r.SettleAt})
+			Result: r.Result, SettleAt: r.SettleAt,
+			SettledPrice: r.SettledPrice, LegResults: r.LegResults})
 	}
 	return out, nil
 }
@@ -437,7 +485,14 @@ func Score(bets []Settled, filter func(Settled) bool) (Calibration, error) {
 					"contributing nothing to ROI", b.ID, stake)
 		}
 		c.Staked += stake
-		profit, err := b.Bet.Price.ProfitMultiple()
+		// A settlement's SettledPrice, when present, is what the book actually
+		// paid the combined wager at -- e.g. after repricing a same-game parlay
+		// once a leg voided. Score against that, not the original quote.
+		price := b.Bet.Price
+		if b.SettledPrice != nil {
+			price = *b.SettledPrice
+		}
+		profit, err := price.ProfitMultiple()
 		if err != nil {
 			return Calibration{}, fmt.Errorf("betlog: bet %s: %w", b.ID, err)
 		}

@@ -284,7 +284,7 @@ func (s *boardServer) handleSettle(w http.ResponseWriter, r *http.Request) {
 	// place exists for this wager, the ledger settle too -- so the bankroll
 	// clears alongside the prediction. It refuses a double settle, since the
 	// betlog folds the last outcome on top and a second tap could flip a result.
-	if err := journal.Settle(s.betlogPath, s.ledgerPath, req.ID, betlog.Result(req.Result), nil, req.Note, time.Now()); err != nil {
+	if err := journal.Settle(s.betlogPath, s.ledgerPath, req.ID, betlog.Result(req.Result), nil, nil, nil, req.Note, time.Now()); err != nil {
 		httpError(w, http.StatusConflict, err.Error())
 		return
 	}

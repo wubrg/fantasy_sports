@@ -36,7 +36,7 @@ func TestRoundTrip(t *testing.T) {
 		Scenario:  "shootout",
 		Predicted: 0.58,
 	})
-	if err := Settle(path, id, Won, "cleared by 12"); err != nil {
+	if err := Settle(path, id, Won, nil, nil, "cleared by 12"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -72,7 +72,7 @@ func TestSettlementIsAppendedNotRewritten(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := Settle(path, id, Lost, ""); err != nil {
+	if err := Settle(path, id, Lost, nil, nil, ""); err != nil {
 		t.Fatal(err)
 	}
 	after, err := os.ReadFile(path)
@@ -108,7 +108,7 @@ func TestCalibrationHeadline(t *testing.T) {
 		if i < 3 {
 			res = Won
 		}
-		if err := Settle(path, id, res, ""); err != nil {
+		if err := Settle(path, id, res, nil, nil, ""); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -143,7 +143,7 @@ func TestBonusBetLossCostsNothing(t *testing.T) {
 	id := mustPlace(t, path, Bet{
 		Selection: "longshot", Price: 900, Bankroll: "bonus bet", Stake: 10, Predicted: 0.12,
 	})
-	if err := Settle(path, id, Lost, ""); err != nil {
+	if err := Settle(path, id, Lost, nil, nil, ""); err != nil {
 		t.Fatal(err)
 	}
 	bets := mustLoad(t, path)
@@ -160,7 +160,7 @@ func TestBonusBetLossCostsNothing(t *testing.T) {
 	id2 := mustPlace(t, path2, Bet{
 		Selection: "longshot", Price: 900, Bankroll: "real money", Stake: 10, Predicted: 0.12,
 	})
-	if err := Settle(path2, id2, Lost, ""); err != nil {
+	if err := Settle(path2, id2, Lost, nil, nil, ""); err != nil {
 		t.Fatal(err)
 	}
 	bets2 := mustLoad(t, path2)
@@ -180,7 +180,7 @@ func TestPushesAreExcluded(t *testing.T) {
 		id := mustPlace(t, path, Bet{
 			Selection: "b", Price: -110, Bankroll: "real money", Stake: 1, Predicted: 0.5,
 		})
-		if err := Settle(path, id, r, ""); err != nil {
+		if err := Settle(path, id, r, nil, nil, ""); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -212,7 +212,7 @@ func TestBySourceSplitsCalibration(t *testing.T) {
 			Selection: "b", Price: 100, Bankroll: "real money", Stake: 1,
 			ScenarioSource: src, Predicted: predicted,
 		})
-		if err := Settle(path, id, res, ""); err != nil {
+		if err := Settle(path, id, res, nil, nil, ""); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -257,7 +257,7 @@ func TestBySourceSplitsCalibration(t *testing.T) {
 // or an id was mistyped, and hiding it would corrupt the calibration silently.
 func TestCorruptLogFailsLoudly(t *testing.T) {
 	path := tmpLog(t)
-	if err := Settle(path, "no-such-bet", Won, ""); err != nil {
+	if err := Settle(path, "no-such-bet", Won, nil, nil, ""); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := Load(path); err == nil {
@@ -322,7 +322,7 @@ func TestCannotResettle(t *testing.T) {
 	id := mustPlace(t, path, Bet{
 		Selection: "x", Price: -110, Bankroll: "real money", Stake: 100, Predicted: 0.5,
 	})
-	if err := Settle(path, id, Lost, ""); err != nil {
+	if err := Settle(path, id, Lost, nil, nil, ""); err != nil {
 		t.Fatal(err)
 	}
 	before := mustLoad(t, path)
@@ -332,7 +332,7 @@ func TestCannotResettle(t *testing.T) {
 
 	// The append itself may succeed -- the file is a raw event stream -- but the
 	// log must not READ as though the outcome changed.
-	_ = Settle(path, id, Won, "changed my mind")
+	_ = Settle(path, id, Won, nil, nil, "changed my mind")
 	if _, err := Load(path); err == nil {
 		t.Error("a second settlement must make the log fail loudly, not silently rewrite the outcome")
 	}
@@ -390,6 +390,172 @@ func TestStakeMustBePositive(t *testing.T) {
 		}); err == nil {
 			t.Errorf("stake %v must be rejected", bad)
 		}
+	}
+}
+
+// TestMultiLegSettledPriceScoresRealizedPayout is the actual bug fix: a
+// same-game parlay that loses a leg to a void gets repriced by the book, and
+// Score must use that real payout, not the price originally quoted.
+func TestMultiLegSettledPriceScoresRealizedPayout(t *testing.T) {
+	path := tmpLog(t)
+	id := mustPlace(t, path, Bet{
+		Selection: "SGP: A anytime TD + B over 5.5 recs + C over 250 pass yds",
+		Price:     450, // combined price as originally struck
+		Bankroll:  "real money",
+		Stake:     10,
+		Predicted: 0.3,
+		Legs: []Leg{
+			{Selection: "A anytime TD", Price: -150},
+			{Selection: "B over 5.5 recs", Price: -110},
+			{Selection: "C over 250 pass yds", Price: 120},
+		},
+	})
+	// C's leg voids (player ruled out pregame); the book reprices the
+	// remaining two-leg parlay down to +180 and pays that out.
+	settledPrice := wager.American(180)
+	legResults := []Leg{
+		{Selection: "A anytime TD", Result: Won},
+		{Selection: "B over 5.5 recs", Result: Won},
+		{Selection: "C over 250 pass yds", Result: Void},
+	}
+	if err := Settle(path, id, Won, &settledPrice, legResults, "C voided, repriced to +180"); err != nil {
+		t.Fatal(err)
+	}
+
+	bets := mustLoad(t, path)
+	if len(bets) != 1 {
+		t.Fatalf("got %d bets, want 1", len(bets))
+	}
+	if bets[0].SettledPrice == nil || *bets[0].SettledPrice != settledPrice {
+		t.Fatalf("SettledPrice = %v, want %v", bets[0].SettledPrice, settledPrice)
+	}
+	if len(bets[0].LegResults) != 3 {
+		t.Fatalf("got %d leg results, want 3", len(bets[0].LegResults))
+	}
+
+	c, err := Score(bets, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantMultiple, err := settledPrice.ProfitMultiple()
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantProfit := 10 * wantMultiple
+	if !closeTo(c.Profit, wantProfit, 1e-9) {
+		t.Errorf("profit = %.4f, want %.4f (scored against SettledPrice +180, not the original +450 quote)", c.Profit, wantProfit)
+	}
+
+	// Sanity: scoring against the ORIGINAL quote would give a different
+	// (much larger) profit, confirming the settled price actually took effect.
+	originalMultiple, err := wager.American(450).ProfitMultiple()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if closeTo(c.Profit, 10*originalMultiple, 1e-9) {
+		t.Error("profit matches the original +450 quote; SettledPrice was not used")
+	}
+}
+
+// TestSingleLegBetUnaffectedByMultiLegFields is the regression check: a plain
+// single-leg bet with no Legs and no SettledPrice on settle must score exactly
+// as it always has.
+func TestSingleLegBetUnaffectedByMultiLegFields(t *testing.T) {
+	path := tmpLog(t)
+	id := mustPlace(t, path, Bet{
+		Selection: "Player A over 52.5 rec yds",
+		Price:     -110,
+		Bankroll:  "real money",
+		Stake:     5,
+		Predicted: 0.58,
+	})
+	if err := Settle(path, id, Won, nil, nil, "cleared by 12"); err != nil {
+		t.Fatal(err)
+	}
+	bets := mustLoad(t, path)
+	if bets[0].SettledPrice != nil {
+		t.Errorf("SettledPrice = %v, want nil for a plain single-leg bet", bets[0].SettledPrice)
+	}
+	if bets[0].LegResults != nil {
+		t.Errorf("LegResults = %v, want nil for a plain single-leg bet", bets[0].LegResults)
+	}
+	c, err := Score(bets, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pm, err := wager.American(-110).ProfitMultiple()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !closeTo(c.Profit, 5*pm, 1e-9) {
+		t.Errorf("profit = %.4f, want %.4f (scored against Bet.Price)", c.Profit, 5*pm)
+	}
+}
+
+// TestEntryRoundTripsLegsAndSettledPrice confirms the new fields survive a
+// marshal-to-JSON-and-scan round trip losslessly.
+func TestEntryRoundTripsLegsAndSettledPrice(t *testing.T) {
+	path := tmpLog(t)
+	id := mustPlace(t, path, Bet{
+		Selection: "SGP round trip", Price: 300, Bankroll: "real money", Stake: 20, Predicted: 0.25,
+		Legs: []Leg{
+			{Selection: "leg one", Price: -200},
+			{Selection: "leg two", Price: 150},
+		},
+	})
+	settledPrice := wager.American(-105)
+	legResults := []Leg{
+		{Selection: "leg one", Result: Won},
+		{Selection: "leg two", Result: Void},
+	}
+	if err := Settle(path, id, Pushed, &settledPrice, legResults, "leg two voided"); err != nil {
+		t.Fatal(err)
+	}
+
+	bets := mustLoad(t, path)
+	if len(bets) != 1 {
+		t.Fatalf("got %d bets, want 1", len(bets))
+	}
+	b := bets[0]
+	if len(b.Bet.Legs) != 2 || b.Bet.Legs[0].Selection != "leg one" || b.Bet.Legs[0].Price != -200 ||
+		b.Bet.Legs[1].Selection != "leg two" || b.Bet.Legs[1].Price != 150 {
+		t.Errorf("Bet.Legs did not round-trip: %+v", b.Bet.Legs)
+	}
+	if b.SettledPrice == nil || *b.SettledPrice != settledPrice {
+		t.Errorf("SettledPrice did not round-trip: %v", b.SettledPrice)
+	}
+	if len(b.LegResults) != 2 || b.LegResults[0].Result != Won || b.LegResults[1].Result != Void {
+		t.Errorf("LegResults did not round-trip: %+v", b.LegResults)
+	}
+}
+
+// TestMultiLegDuplicateAndUnknownSettlementStillRejected confirms the core
+// integrity properties (no re-settling, no settling an unknown id) hold
+// unchanged with the extended Settle signature.
+func TestMultiLegDuplicateAndUnknownSettlementStillRejected(t *testing.T) {
+	path := tmpLog(t)
+	id := mustPlace(t, path, Bet{
+		Selection: "SGP", Price: 300, Bankroll: "real money", Stake: 10, Predicted: 0.3,
+		Legs: []Leg{{Selection: "leg one", Price: -150}},
+	})
+	settledPrice := wager.American(200)
+	if err := Settle(path, id, Won, &settledPrice, nil, "first settle"); err != nil {
+		t.Fatal(err)
+	}
+	// A second settlement, even with different multi-leg detail, must make the
+	// log fail loudly rather than silently overwrite the outcome.
+	other := wager.American(-500)
+	_ = Settle(path, id, Lost, &other, nil, "changed my mind")
+	if _, err := Load(path); err == nil {
+		t.Error("a second settlement must make the log fail loudly, not silently rewrite the outcome")
+	}
+
+	path2 := tmpLog(t)
+	if err := Settle(path2, "no-such-bet", Won, &settledPrice, nil, ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(path2); err == nil {
+		t.Error("a settlement for an unknown bet must fail even when it carries multi-leg detail")
 	}
 }
 
