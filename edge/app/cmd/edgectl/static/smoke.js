@@ -6,10 +6,10 @@
 // "could not load the board". That failure shipped twice. Serving the file is
 // not evidence that it works -- executing it is.
 //
-// The DOM stub is deliberately shallow: just enough to let app.js reach
-// render() and build rows. It is not a browser and does not pretend to be. It
-// catches "this identifier does not exist" and "this path throws", which is
-// the class of bug that got through.
+// The DOM stub is deliberately shallow: just enough to let app.js reach each
+// view's render function and build its markup. It is not a browser and does
+// not pretend to be. It catches "this identifier does not exist" and "this
+// path throws", which is the class of bug that got through.
 
 "use strict";
 const fs = require("fs");
@@ -113,37 +113,10 @@ try {
 
 // ---- exercise the paths that broke --------------------------------------
 
-const sample = {
-  games: [{
-    id: "2026_01_NE_SEA", away: "NE", home: "SEA", kickoff: "2026-09-09T20:20",
-    books: {
-      fanatics: { ml: "+200/-165", spread: "+3.5 -110/-110", total: "44.5 -110/-110" },
-      consensus: { ml: "+160/-192", spread: "3.5 -110/-110", total: "44.5 -110/-110" },
-    },
-  }],
-};
-
 // `data` and `state` are let/const, so they are NOT properties of the sandbox
 // -- assigning ctx.data would create a shadow the script never reads, and the
 // test would pass while exercising nothing. Assign inside the context instead.
 function inCtx(code) { return vm.runInContext(code, ctx, { filename: "smoke" }); }
-
-sandbox.__sample = sample;
-function tryRender(what, setup) {
-  try {
-    inCtx(setup + "; render(); el.rows.children.length");
-    const n = inCtx("el.rows.children.length");
-    if (n > 0) ok(`${what} (${n} card(s) built)`);
-    else fail(`${what}: render produced no rows`);
-  } catch (e) {
-    fail(`${what}: ${e.message}`);
-  }
-}
-
-tryRender("render() against a priced game", 'data = __sample; state.book = "fanatics"');
-tryRender("render() with consensus selected", 'data = __sample; state.book = "consensus"');
-tryRender("render() against a game with no prices",
-  'data = { games: [{ id: "x", away: "A", home: "B", kickoff: "2026-09-09T20:20", books: {} }] }; state.book = "fanatics"');
 
 // ---- the bets view ------------------------------------------------------
 // Same reasoning as render(): this path is reachable only by tapping a tab, so
@@ -209,7 +182,7 @@ tryReport("renderReport() with null collections (Go emits null, not [])",
 try {
   inCtx('state.view = "bets"; syncView(); 0');
   ok("syncView() switches to the bets view");
-  inCtx('state.view = "enter"; syncView(); 0');
+  inCtx('state.view = "bets"; syncView(); 0');
 } catch (e) {
   fail("syncView() threw: " + e.message);
 }
@@ -244,7 +217,7 @@ tryLog("renderLog() with an empty log",
 try {
   inCtx('state.view = "log"; syncView(); 0');
   ok("syncView() switches to the log view");
-  inCtx('state.view = "enter"; syncView(); 0');
+  inCtx('state.view = "bets"; syncView(); 0');
 } catch (e) { fail("syncView(log) threw: " + e.message); }
 
 // ---- the funds view -----------------------------------------------------
@@ -330,7 +303,7 @@ tryPeriod("renderPeriod() with a null week list", {
 
 inCtx('state.view = "period"; syncView(); 0');
 ok("syncView() switches to the period view");
-inCtx('state.view = "enter"; syncView(); 0');
+inCtx('state.view = "bets"; syncView(); 0');
 
 // The frontier and allocation, which only appear once a bankroll exists.
 tryReport("renderReport() with a frontier and allocation",
@@ -411,7 +384,6 @@ try {
   sandbox.__r2 = Object.assign({}, sampleReport, { books: ["fanatics", "bet365"] });
   inCtx("renderReport(__r2)");
   ok("renderReport() with no board loaded yet (chip row has no books to draw)");
-  inCtx("data = __sample; 0");
 } catch (e) {
   fail("renderReport() threw with data unset: " + e.message);
 }
@@ -436,34 +408,6 @@ tryBoosts("renderBoosts() keeps ceiling order against headline percentage", { fl
     min_odds: 0, expires: "", in_hours: 0, ceiling: 4.78, at_500: 3.99,
     chase: false, restricted: true },
 ]});
-
-// ---- value model --------------------------------------------------------
-
-function eq(what, got, want) {
-  if (got === want) ok(what);
-  else fail(`${what}: got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
-}
-
-eq("splitStored ml", JSON.stringify(ctx.splitStored("ml", "+200/-165")), '["+200","-165"]');
-eq("splitStored spread mirrors the far side",
-  JSON.stringify(ctx.splitStored("spread", "+3.5 -110/-110")), '["+3.5","-110","-3.5","-110"]');
-eq("splitStored total repeats the line",
-  JSON.stringify(ctx.splitStored("total", "44.5 -110/-115")), '["+44.5","-110","+44.5","-115"]');
-
-eq("joinValue ml", ctx.joinValue("ml", ["+200", "-165"]).value, "+200/-165");
-eq("joinValue spread from one side only",
-  ctx.joinValue("spread", ["+3.5", "", "", ""]).value, "+3.5 -110/-110");
-eq("joinValue spread keeps typed juice",
-  ctx.joinValue("spread", ["+3.5", "-105", "-3.5", "-115"]).value, "+3.5 -105/-115");
-// The decimal that started all this: it must survive as one value.
-eq("joinValue keeps 3.5 intact",
-  ctx.joinValue("spread", ["-3.5", "", "", ""]).value, "-3.5 -110/-110");
-eq("joinValue flags a mirror conflict",
-  !!ctx.joinValue("spread", ["+3.5", "", "+4.5", ""]).conflict, true);
-eq("joinValue flags a total disagreeing with itself",
-  !!ctx.joinValue("total", ["44.5", "", "45.5", ""]).conflict, true);
-eq("joinValue empty stays empty", ctx.joinValue("spread", ["", "", "", ""]).value, "");
-eq("joinValue partial ml", !!ctx.joinValue("ml", ["+200", ""]).partial, true);
 
 console.log(failures ? `\n${failures} failure(s)` : "\nall smoke checks passed");
 process.exit(failures ? 1 : 0);

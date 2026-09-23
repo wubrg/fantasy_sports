@@ -127,9 +127,10 @@ func (s *boardServer) routes(mux *http.ServeMux) error {
 	mux.HandleFunc("/api/funds/adjust", s.handleAdjust)
 	mux.HandleFunc("/api/boosts", s.handleBoosts)
 	mux.HandleFunc("/api/funds/expire", s.handleExpire)
-	mux.HandleFunc("/api/price", s.handlePrice)
 	mux.HandleFunc("/api/import/preview", s.handleImportPreview)
 	mux.HandleFunc("/api/import/apply", s.handleImportApply)
+	mux.HandleFunc("/api/props/sync/preview", s.handlePropsSyncPreview)
+	mux.HandleFunc("/api/props/sync/apply", s.handlePropsSyncApply)
 	mux.HandleFunc("/api/beliefs/pack", s.handleBeliefsPack)
 	mux.HandleFunc("/api/beliefs/ingest", s.handleBeliefsIngest)
 	mux.HandleFunc("/api/beliefs/score", s.handleBeliefsScore)
@@ -259,53 +260,6 @@ func (s *boardServer) handleBoard(w http.ResponseWriter, r *http.Request) {
 		out.Games = append(out.Games, gj)
 	}
 	writeJSON(w, out)
-}
-
-type priceRequest struct {
-	Week   int    `json:"week"`
-	GameID string `json:"game_id"`
-	Book   string `json:"book"`
-	Market string `json:"market"`
-	Value  string `json:"value"`
-}
-
-// handlePrice stores one cell.
-//
-// The value is validated before anything is written, and a rejection comes
-// back as a 400 naming what was wrong so the field can keep the text and show
-// the reason. A rejected value that vanished from the box would be worse than
-// no validation at all: the operator would not know what they had lost.
-func (s *boardServer) handlePrice(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		httpError(w, http.StatusMethodNotAllowed, "POST required")
-		return
-	}
-	var req priceRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httpError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	wf, err := s.load(req.Week)
-	if err != nil {
-		httpError(w, http.StatusNotFound, err.Error())
-		return
-	}
-	if err := wf.doc.SetPrice(req.GameID, req.Book, req.Market, req.Value); err != nil {
-		httpError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if err := s.save(wf); err != nil {
-		httpError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	l := wf.doc.Games[req.GameID].Books[req.Book]
-	stored := map[string]string{"ml": l.ML, "spread": l.Spread, "total": l.Total}[req.Market]
-	writeJSON(w, map[string]any{"ok": true, "value": stored})
 }
 
 type importRequest struct {

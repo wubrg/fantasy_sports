@@ -78,7 +78,7 @@ body {
 .seg button:last-child { border-radius: 0 8px 8px 0; }
 .seg button.on { color: #0b0d10; background: var(--accent); font-weight: 600; }
 
-#hint, .note {
+.note {
   margin: 0.5rem 0.6rem;
   font-size: 0.78rem;
   color: var(--dim);
@@ -91,140 +91,6 @@ body {
   border-bottom: 1px solid var(--bad);
   color: #ffd9d9;
   font-size: 0.85rem;
-}
-
-/* A field is now a labelled stack: the side it belongs to above, the sign
-   chip and digits below. The label stays visible while you type, which the
-   old placeholder did not. */
-.field { display: flex; flex-direction: column; gap: 0.12rem; flex: 1 1 0; min-width: 0; }
-.lbl {
-  font-size: 0.62rem;
-  color: var(--dim);
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.entry { display: flex; align-items: stretch; }
-
-/* ---- one game -------------------------------------------------------
-   A card is one game and holds all three markets, so entering a game is one
-   stop rather than three passes over the week under different tabs. Each
-   market is still its own .row and its own save, because they are separate
-   cells on disk: a rejected spread must not block a saved moneyline. */
-
-.card {
-  padding: 0.5rem 0.6rem 0.6rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 3.1rem 1fr auto auto;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.15rem 0;
-}
-
-/* The market label is a fixed column so the three rows line up as a block
-   rather than reading as three unrelated lines. */
-.mkt {
-  font-size: 0.72rem;
-  color: var(--dim);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.row .fields { min-width: 0; display: flex; gap: 0.3rem; flex-wrap: wrap; }
-/* Four boxes for a lined market: on a narrow screen they wrap two and two,
-   which puts each side's line and price together rather than splitting a
-   pair across rows. */
-.row .fields .field { flex: 1 1 4.2rem; }
-
-/* The error belongs to its market row but needs the full width, so it drops
-   to its own grid line under all four columns. */
-.row .err-msg { grid-column: 1 / -1; }
-
-.head {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.35rem;
-}
-
-.teams { font-weight: 600; font-variant-numeric: tabular-nums; }
-.kick { font-size: 0.72rem; color: var(--dim); }
-
-/* The consensus number sits beside the row you are typing into, dimmed. It is
-   a sanity check, not a suggestion: a price two hundred points away from it is
-   almost always a mistyped one. */
-.cons {
-  font-size: 0.8rem;
-  color: var(--dim);
-  font-variant-numeric: tabular-nums;
-}
-
-.dot {
-  width: 9px; height: 9px;
-  border-radius: 50%;
-  background: transparent;
-  flex: 0 0 auto;
-}
-.dot.saving { background: var(--warn); }
-.dot.saved { background: var(--good); }
-.dot.error { background: var(--bad); }
-.dot.partial { background: var(--dim); }
-
-.fields { display: flex; gap: 0.4rem; }
-
-/* An entry is a sign chip plus digits. Splitting the sign out is what lets the
-   input be inputmode=numeric: neither the iOS number pad nor Gboard's numeric
-   layout has a minus key, so a single text box would either open the letter
-   keyboard or make a dog untypeable. */
-.entry {
-  display: flex;
-  min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--bg);
-}
-
-.field.err .entry { border-color: var(--bad); }
-
-.entry .sign--removed {
-  flex: 0 0 34px;
-  min-height: var(--tap);
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--dim);
-  background: var(--panel);
-  border: 0;
-  border-right: 1px solid var(--line);
-}
-.entry .sign[data-sign="+"] { color: var(--good); }
-.entry .sign.hidden { display: none; }
-
-.entry input {
-  flex: 1 1 0;
-  min-width: 0;
-  min-height: var(--tap);
-  padding: 0 0.4rem;
-  font-size: 17px;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-  color: var(--text);
-  background: transparent;
-  border: 0;
-  outline: none;
-}
-.entry input:focus { background: #232833; }
-.entry input::placeholder { color: #4a515e; }
-
-.err-msg {
-  margin-top: 0.3rem;
-  font-size: 0.78rem;
-  color: var(--bad);
 }
 
 /* ---- desktop-only paste panel --------------------------------------- */
@@ -264,8 +130,63 @@ body {
 .pasteActions button:disabled { color: #4a515e; }
 
 #diff { font: 13px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; }
-#diff .add { color: var(--good); }
-#diff .bad { color: var(--bad); }
+#diff .add, #props-sync-diff .add { color: var(--good); }
+#diff .bad, #props-sync-box .bad { color: var(--bad); }
+
+/* ---- props tab: reload/sync buttons and the per-game diff ------------ */
+
+.scope button {
+  min-height: 2rem;
+  margin-right: 0.4rem;
+  padding: 0 0.7rem;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+}
+#props-sync-box { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line); }
+#props-sync-diff { font: 13px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; margin-bottom: 0.5rem; }
+#props-sync-apply {
+  min-height: var(--tap);
+  padding: 0 1rem;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+/* Per-game collapsible sections. <details>/<summary> rather than a hand-rolled
+   toggle: it needs no state management and comes with keyboard/accessibility
+   behaviour for free. Styled like .rep so a game section reads as the same
+   kind of block as every other section on the page. */
+.rep.game { padding: 0; border-bottom: 1px solid var(--line); }
+.rep.game summary {
+  padding: 0.7rem 0.75rem 0.6rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none; /* the marker is drawn manually so it flips consistently */
+}
+.rep.game summary::-webkit-details-marker { display: none; }
+.rep.game summary::before {
+  content: "\25B8"; /* ▸ */
+  display: inline-block;
+  margin-right: 0.4rem;
+  color: var(--dim);
+  transition: transform 0.15s ease;
+}
+.rep.game[open] summary::before { transform: rotate(90deg); }
+.rep.game h3 {
+  margin: 0.5rem 0.75rem 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--dim);
+}
+.rep.game .dog { padding: 0.22rem 0.75rem; }
 
 /* Below this width the paste panel is dead weight: copying a book's odds page
    on a phone means leaving this app, which is the friction the form removes. */

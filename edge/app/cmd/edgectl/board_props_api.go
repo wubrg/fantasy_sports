@@ -53,9 +53,9 @@ type propRow struct {
 	Selection string   `json:"selection"`
 	Line      *float64 `json:"line,omitempty"`
 	Price     int      `json:"price"`
-	Implied   float64  `json:"implied"`             // raw implied, vig included
-	BoostBE   *float64 `json:"boost_be,omitempty"`  // cash-lens boosted breakeven (one-sided)
-	Fair      *float64 `json:"fair,omitempty"`      // de-vigged fair prob (two-sided game lines)
+	Implied   float64  `json:"implied"`            // raw implied, vig included
+	BoostBE   *float64 `json:"boost_be,omitempty"` // cash-lens boosted breakeven (one-sided)
+	Fair      *float64 `json:"fair,omitempty"`     // de-vigged fair prob (two-sided game lines)
 }
 
 type propGroup struct {
@@ -63,26 +63,30 @@ type propGroup struct {
 	Rows     []propRow `json:"rows"`
 }
 
-func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
-	if s.ingestDir == "" {
-		writeJSON(w, map[string]any{"dir": "", "groups": []propGroup{},
-			"note": "no ingest folder configured (-ingest-dir)"})
-		return
-	}
+// ingestResult is the merged view of every odds capture in the ingest folder,
+// scoped to one week. handleProps and the props-sync endpoints both start
+// from it, so a capture is read and merged exactly one way everywhere it is
+// used.
+type ingestResult struct {
+	outcomes []oddspull.Outcome // newest price per (event, market, selection, line), in first-seen order
+	sources  []map[string]string
+	newest   time.Time
+	nFiles   int // files found in the folder, whether or not any parsed
+}
 
-	// An optional ?week scopes the tab to captures named for that week; a capture
-	// with no week token in its name is shown regardless.
-	week, _ := strconv.Atoi(r.URL.Query().Get("week"))
-
-	// Oldest first, so a newer capture of the same market overwrites the older
-	// one and the tab shows the latest price.
+// readIngest reads every .har/.json in dir, oldest first so a newer capture
+// of the same market overwrites the older one, and merges them into one set
+// of outcomes. An optional week (0 means "no filter") scopes it to captures
+// named for that week; a capture with no week token in its name is read
+// regardless.
+func readIngest(dir string, week int) ingestResult {
 	type fileAt struct {
 		path string
 		mod  time.Time
 	}
 	var files []fileAt
 	for _, pat := range []string{"*.har", "*.json"} {
-		matches, _ := filepath.Glob(filepath.Join(s.ingestDir, pat))
+		matches, _ := filepath.Glob(filepath.Join(dir, pat))
 		for _, p := range matches {
 			if st, err := os.Stat(p); err == nil {
 				files = append(files, fileAt{p, st.ModTime()})
@@ -93,8 +97,8 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 
 	merged := map[string]oddspull.Outcome{}
 	var order []string
-	var sources []map[string]string
-	var newest time.Time
+	var res ingestResult
+	res.nFiles = len(files)
 	for _, f := range files {
 		if week > 0 {
 			if cw := captureWeek(filepath.Base(f.path)); cw != 0 && cw != week {
@@ -109,10 +113,10 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			continue // a junk / odds-less file is skipped, noted below if nothing parses
 		}
-		sources = append(sources, map[string]string{
+		res.sources = append(res.sources, map[string]string{
 			"name": filepath.Base(f.path), "at": f.mod.Format("2006-01-02 15:04")})
-		if f.mod.After(newest) {
-			newest = f.mod
+		if f.mod.After(res.newest) {
+			res.newest = f.mod
 		}
 		for _, o := range outs {
 			k := outcomeKey(o)
@@ -121,6 +125,32 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 			}
 			merged[k] = o
 		}
+	}
+	res.outcomes = make([]oddspull.Outcome, 0, len(order))
+	for _, k := range order {
+		res.outcomes = append(res.outcomes, merged[k])
+	}
+	return res
+}
+
+func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
+	if s.ingestDir == "" {
+		writeJSON(w, map[string]any{"dir": "", "groups": []propGroup{},
+			"note": "no ingest folder configured (-ingest-dir)"})
+		return
+	}
+
+	// An optional ?week scopes the tab to captures named for that week; a capture
+	// with no week token in its name is shown regardless.
+	week, _ := strconv.Atoi(r.URL.Query().Get("week"))
+
+	ing := readIngest(s.ingestDir, week)
+	order := make([]string, 0, len(ing.outcomes))
+	merged := make(map[string]oddspull.Outcome, len(ing.outcomes))
+	for _, o := range ing.outcomes {
+		k := outcomeKey(o)
+		order = append(order, k)
+		merged[k] = o
 	}
 
 	// De-vig two-sided game lines: group Game outcomes by (event, marketID) and
@@ -167,15 +197,15 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 	}
 
 	note := ""
-	if len(files) > 0 && len(sources) == 0 {
+	if ing.nFiles > 0 && len(ing.sources) == 0 {
 		note = "found files in the folder but none contained odds — re-check the capture"
 	}
 	asOf := ""
-	if !newest.IsZero() {
-		asOf = newest.Format("2006-01-02 15:04")
+	if !ing.newest.IsZero() {
+		asOf = ing.newest.Format("2006-01-02 15:04")
 	}
 	writeJSON(w, map[string]any{
-		"dir": s.ingestDir, "week": week, "groups": groups, "sources": sources,
+		"dir": s.ingestDir, "week": week, "groups": groups, "sources": ing.sources,
 		"boost_pct": defaultBoostPct, "as_of": asOf, "note": note,
 	})
 }
