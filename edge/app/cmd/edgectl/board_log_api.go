@@ -194,6 +194,32 @@ type placeReq struct {
 	// logged against fresh funds without a separate declare step. No effect
 	// without a book.
 	Deposit bool `json:"deposit"`
+	// Legs records what makes up a multi-leg (e.g. same-game parlay) wager --
+	// purely additive detail alongside the combined Selection/Price/Stake
+	// above, same as betlog.Bet.Legs. Optional: a single-leg bet omits it.
+	Legs []legReq `json:"legs"`
+}
+
+// legReq is one leg of a multi-leg wager, over the wire. It carries the same
+// two fields as the CLI's "selection:price,selection:price" -legs convention
+// (see parseBetLegs in bet.go) as a JSON array instead of that string
+// encoding, since the client already builds legs as a list of form rows.
+type legReq struct {
+	Selection string `json:"selection"`
+	Price     int    `json:"price"`
+}
+
+// toBetlogLegs converts the wire legs into betlog.Leg. nil in, nil out: an
+// empty/absent Legs leaves the bet exactly as it was before legs existed.
+func toBetlogLegs(legs []legReq) []betlog.Leg {
+	if len(legs) == 0 {
+		return nil
+	}
+	out := make([]betlog.Leg, len(legs))
+	for i, l := range legs {
+		out[i] = betlog.Leg{Selection: l.Selection, Price: wager.American(l.Price)}
+	}
+	return out
 }
 
 func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
@@ -231,6 +257,7 @@ func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
 		Predicted: req.Predicted,
 		Narrative: req.Narrative,
 		Week:      req.Week,
+		Legs:      toBetlogLegs(req.Legs),
 	}
 	// Book on the Bet is deliberately left empty. betlog rejects an unknown
 	// book, and while Fanatics is now recorded in wager.Book, the campaign's
@@ -307,4 +334,3 @@ func (s *boardServer) handleSettle(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, map[string]any{"ok": true, "id": req.ID, "result": req.Result})
 }
-

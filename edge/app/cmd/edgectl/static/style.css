@@ -432,6 +432,40 @@ body {
 .bp-verdict.bp-refuse { color: #d66; border-color: #d66; }
 .bp-ingest ul { margin: 0.3rem 0; padding-left: 1.1rem; font-size: 0.76rem; }
 
+/* the bets-tab calculator: a prop hit rate, or a multi-leg wager, typed by
+   hand. <details> gives free collapse with no JS -- each block starts closed
+   except the one most likely wanted first, rather than always showing both
+   forms on a screen already carrying the algorithmic report above them. */
+.calc details {
+  margin-top: 0.6rem; padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
+}
+.calc summary {
+  font-weight: 600; cursor: pointer; min-height: var(--tap);
+  display: flex; align-items: center;
+}
+.calc .legrow { margin-top: 0.35rem; }
+.calc .legrow .rm {
+  flex: 0 0 2.4rem; min-height: var(--tap);
+  color: var(--dim); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 6px; font-size: 1rem;
+}
+.calc #c-leg-add {
+  margin-top: 0.35rem; min-height: var(--tap); padding: 0 0.6rem;
+  color: var(--dim); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 6px; font-size: 0.78rem;
+}
+.calc .out { margin-top: 0.4rem; }
+.calc .out p { margin: 0.25rem 0; font-size: 0.82rem; }
+.calc .out .bad { color: var(--bad); }
+.calc .out .good { color: var(--good); }
+.calc .out .tag {
+  display: inline-block; padding: 0.15rem 0.5rem;
+  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+  border: 1px solid currentColor; border-radius: 999px;
+}
+.calc .out .tag.warn { color: var(--warn); }
+
 /* help view */
 .help { max-width: 44rem; margin: 0 auto; padding: 0 0.75rem; line-height: 1.5; }
 .help h2 { margin: 1.2rem 0 0.4rem; font-size: 0.95rem; }

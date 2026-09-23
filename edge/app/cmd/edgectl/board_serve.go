@@ -134,6 +134,8 @@ func (s *boardServer) routes(mux *http.ServeMux) error {
 	mux.HandleFunc("/api/beliefs/pack", s.handleBeliefsPack)
 	mux.HandleFunc("/api/beliefs/ingest", s.handleBeliefsIngest)
 	mux.HandleFunc("/api/beliefs/score", s.handleBeliefsScore)
+	mux.HandleFunc("/api/hitrate", s.handleHitRate)
+	mux.HandleFunc("/api/parlay/combine", s.handleParlayCombine)
 	return nil
 }
 

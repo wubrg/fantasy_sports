@@ -274,7 +274,197 @@ function renderReport(r) {
       ${r.notes.map(n => `<div class="muted">${n}</div>`).join("")}</section>`);
   }
 
+  // The calculator is a manual tool, not part of the algorithmic answer above
+  // it, so it goes last: an arbitrary prop or SGP the board never priced.
+  out.push(calcPanel());
+
   el.report.innerHTML = out.join("");
+  wireCalcPanel();
+}
+
+// ---- the calculator: a prop hit rate, or a multi-leg wager, typed by hand --
+//
+// Everything above this point is the board's own algorithmic answer, built
+// from prices synced onto it. This is the escape hatch for a prop, an SGP, or
+// a cross-game parlay the board never carries a price for -- the same two
+// questions `edgectl hitrate` and `edgectl parlay` answer on a terminal,
+// reachable here because that is where the game log or the book's leg prices
+// actually are.
+
+function calcPanel() {
+  return `<section class="rep calc" id="calcPanel">
+    <h2>calculator</h2>
+    <p class="muted">Price a prop or a multi-leg wager by hand -- the same math
+      as <span class="mono">edgectl hitrate</span> / <span class="mono">edgectl parlay</span>.</p>
+
+    <details open>
+      <summary>hit rate</summary>
+      <div class="fundform">
+        <input id="c-values" placeholder="game log: 48,55,60,51,52,49">
+        <input id="c-line" inputmode="decimal" placeholder="line 52.5">
+        <select id="c-side"><option value="over">over</option><option value="under">under</option></select>
+        <input id="c-price" inputmode="tel" placeholder="price (opt) -110">
+        <button type="button" id="c-hitrate-go">calculate</button>
+      </div>
+      <div id="c-hitrate-out" class="out"></div>
+    </details>
+
+    <details>
+      <summary>multi-leg wager</summary>
+      <p class="muted">Tag every leg with the game/event it belongs to. Legs in
+        DIFFERENT games combine automatically; two or more legs sharing a game
+        tag are refused -- enter the book's own combined price for that SGP
+        group as the overall price below instead.</p>
+      <div id="c-legs"></div>
+      <button type="button" id="c-leg-add">+ add leg</button>
+      <div id="c-parlay-combine" class="fundform">
+        <button type="button" id="c-parlay-go">combine cross-game legs</button>
+      </div>
+      <div id="c-parlay-out" class="out"></div>
+      <div class="fundform">
+        <input id="c-parlay-sel" placeholder="overall selection, e.g. SGP: A + B">
+        <input id="c-parlay-price" inputmode="tel" placeholder="overall price">
+        <input id="c-parlay-stake" inputmode="decimal" placeholder="stake 0.50">
+        <select id="c-parlay-bank"><option value="bonus bet">bonus bet</option><option value="real money">real money</option><option value="no-sweat">no-sweat</option></select>
+        <select id="c-parlay-book">${["— log only", "fanatics", "draftkings", "fanduel", "bet365", "betmgm", "caesars"].map(b => `<option>${b}</option>`).join("")}</select>
+        <input id="c-parlay-week" inputmode="numeric" value="${(state && state.week) || 1}" title="NFL week">
+        <button type="button" id="c-parlay-log">log this wager</button>
+      </div>
+    </details>
+  </section>`;
+}
+
+// legRow builds one leg's markup: a selection, a price and a game tag, plus a
+// remove button. Two legs are seeded so there is always enough to combine.
+function legRow() {
+  const div = document.createElement("div");
+  div.className = "fundform legrow";
+  div.innerHTML = `<input class="c-leg-sel" placeholder="selection">
+    <input class="c-leg-price" inputmode="tel" placeholder="price +150">
+    <input class="c-leg-game" placeholder="game tag">
+    <button type="button" class="rm" title="remove leg">×</button>`;
+  return div;
+}
+
+function wireCalcPanel() {
+  const panel = document.getElementById("calcPanel");
+  if (!panel) return;
+
+  // -- hit rate --
+  document.getElementById("c-hitrate-go").addEventListener("click", async () => {
+    const out = document.getElementById("c-hitrate-out");
+    const values = document.getElementById("c-values").value.trim();
+    const lineStr = document.getElementById("c-line").value.trim();
+    if (!values) { out.innerHTML = `<p class="bad">a hit rate needs a game log</p>`; return; }
+    if (lineStr === "") { out.innerHTML = `<p class="bad">enter a line</p>`; return; }
+    const line = Number(lineStr);
+    if (!Number.isFinite(line)) { out.innerHTML = `<p class="bad">line is not a number</p>`; return; }
+    const price = Number(document.getElementById("c-price").value) || 0;
+    out.innerHTML = `<p class="muted">working…</p>`;
+    try {
+      const res = await fetch(BASE + "api/hitrate", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ values, line, side: document.getElementById("c-side").value, price }),
+      });
+      const r = await res.json();
+      if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
+      const verdictClass = r.verdict === "supported" ? "good" : r.verdict === "reject" ? "bad" : "warn";
+      out.innerHTML = `<p><b>${r.hits} of ${r.n}</b> games${r.pushes ? ` (${r.pushes} push${r.pushes === 1 ? "" : "es"} excluded)` : ""}
+          <span class="mono">${pct(r.rate)}</span></p>
+        <p class="muted">${Math.round(r.confidence * 100)}% interval <span class="mono">${pct(r.lower)} – ${pct(r.upper)}</span></p>
+        ${r.verdict ? `<p class="tag ${verdictClass}">${r.verdict.toUpperCase()} — hurdle ${pct(r.breakeven)}</p>` : ""}
+        ${r.n < 20 ? `<p class="muted">${r.n} games is a small sample; widen the window before treating this as a probability.</p>` : ""}`;
+    } catch (e) {
+      out.innerHTML = `<p class="bad">${e.message}</p>`;
+    }
+  });
+
+  // -- multi-leg wager --
+  const legsBox = document.getElementById("c-legs");
+  legsBox.appendChild(legRow());
+  legsBox.appendChild(legRow());
+  document.getElementById("c-leg-add").addEventListener("click", () => legsBox.appendChild(legRow()));
+  legsBox.addEventListener("click", (e) => {
+    if (!e.target.closest(".rm")) return;
+    if (legsBox.children.length <= 2) return; // a parlay needs at least 2 to combine
+    e.target.closest(".legrow").remove();
+  });
+
+  function readLegs() {
+    return [...legsBox.querySelectorAll(".legrow")].map((row) => ({
+      selection: row.querySelector(".c-leg-sel").value.trim(),
+      price: Number(row.querySelector(".c-leg-price").value),
+      game: row.querySelector(".c-leg-game").value.trim(),
+    }));
+  }
+
+  document.getElementById("c-parlay-go").addEventListener("click", async () => {
+    const out = document.getElementById("c-parlay-out");
+    const legs = readLegs();
+    if (legs.some((l) => !l.selection || !l.price || !l.game)) {
+      out.innerHTML = `<p class="bad">every leg needs a selection, a price and a game tag</p>`;
+      return;
+    }
+    out.innerHTML = `<p class="muted">working…</p>`;
+    try {
+      const res = await fetch(BASE + "api/parlay/combine", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ legs }),
+      });
+      const r = await res.json();
+      if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
+      out.innerHTML = `<p><b class="mono">${amer(r.price)}</b> combined
+          <span class="muted">${pct(r.implied)} implied · decimal ${r.decimal.toFixed(3)}</span></p>
+        <p class="muted">All legs are cross-game and independent -- this is the product of their
+          fair decimals, not a book quote.</p>`;
+      // The combine result seeds the overall price/selection, but both stay
+      // editable: the operator may still want to type the book's own number.
+      document.getElementById("c-parlay-price").value = String(r.price);
+      const selField = document.getElementById("c-parlay-sel");
+      if (!selField.value.trim()) selField.value = legs.map((l) => l.selection).join(" + ");
+    } catch (e) {
+      // A same-game refusal is not a failure of the tool -- it is the
+      // correlation firewall working. Say so, and point at the fix: the
+      // overall price field below, typed from the book's own SGP quote.
+      const correlated = /correlated/.test(e.message);
+      out.innerHTML = `<p class="bad">${e.message}</p>${correlated
+        ? `<p class="muted">Enter the book's own combined price for that group in
+             "overall price" below instead of combining it here.</p>` : ""}`;
+    }
+  });
+
+  document.getElementById("c-parlay-log").addEventListener("click", async () => {
+    const btn = document.getElementById("c-parlay-log");
+    const legs = readLegs().filter((l) => l.selection || l.price);
+    const sel = document.getElementById("c-parlay-sel").value.trim();
+    const price = Number(document.getElementById("c-parlay-price").value);
+    const stake = Number(document.getElementById("c-parlay-stake").value);
+    if (!sel) { alert("what's the overall selection?"); return; }
+    if (!price || Math.abs(price) < 100) { alert("overall price, as American odds, e.g. +240 or -150"); return; }
+    if (!stake || stake <= 0) { alert("stake?"); return; }
+    let book = document.getElementById("c-parlay-book").value;
+    if (book.startsWith("—")) book = "";
+    btn.disabled = true;
+    try {
+      const res = await fetch(BASE + "api/place", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          selection: sel, price, stake,
+          bankroll: document.getElementById("c-parlay-bank").value,
+          book, week: Number(document.getElementById("c-parlay-week").value) || 0,
+          narrative: "Entered from the bets-tab calculator.",
+          legs: legs.map((l) => ({ selection: l.selection, price: l.price })),
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+      document.getElementById("c-parlay-out").innerHTML = `<p class="good">logged.</p>`;
+    } catch (e) {
+      alert("not logged: " + e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
 }
 
 async function loadLog() {
