@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import fit_conditionals as F
 import proe
+import raoe
 import signals as signals_mod
 
 # Scenarios on the game TOTAL describe the game; everything else describes one
@@ -252,6 +253,13 @@ def prior_form(season: int, week: int) -> tuple[dict, str]:
 
     pf_p = proe.prior_form(proe.team_weeks(season))
     pf_s = signals_mod.prior_form(signals_mod.team_weeks(season))
+    # RAOE's source (Next Gen Stats rushing) only exists from 2016 and has its
+    # own, independent attempts-based coverage gate (raoe.MIN_ATTEMPTS) -- a
+    # team can clear PROE's pass-play threshold in a week it doesn't clear
+    # RAOE's rush-attempt one, and vice versa. So unlike offense_prior above,
+    # raoe_prior is added when available rather than required: its absence
+    # drops one field, not the team's whole FORM entry.
+    pf_r = raoe.prior_form(raoe.team_weeks(season)) if raoe.SOURCE.exists() else {}
     out = {}
     for (s, w, team), v in pf_s.items():
         if s != season or w != week:
@@ -259,11 +267,15 @@ def prior_form(season: int, week: int) -> tuple[dict, str]:
         p = pf_p.get((s, w, team))
         if p is None:
             continue
-        out[team] = {
+        entry = {
             "success_rate_prior": round(v["success_rate_prior"], 4),
             "offense_prior": round(p["offense_prior"], 4),
             "prior_games": v["prior_games"],
         }
+        r = pf_r.get((s, w, team))
+        if r is not None:
+            entry["raoe_prior"] = round(r["raoe_prior"], 4)
+        out[team] = entry
     return out, "" if out else "no team has enough prior games yet"
 
 
@@ -471,14 +483,19 @@ def render(p: dict, sha: str) -> str:
                  "the weeks it happens in are the ones where nobody — you, the model, or "
                  "the market — has much to go on.")
     else:
-        L.append("| team | success rate | offence PROE | games |")
-        L.append("|---|---|---|---|")
+        L.append("| team | success rate | offence PROE | RAOE (rush yds/att over expected) | games |")
+        L.append("|---|---|---|---|---|")
         for g in p["games"]:
             for team, t in g["teams"].items():
                 f = t.get("prior_form")
                 if f:
+                    # raoe_prior is additive, not required (see prior_form()'s
+                    # comment) -- a team can clear PROE's pass-play threshold
+                    # in a week it doesn't clear RAOE's rush-attempt one, so
+                    # this column reads "—" rather than omitting the row.
+                    raoe_cell = f"{f['raoe_prior']:+.4f}" if "raoe_prior" in f else "—"
                     L.append(f"| {team} | {f['success_rate_prior']:.4f} | "
-                             f"{f['offense_prior']:+.4f} | {f['prior_games']} |")
+                             f"{f['offense_prior']:+.4f} | {raoe_cell} | {f['prior_games']} |")
     L.append("")
     return "\n".join(L)
 
