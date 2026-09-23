@@ -124,9 +124,8 @@ function renderReport(r) {
 
   if (!r.priced) {
     out.push(`<section class="rep"><h2>nothing priced</h2>
-      <p class="muted">No ${r.book} prices in week ${r.week} yet. Enter some on the
-      enter tab, or switch the book selector to consensus to see the schedule's
-      own numbers.</p></section>`);
+      <p class="muted">No ${r.book} prices in week ${r.week} yet. Drop a DraftKings
+      capture in the ingest folder and sync it from the props tab.</p></section>`);
     el.report.innerHTML = out.join("");
     return;
   }
@@ -1012,6 +1011,10 @@ async function loadFunds() {
 function renderFunds(r) {
   const books = (data && data.books) || ["fanatics"];
   const exp = r.expiring || [];
+  // Only cash is zeroed here: it is the part of a balance a Tuesday actually
+  // withdraws to the bank. Bonus/boost lots are not withdrawable money and
+  // already have their own expiry handling.
+  const cash = (r.balances || []).filter(b => b.asset === "cash" && b.amount > 0.005);
 
   el.funds.innerHTML = `
     ${exp.length ? `<section class="rep warn">
@@ -1026,11 +1029,24 @@ function renderFunds(r) {
       price. This is the part of a bankroll worth looking at.</p>
     </section>` : ""}
 
+    <section class="rep">
+      <h2>cash balances</h2>
+      ${cash.length ? cash.map(b => `<div class="dog">
+        <span class="team">${b.book}</span>
+        <span class="price">${money(b.amount)}</span>
+        <button type="button" class="zero-book" data-book="${b.book}" data-amount="${b.amount}">zero out</button>
+      </div>`).join("") : `<p class="muted">no book is holding cash right now.</p>`}
+      <p class="muted">Zeroing out withdraws a book's cash to the bank — the same
+      kind of event <code>edgectl ledger add -kind withdraw</code> records, so
+      it lands in the period report as a withdrawal, not a loss. Use it Tuesday
+      morning once last week's cash is pulled out, to start the new week at $0.</p>
+    </section>
+
     <div id="boostbox"></div>
 
-    <p class="muted">Cash and bonus balances live in <code>edgectl ledger
-    balances</code> — the money accounting moved to the CLI by design. This
-    view holds only the boosts and no-sweat tokens on hand.</p>
+    <p class="muted">Bonus balances and full ledger detail live in <code>edgectl
+    ledger balances</code>. This view holds cash balances above, plus the
+    boosts and no-sweat tokens on hand below.</p>
 
     <section class="rep">
       <h2>declare a boost</h2>
@@ -1063,6 +1079,33 @@ function renderFunds(r) {
       a contingent right, not money. Enter the stake it covers. Leave expires
       blank to auto-expire at the end of week ${state.week}.</p>
     </section>`;
+
+  // Zeroing withdraws the full displayed balance to a target of 0. Reusing
+  // /api/funds/adjust (rather than a bespoke endpoint) means this goes through
+  // the exact same "correct the balance to what it should be" path a typo
+  // fix would use -- draws the newest lots first, appends a withdraw event per
+  // lot, and the period report already treats a withdraw as a withdraw.
+  for (const btn of el.funds.querySelectorAll(".zero-book")) {
+    btn.addEventListener("click", async () => {
+      const book = btn.dataset.book;
+      const amt = money(Number(btn.dataset.amount));
+      if (!confirm(`Zero out ${book}'s cash (${amt})? This withdraws it to the bank and cannot be undone from here.`)) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch(BASE + "api/funds/adjust", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ book: book, asset: "cash", target: 0, note: "Tuesday zero-out to the bank" }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+        loadFunds();
+      } catch (e) {
+        btn.disabled = false;
+        alert("not zeroed: " + e.message);
+      }
+    });
+  }
 
   loadBoosts().then((html) => {
     const box = document.getElementById("boostbox");
