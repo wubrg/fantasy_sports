@@ -221,11 +221,30 @@ type gameJSON struct {
 }
 
 type boardJSON struct {
-	Season int        `json:"season"`
-	Week   int        `json:"week"`
-	Weeks  []int      `json:"weeks"`
-	Books  []string   `json:"books"`
-	Games  []gameJSON `json:"games"`
+	Season int   `json:"season"`
+	Week   int   `json:"week"`
+	Weeks  []int `json:"weeks"`
+	// Books is the client's pool of ACTIONABLE books -- every place a chip can
+	// toggle a book into the bets-tab report pool, or a book can be picked for
+	// a boost/deposit. consensus is deliberately excluded: it is the closing
+	// line prefilled from the schedule, not a book anyone can stake against,
+	// and it is priced for every game from the moment a week is scaffolded --
+	// letting it into the pool produced fully-priced-looking "recommendations"
+	// built entirely off a line nobody actually offered.
+	Books []string   `json:"books"`
+	Games []gameJSON `json:"games"`
+}
+
+// realBooks is board.Books minus the consensus reference column. See the
+// Books field comment above for why consensus must never reach a client pool.
+func realBooks() []string {
+	out := make([]string, 0, len(board.Books)-1)
+	for _, b := range board.Books {
+		if b != board.Consensus {
+			out = append(out, b)
+		}
+	}
+	return out
 }
 
 func (s *boardServer) handleBoard(w http.ResponseWriter, r *http.Request) {
@@ -248,7 +267,7 @@ func (s *boardServer) handleBoard(w http.ResponseWriter, r *http.Request) {
 
 	out := boardJSON{
 		Season: wf.doc.Season, Week: wf.doc.Week,
-		Weeks: s.weekNumbers(), Books: board.Books,
+		Weeks: s.weekNumbers(), Books: realBooks(),
 	}
 	// Kickoff order, because that is the order the games are talked about and
 	// the order a book's own page lists them in.

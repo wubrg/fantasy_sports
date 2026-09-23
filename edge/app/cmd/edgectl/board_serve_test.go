@@ -95,6 +95,18 @@ func TestServeStaticAndBoard(t *testing.T) {
 	if len(got.Weeks) != 1 || got.Weeks[0] != 1 {
 		t.Errorf("weeks = %v", got.Weeks)
 	}
+	// The top-level Books list is the client's chip/dropdown pool of books it
+	// can act on (toggle into a report, declare a boost against). consensus is
+	// priced for every game from the moment a week is scaffolded, so letting
+	// it into that pool makes an entirely unbettable week look fully
+	// recommended the instant its chip is tapped -- it must never appear here,
+	// even though the per-game Books map above (a different field) rightly
+	// still carries consensus as a reference price.
+	for _, b := range got.Books {
+		if b == "consensus" {
+			t.Fatalf("Books pool includes consensus, which is not a book anyone can act on: %v", got.Books)
+		}
+	}
 }
 
 func TestServeRereadsFileChangedUnderneath(t *testing.T) {
@@ -192,5 +204,61 @@ func TestServeReportDefaultsToDraftKings(t *testing.T) {
 	}
 	if out.Book != "draftkings" {
 		t.Fatalf("report book = %q, want draftkings", out.Book)
+	}
+}
+
+// TestServeReportDropsConsensusFromPool guards the bug a screenshot surfaced
+// live: a client whose book pool includes "consensus" (the schedule's closing
+// line, prefilled for every game the moment a week is scaffolded, from an old
+// chip selection or a hand-built URL) must not get consensus-derived
+// "recommendations" back -- consensus is not a book anyone can stake against.
+func TestServeReportDropsConsensusFromPool(t *testing.T) {
+	ts, _ := newTestServer(t)
+
+	res, err := http.Get(ts.URL + "/api/report?week=1&books=consensus,draftkings")
+	if err != nil {
+		t.Fatalf("GET /api/report: %v", err)
+	}
+	defer res.Body.Close()
+	var out struct {
+		Books []string `json:"books"`
+		Notes []string `json:"notes"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&out); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	for _, b := range out.Books {
+		if b == "consensus" {
+			t.Fatalf("consensus survived into the pooled books: %v", out.Books)
+		}
+	}
+	if len(out.Books) != 1 || out.Books[0] != "draftkings" {
+		t.Fatalf("books = %v, want just [draftkings]", out.Books)
+	}
+	found := false
+	for _, n := range out.Notes {
+		if strings.Contains(n, "consensus") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("dropping consensus went unmentioned in notes: %v", out.Notes)
+	}
+
+	// A pool that is ONLY consensus falls back to the default book rather than
+	// reporting on nothing.
+	res2, err := http.Get(ts.URL + "/api/report?week=1&books=consensus")
+	if err != nil {
+		t.Fatalf("GET /api/report: %v", err)
+	}
+	defer res2.Body.Close()
+	var out2 struct {
+		Book string `json:"book"`
+	}
+	if err := json.NewDecoder(res2.Body).Decode(&out2); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if out2.Book != "draftkings" {
+		t.Fatalf("consensus-only pool: report book = %q, want the draftkings fallback", out2.Book)
 	}
 }
