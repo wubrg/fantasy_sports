@@ -98,7 +98,7 @@ func logSettle(args []string) error {
 		return fmt.Errorf("no wager with id %q in %s", *id, *path)
 	}
 
-	if err := betlog.Settle(*path, *id, r, *note); err != nil {
+	if err := betlog.Settle(*path, *id, r, nil, nil, *note); err != nil {
 		return err
 	}
 	fmt.Printf("%s settled as %s\n", *id, r)

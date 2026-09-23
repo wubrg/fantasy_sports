@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"edge/internal/betlog"
@@ -41,6 +43,7 @@ func betPlace(args []string) error {
 	week := fs.Int("week", 0, "the NFL week this wager is FOR")
 	narrative := fs.String("narrative", "", "free-text note")
 	predicted := fs.Float64("predicted", 0, "your win-probability belief in [0,1]; drives the log's EV")
+	legs := fs.String("legs", "", "same-game parlay legs, as \"selection:price,selection:price\" (optional)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -51,10 +54,15 @@ func betPlace(args []string) error {
 	case "no-sweat", "nosweat", "no sweat":
 		bank = "no-sweat"
 	}
+	parsedLegs, err := parseBetLegs(*legs)
+	if err != nil {
+		return err
+	}
 	id, err := journal.Place(*betlogPath, *ledgerPath, journal.PlaceRequest{
 		Bet: betlog.Bet{
 			Selection: *selection, Price: wager.American(*price), Bankroll: bank,
 			Stake: *stake, Week: *week, Narrative: *narrative, Predicted: *predicted,
+			Legs: parsedLegs,
 		},
 		Book: *book, BoostLotID: *boost,
 	}, time.Now())
@@ -75,6 +83,8 @@ func betSettle(args []string) error {
 	returnsAsset := fs.String("returns-asset", "cash", "asset the returns arrive as")
 	book := fs.String("book", "", "book the returns land at (required with -returns)")
 	note := fs.String("note", "", "free-text note")
+	settledPrice := fs.Int("settled-price", 0, "American price the book actually recomputed a multi-leg wager to (optional; only meaningful when it differs from the price placed at)")
+	legResults := fs.String("leg-results", "", "per-leg outcomes of a multi-leg wager, as \"selection=won,selection=void\" (optional)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -85,9 +95,74 @@ func betSettle(args []string) error {
 		}
 		ret = &ledger.Lot{Book: *book, Asset: *returnsAsset, Amount: *returns}
 	}
-	if err := journal.Settle(*betlogPath, *ledgerPath, *id, betlog.Result(*result), ret, *note, time.Now()); err != nil {
+	var settled *wager.American
+	if *settledPrice != 0 {
+		sp := wager.American(*settledPrice)
+		settled = &sp
+	}
+	parsedLegResults, err := parseLegResults(*legResults)
+	if err != nil {
+		return err
+	}
+	if err := journal.Settle(*betlogPath, *ledgerPath, *id, betlog.Result(*result), settled, parsedLegResults, ret, *note, time.Now()); err != nil {
 		return err
 	}
 	fmt.Printf("settled %s %s\n", *id, *result)
 	return nil
+}
+
+// parseBetLegs reads "selection:price,selection:price" -- the same
+// comma-separated-fields-with-colon-separated-subfields convention this CLI
+// already uses for rungs (see parseRungs in scenario.go) and ladder specs.
+// Empty input is not an error: most bets have no legs.
+func parseBetLegs(spec string) ([]betlog.Leg, error) {
+	var out []betlog.Leg
+	for _, part := range strings.Split(spec, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		f := strings.SplitN(part, ":", 2)
+		if len(f) != 2 {
+			return nil, fmt.Errorf("-legs: leg %q: want selection:price", part)
+		}
+		sel := strings.TrimSpace(f[0])
+		if sel == "" {
+			return nil, fmt.Errorf("-legs: leg %q: selection is required", part)
+		}
+		price, err := strconv.Atoi(strings.TrimPrefix(strings.TrimSpace(f[1]), "+"))
+		if err != nil {
+			return nil, fmt.Errorf("-legs: leg %q: %q is not a price", part, f[1])
+		}
+		out = append(out, betlog.Leg{Selection: sel, Price: wager.American(price)})
+	}
+	return out, nil
+}
+
+// parseLegResults reads "selection=won,selection=void" -- what happened to
+// each leg of a multi-leg wager at settlement.
+func parseLegResults(spec string) ([]betlog.Leg, error) {
+	var out []betlog.Leg
+	for _, part := range strings.Split(spec, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		f := strings.SplitN(part, "=", 2)
+		if len(f) != 2 {
+			return nil, fmt.Errorf("-leg-results: entry %q: want selection=result", part)
+		}
+		sel := strings.TrimSpace(f[0])
+		if sel == "" {
+			return nil, fmt.Errorf("-leg-results: entry %q: selection is required", part)
+		}
+		r := betlog.Result(strings.ToLower(strings.TrimSpace(f[1])))
+		switch r {
+		case betlog.Won, betlog.Lost, betlog.Pushed, betlog.Void:
+		default:
+			return nil, fmt.Errorf("-leg-results: entry %q: result must be won, lost, push or void, got %q", part, f[1])
+		}
+		out = append(out, betlog.Leg{Selection: sel, Result: r})
+	}
+	return out, nil
 }

@@ -13,6 +13,7 @@ import (
 
 	"edge/internal/betlog"
 	"edge/internal/ledger"
+	"edge/internal/wager"
 )
 
 // PlaceRequest is a wager to record. Bet is the frozen snapshot written to the
@@ -116,7 +117,14 @@ func Place(betlogPath, ledgerPath string, req PlaceRequest, now time.Time) (stri
 // recorded without a book has no ledger place; settling it touches only the
 // betlog. Double settles are refused: the betlog folds the last outcome on top,
 // so a second tap could quietly flip a result.
-func Settle(betlogPath, ledgerPath string, id string, result betlog.Result, returns *ledger.Lot, note string, now time.Time) error {
+//
+// settledPrice and legResults are optional multi-leg detail: settledPrice is
+// the price the book actually recomputed a same-game parlay to after voiding
+// one leg, and legResults records what happened to each leg. Both are nil for
+// an ordinary single-leg wager. When settledPrice is set, computeReturns uses
+// it instead of the bet's originally quoted price, so a caller that passes no
+// explicit returns still gets the real payout.
+func Settle(betlogPath, ledgerPath string, id string, result betlog.Result, settledPrice *wager.American, legResults []betlog.Leg, returns *ledger.Lot, note string, now time.Time) error {
 	if strings.TrimSpace(id) == "" {
 		return fmt.Errorf("journal: which bet? an id is required")
 	}
@@ -140,7 +148,7 @@ func Settle(betlogPath, ledgerPath string, id string, result betlog.Result, retu
 		return fmt.Errorf("no bet with id %s", id)
 	}
 
-	if err := betlog.Settle(betlogPath, id, result, note); err != nil {
+	if err := betlog.Settle(betlogPath, id, result, settledPrice, legResults, note); err != nil {
 		return err
 	}
 
@@ -191,7 +199,7 @@ func Settle(betlogPath, ledgerPath string, id string, result betlog.Result, retu
 			// nothing, correctly, at zero.
 			ret := returns
 			if ret == nil {
-				lot, err := computeReturns(bet, result, placeBook, now, id)
+				lot, err := computeReturns(bet, result, settledPrice, placeBook, now, id)
 				if err != nil {
 					return err
 				}
@@ -226,13 +234,18 @@ func Settle(betlogPath, ledgerPath string, id string, result betlog.Result, retu
 //     bettor's money, so a refunded-or-not bonus push realizes no cash here;
 //     any re-granted bonus token is a separate grant event, not a return)
 //   - lost:                 no returns
-func computeReturns(bet betlog.Bet, result betlog.Result, book string, now time.Time, id string) (*ledger.Lot, error) {
+func computeReturns(bet betlog.Bet, result betlog.Result, settledPrice *wager.American, book string, now time.Time, id string) (*ledger.Lot, error) {
 	cash := AssetForBankroll(bet.Bankroll) == ledger.Cash
+
+	price := bet.Price
+	if settledPrice != nil {
+		price = *settledPrice
+	}
 
 	var amount float64
 	switch result {
 	case betlog.Won:
-		pm, err := bet.Price.ProfitMultiple()
+		pm, err := price.ProfitMultiple()
 		if err != nil {
 			return nil, fmt.Errorf("cannot compute returns for %s: %w", id, err)
 		}
