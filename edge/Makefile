@@ -6,6 +6,7 @@ DEMO_LOG := /tmp/edgectl-demo.jsonl
 .PHONY: help build check test vet fmt fmt-check lint clean list \
 	board board-check board-report \
 	data data-status data-clean \
+	roster roster-refresh \
 	fit fit-residuals fit-conditionals fit-belief fit-line-model power-table verify-model lag findings \
 	demo demo-clean
 
@@ -108,6 +109,15 @@ data-status: ## Show what is cached without fetching
 
 data-clean: ## Delete the cache (regenerable with `make data`)
 	rm -rf $(MODEL)/data/raw
+
+roster: ## Sleeper roster + injury status. make roster TEAM=GB [TEAM2=DET] [PLAYER=Parsons] [POSITION=CB] [FORCE=1]
+	@cd $(MODEL)/ingest && $(PY) sleeper.py \
+		$(if $(TEAM),--team $(TEAM)) $(if $(TEAM2),--team $(TEAM2)) \
+		$(if $(PLAYER),--player "$(PLAYER)") $(if $(POSITION),--position $(POSITION)) \
+		$(if $(FORCE),--force)
+
+roster-refresh: ## Force a fresh Sleeper pull with no team/player filter
+	@cd $(MODEL)/ingest && $(PY) sleeper.py --force
 
 ## --- Model ---
 ##
