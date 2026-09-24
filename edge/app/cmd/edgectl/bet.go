@@ -65,7 +65,7 @@ func betPlace(args []string) error {
 	}
 	// Freeze Book onto the log entry only when betlog.PlaceBet will accept it
 	// (a book with bonus-bet rules recorded, wager.Book.Known()) -- same rule
-	// the GUI's handlePlace applies, so a Caesars bet (no rules recorded yet)
+	// the GUI's handlePlace applies, so a bet at a book with no rules recorded
 	// still logs instead of getting rejected outright by PlaceBet's Book check.
 	if bk := wager.Book(strings.TrimSpace(*book)); bk.Known() {
 		betRec.Book = bk

@@ -264,12 +264,13 @@ func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
 	}
 	// Book is frozen onto the bet only when it's a book betlog.PlaceBet will
 	// accept -- one wager.Book already has bonus-bet rules recorded for
-	// (Known()). A book like Caesars, with no rules recorded yet, must stay
-	// off the bet: setting it would make PlaceBet reject the whole wager
-	// outright (see its Book validation), turning "the log tab doesn't show
-	// the book" into "you can't log a Caesars bet at all". req.Book still
-	// drives the ledger debit via journal.Place either way; this only decides
-	// what gets frozen into the log entry itself.
+	// (Known()). A book with no rules recorded (anything not in
+	// wager.KnownBooks) must stay off the bet: setting it would make
+	// PlaceBet reject the whole wager outright (see its Book validation),
+	// turning "the log tab doesn't show the book" into "you can't log this
+	// bet at all". req.Book still drives the ledger debit via journal.Place
+	// either way; this only decides what gets frozen into the log entry
+	// itself.
 	if bk := wager.Book(strings.TrimSpace(req.Book)); bk.Known() {
 		b.Book = bk
 	}

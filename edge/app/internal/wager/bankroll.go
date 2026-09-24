@@ -99,6 +99,15 @@ const (
 	// asset rather than a reduced conversion. It does not, so that constraint
 	// is lifted.
 	Fanatics Book = "fanatics"
+	// Caesars runs a recurring weekly no-sweat promo (confirmed by the
+	// operator 2026-09-24) and carries the same bonus-bet policy as Bet365:
+	// no BonusLostOnPush or BonusSplittable case below, so it falls through
+	// to the same defaults Bet365 already relies on (bonus kept on a push,
+	// token used whole). This is operator-confirmed, not a house-rules
+	// document citation like Fanatics' comment above -- if Caesars' actual
+	// house rules are ever read directly and turn out to differ, correct
+	// this rather than trusting the recollection further.
+	Caesars Book = "caesars"
 )
 
 // Known reports whether this is a book whose bonus-bet rules are recorded here.
@@ -109,7 +118,7 @@ const (
 // guards against forfeiting a bonus bet outright, into a silent no-op.
 func (b Book) Known() bool {
 	switch b.normalized() {
-	case FanDuel, DraftKings, BetMGM, Bet365, Fanatics:
+	case FanDuel, DraftKings, BetMGM, Bet365, Fanatics, Caesars:
 		return true
 	}
 	return false
@@ -118,7 +127,7 @@ func (b Book) Known() bool {
 func (b Book) normalized() Book { return Book(strings.ToLower(strings.TrimSpace(string(b)))) }
 
 // KnownBooks lists the books whose rules are recorded.
-func KnownBooks() []Book { return []Book{FanDuel, DraftKings, BetMGM, Bet365, Fanatics} }
+func KnownBooks() []Book { return []Book{FanDuel, DraftKings, BetMGM, Bet365, Fanatics, Caesars} }
 
 // BonusLostOnPush reports whether a bonus bet is forfeited when the wager
 // pushes (ties).

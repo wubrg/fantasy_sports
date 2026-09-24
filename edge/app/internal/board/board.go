@@ -62,10 +62,11 @@ func (l Lines) Empty() bool { return l.ML == "" && l.Spread == "" && l.Total == 
 // prevent.
 //
 // The two are kept separate so that appearing on a board never implies a
-// safety clearance. Fanatics has recorded rules now (it returns the stake on
-// a push, so push-capable markets are eligible); Caesars still does not, and
-// must keep failing closed. Line shopping needs a label for every column,
-// including the ones nothing is known about.
+// safety clearance. Fanatics and Caesars both have recorded rules now
+// (Fanatics returns the stake on a push; Caesars follows Bet365's policy);
+// "consensus" is the standing example of a column with none, and must keep
+// failing closed. Line shopping needs a label for every column, including
+// the ones nothing is known about.
 var Books = []string{
 	"consensus",
 	"fanatics",

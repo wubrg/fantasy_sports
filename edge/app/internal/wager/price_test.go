@@ -273,7 +273,7 @@ func TestBookRulesAreCaseInsensitiveAndClosed(t *testing.T) {
 			t.Errorf("%q on a pushable market must be refused", spelling)
 		}
 	}
-	for _, unknown := range []Book{"bovada", "", "caesars", "pinnacle"} {
+	for _, unknown := range []Book{"bovada", "", "pinnacle", "espnbet"} {
 		if unknown.Known() {
 			t.Errorf("%q should not be a known book", unknown)
 		}
