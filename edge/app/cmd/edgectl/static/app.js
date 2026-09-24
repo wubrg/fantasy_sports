@@ -72,6 +72,16 @@ function save() {
 // to a desk to read the result is the friction this page exists to remove.
 
 function pct(x) { return (x * 100).toFixed(1) + "%"; }
+// A "predicted" belief field accepts either a percent (55) or a fraction
+// (0.55) -- shared by every place-a-wager form so the log tab, the
+// calculator's single/multi-leg fieldset, and anything logged in the future
+// all normalize the same input the same way. Blank/unparseable is 0, which
+// just omits the EV column rather than erroring.
+function probFromInput(id) {
+  let v = Number(document.getElementById(id).value) || 0;
+  if (v > 1) v /= 100;
+  return v;
+}
 // Shared rather than defined inside one renderer. It was local to renderLog,
 // and using it from renderReport threw at the moment a bankroll existed --
 // which is to say, the first time the feature it formats was exercised.
@@ -293,27 +303,38 @@ function renderReport(r) {
 function calcPanel() {
   return `<section class="rep calc" id="calcPanel">
     <h2>calculator</h2>
-    <p class="muted">Price a prop or a multi-leg wager by hand -- the same math
-      as <span class="mono">edgectl hitrate</span> / <span class="mono">edgectl parlay</span>.</p>
+    <p class="muted">Price a prop or a wager by hand -- the same math
+      as <span class="mono">edgectl hitrate</span> / <span class="mono">edgectl parlay</span>.
+      Nothing here is moneyline-only: the hit-rate tool below prices ANY numeric threshold prop
+      (yardage, attempts, receptions -- or an ATD/binary prop, framed as 0/1 or TD-count values
+      against a 0.5 line), and the wager form below that logs a single prop just as well as a
+      multi-leg SGP or cross-game parlay -- legs are optional detail, not a requirement.</p>
 
     <details open>
       <summary>hit rate</summary>
+      <p class="muted">Works for any numeric game log against a line: a yardage/attempts prop
+        (<span class="mono">48,55,60,51,52,49</span> vs. line <span class="mono">52.5</span>), or
+        an ATD/anytime-TD prop -- enter each game's TD count (<span class="mono">0,1,0,2,1,0</span>)
+        against line <span class="mono">0.5</span>, over.</p>
       <div class="fundform">
-        <input id="c-values" placeholder="game log: 48,55,60,51,52,49">
-        <input id="c-line" inputmode="decimal" placeholder="line 52.5">
+        <input id="c-values" placeholder="game log, most recent first: 48,55,60,51,52,49">
+        <input id="c-line" inputmode="decimal" placeholder="line 52.5 (or 0.5 for ATD)">
         <select id="c-side"><option value="over">over</option><option value="under">under</option></select>
         <input id="c-price" inputmode="tel" placeholder="price (opt) -110">
         <button type="button" id="c-hitrate-go">calculate</button>
       </div>
       <div id="c-hitrate-out" class="out"></div>
+      <p class="muted">The computed hit rate feeds the "your % belief" field below when you log the
+        wager -- calculate here first if you want a real number instead of a gut estimate.</p>
     </details>
 
     <details>
-      <summary>multi-leg wager</summary>
-      <p class="muted">Tag every leg with the game/event it belongs to. Legs in
-        DIFFERENT games combine automatically; two or more legs sharing a game
-        tag are refused -- enter the book's own combined price for that SGP
-        group as the overall price below instead.</p>
+      <summary>log a wager -- single prop, SGP, or cross-game parlay</summary>
+      <p class="muted">A single prop needs none of the legs below -- just fill in the overall
+        selection/price/stake/belief fields and log it. Legs are optional breakdown detail, only
+        needed to auto-combine legs from DIFFERENT games, or to document an SGP's parts (two or
+        more legs sharing a game tag are refused for combining -- enter the book's own combined
+        price for that SGP group as the overall price instead).</p>
       <div id="c-legs"></div>
       <button type="button" id="c-leg-add">+ add leg</button>
       <div id="c-parlay-combine" class="fundform">
@@ -321,9 +342,10 @@ function calcPanel() {
       </div>
       <div id="c-parlay-out" class="out"></div>
       <div class="fundform">
-        <input id="c-parlay-sel" placeholder="overall selection, e.g. SGP: A + B">
-        <input id="c-parlay-price" inputmode="tel" placeholder="overall price">
+        <input id="c-parlay-sel" placeholder="selection, e.g. Player X 40+ rec yds">
+        <input id="c-parlay-price" inputmode="tel" placeholder="price">
         <input id="c-parlay-stake" inputmode="decimal" placeholder="stake 0.50">
+        <input id="c-parlay-pred" inputmode="decimal" placeholder="your % belief (opt)" title="Your own probability estimate (0-100) -- auto-filled from the hit-rate calculation above when you haven't typed one yet, but always editable. Optional; blank just omits the EV column.">
         <select id="c-parlay-bank"><option value="bonus bet">bonus bet</option><option value="real money">real money</option><option value="no-sweat">no-sweat</option></select>
         <select id="c-parlay-book">${["— log only", "fanatics", "draftkings", "fanduel", "bet365", "betmgm", "caesars"].map(b => `<option>${b}</option>`).join("")}</select>
         <input id="c-parlay-week" inputmode="numeric" value="${(state && state.week) || 1}" title="NFL week">
@@ -373,19 +395,25 @@ function wireCalcPanel() {
         <p class="muted">${Math.round(r.confidence * 100)}% interval <span class="mono">${pct(r.lower)} – ${pct(r.upper)}</span></p>
         ${r.verdict ? `<p class="tag ${verdictClass}">${r.verdict.toUpperCase()} — hurdle ${pct(r.breakeven)}</p>` : ""}
         ${r.n < 20 ? `<p class="muted">${r.n} games is a small sample; widen the window before treating this as a probability.</p>` : ""}`;
+      // Seed the wager form's belief field, same "seed but stay editable"
+      // pattern as the parlay-combine result below -- a hit rate just
+      // computed is exactly the number "log this wager" needs and previously
+      // had no way to receive, so a typed belief is never overwritten.
+      const predField = document.getElementById("c-parlay-pred");
+      if (predField && !predField.value.trim()) predField.value = (r.rate * 100).toFixed(1);
     } catch (e) {
       out.innerHTML = `<p class="bad">${e.message}</p>`;
     }
   });
 
-  // -- multi-leg wager --
+  // -- wager legs (optional -- a single prop needs none) --
   const legsBox = document.getElementById("c-legs");
   legsBox.appendChild(legRow());
   legsBox.appendChild(legRow());
   document.getElementById("c-leg-add").addEventListener("click", () => legsBox.appendChild(legRow()));
   legsBox.addEventListener("click", (e) => {
     if (!e.target.closest(".rm")) return;
-    if (legsBox.children.length <= 2) return; // a parlay needs at least 2 to combine
+    if (legsBox.children.length <= 1) return; // combining needs 2+; a single prop needs 0
     e.target.closest(".legrow").remove();
   });
 
@@ -443,12 +471,13 @@ function wireCalcPanel() {
     if (!stake || stake <= 0) { alert("stake?"); return; }
     let book = document.getElementById("c-parlay-book").value;
     if (book.startsWith("—")) book = "";
+    const predicted = probFromInput("c-parlay-pred");
     btn.disabled = true;
     try {
       const res = await fetch(BASE + "api/place", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          selection: sel, price, stake,
+          selection: sel, price, stake, predicted,
           bankroll: document.getElementById("c-parlay-bank").value,
           book, week: Number(document.getElementById("c-parlay-week").value) || 0,
           narrative: "Entered from the bets-tab calculator.",
@@ -492,7 +521,7 @@ function betEntryForm() {
       <input id="e-sel" placeholder="selection, e.g. Marvin Harrison Jr. ATD">
       <input id="e-price" inputmode="tel" placeholder="odds +240">
       <input id="e-stake" inputmode="decimal" placeholder="stake 0.50">
-      <input id="e-pred" inputmode="decimal" placeholder="win % (opt)" title="your win-probability belief, e.g. 55">
+      <input id="e-pred" inputmode="decimal" placeholder="your % belief (opt)" title="Your own probability estimate that this wins (0-100) -- from a report's ladder read, a hit-rate calc, or a gut call. The tool never computes this for you here; for a number it CAN compute, use the bets tab's calculator first (hit rate from a game log, or de-vig a two-sided board price) and type the result in. Optional -- blank just omits the EV column.">
       <select id="e-bank"><option value="bonus bet">bonus bet</option><option value="real money">real money</option><option value="no-sweat">no-sweat</option></select>
       <select id="e-book">${books.map(b => `<option>${b}</option>`).join("")}</select>
       <select id="e-boost"><option value="">— no boost</option></select>
@@ -546,10 +575,7 @@ function wireBetEntry() {
     if (!stake || stake <= 0) { alert("stake?"); return; }
     let book = document.getElementById("e-book").value;
     if (book.startsWith("—")) book = "";
-    // Belief is optional and entered as a percent (55) or a fraction (0.55);
-    // normalize to [0,1]. Blank leaves it 0, which just omits the EV column.
-    let predicted = Number(document.getElementById("e-pred").value) || 0;
-    if (predicted > 1) predicted /= 100;
+    const predicted = probFromInput("e-pred");
     btn.disabled = true;
     try {
       const res = await fetch(BASE + "api/place", {
