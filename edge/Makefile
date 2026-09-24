@@ -6,7 +6,7 @@ DEMO_LOG := /tmp/edgectl-demo.jsonl
 .PHONY: help build check test vet fmt fmt-check lint clean list \
 	board board-check board-report \
 	data data-status data-clean \
-	roster roster-refresh \
+	roster roster-refresh lateround \
 	fit fit-residuals fit-conditionals fit-belief fit-line-model power-table verify-model lag findings \
 	demo demo-clean
 
@@ -118,6 +118,9 @@ roster: ## Sleeper roster + injury status. make roster TEAM=GB [TEAM2=DET] [PLAY
 
 roster-refresh: ## Force a fresh Sleeper pull with no team/player filter
 	@cd $(MODEL)/ingest && $(PY) sleeper.py --force
+
+lateround: ## Late Round matchup-notes newsletter, cached for citation. make lateround WEEK=3 [SEASON=2026] [FORCE=1]
+	@cd $(MODEL)/ingest && $(PY) lateround.py --week $(WEEK) $(if $(SEASON),--season $(SEASON)) $(if $(FORCE),--force)
 
 ## --- Model ---
 ##
