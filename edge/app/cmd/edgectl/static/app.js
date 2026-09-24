@@ -310,6 +310,39 @@ function calcPanel() {
       against a 0.5 line), and the wager form below that logs a single prop just as well as a
       multi-leg SGP or cross-game parlay -- legs are optional detail, not a requirement.</p>
 
+    <details>
+      <summary>worked examples -- what to actually type</summary>
+      <p class="muted">The hit-rate tool below is pure empirical counting -- <span class="mono">rate
+        = hits / N</span> from whatever numbers you type into "game log." It is <b>not</b> derived
+        from FORM (the belief pack's PROE/success-rate/RAOE -- a separate, team-level,
+        season-aggregate figure this tool never touches) and <b>not</b> derived from the line's own
+        hold/de-vig (the optional price field only grades the computed rate against that price's
+        breakeven afterward -- it never feeds the rate itself). The game log has to be typed in by
+        hand -- that player's actual last-N-games number, looked up from Sleeper, a box score,
+        wherever -- nothing here pulls it automatically.</p>
+      <p><b>1. Simple prop, computed belief.</b> Hit rate: game log
+        <span class="mono">48,55,60,51,52,49</span>, line <span class="mono">67.5</span>, over.
+        Calculate -- it auto-fills the belief field below. Wager: selection
+        <span class="mono">Drake London 67+ rec yards</span>, price <span class="mono">-113</span>,
+        stake <span class="mono">10</span>, book/week as normal. No legs.</p>
+      <p><b>2. Simple prop, no game log -- your own belief.</b> Skip the hit-rate tool. Wager:
+        selection <span class="mono">Kaleb Johnson ATD</span>, price <span class="mono">+195</span>,
+        belief <span class="mono">25</span> (your own read, e.g. from a report's ATD board).
+        No legs.</p>
+      <p><b>3. SGP -- book-priced, legs are documentation only.</b> Selection
+        <span class="mono">Golden 40+ yds + Golden 4+ rec + Watson 4+ rec + Love 200+ pass
+        yds</span>, price <span class="mono">+125</span> (the book's own combined price -- never
+        computed here), belief your own correlation-aware estimate (naive leg-multiplication
+        understates a same-game combo). Fill all 4 legs with the SAME game tag if you want a
+        record of what's in it -- don't click "combine," it correctly refuses same-game legs as
+        correlated rather than multiplying them.</p>
+      <p><b>4. Cross-game parlay -- the tool computes the price.</b> Leg 1: selection
+        <span class="mono">Bijan Robinson 78+ rush yds</span>, price <span class="mono">-114</span>,
+        game <span class="mono">ATL@GB</span>. Leg 2: a prop from a DIFFERENT game, its own price
+        and game tag. Click "combine cross-game legs" -- selection and price fill in automatically
+        from the independent-legs math.</p>
+    </details>
+
     <details open>
       <summary>hit rate</summary>
       <p class="muted">Works for any numeric game log against a line: a yardage/attempts prop
@@ -334,7 +367,8 @@ function calcPanel() {
         selection/price/stake/belief fields and log it. Legs are optional breakdown detail, only
         needed to auto-combine legs from DIFFERENT games, or to document an SGP's parts (two or
         more legs sharing a game tag are refused for combining -- enter the book's own combined
-        price for that SGP group as the overall price instead).</p>
+        price for that SGP group as the overall price instead). See "worked examples" above for
+        all four shapes (single prop, SGP, cross-game parlay) with real field values.</p>
       <div id="c-legs"></div>
       <button type="button" id="c-leg-add">+ add leg</button>
       <div id="c-parlay-combine" class="fundform">
