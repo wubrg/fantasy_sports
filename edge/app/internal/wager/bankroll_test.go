@@ -30,12 +30,34 @@ func TestFanaticsPushRules(t *testing.T) {
 	if err := CheckBonusMarket(FanDuel, true); err == nil {
 		t.Error("FanDuel forfeits on a push and must still be refused")
 	}
-	// Caesars remains unrecorded and must still fail closed.
-	if err := CheckBonusMarket(Book("caesars"), true); err == nil {
-		t.Error("caesars has no recorded rules and must not be cleared")
+	// An unrecorded book must still fail closed.
+	if err := CheckBonusMarket(Book("unrecordedbook"), true); err == nil {
+		t.Error("a book with no recorded rules must not be cleared")
 	}
 	// Capitalisation must not smuggle a book past the check.
 	if !Book("Fanatics").Known() {
 		t.Error("Book normalisation stopped working for Fanatics")
+	}
+}
+
+// TestCaesarsPushRules pins Caesars' policy: same as Bet365, confirmed by the
+// operator (2026-09-24) rather than read from a house-rules document -- see
+// the comment on the Caesars constant. Bet365 has no explicit case in
+// BonusLostOnPush/BonusSplittable and relies on their default (false, false);
+// Caesars is expected to fall through the same way.
+func TestCaesarsPushRules(t *testing.T) {
+	if !Caesars.Known() {
+		t.Fatal("Caesars is not Known, so CheckBonusMarket will refuse every wager on it")
+	}
+	if Caesars.BonusLostOnPush() != Bet365.BonusLostOnPush() {
+		t.Error("Caesars is documented to share Bet365's push policy but disagrees with it")
+	}
+	if Caesars.BonusSplittable() != Bet365.BonusSplittable() {
+		t.Error("Caesars is documented to share Bet365's split policy but disagrees with it")
+	}
+	// The case that matters: a whole-number spread can push, and neither
+	// Caesars nor Bet365 forfeits the bonus over it.
+	if err := CheckBonusMarket(Caesars, true); err != nil {
+		t.Errorf("CheckBonusMarket(Caesars, canPush) = %v, want nil", err)
 	}
 }
