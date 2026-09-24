@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"edge/internal/betlog"
@@ -40,6 +41,7 @@ type logEntryJSON struct {
 	Selection string  `json:"selection"`
 	Price     int     `json:"price"`
 	Stake     float64 `json:"stake"`
+	Book      string  `json:"book,omitempty"` // empty for bets placed before this was tracked, or at a book with no rules recorded (see handlePlace)
 	Bankroll  string  `json:"bankroll"`
 	Predicted float64 `json:"predicted"`
 	Result    string  `json:"result"`
@@ -114,6 +116,7 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 		out = append(out, logEntryJSON{
 			ID: b.ID, Placed: b.Placed.Format("2006-01-02"),
 			Selection: b.Bet.Selection, Price: int(b.Bet.Price), Stake: b.Bet.Stake,
+			Book:     string(b.Bet.Book),
 			Bankroll: b.Bet.Bankroll, Predicted: b.Bet.Predicted,
 			Result: res, Narrative: b.Bet.Narrative, Week: b.Bet.Week,
 			Payout: payout,
@@ -259,11 +262,17 @@ func (s *boardServer) handlePlace(w http.ResponseWriter, r *http.Request) {
 		Week:      req.Week,
 		Legs:      toBetlogLegs(req.Legs),
 	}
-	// Book on the Bet is deliberately left empty. betlog rejects an unknown
-	// book, and while Fanatics is now recorded in wager.Book, the campaign's
-	// existing nine entries all omit it -- adding it to new ones only would
-	// split the log's history against itself for no gain. req.Book still drives
-	// the ledger debit via journal.Place; it is simply not frozen into the bet.
+	// Book is frozen onto the bet only when it's a book betlog.PlaceBet will
+	// accept -- one wager.Book already has bonus-bet rules recorded for
+	// (Known()). A book like Caesars, with no rules recorded yet, must stay
+	// off the bet: setting it would make PlaceBet reject the whole wager
+	// outright (see its Book validation), turning "the log tab doesn't show
+	// the book" into "you can't log a Caesars bet at all". req.Book still
+	// drives the ledger debit via journal.Place either way; this only decides
+	// what gets frozen into the log entry itself.
+	if bk := wager.Book(strings.TrimSpace(req.Book)); bk.Known() {
+		b.Book = bk
+	}
 	//
 	// journal.Place writes the betlog and the ledger debit as one operation, in
 	// the safe order: a failed debit leaves no betlog entry, so the two logs can
