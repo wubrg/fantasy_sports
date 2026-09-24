@@ -587,12 +587,27 @@ function renderLog(r) {
   // reads back minus the stake. "To win" is the deterministic potential profit
   // on what is still open, and is always shown.
   const hasPred = r.entries.some(e => e.result === "open" && e.predicted > 0);
-  el.betlog.innerHTML = betEntryForm() + `
-    <div class="scope">${r.week ? "week " + r.week + " · " : ""}${r.count} recorded · ${Math.round(r.open)} open ·
-      ${money(r.open_staked_cash ?? r.open_staked ?? r.staked)} cash · ${money(r.open_staked_bonus ?? 0)} bonus at risk · <b>${money(r.open_payout ?? 0)}</b> to win${hasPred ? ` · ${money(r.open_ev ?? r.ev)} expected` : ""}
-      · ${money(r.realized ?? 0)} realized</div>
-    <section class="rep">
-      ${r.entries.map(e => `<div class="logrow ${e.result}" data-id="${e.id}">
+
+  // Grouped by book, not one flat list: a bankroll question ("what's live at
+  // FanDuel") used to mean scanning every row for a book that wasn't even
+  // shown. Fixed order for the books everyone actually places at, so the
+  // section order doesn't reshuffle week to week; anything else (a book not
+  // in that list, or older/CLI entries with no book frozen onto them at all)
+  // falls into its own trailing group instead of vanishing silently.
+  const bookOrder = ["fanatics", "draftkings", "fanduel", "bet365", "betmgm", "caesars"];
+  const groups = new Map();
+  for (const e of r.entries) {
+    const key = e.book || "";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(e);
+  }
+  const orderedKeys = [
+    ...bookOrder.filter(b => groups.has(b)),
+    ...[...groups.keys()].filter(k => k && !bookOrder.includes(k)).sort(),
+    ...(groups.has("") ? [""] : []),
+  ];
+
+  const rows = (es) => es.map(e => `<div class="logrow ${e.result}" data-id="${e.id}">
         <div class="sel">${e.selection}</div>
         <div class="meta">
           <span class="mono">${e.price > 0 ? "+" : ""}${e.price}</span>
@@ -607,8 +622,24 @@ function renderLog(r) {
             `<button type="button" data-res="${x}" data-id="${e.id}">${x}</button>`).join("")}
           <button type="button" class="repriced" data-id="${e.id}" title="settle at a price the book recomputed, e.g. an SGP leg voided by an injury">repriced…</button>
         </div>` : ""}
-      </div>`).join("")}
-    </section>
+      </div>`).join("");
+
+  const bookSections = orderedKeys.map(key => {
+    const es = groups.get(key);
+    const label = key || "book not recorded";
+    return `<section class="rep">
+      <h2>${label} <span class="muted">· ${es.length} bet${es.length > 1 ? "s" : ""}</span></h2>
+      ${key === "" ? `<p class="muted">Placed before the book was tracked, or logged from the CLI without
+        <span class="mono">-book</span> — nothing to group these by. Not a data error.</p>` : ""}
+      ${rows(es)}
+    </section>`;
+  }).join("");
+
+  el.betlog.innerHTML = betEntryForm() + `
+    <div class="scope">${r.week ? "week " + r.week + " · " : ""}${r.count} recorded · ${Math.round(r.open)} open ·
+      ${money(r.open_staked_cash ?? r.open_staked ?? r.staked)} cash · ${money(r.open_staked_bonus ?? 0)} bonus at risk · <b>${money(r.open_payout ?? 0)}</b> to win${hasPred ? ` · ${money(r.open_ev ?? r.ev)} expected` : ""}
+      · ${money(r.realized ?? 0)} realized</div>
+    ${bookSections}
     <section class="rep">
       <p class="muted">Predictions are recorded before the outcome and settled by
       appending, never by rewriting — so nothing here can be re-predicted after the
