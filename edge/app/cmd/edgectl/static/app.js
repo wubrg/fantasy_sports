@@ -382,6 +382,7 @@ function calcPanel() {
         <input id="c-parlay-pred" inputmode="decimal" placeholder="your % belief (opt)" title="Your own probability estimate (0-100) -- auto-filled from the hit-rate calculation above when you haven't typed one yet, but always editable. Optional; blank just omits the EV column.">
         <select id="c-parlay-bank"><option value="bonus bet">bonus bet</option><option value="real money">real money</option><option value="no-sweat">no-sweat</option></select>
         <select id="c-parlay-book">${["— log only", "fanatics", "draftkings", "fanduel", "bet365", "betmgm", "caesars"].map(b => `<option>${b}</option>`).join("")}</select>
+        <select id="c-parlay-boost"><option value="">— no boost</option></select>
         <input id="c-parlay-week" inputmode="numeric" value="${(state && state.week) || 1}" title="NFL week">
         <button type="button" id="c-parlay-log">log this wager</button>
       </div>
@@ -494,6 +495,37 @@ function wireCalcPanel() {
     }
   });
 
+  // -- boost dropdown, same "held boosts, filtered to the selected book"
+  // pattern as the log tab's free-form entry (wireBetEntry below) -- a boost
+  // applied here must reach journal.Place the same way, or it's consumed on
+  // the board but never actually discounted off the settled price.
+  const parlayBoostSel = document.getElementById("c-parlay-boost");
+  const parlayBookSel = document.getElementById("c-parlay-book");
+  let allParlayBoosts = [];
+  async function loadParlayBoostOptions() {
+    try {
+      const res = await fetch(BASE + "api/boosts");
+      const r = await res.json();
+      allParlayBoosts = (r && r.boosts) || [];
+    } catch (e) { allParlayBoosts = []; }
+    fillParlayBoostOptions();
+  }
+  function fillParlayBoostOptions() {
+    if (!parlayBoostSel) return;
+    let book = parlayBookSel ? parlayBookSel.value : "";
+    if (book.startsWith("—")) book = "";
+    const opts = ['<option value="">— no boost</option>'];
+    for (const b of allParlayBoosts) {
+      if (b.kind !== "boost") continue; // no-sweat tokens are a different flow
+      if (book && b.book !== book) continue;
+      const label = `${b.book} ${b.label || (Math.round((b.percent || 0) * 100) + "% boost")}`;
+      opts.push(`<option value="${b.id}">${label}</option>`);
+    }
+    parlayBoostSel.innerHTML = opts.join("");
+  }
+  if (parlayBookSel) parlayBookSel.addEventListener("change", fillParlayBoostOptions);
+  loadParlayBoostOptions();
+
   document.getElementById("c-parlay-log").addEventListener("click", async () => {
     const btn = document.getElementById("c-parlay-log");
     const legs = readLegs().filter((l) => l.selection || l.price);
@@ -514,6 +546,7 @@ function wireCalcPanel() {
           selection: sel, price, stake, predicted,
           bankroll: document.getElementById("c-parlay-bank").value,
           book, week: Number(document.getElementById("c-parlay-week").value) || 0,
+          boost: (document.getElementById("c-parlay-boost") || {}).value || "",
           narrative: "Entered from the bets-tab calculator.",
           legs: legs.map((l) => ({ selection: l.selection, price: l.price })),
         }),
@@ -521,6 +554,7 @@ function wireCalcPanel() {
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
       document.getElementById("c-parlay-out").innerHTML = `<p class="good">logged.</p>`;
+      loadParlayBoostOptions(); // a consumed boost should drop off the dropdown
     } catch (e) {
       alert("not logged: " + e.message);
     } finally {
