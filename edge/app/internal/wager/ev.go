@@ -125,6 +125,31 @@ func validPct(pct float64) error {
 	return nil
 }
 
+// BoostedPrice is the American price a profit-boosted wager actually settles
+// at -- the number that belongs on the betlog entry once a boost is applied,
+// not the pre-boost price the book originally quoted.
+//
+// A boost multiplies profit, i.e. decimal-minus-one, never the whole decimal:
+//
+//	boosted decimal = 1 + (d−1)·(1+pct)
+//
+// converted back to American via AmericanFromDecimal's same round-to-nearest-
+// integer convention a book uses when it displays a boosted price. Verified
+// directly against a real DraftKings boost: a 50% boost turned +117 into
+// +176 exactly, matching this formula (not the unrounded 175.5 a naive
+// profit-only calculation would imply) -- the rounding step is load-bearing,
+// not cosmetic.
+func BoostedPrice(odds American, pct float64) (American, error) {
+	if err := validPct(pct); err != nil {
+		return 0, err
+	}
+	profit, err := odds.ProfitMultiple()
+	if err != nil {
+		return 0, err
+	}
+	return AmericanFromDecimal(1 + profit*(1+pct))
+}
+
 // BoostedProfit is the cash a winning profit-boosted wager pays out as profit:
 //
 //	stake·(d−1)·(1+pct)

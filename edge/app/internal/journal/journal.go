@@ -72,8 +72,16 @@ func Place(betlogPath, ledgerPath string, req PlaceRequest, now time.Time) (stri
 
 	stakeIsCash := AssetForBankroll(req.Bet.Bankroll) == ledger.Cash
 	if strings.TrimSpace(req.BoostLotID) != "" {
-		if err := validateBoostLot(ledgerPath, req.BoostLotID, req.Book, stakeIsCash, now); err != nil {
+		boost, err := validateBoostLot(ledgerPath, req.BoostLotID, req.Book, stakeIsCash, now)
+		if err != nil {
 			return "", err
+		}
+		if boost != nil {
+			boosted, err := wager.BoostedPrice(req.Bet.Price, boost.Percent)
+			if err != nil {
+				return "", fmt.Errorf("boost lot %q could not be applied to a %+d price: %w", req.BoostLotID, req.Bet.Price, err)
+			}
+			req.Bet.Price = boosted
 		}
 	}
 
@@ -288,27 +296,32 @@ func computeReturns(bet betlog.Bet, result betlog.Result, settledPrice *wager.Am
 // the token is not consumed on a bet that could never carry it. (Replay also
 // enforces it at settlement, as a second line of defence; this catches it early
 // and keeps the token.)
-func validateBoostLot(ledgerPath, id, book string, stakeIsCash bool, now time.Time) error {
+//
+// The returned *ledger.BoostSpec is the found lot's boost, so the caller can
+// apply its Percent to the bet's price -- nil only when the lot carries no
+// boost at all (a plain token lot referenced by a stale/wrong BoostLotID would
+// already have failed the lookup below).
+func validateBoostLot(ledgerPath, id, book string, stakeIsCash bool, now time.Time) (*ledger.BoostSpec, error) {
 	events, err := ledger.Load(ledgerPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	pos, err := ledger.Balances(events, now)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	for _, l := range pos.Lots {
 		if l.ID == id {
 			if l.Book != book {
-				return fmt.Errorf("boost lot %q belongs to %s, not %s: a boost cannot be applied to a wager at a different book", id, l.Book, book)
+				return nil, fmt.Errorf("boost lot %q belongs to %s, not %s: a boost cannot be applied to a wager at a different book", id, l.Book, book)
 			}
 			if l.Boost != nil && l.Boost.RequiresCashStake && !stakeIsCash {
-				return fmt.Errorf("boost lot %q requires a real-money stake, but this wager is funded from a bonus bet: a profit boost will not attach to a bonus bet", id)
+				return nil, fmt.Errorf("boost lot %q requires a real-money stake, but this wager is funded from a bonus bet: a profit boost will not attach to a bonus bet", id)
 			}
-			return nil
+			return l.Boost, nil
 		}
 	}
-	return fmt.Errorf("boost lot %q is not a live lot in the ledger (already consumed, expired, or never granted)", id)
+	return nil, fmt.Errorf("boost lot %q is not a live lot in the ledger (already consumed, expired, or never granted)", id)
 }
 
 // draw builds the ledger place events for a stake, oldest-deadline lot first.

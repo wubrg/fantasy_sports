@@ -493,6 +493,43 @@ func TestBoostedProfit(t *testing.T) {
 	}
 }
 
+// TestBoostedPrice pins the American price a profit-boosted wager actually
+// settles at, including the real-world case that motivated it: a 50% DraftKings
+// boost turning +117 into +176, which paid $27.60 on a $10 stake.
+func TestBoostedPrice(t *testing.T) {
+	cases := []struct {
+		odds American
+		pct  float64
+		want American
+	}{
+		{117, 0.50, 176},
+		{100, 0.30, 130},
+		{-150, 0.30, -115},
+	}
+	for _, c := range cases {
+		got, err := BoostedPrice(c.odds, c.pct)
+		if err != nil {
+			t.Fatalf("%d: %v", c.odds, err)
+		}
+		if got != c.want {
+			t.Errorf("BoostedPrice(%d, %.2f) = %+d, want %+d", c.odds, c.pct, got, c.want)
+		}
+	}
+
+	price, err := BoostedPrice(117, 0.50)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pm, err := price.ProfitMultiple()
+	if err != nil {
+		t.Fatal(err)
+	}
+	payout := 10 + 10*pm
+	if math.Abs(payout-27.60) > 1e-2 {
+		t.Errorf("payout on $10 stake at boosted price %+d = %.4f, want 27.60", price, payout)
+	}
+}
+
 // TestBoostedBreakeven pins the reduced win rate and that it is always below
 // the unboosted breakeven.
 func TestBoostedBreakeven(t *testing.T) {

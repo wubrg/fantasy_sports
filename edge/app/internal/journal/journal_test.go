@@ -186,6 +186,16 @@ func TestPlace_appliesBoost(t *testing.T) {
 	if !sawBoostPlace {
 		t.Fatal("boost lot was not placed against the wager")
 	}
+	// The frozen betlog price must reflect the boost, not the book's original
+	// quote -- otherwise settlement pays out as if no boost was ever applied.
+	// -115 boosted 30% is +113 (boosted decimal 2.1304, rounded).
+	bets, err := betlog.Load(bl)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if len(bets) != 1 || bets[0].Bet.Price != wager.American(113) {
+		t.Fatalf("betlog price = %+v, want a single bet at +113", bets)
+	}
 	// The boost lot is consumed: it is no longer a live lot.
 	pos, err := ledger.Balances(evs, now)
 	if err != nil {
