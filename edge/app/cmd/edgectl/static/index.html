@@ -69,27 +69,36 @@ if (!location.pathname.endsWith("/")) {
         moneyline blob to fill prices the same confirm-first way, for a book with no HAR capture.</li>
       <li><strong>bets</strong> — what the tool recommends this week from whatever is on the board:
         suspect (implausible-overround) lines flagged first, a bankroll frontier and per-book
-        allocation when funds are on hand, disjoint parlay tickets with a <em>record</em> button,
-        dogs ranked by bonus-bet conversion rather than price, and line shopping once a second book is
-        priced. The book-pool chips above it choose which book(s) the recommendations are drawn from
-        — <em>consensus</em> is deliberately not one of the choices, since it is the schedule's own
-        reference line and not a price anyone can bet. At the bottom, a calculator prices a
-        one-off prop's hit rate from a pasted game log — any numeric series against a line, so a
-        yardage/attempts prop works the same way an ATD prop does (enter TD counts per game against
-        a 0.5 line) — then logs the wager itself: a single prop needs none of the optional legs,
-        which exist only to auto-combine cross-game legs or document an SGP's parts (two or more
-        legs sharing a game tag are refused for combining — enter the book's own combined SGP price
-        for that group instead). The computed hit rate feeds the wager form's belief field
-        automatically, still editable.</li>
+        allocation (with tactical advice) when funds are on hand, disjoint parlay tickets with a
+        <em>record</em> button — each matched against your held boosts automatically, showing the
+        dollar add and flagging a boost that's capped at its max stake or can't attach (a prop-only or
+        cash-only boost that doesn't fit the ticket) — dogs ranked by bonus-bet conversion rather than
+        price, and line shopping once a second book is priced. A board still missing games is marked
+        <em>provisional</em> and counts what couldn't be built yet; wagers already recorded against a
+        game are shown separately and excluded from fresh recommendations, so an already-placed ticket
+        is never double-counted as a second chance at the same outcome. The book-pool chips above it
+        choose which book(s) the recommendations are drawn from — <em>consensus</em> is deliberately
+        not one of the choices, since it is the schedule's own reference line and not a price anyone
+        can bet. At the bottom, a calculator prices a one-off prop's hit rate from a pasted game log —
+        any numeric series against a line, so a yardage/attempts prop works the same way an ATD prop
+        does (enter TD counts per game against a 0.5 line) — then logs the wager itself: a single prop
+        needs none of the optional legs, which exist only to auto-combine cross-game legs or document
+        an SGP's parts (two or more legs sharing a game tag are refused for combining — enter the
+        book's own combined SGP price for that group instead), and a held boost can be applied the same
+        way as the record button's tickets, drawn from the funds tab. The computed hit rate feeds the
+        wager form's belief field automatically, still editable.</li>
       <li><strong>log</strong> — every wager placed (from the bets tab's <em>record</em> button, its
         calculator, or typed in directly here), and how it settled. An open wager gets
         <em>won</em>/<em>lost</em>/<em>push</em>/<em>void</em> buttons, plus <em>repriced…</em> for a
         same-game parlay the book recomputed after a leg voided (an injury scratch, say) — it
         records what settlement actually paid without rewriting the original quote. The entry form
-        logs a wager into the betlog and the bankroll together in one call, with an optional
-        multi-leg detail, a win-probability belief for EV — your own estimate, or a number computed
-        in the bets tab's calculator and typed over — and a checkbox to fund it with a matching
-        deposit first rather than draw down an existing balance.</li>
+        here logs a single wager into the betlog and the bankroll together in one call: a
+        win-probability belief for EV (your own estimate, or a number computed in the bets tab's
+        calculator and typed over), a held boost to apply (drawn from the funds tab — a boost changes
+        the price the bet actually settles at, not just the ledger balance), and a checkbox to fund it
+        with a matching deposit first rather than draw down an existing balance. Multi-leg detail —
+        auto-combining cross-game legs, or documenting an SGP's parts — is the bets tab calculator's
+        job, not this form's.</li>
       <li><strong>funds</strong> — cash, bonus and no-sweat balances, an expiring-soon list, and forms
         to declare a boost or a no-sweat token. Leaving a promo's expiry blank auto-expires it at the
         end of whichever week the banner is currently on (the Tuesday-on-or-before-kickoff boundary
