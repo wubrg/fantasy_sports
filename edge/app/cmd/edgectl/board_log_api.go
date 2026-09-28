@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -57,7 +58,12 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 		// A log that does not exist yet is an empty log, not a failure: the
 		// first bet recorded creates it.
 		if os.IsNotExist(err) {
-			writeJSON(w, map[string]any{"path": path, "entries": []logEntryJSON{}})
+			writeJSON(w, map[string]any{
+				"path": path, "entries": []logEntryJSON{},
+				// The same filter fields the populated response carries, so the
+				// client never has to special-case undefined on a first run.
+				"books": []string{}, "available_books": []string{}, "q": "",
+			})
 			return
 		}
 		httpError(w, http.StatusInternalServerError, err.Error())
@@ -67,7 +73,39 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 	// An optional ?week filters the log to the bets FOR that NFL week, so the
 	// listing and its at-risk/realized figures both scope to the week the header
 	// selector is on. week 0 (absent) shows every bet.
-	week, _ := strconv.Atoi(r.URL.Query().Get("week"))
+	q := r.URL.Query()
+	week, _ := strconv.Atoi(q.Get("week"))
+
+	// ?books= and ?q= narrow the week further. They are applied HERE rather than
+	// in the browser because the summary line below (open count, at-risk, EV,
+	// realized) is accumulated in this same loop from bankroll-aware wager.EV
+	// math -- filtering client-side would either reimplement that math in
+	// JavaScript or show a week's totals above a filtered list.
+	//
+	// books is the same comma-split idiom handleReport uses; an empty list means
+	// every book, since the log has nothing to fall back to the way a report's
+	// pool does.
+	books := []string{}
+	for _, b := range strings.Split(q.Get("books"), ",") {
+		if b = strings.TrimSpace(b); b != "" {
+			books = append(books, b)
+		}
+	}
+	bookWanted := make(map[string]bool, len(books))
+	for _, b := range books {
+		bookWanted[b] = true
+	}
+	// A free-text needle, matched case-insensitively against the selection and
+	// the narrative. Nothing in a log entry names a team or a player as a field
+	// -- those live inside that prose -- so substring search is the only handle
+	// there is on "everything I have on Bijan".
+	search := strings.TrimSpace(q.Get("q"))
+	query := strings.ToLower(search)
+
+	// Every book with a bet this WEEK, collected before the filters run. Derived
+	// from the filtered entries instead, picking one book would erase every other
+	// book from the chip row and leave no way to re-select it.
+	availBooks := map[string]bool{}
 
 	out := make([]logEntryJSON, 0, len(bets))
 	// Two different questions, kept apart. openEV is the EXPECTED value of what
@@ -79,6 +117,17 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 	for _, b := range bets {
 		if week > 0 && b.Bet.Week != week {
 			continue // not this week's wager
+		}
+		if bk := string(b.Bet.Book); bk != "" {
+			availBooks[bk] = true
+		}
+		if len(bookWanted) > 0 && !bookWanted[string(b.Bet.Book)] {
+			continue // not a book the chip row has selected
+		}
+		if query != "" &&
+			!strings.Contains(strings.ToLower(b.Bet.Selection), query) &&
+			!strings.Contains(strings.ToLower(b.Bet.Narrative), query) {
+			continue // the search names neither this selection nor its reasoning
 		}
 		res := string(b.Result)
 		if res == "" {
@@ -127,8 +176,16 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 	for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
 		out[i], out[j] = out[j], out[i]
 	}
+	sortedAvail := make([]string, 0, len(availBooks))
+	for b := range availBooks {
+		sortedAvail = append(sortedAvail, b)
+	}
+	sort.Strings(sortedAvail) // a chip row that reshuffles per reload is unusable
 	writeJSON(w, map[string]any{
 		"path": path, "week": week, "entries": out, "count": len(out), "open": open,
+		// The filter, echoed back: books/q are what is ACTIVE, available_books is
+		// the week's whole option set (see above).
+		"books": books, "available_books": sortedAvail, "q": search,
 		// staked/ev keep their names but now carry OPEN semantics, so anything
 		// still reading them sees live exposure rather than an all-time sum.
 		"staked": openStaked, "ev": openEV,

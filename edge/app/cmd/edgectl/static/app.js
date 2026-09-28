@@ -57,6 +57,12 @@ function load() {
     // endpoints (see board_props_sync_api.go), which always sync draftkings,
     // so this is pinned rather than user-selectable.
     book: "draftkings",
+    // The log tab's own filters, kept apart from state.books above: an empty
+    // pool there falls back to the entry book, while an empty pool HERE means
+    // every book. Same widget, opposite empty-case semantics -- sharing one
+    // field would make one of the two behave wrongly.
+    logBooks: Array.isArray(s.logBooks) ? s.logBooks : [],
+    logQuery: typeof s.logQuery === "string" ? s.logQuery : "",
   };
 }
 
@@ -571,7 +577,14 @@ async function loadLog(preserveScroll = false) {
   const savedY = preserveScroll ? window.scrollY : null;
   el.betlog.innerHTML = `<p class="muted">reading the log…</p>`;
   try {
-    const res = await fetch(BASE + "api/log?week=" + encodeURIComponent(state.week));
+    // The book/search filters go to the server, not to a .filter() here: the
+    // summary line's at-risk and EV figures are accumulated server-side over
+    // whatever survives the filter, so narrowing in the browser would leave a
+    // whole week's totals sitting above a filtered list.
+    const params = new URLSearchParams({ week: state.week });
+    if (state.logBooks && state.logBooks.length) params.set("books", state.logBooks.join(","));
+    if (state.logQuery) params.set("q", state.logQuery);
+    const res = await fetch(BASE + "api/log?" + params.toString());
     const r = await res.json();
     if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
     renderLog(r);
@@ -680,11 +693,41 @@ function wireBetEntry() {
   });
 }
 
+// filterControls narrows a week's log. Nothing in an entry names a team or a
+// player as a field -- both live inside the free-text selection and narrative --
+// so a search box is the only handle on those, while the book IS structured and
+// gets the bets tab's chip row verbatim.
+//
+// The book options come from r.available_books (the whole week) rather than from
+// what is currently listed, so deselecting never hides the chip you would need
+// to select again.
+function filterControls(r) {
+  const on = new Set(r.books || []);
+  const avail = r.available_books || [];
+  const chips = avail.length
+    ? `<div class="chips">${avail.map((b) =>
+        `<button type="button" class="chip${on.has(b) ? " on" : ""}" data-book="${b}">${b}</button>`
+      ).join("")}</div>`
+    : "";
+  return `${chips}<section class="rep"><div class="fundform">
+    <input id="log-q" placeholder="search team, player or note — e.g. Bijan" value="${(r.q || "").replace(/"/g, "&quot;")}">
+  </div></section>`;
+}
+
+// filtering tells the empty state which of two very different things happened.
+function logFiltered(r) { return (r.books && r.books.length) || (r.q || "").length; }
+
 function renderLog(r) {
   if (!r.entries.length) {
-    el.betlog.innerHTML = betEntryForm() + `<section class="rep"><h2>no bets ${r.week ? "for week " + r.week : "recorded"}</h2>
-      <p class="muted">Nothing ${r.week ? "logged for week " + r.week : "in " + r.path} yet. Enter one above, or place a wager from
-      the bets tab.</p></section>`;
+    // The controls render ABOVE this early return, not below the list: an
+    // over-narrow filter is exactly the moment the operator needs to see and
+    // clear it, and a bare "no bets" with no visible filter reads as data loss.
+    el.betlog.innerHTML = betEntryForm() + filterControls(r) + `<section class="rep">
+      <h2>${logFiltered(r) ? "no bets match the filter" : `no bets ${r.week ? "for week " + r.week : "recorded"}`}</h2>
+      <p class="muted">${logFiltered(r)
+        ? `Nothing ${r.week ? "in week " + r.week : "logged"} matches this book/search. Clear a chip or empty the box above to widen it.`
+        : `Nothing ${r.week ? "logged for week " + r.week : "in " + r.path} yet. Enter one above, or place a wager from the bets tab.`}</p>
+    </section>`;
     wireBetEntry();
     return;
   }
@@ -740,7 +783,7 @@ function renderLog(r) {
     </section>`;
   }).join("");
 
-  el.betlog.innerHTML = betEntryForm() + `
+  el.betlog.innerHTML = betEntryForm() + filterControls(r) + `
     <div class="scope">${r.week ? "week " + r.week + " · " : ""}${r.count} recorded · ${Math.round(r.open)} open ·
       ${money(r.open_staked_cash ?? r.open_staked ?? r.staked)} cash · ${money(r.open_staked_bonus ?? 0)} bonus at risk · <b>${money(r.open_payout ?? 0)}</b> to win${hasPred ? ` · ${money(r.open_ev ?? r.ev)} expected` : ""}
       · ${money(r.realized ?? 0)} realized</div>
@@ -847,6 +890,44 @@ el.betlog.addEventListener("click", async (e) => {
     for (const b of btn.parentElement.querySelectorAll("button")) b.disabled = false;
     alert("not settled: " + err.message);
   }
+});
+
+// Filtering the log. Both listeners are delegated off el.betlog rather than
+// bound to the elements, because renderLog replaces the tab's whole innerHTML
+// on every reload -- including the very controls that triggered the reload.
+//
+// Toggling a book narrows the list AND the summary figures above it. Emptying
+// the selection means every book, unlike the bets tab's chips (which fall back
+// to the entry book): there is nothing to compute here, so "no filter" is a
+// perfectly good answer.
+el.betlog.addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  const b = chip.dataset.book;
+  const cur = new Set(state.logBooks || []);
+  if (cur.has(b)) cur.delete(b); else cur.add(b);
+  state.logBooks = [...cur];
+  save();
+  loadLog(); // a filter change is a fresh view; don't preserve scroll
+});
+
+// Searching the selection and the narrative, debounced -- a request per
+// keystroke would re-render the tab under the typist's fingers. The focus and
+// caret are put back after the reload for the same reason: the input that was
+// being typed into no longer exists once renderLog has run.
+let logQueryTimer = null;
+el.betlog.addEventListener("input", (e) => {
+  if (e.target.id !== "log-q") return;
+  const v = e.target.value;
+  const caret = e.target.selectionStart;
+  clearTimeout(logQueryTimer);
+  logQueryTimer = setTimeout(async () => {
+    state.logQuery = v.trim();
+    save();
+    await loadLog();
+    const box = document.getElementById("log-q");
+    if (box) { box.focus(); try { box.setSelectionRange(caret, caret); } catch (err) { /* not selectable */ } }
+  }, 350);
 });
 
 // ---- the bankroll -------------------------------------------------------

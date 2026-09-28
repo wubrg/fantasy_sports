@@ -59,6 +59,101 @@ func TestHandleLogSplitsAtRiskByBankroll(t *testing.T) {
 	}
 }
 
+// TestHandleLogFiltersByBookAndQuery pins the log tab's two filters: a
+// multi-select of books, and a free-text needle matched against the selection
+// and the narrative (the only place a team or a player name is ever written).
+//
+// It also pins the trap in available_books: derived from the FILTERED entries,
+// picking one book would erase every other book from the chip row, leaving the
+// filter unclearable from the UI that set it. The option set is week-scoped and
+// filter-independent by construction.
+func TestHandleLogFiltersByBookAndQuery(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "log.jsonl")
+	for _, b := range []betlog.Bet{
+		{Selection: "Bijan Robinson 70+ rush yards", Price: -110, Bankroll: "real money", Stake: 20, Predicted: 0.55, Book: "fanduel", Week: 4},
+		{Selection: "Falcons team total over", Price: 100, Bankroll: "real money", Stake: 10, Predicted: 0.52, Book: "fanduel", Week: 4,
+			Narrative: "the same Bijan volume, priced off the team side"},
+		{Selection: "Drake London 67+ rec yards", Price: -120, Bankroll: "real money", Stake: 15, Predicted: 0.56, Book: "fanduel", Week: 4},
+		{Selection: "Bijan Robinson anytime TD", Price: 130, Bankroll: "real money", Stake: 12, Predicted: 0.45, Book: "draftkings", Week: 4},
+		{Selection: "Bijan Robinson anytime TD", Price: 145, Bankroll: "real money", Stake: 12, Predicted: 0.45, Book: "fanduel", Week: 5},
+	} {
+		if _, err := betlog.PlaceBet(path, b); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	type logResp struct {
+		Count     int      `json:"count"`
+		Books     []string `json:"books"`
+		Avail     []string `json:"available_books"`
+		Q         string   `json:"q"`
+		OpenStake float64  `json:"open_staked"`
+		Entries   []struct {
+			Selection string `json:"selection"`
+			Book      string `json:"book"`
+		} `json:"entries"`
+	}
+	get := func(query string) logResp {
+		t.Helper()
+		rr := httptest.NewRecorder()
+		(&boardServer{betlogPath: path}).handleLog(rr, httptest.NewRequest("GET", "/api/log?"+query, nil))
+		if rr.Code != 200 {
+			t.Fatalf("%s: status %d: %s", query, rr.Code, rr.Body.String())
+		}
+		var r logResp
+		if err := json.Unmarshal(rr.Body.Bytes(), &r); err != nil {
+			t.Fatalf("%s: %v", query, err)
+		}
+		return r
+	}
+
+	// No filter: the whole week, and both filter fields echo back empty.
+	if r := get("week=4"); r.Count != 4 || len(r.Books) != 0 || r.Q != "" {
+		t.Errorf("unfiltered week 4: count=%d books=%v q=%q, want 4//\"\"", r.Count, r.Books, r.Q)
+	}
+
+	// Book + search together AND: only the FanDuel week-4 bets naming Bijan --
+	// one by selection, one only in its narrative.
+	r := get("week=4&books=fanduel&q=bijan")
+	if r.Count != 2 {
+		t.Fatalf("books=fanduel&q=bijan: count=%d, want 2 (%+v)", r.Count, r.Entries)
+	}
+	for _, e := range r.Entries {
+		if e.Book != "fanduel" {
+			t.Errorf("entry %q came from %q, want fanduel only", e.Selection, e.Book)
+		}
+	}
+	// The stats accumulate over the FILTERED set, not the week: 20 + 10.
+	if math.Abs(r.OpenStake-30) > 1e-9 {
+		t.Errorf("open_staked=%v, want 30 (the filtered stakes only)", r.OpenStake)
+	}
+	if r.Q != "bijan" || len(r.Books) != 1 || r.Books[0] != "fanduel" {
+		t.Errorf("filter not echoed: books=%v q=%q", r.Books, r.Q)
+	}
+	// The bug this pins: draftkings is filtered OUT of the entries and must still
+	// be offered as a chip, or the filter cannot be widened again.
+	if len(r.Avail) != 2 || r.Avail[0] != "draftkings" || r.Avail[1] != "fanduel" {
+		t.Errorf("available_books=%v, want the week's full sorted set [draftkings fanduel]", r.Avail)
+	}
+
+	// Several books OR together.
+	if r := get("week=4&books=fanduel,draftkings&q=bijan"); r.Count != 3 {
+		t.Errorf("two books: count=%d, want 3", r.Count)
+	}
+	// Search alone, case-insensitively, across every book in the week.
+	if r := get("week=4&q=BIJAN"); r.Count != 3 {
+		t.Errorf("q=BIJAN: count=%d, want 3", r.Count)
+	}
+	// available_books re-scopes with the week: week 5 has only the one bet.
+	if r := get("week=5&books=fanduel"); r.Count != 1 || len(r.Avail) != 1 || r.Avail[0] != "fanduel" {
+		t.Errorf("week 5: count=%d avail=%v, want 1/[fanduel]", r.Count, r.Avail)
+	}
+	// Over-narrow: zero entries, but the chip row still offers the whole week.
+	if r := get("week=4&books=fanduel&q=mahomes"); r.Count != 0 || len(r.Avail) != 2 {
+		t.Errorf("no matches: count=%d avail=%v, want 0 and the full option set", r.Count, r.Avail)
+	}
+}
+
 // TestRealizedPnL pins the settled-P&L rules the log's "realized" figure sums:
 // a win books its profit regardless of bankroll; only a real-money loss costs
 // cash; a bonus loss, a push and a void are all zero.
