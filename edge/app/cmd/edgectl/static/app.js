@@ -563,7 +563,12 @@ function wireCalcPanel() {
   });
 }
 
-async function loadLog() {
+// preserveScroll keeps the reader's place in a long log across a rebuild that
+// they caused on purpose -- logging a bet or recording a result -- rather than
+// snapping back to the top the way a fresh view (switching to the tab, or
+// changing week) reasonably does.
+async function loadLog(preserveScroll = false) {
+  const savedY = preserveScroll ? window.scrollY : null;
   el.betlog.innerHTML = `<p class="muted">reading the log…</p>`;
   try {
     const res = await fetch(BASE + "api/log?week=" + encodeURIComponent(state.week));
@@ -572,6 +577,12 @@ async function loadLog() {
     renderLog(r);
   } catch (e) {
     el.betlog.innerHTML = `<p class="muted">could not read the log: ${e.message}</p>`;
+  }
+  if (savedY !== null) {
+    // After the DOM settles, not before -- restoring against the still-collapsed
+    // "reading the log…" placeholder would clamp to a scrollY that no longer
+    // exists once the full list re-renders.
+    requestAnimationFrame(() => window.scrollTo(0, savedY));
   }
 }
 
@@ -660,7 +671,7 @@ function wireBetEntry() {
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
-      loadLog();
+      loadLog(true);
       loadBoostOptions(); // a consumed boost should drop off the dropdown
     } catch (e) {
       btn.disabled = false;
@@ -831,7 +842,7 @@ el.betlog.addEventListener("click", async (e) => {
     });
     const body = await r.json();
     if (!r.ok) throw new Error(body.error || ("HTTP " + r.status));
-    loadLog();
+    loadLog(true);
   } catch (err) {
     for (const b of btn.parentElement.querySelectorAll("button")) b.disabled = false;
     alert("not settled: " + err.message);
