@@ -63,6 +63,9 @@ function load() {
     // field would make one of the two behave wrongly.
     logBooks: Array.isArray(s.logBooks) ? s.logBooks : [],
     logQuery: typeof s.logQuery === "string" ? s.logQuery : "",
+    // "", "open" or "settled" -- exclusive, unlike the book chips, so this is a
+    // segmented control (radio-style) rather than another chip row.
+    logStatus: ["open", "settled"].includes(s.logStatus) ? s.logStatus : "",
   };
 }
 
@@ -584,6 +587,7 @@ async function loadLog(preserveScroll = false) {
     const params = new URLSearchParams({ week: state.week });
     if (state.logBooks && state.logBooks.length) params.set("books", state.logBooks.join(","));
     if (state.logQuery) params.set("q", state.logQuery);
+    if (state.logStatus) params.set("status", state.logStatus);
     const res = await fetch(BASE + "api/log?" + params.toString());
     const r = await res.json();
     if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
@@ -709,13 +713,21 @@ function filterControls(r) {
         `<button type="button" class="chip${on.has(b) ? " on" : ""}" data-book="${b}">${b}</button>`
       ).join("")}</div>`
     : "";
-  return `${chips}<section class="rep"><div class="fundform">
+  // Open/settled is exclusive -- a bet is one or the other, never both -- so
+  // this is a segmented control (the same widget the header's view switcher
+  // uses), not another multi-select chip row.
+  const status = r.status || "";
+  const seg = ["", "open", "settled"].map((v) =>
+    `<button type="button" class="${status === v ? "on" : ""}" data-status="${v}">${v || "all"}</button>`
+  ).join("");
+  return `${chips}<div class="seg" role="group" aria-label="log status">${seg}</div>
+  <section class="rep"><div class="fundform">
     <input id="log-q" placeholder="search team, player or note — e.g. Bijan" value="${(r.q || "").replace(/"/g, "&quot;")}">
   </div></section>`;
 }
 
-// filtering tells the empty state which of two very different things happened.
-function logFiltered(r) { return (r.books && r.books.length) || (r.q || "").length; }
+// filtering tells the empty state which of three very different things happened.
+function logFiltered(r) { return (r.books && r.books.length) || (r.q || "").length || (r.status || "").length; }
 
 function renderLog(r) {
   if (!r.entries.length) {
@@ -902,13 +914,23 @@ el.betlog.addEventListener("click", async (e) => {
 // perfectly good answer.
 el.betlog.addEventListener("click", (e) => {
   const chip = e.target.closest(".chip");
-  if (!chip) return;
-  const b = chip.dataset.book;
-  const cur = new Set(state.logBooks || []);
-  if (cur.has(b)) cur.delete(b); else cur.add(b);
-  state.logBooks = [...cur];
-  save();
-  loadLog(); // a filter change is a fresh view; don't preserve scroll
+  if (chip) {
+    const b = chip.dataset.book;
+    const cur = new Set(state.logBooks || []);
+    if (cur.has(b)) cur.delete(b); else cur.add(b);
+    state.logBooks = [...cur];
+    save();
+    loadLog(); // a filter change is a fresh view; don't preserve scroll
+    return;
+  }
+  // Open/settled/all -- exclusive, so this just replaces the value rather
+  // than toggling a Set the way the book chips do.
+  const statusBtn = e.target.closest("[data-status]");
+  if (statusBtn) {
+    state.logStatus = statusBtn.dataset.status;
+    save();
+    loadLog();
+  }
 });
 
 // Searching the selection and the narrative, debounced -- a request per

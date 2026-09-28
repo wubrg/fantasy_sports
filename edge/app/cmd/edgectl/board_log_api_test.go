@@ -154,6 +154,60 @@ func TestHandleLogFiltersByBookAndQuery(t *testing.T) {
 	}
 }
 
+// TestHandleLogFiltersByStatus pins the open/settled toggle: exclusive (a bet
+// is one or the other, never both, unlike the multi-select book chips), and
+// it gates the accumulated stats the same way book/q already do -- an "open"
+// view has zero realized, a "settled" view has zero open exposure.
+func TestHandleLogFiltersByStatus(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "log.jsonl")
+	openID, err := betlog.PlaceBet(path, betlog.Bet{
+		Selection: "still live", Price: -110, Bankroll: "real money", Stake: 20, Week: 6})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wonID, err := betlog.PlaceBet(path, betlog.Bet{
+		Selection: "already graded", Price: 150, Bankroll: "real money", Stake: 10, Week: 6})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := betlog.Settle(path, wonID, betlog.Won, nil, nil, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	type logResp struct {
+		Count      int     `json:"count"`
+		Status     string  `json:"status"`
+		OpenStaked float64 `json:"open_staked"`
+		Realized   float64 `json:"realized"`
+		Entries    []struct {
+			ID string `json:"id"`
+		} `json:"entries"`
+	}
+	get := func(query string) logResp {
+		t.Helper()
+		rr := httptest.NewRecorder()
+		(&boardServer{betlogPath: path}).handleLog(rr, httptest.NewRequest("GET", "/api/log?"+query, nil))
+		if rr.Code != 200 {
+			t.Fatalf("%s: status %d: %s", query, rr.Code, rr.Body.String())
+		}
+		var r logResp
+		if err := json.Unmarshal(rr.Body.Bytes(), &r); err != nil {
+			t.Fatalf("%s: %v", query, err)
+		}
+		return r
+	}
+
+	if r := get("week=6"); r.Count != 2 || r.Status != "" {
+		t.Errorf("unfiltered: count=%d status=%q, want 2/\"\"", r.Count, r.Status)
+	}
+	if r := get("week=6&status=open"); r.Count != 1 || r.Entries[0].ID != openID || r.Realized != 0 {
+		t.Errorf("status=open: count=%d id=%q realized=%v, want 1/%q/0", r.Count, r.Entries[0].ID, r.Realized, openID)
+	}
+	if r := get("week=6&status=settled"); r.Count != 1 || r.Entries[0].ID != wonID || r.OpenStaked != 0 {
+		t.Errorf("status=settled: count=%d id=%q open_staked=%v, want 1/%q/0", r.Count, r.Entries[0].ID, r.OpenStaked, wonID)
+	}
+}
+
 // TestRealizedPnL pins the settled-P&L rules the log's "realized" figure sums:
 // a win books its profit regardless of bankroll; only a real-money loss costs
 // cash; a bonus loss, a push and a void are all zero.
