@@ -62,7 +62,7 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 				"path": path, "entries": []logEntryJSON{},
 				// The same filter fields the populated response carries, so the
 				// client never has to special-case undefined on a first run.
-				"books": []string{}, "available_books": []string{}, "q": "",
+				"books": []string{}, "available_books": []string{}, "q": "", "status": "",
 			})
 			return
 		}
@@ -101,6 +101,9 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 	// there is on "everything I have on Bijan".
 	search := strings.TrimSpace(q.Get("q"))
 	query := strings.ToLower(search)
+	// "open" or "settled" (won/lost/push/void, anything that isn't open); any
+	// other value (including empty/absent) means both.
+	status := strings.ToLower(strings.TrimSpace(q.Get("status")))
 
 	// Every book with a bet this WEEK, collected before the filters run. Derived
 	// from the filtered entries instead, picking one book would erase every other
@@ -132,6 +135,9 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 		res := string(b.Result)
 		if res == "" {
 			res = "open"
+		}
+		if (status == "open" && res != "open") || (status == "settled" && res == "open") {
+			continue // the status toggle wants the other bucket
 		}
 		// Potential payout: the profit a win pays (stake x the price's profit
 		// multiple), the same for cash and a bonus bet. Deterministic -- no belief
@@ -185,7 +191,7 @@ func (s *boardServer) handleLog(w http.ResponseWriter, r *http.Request) {
 		"path": path, "week": week, "entries": out, "count": len(out), "open": open,
 		// The filter, echoed back: books/q are what is ACTIVE, available_books is
 		// the week's whole option set (see above).
-		"books": books, "available_books": sortedAvail, "q": search,
+		"books": books, "available_books": sortedAvail, "q": search, "status": status,
 		// staked/ev keep their names but now carry OPEN semantics, so anything
 		// still reading them sees live exposure rather than an all-time sum.
 		"staked": openStaked, "ev": openEV,
