@@ -125,6 +125,7 @@ func ledgerAdd(args []string) error {
 	id := fs.String("id", "", "id for the lot this event creates (default: the event id)")
 	wagerID := fs.String("wager", "", "wager id tying a place to its settle; use the betlog id")
 	weekNo := fs.Int("week", 0, "the NFL week this event is FOR (place, deposit, grant, convert or withdraw; the period report attributes by it over its own timestamp)")
+	dir := fs.String("dir", defaultBoardDir, "directory holding the week files, used to derive a default boost/no-sweat -expiry from -week when -expiry is not given")
 	result := fs.String("result", "", "settle only: won, lost, push or void")
 	returns := fs.Float64("returns", 0, "settle only: amount handed back by the book")
 	returnsAsset := fs.String("returns-asset", ledger.Cash, "settle only: asset the returns arrive as")
@@ -163,12 +164,23 @@ func ledgerAdd(args []string) error {
 	// keeps deposit, grant and convert from drifting apart in what they accept.
 	newLot := func() (*ledger.Lot, error) {
 		l := ledger.Lot{ID: *id, Book: *book, Asset: *asset, Amount: *amount}
+		isBoostOrNoSweat := *boostPct != 0 || *nosweatMax > 0 || *nosweatMarket != ""
 		if *expiry != "" {
 			t, err := parseWhen(*expiry, now)
 			if err != nil {
 				return nil, err
 			}
 			l.Expires = &t
+		} else if isBoostOrNoSweat && *weekNo > 0 {
+			// A promo granted mid-week is good through that week's own last game,
+			// not some hand-typed date that happens to land on the right Tuesday --
+			// NFL weeks roll over on Tuesday (see weekWindow), so this is the same
+			// boundary the period report already uses, not a new convention.
+			_, end, err := weekWindow(*dir, *weekNo)
+			if err != nil {
+				return nil, fmt.Errorf("no -expiry given and could not derive one from -week %d: %w", *weekNo, err)
+			}
+			l.Expires = &end
 		}
 		if *boostPct != 0 {
 			l.Boost = &ledger.BoostSpec{
