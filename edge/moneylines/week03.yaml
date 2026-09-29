@@ -35,9 +35,9 @@ games:
         spread: 11.5 -110/-110
         total: 46.5 -110/-110
       draftkings:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: +340/-440
+        spread: 8.5 -112/-108
+        total: 48.5 -105/-115
       fanatics:
         ml: ""
         spread: ""
@@ -68,9 +68,9 @@ games:
         spread: 7.5 -110/-110
         total: 46.5 -110/-110
       draftkings:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: +200/-245
+        spread: 4.5 -105/-115
+        total: 42.5 -118/-102
       fanatics:
         ml: ""
         spread: ""
@@ -101,9 +101,9 @@ games:
         spread: -2.5 -110/-110
         total: 51.5 -110/-110
       draftkings:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: -175/+145
+        spread: -3.5 -105/-115
+        total: 53.5 -105/-115
       fanatics:
         ml: ""
         spread: ""
@@ -134,9 +134,9 @@ games:
         spread: -1.5 -110/-110
         total: 39.5 -110/-110
       draftkings:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: -148/+124
+        spread: -2.5 -118/-102
+        total: 42.5 -108/-112
       fanatics:
         ml: ""
         spread: ""
@@ -167,9 +167,9 @@ games:
         spread: -1.5 -110/-110
         total: 46.5 -118/-102
       draftkings:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: -175/+145
+        spread: -3.5 -110/-110
+        total: 42.5 -110/-110
       fanatics:
         ml: ""
         spread: ""
@@ -200,9 +200,9 @@ games:
         spread: -1.5 -110/-110
         total: 45.5 -110/-110
       draftkings:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: -125/+105
+        spread: -1.5 -118/-102
+        total: 42.5 -112/-108
       fanatics:
         ml: ""
         spread: ""
@@ -233,9 +233,9 @@ games:
         spread: -7.5 -110/-110
         total: 44.5 -110/-110
       draftkings:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: -650/+470
+        spread: -10.5 -112/-108
+        total: 45.5 -115/-105
       fanatics:
         ml: ""
         spread: ""
@@ -266,9 +266,9 @@ games:
         spread: -3 -110/-110
         total: 45.5 -110/-110
       draftkings:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: -135/+114
+        spread: -2.5 -110/-110
+        total: 43.5 -115/-105
       fanatics:
         ml: ""
         spread: ""
@@ -332,9 +332,9 @@ games:
         spread: 3.5 -110/-110
         total: 42.5 -110/-110
       draftkings:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: +154/-185
+        spread: 3 +102/-122
+        total: 43.5 -110/-110
       fanatics:
         ml: ""
         spread: ""
@@ -365,9 +365,9 @@ games:
         spread: 1.5 -110/-110
         total: 44.5 -110/-110
       draftkings:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: -120/+100
+        spread: -1.5 -108/-112
+        total: 42.5 -110/-110
       fanatics:
         ml: ""
         spread: ""
@@ -398,9 +398,9 @@ games:
         spread: 1.5 -115/-105
         total: 45.5 -110/-110
       draftkings:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: +130/-155
+        spread: 3 -118/-102
+        total: 45.5 -115/-105
       fanatics:
         ml: ""
         spread: ""
@@ -464,9 +464,9 @@ games:
         spread: 1.5 -115/-105
         total: 46.5 -110/-110
       draftkings:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: -192/+160
+        spread: -4.5 -115/-105
+        total: 41.5 -110/-110
       fanatics:
         ml: ""
         spread: ""
@@ -497,9 +497,9 @@ games:
         spread: -3.5 -110/-110
         total: 46.5 -110/-110
       draftkings:
-        ml: ""
-        spread: ""
-        total: ""
+        ml: -355/+280
+        spread: -7.5 -108/-112
+        total: 40.5 -102/-118
       fanatics:
         ml: ""
         spread: ""
