@@ -135,11 +135,18 @@ def load(first: int, last: int) -> dict[tuple[int, int, str], dict]:
     return out
 
 
-def prior_form(tw: dict, min_prior: int = 3) -> dict[tuple[int, int, str], dict]:
+def prior_form(tw: dict, min_prior: int = 3, forecast_week: int | None = None) -> dict[tuple[int, int, str], dict]:
     """A team's RAOE coming into each game, from earlier games only.
 
     Never includes the game itself -- see the module docstring and
     proe.py:124 for why this discipline is load-bearing, not incidental.
+
+    forecast_week, when given, also emits one entry per team at that week --
+    a game not yet played, so it has no row of its own in tw the way every
+    other key here does. The prior is every game strictly before forecast_week,
+    not "last played + 1": a team can have a bye, and assuming the week right
+    after its last game is the one being forecast would silently pick a week
+    that was never played and call it the prior.
     """
     by_team = defaultdict(list)
     for (season, week, team), v in tw.items():
@@ -156,6 +163,13 @@ def prior_form(tw: dict, min_prior: int = 3) -> dict[tuple[int, int, str], dict]
                 "raoe_prior": st.mean(p["raoe_per_att"] for p in prior),
                 "prior_games": i,
             }
+        if forecast_week is not None:
+            prior = [v for w, v in games if w < forecast_week]
+            if len(prior) >= min_prior:
+                out[(season, forecast_week, team)] = {
+                    "raoe_prior": st.mean(p["raoe_per_att"] for p in prior),
+                    "prior_games": len(prior),
+                }
     return out
 
 

@@ -149,11 +149,18 @@ def load(first: int, last: int) -> dict[tuple[int, int, str], dict]:
 NAMES = ("success_rate", "chunk_rate", "tempo")
 
 
-def prior_form(tw: dict, min_prior: int = 3) -> dict[tuple[int, int, str], dict]:
+def prior_form(tw: dict, min_prior: int = 3, forecast_week: int | None = None) -> dict[tuple[int, int, str], dict]:
     """Each team's rates coming into a game, from earlier games only.
 
     Never includes the game itself. A predictor that contains the thing it
     predicts is not one.
+
+    forecast_week, when given, also emits one entry per team at that week --
+    a game not yet played, so it has no row of its own in tw the way every
+    other key here does. The prior is every game strictly before forecast_week,
+    not "last played + 1": a team can have a bye, and assuming the week right
+    after its last game is the one being forecast would silently pick a week
+    that was never played and call it the prior.
     """
     by_team = defaultdict(list)
     for (season, week, team), v in tw.items():
@@ -169,6 +176,12 @@ def prior_form(tw: dict, min_prior: int = 3) -> dict[tuple[int, int, str], dict]
             out[(season, week, team)] = {
                 f"{n}_prior": st.mean(p[n] for p in prior) for n in NAMES
             } | {"prior_games": i}
+        if forecast_week is not None:
+            prior = [v for w, v in games if w < forecast_week]
+            if len(prior) >= min_prior:
+                out[(season, forecast_week, team)] = {
+                    f"{n}_prior": st.mean(p[n] for p in prior) for n in NAMES
+                } | {"prior_games": len(prior)}
     return out
 
 
