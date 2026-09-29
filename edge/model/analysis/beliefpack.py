@@ -251,15 +251,20 @@ def prior_form(season: int, week: int) -> tuple[dict, str]:
     if not pbp.exists():
         return {}, f"play_by_play_{season} is not in the cache yet"
 
-    pf_p = proe.prior_form(proe.team_weeks(season))
-    pf_s = signals_mod.prior_form(signals_mod.team_weeks(season))
+    # forecast_week=week asks each prior_form for one extra entry per team, at
+    # the week being forecast, computed from every game strictly before it --
+    # not just the weeks that happen to already have their own played-game
+    # row. See proe.prior_form's docstring for why (a team's own FORM must be
+    # readable before its game, not only after).
+    pf_p = proe.prior_form(proe.team_weeks(season), forecast_week=week)
+    pf_s = signals_mod.prior_form(signals_mod.team_weeks(season), forecast_week=week)
     # RAOE's source (Next Gen Stats rushing) only exists from 2016 and has its
     # own, independent attempts-based coverage gate (raoe.MIN_ATTEMPTS) -- a
     # team can clear PROE's pass-play threshold in a week it doesn't clear
     # RAOE's rush-attempt one, and vice versa. So unlike offense_prior above,
     # raoe_prior is added when available rather than required: its absence
     # drops one field, not the team's whole FORM entry.
-    pf_r = raoe.prior_form(raoe.team_weeks(season)) if raoe.SOURCE.exists() else {}
+    pf_r = raoe.prior_form(raoe.team_weeks(season), forecast_week=week) if raoe.SOURCE.exists() else {}
     out = {}
     for (s, w, team), v in pf_s.items():
         if s != season or w != week:
