@@ -1,0 +1,1031 @@
+{
+ "season": 2026,
+ "week": 4,
+ "input_pack": "beliefs/2026/week04.input.json",
+ "input_pack_sha256": "5afcc4fb8edbd0190b9a1b3149fd4e942525c714ee63d58be9896fcc104bd295",
+ "model": "llm-forecaster/belief-v1",
+ "prompt": "belief-v1",
+ "generated_at": "2026-09-29T20:00:00Z",
+ "predictions": [
+  {
+   "game_id": "2026_04_PIT_CLE",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.181,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_PIT_CLE",
+   "team": "PIT",
+   "scenario": "blowout_loss",
+   "belief": 0.225,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_PIT_CLE",
+   "team": "PIT",
+   "scenario": "pass_heavy",
+   "belief": 0.45,
+   "confidence": 0.59,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_PIT_CLE",
+   "team": "PIT",
+   "scenario": "efficient_offense",
+   "belief": 0.279,
+   "confidence": 0.44,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_PIT_CLE",
+   "team": "CLE",
+   "scenario": "blowout_loss",
+   "belief": 0.36,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_PIT_CLE",
+   "team": "CLE",
+   "scenario": "pass_heavy",
+   "belief": 0.292,
+   "confidence": 0.43,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_PIT_CLE",
+   "team": "CLE",
+   "scenario": "efficient_offense",
+   "belief": 0.336,
+   "confidence": 0.39,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_IND_WAS",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.391,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_IND_WAS",
+   "team": "IND",
+   "scenario": "blowout_loss",
+   "belief": 0.195,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_IND_WAS",
+   "team": "IND",
+   "scenario": "pass_heavy",
+   "belief": 0.219,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_IND_WAS",
+   "team": "IND",
+   "scenario": "efficient_offense",
+   "belief": 0.424,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_IND_WAS",
+   "team": "WAS",
+   "scenario": "blowout_loss",
+   "belief": 0.389,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_IND_WAS",
+   "team": "WAS",
+   "scenario": "pass_heavy",
+   "belief": 0.207,
+   "confidence": 0.46,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_IND_WAS",
+   "team": "WAS",
+   "scenario": "efficient_offense",
+   "belief": 0.332,
+   "confidence": 0.39,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_TEN_BAL",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.283,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_TEN_BAL",
+   "team": "TEN",
+   "scenario": "blowout_loss",
+   "belief": 0.662,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_TEN_BAL",
+   "team": "TEN",
+   "scenario": "pass_heavy",
+   "belief": 0.133,
+   "confidence": 0.53,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_TEN_BAL",
+   "team": "TEN",
+   "scenario": "efficient_offense",
+   "belief": 0.387,
+   "confidence": 0.36,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_TEN_BAL",
+   "team": "BAL",
+   "scenario": "blowout_loss",
+   "belief": 0.074,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_TEN_BAL",
+   "team": "BAL",
+   "scenario": "pass_heavy",
+   "belief": 0.216,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_TEN_BAL",
+   "team": "BAL",
+   "scenario": "efficient_offense",
+   "belief": 0.475,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NE_BUF",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.424,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NE_BUF",
+   "team": "NE",
+   "scenario": "blowout_loss",
+   "belief": 0.505,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NE_BUF",
+   "team": "NE",
+   "scenario": "pass_heavy",
+   "belief": 0.277,
+   "confidence": 0.41,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NE_BUF",
+   "team": "NE",
+   "scenario": "efficient_offense",
+   "belief": 0.285,
+   "confidence": 0.44,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NE_BUF",
+   "team": "BUF",
+   "scenario": "blowout_loss",
+   "belief": 0.126,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NE_BUF",
+   "team": "BUF",
+   "scenario": "pass_heavy",
+   "belief": 0.251,
+   "confidence": 0.41,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NE_BUF",
+   "team": "BUF",
+   "scenario": "efficient_offense",
+   "belief": 0.475,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NYJ_CHI",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.263,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NYJ_CHI",
+   "team": "NYJ",
+   "scenario": "blowout_loss",
+   "belief": 0.389,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NYJ_CHI",
+   "team": "NYJ",
+   "scenario": "pass_heavy",
+   "belief": 0.291,
+   "confidence": 0.43,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NYJ_CHI",
+   "team": "NYJ",
+   "scenario": "efficient_offense",
+   "belief": 0.512,
+   "confidence": 0.49,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NYJ_CHI",
+   "team": "CHI",
+   "scenario": "blowout_loss",
+   "belief": 0.195,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NYJ_CHI",
+   "team": "CHI",
+   "scenario": "pass_heavy",
+   "belief": 0.261,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_NYJ_CHI",
+   "team": "CHI",
+   "scenario": "efficient_offense",
+   "belief": 0.49,
+   "confidence": 0.47,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_JAX_CIN",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.506,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_JAX_CIN",
+   "team": "JAX",
+   "scenario": "blowout_loss",
+   "belief": 0.36,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_JAX_CIN",
+   "team": "JAX",
+   "scenario": "pass_heavy",
+   "belief": 0.21,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_JAX_CIN",
+   "team": "JAX",
+   "scenario": "efficient_offense",
+   "belief": 0.475,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_JAX_CIN",
+   "team": "CIN",
+   "scenario": "blowout_loss",
+   "belief": 0.225,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_JAX_CIN",
+   "team": "CIN",
+   "scenario": "pass_heavy",
+   "belief": 0.425,
+   "confidence": 0.56,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_JAX_CIN",
+   "team": "CIN",
+   "scenario": "efficient_offense",
+   "belief": 0.52,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DAL_HOU",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.391,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DAL_HOU",
+   "team": "DAL",
+   "scenario": "blowout_loss",
+   "belief": 0.36,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DAL_HOU",
+   "team": "DAL",
+   "scenario": "pass_heavy",
+   "belief": 0.46,
+   "confidence": 0.59,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DAL_HOU",
+   "team": "DAL",
+   "scenario": "efficient_offense",
+   "belief": 0.475,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DAL_HOU",
+   "team": "HOU",
+   "scenario": "blowout_loss",
+   "belief": 0.225,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DAL_HOU",
+   "team": "HOU",
+   "scenario": "pass_heavy",
+   "belief": 0.27,
+   "confidence": 0.41,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DAL_HOU",
+   "team": "HOU",
+   "scenario": "efficient_offense",
+   "belief": 0.289,
+   "confidence": 0.43,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ARI_NYG",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.305,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ARI_NYG",
+   "team": "ARI",
+   "scenario": "blowout_loss",
+   "belief": 0.251,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ARI_NYG",
+   "team": "ARI",
+   "scenario": "pass_heavy",
+   "belief": 0.31,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ARI_NYG",
+   "team": "ARI",
+   "scenario": "efficient_offense",
+   "belief": 0.498,
+   "confidence": 0.48,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ARI_NYG",
+   "team": "NYG",
+   "scenario": "blowout_loss",
+   "belief": 0.339,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ARI_NYG",
+   "team": "NYG",
+   "scenario": "pass_heavy",
+   "belief": 0.125,
+   "confidence": 0.54,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ARI_NYG",
+   "team": "NYG",
+   "scenario": "efficient_offense",
+   "belief": 0.344,
+   "confidence": 0.38,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LA_PHI",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.283,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LA_PHI",
+   "team": "LA",
+   "scenario": "blowout_loss",
+   "belief": 0.209,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LA_PHI",
+   "team": "LA",
+   "scenario": "pass_heavy",
+   "belief": 0.285,
+   "confidence": 0.42,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LA_PHI",
+   "team": "LA",
+   "scenario": "efficient_offense",
+   "belief": 0.457,
+   "confidence": 0.43,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LA_PHI",
+   "team": "PHI",
+   "scenario": "blowout_loss",
+   "belief": 0.374,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LA_PHI",
+   "team": "PHI",
+   "scenario": "pass_heavy",
+   "belief": 0.194,
+   "confidence": 0.47,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LA_PHI",
+   "team": "PHI",
+   "scenario": "efficient_offense",
+   "belief": 0.281,
+   "confidence": 0.44,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_GB_TB",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.202,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_GB_TB",
+   "team": "GB",
+   "scenario": "blowout_loss",
+   "belief": 0.195,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_GB_TB",
+   "team": "GB",
+   "scenario": "pass_heavy",
+   "belief": 0.364,
+   "confidence": 0.5,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_GB_TB",
+   "team": "GB",
+   "scenario": "efficient_offense",
+   "belief": 0.306,
+   "confidence": 0.42,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_GB_TB",
+   "team": "TB",
+   "scenario": "blowout_loss",
+   "belief": 0.389,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_GB_TB",
+   "team": "TB",
+   "scenario": "pass_heavy",
+   "belief": 0.259,
+   "confidence": 0.41,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_GB_TB",
+   "team": "TB",
+   "scenario": "efficient_offense",
+   "belief": 0.298,
+   "confidence": 0.42,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_MIA_MIN",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.181,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_MIA_MIN",
+   "team": "MIA",
+   "scenario": "blowout_loss",
+   "belief": 0.662,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_MIA_MIN",
+   "team": "MIA",
+   "scenario": "pass_heavy",
+   "belief": 0.142,
+   "confidence": 0.52,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_MIA_MIN",
+   "team": "MIA",
+   "scenario": "efficient_offense",
+   "belief": 0.325,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_MIA_MIN",
+   "team": "MIN",
+   "scenario": "blowout_loss",
+   "belief": 0.074,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_MIA_MIN",
+   "team": "MIN",
+   "scenario": "pass_heavy",
+   "belief": 0.208,
+   "confidence": 0.46,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_MIA_MIN",
+   "team": "MIN",
+   "scenario": "efficient_offense",
+   "belief": 0.325,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_KC_LV",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.391,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_KC_LV",
+   "team": "KC",
+   "scenario": "blowout_loss",
+   "belief": 0.169,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_KC_LV",
+   "team": "KC",
+   "scenario": "pass_heavy",
+   "belief": 0.42,
+   "confidence": 0.55,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_KC_LV",
+   "team": "KC",
+   "scenario": "efficient_offense",
+   "belief": 0.475,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_KC_LV",
+   "team": "LV",
+   "scenario": "blowout_loss",
+   "belief": 0.42,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_KC_LV",
+   "team": "LV",
+   "scenario": "pass_heavy",
+   "belief": 0.205,
+   "confidence": 0.46,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_KC_LV",
+   "team": "LV",
+   "scenario": "efficient_offense",
+   "belief": 0.287,
+   "confidence": 0.44,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LAC_SEA",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.263,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LAC_SEA",
+   "team": "LAC",
+   "scenario": "blowout_loss",
+   "belief": 0.505,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LAC_SEA",
+   "team": "LAC",
+   "scenario": "pass_heavy",
+   "belief": 0.178,
+   "confidence": 0.49,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LAC_SEA",
+   "team": "LAC",
+   "scenario": "efficient_offense",
+   "belief": 0.293,
+   "confidence": 0.43,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LAC_SEA",
+   "team": "SEA",
+   "scenario": "blowout_loss",
+   "belief": 0.126,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LAC_SEA",
+   "team": "SEA",
+   "scenario": "pass_heavy",
+   "belief": 0.244,
+   "confidence": 0.42,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_LAC_SEA",
+   "team": "SEA",
+   "scenario": "efficient_offense",
+   "belief": 0.469,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DEN_SF",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.361,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DEN_SF",
+   "team": "DEN",
+   "scenario": "blowout_loss",
+   "belief": 0.374,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DEN_SF",
+   "team": "DEN",
+   "scenario": "pass_heavy",
+   "belief": 0.29,
+   "confidence": 0.43,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DEN_SF",
+   "team": "DEN",
+   "scenario": "efficient_offense",
+   "belief": 0.311,
+   "confidence": 0.41,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DEN_SF",
+   "team": "SF",
+   "scenario": "blowout_loss",
+   "belief": 0.209,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DEN_SF",
+   "team": "SF",
+   "scenario": "pass_heavy",
+   "belief": 0.433,
+   "confidence": 0.57,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DEN_SF",
+   "team": "SF",
+   "scenario": "efficient_offense",
+   "belief": 0.475,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DET_CAR",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.485,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DET_CAR",
+   "team": "DET",
+   "scenario": "blowout_loss",
+   "belief": 0.195,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DET_CAR",
+   "team": "DET",
+   "scenario": "pass_heavy",
+   "belief": 0.262,
+   "confidence": 0.4,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DET_CAR",
+   "team": "DET",
+   "scenario": "efficient_offense",
+   "belief": 0.475,
+   "confidence": 0.45,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DET_CAR",
+   "team": "CAR",
+   "scenario": "blowout_loss",
+   "belief": 0.389,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DET_CAR",
+   "team": "CAR",
+   "scenario": "pass_heavy",
+   "belief": 0.356,
+   "confidence": 0.49,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_DET_CAR",
+   "team": "CAR",
+   "scenario": "efficient_offense",
+   "belief": 0.373,
+   "confidence": 0.35,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ATL_NO",
+   "team": null,
+   "scenario": "shootout",
+   "belief": 0.424,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ATL_NO",
+   "team": "ATL",
+   "scenario": "blowout_loss",
+   "belief": 0.374,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ATL_NO",
+   "team": "ATL",
+   "scenario": "pass_heavy",
+   "belief": 0.125,
+   "confidence": 0.54,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ATL_NO",
+   "team": "ATL",
+   "scenario": "efficient_offense",
+   "belief": 0.455,
+   "confidence": 0.43,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ATL_NO",
+   "team": "NO",
+   "scenario": "blowout_loss",
+   "belief": 0.209,
+   "confidence": 0.6,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ATL_NO",
+   "team": "NO",
+   "scenario": "pass_heavy",
+   "belief": 0.372,
+   "confidence": 0.51,
+   "abstained": false,
+   "claims": []
+  },
+  {
+   "game_id": "2026_04_ATL_NO",
+   "team": "NO",
+   "scenario": "efficient_offense",
+   "belief": 0.465,
+   "confidence": 0.44,
+   "abstained": false,
+   "claims": []
+  }
+ ],
+ "flagged": [
+  "2026_04_DAL_HOU/DAL/pass_heavy",
+  "2026_04_PIT_CLE/PIT/pass_heavy",
+  "2026_04_DEN_SF/SF/pass_heavy",
+  "2026_04_JAX_CIN/CIN/pass_heavy",
+  "2026_04_KC_LV/KC/pass_heavy",
+  "2026_04_JAX_CIN/CIN/efficient_offense",
+  "2026_04_NYJ_CHI/NYJ/efficient_offense",
+  "2026_04_ARI_NYG/NYG/pass_heavy",
+  "2026_04_ATL_NO/ATL/pass_heavy",
+  "2026_04_TEN_BAL/TEN/pass_heavy"
+ ]
+}
