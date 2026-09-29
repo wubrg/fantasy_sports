@@ -167,7 +167,7 @@ So: abstain freely, commit where you have a reason, and make the reason checkabl
 
 ## THE PACK — the facts your forecast is bound to
 
-pack_sha256: 1699f3ff77c48b5480ae3305ce4287d60aadc9119e7d7cb3636bea674914aac8
+pack_sha256: 5afcc4fb8edbd0190b9a1b3149fd4e942525c714ee63d58be9896fcc104bd295
 Echo this sha back in your output. It binds your forecast to exactly these facts.
 
 ## BASE — how often each scenario happens to anyone
@@ -185,22 +185,22 @@ spread_line is the home team's expected margin; positive means the home side is 
 
 | game | away | home | kickoff | total | spread | venue |
 |---|---|---|---|---|---|---|
-| 2026_04_PIT_CLE | PIT | CLE | 2026-10-01T20:15:00-04:00 | 40.5 | -2.5 | outdoors, grass, divisional |
-| 2026_04_IND_WAS | IND | WAS | 2026-10-04T09:30:00-04:00 | 50.5 | 1.5 | outdoors, grass |
-| 2026_04_TEN_BAL | TEN | BAL | 2026-10-04T13:00:00-04:00 | 47.5 | 8.5 | outdoors, grass |
-| 2026_04_NE_BUF | NE | BUF | 2026-10-04T13:00:00-04:00 | 49.5 | 3.0 | outdoors, a_turf, divisional |
-| 2026_04_NYJ_CHI | NYJ | CHI | 2026-10-04T13:00:00-04:00 | 45.5 | 8.5 | outdoors, grass |
+| 2026_04_PIT_CLE | PIT | CLE | 2026-10-01T20:15:00-04:00 | 38.5 | -2.5 | outdoors, grass, divisional |
+| 2026_04_IND_WAS | IND | WAS | 2026-10-04T09:30:00-04:00 | 47.5 | -3.5 | outdoors, grass |
+| 2026_04_TEN_BAL | TEN | BAL | 2026-10-04T13:00:00-04:00 | 43.5 | 11.5 | outdoors, grass |
+| 2026_04_NE_BUF | NE | BUF | 2026-10-04T13:00:00-04:00 | 48.5 | 7.0 | outdoors, a_turf, divisional |
+| 2026_04_NYJ_CHI | NYJ | CHI | 2026-10-04T13:00:00-04:00 | 42.5 | 3.5 | outdoors, grass |
 | 2026_04_JAX_CIN | JAX | CIN | 2026-10-04T13:00:00-04:00 | 51.5 | 2.5 | outdoors, fieldturf |
 | 2026_04_DAL_HOU | DAL | HOU | 2026-10-04T13:00:00-04:00 | 47.5 | 2.5 | astroturf |
-| 2026_04_ARI_NYG | ARI | NYG | 2026-10-04T13:00:00-04:00 | 45.5 | 7.0 | outdoors, fieldturf |
-| 2026_04_LA_PHI | LA | PHI | 2026-10-04T13:00:00-04:00 | 47.5 | -1.5 | outdoors, grass |
-| 2026_04_GB_TB | GB | TB | 2026-10-04T13:00:00-04:00 | 47.5 | -1.5 | outdoors, grass |
-| 2026_04_MIA_MIN | MIA | MIN | 2026-10-04T16:05:00-04:00 | 43.5 | 7.5 | dome, sportturf |
-| 2026_04_KC_LV | KC | LV | 2026-10-04T16:25:00-04:00 | 43.5 | -5.5 | dome, grass, divisional |
-| 2026_04_LAC_SEA | LAC | SEA | 2026-10-04T16:25:00-04:00 | 45.5 | 3.0 | outdoors, fieldturf |
-| 2026_04_DEN_SF | DEN | SF | 2026-10-04T16:25:00-04:00 | 46.5 | 2.5 | outdoors, grass |
-| 2026_04_DET_CAR | DET | CAR | 2026-10-04T20:20:00-04:00 | 47.5 | -3.0 | outdoors, grass |
-| 2026_04_ATL_NO | ATL | NO | 2026-10-05T20:15:00-04:00 | 45.5 | 2.5 | dome, sportturf, divisional |
+| 2026_04_ARI_NYG | ARI | NYG | 2026-10-04T13:00:00-04:00 | 44.5 | -1.5 | outdoors, fieldturf |
+| 2026_04_LA_PHI | LA | PHI | 2026-10-04T13:00:00-04:00 | 43.5 | -3.0 | outdoors, grass |
+| 2026_04_GB_TB | GB | TB | 2026-10-04T13:00:00-04:00 | 39.5 | -3.5 | outdoors, grass |
+| 2026_04_MIA_MIN | MIA | MIN | 2026-10-04T16:05:00-04:00 | 38.5 | 11.5 | dome, sportturf |
+| 2026_04_KC_LV | KC | LV | 2026-10-04T16:25:00-04:00 | 47.5 | -4.5 | dome, grass, divisional |
+| 2026_04_LAC_SEA | LAC | SEA | 2026-10-04T16:25:00-04:00 | 42.5 | 7.0 | outdoors, fieldturf |
+| 2026_04_DEN_SF | DEN | SF | 2026-10-04T16:25:00-04:00 | 46.5 | 3.0 | outdoors, grass |
+| 2026_04_DET_CAR | DET | CAR | 2026-10-04T20:20:00-04:00 | 50.5 | -3.5 | outdoors, grass |
+| 2026_04_ATL_NO | ATL | NO | 2026-10-05T20:15:00-04:00 | 48.5 | 3.0 | dome, sportturf, divisional |
 
 ## STAFF — who is coaching, who calls the offence, and who is new
 
