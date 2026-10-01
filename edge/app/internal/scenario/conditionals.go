@@ -237,14 +237,38 @@ func (d Definition) String() string {
 	return fmt.Sprintf("%s %s %g", d.Basis, d.Op, d.Threshold)
 }
 
+// ColumnRef names the nflverse column(s) a field is read from. It is one column
+// for most outcomes (receiving_yards reads "receiving_yards") but several summed
+// for a combined one -- Anytime TD is rushing_tds + receiving_tds, with total
+// touches, carries + targets, as its opportunity. The fit serialises the single
+// case as a JSON string and the combined case as an array, so this unmarshals
+// either and renders the array joined with " + " for display. It stays a string
+// type so the equality checks the tests make keep working.
+type ColumnRef string
+
+// UnmarshalJSON accepts either "col" or ["col_a","col_b"].
+func (c *ColumnRef) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err == nil {
+		*c = ColumnRef(s)
+		return nil
+	}
+	var a []string
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+	*c = ColumnRef(strings.Join(a, " + "))
+	return nil
+}
+
 // OutcomeDef is what an outcome predicts and the opportunity axis it is
 // conditioned on. The axis is not interchangeable: a pass-catcher's
 // opportunity is a share of a fixed team pool, a quarterback's is his own
 // attempt volume, and reading one through the other's bands is meaningless.
 type OutcomeDef struct {
-	YardsField  string `json:"yards_field"`
-	Opportunity string `json:"opportunity"`
-	ShareBased  bool   `json:"share_based"`
+	YardsField  ColumnRef `json:"yards_field"`
+	Opportunity ColumnRef `json:"opportunity"`
+	ShareBased  bool      `json:"share_based"`
 	// Discrete says the OUTCOME is a count. It no longer changes how a cell is
 	// read: the grid stores ratios to the player's own baseline, which are
 	// continuous even for counts. It survives because the unit and the way a
