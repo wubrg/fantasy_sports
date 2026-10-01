@@ -69,6 +69,18 @@ if (!location.pathname.endsWith("/")) {
         week's board once you confirm it. This is now the <strong>only</strong> way a price reaches
         the board; there is no hand-entry form. On desktop only, a second box lets you paste a book's
         moneyline blob to fill prices the same confirm-first way, for a book with no HAR capture.</li>
+      <li><strong>market</strong> — the MARKET block a wager report is supposed to carry, built, not
+        hand-copied: pick a week (optionally filter to one game), and it renders the de-vigged
+        moneylines already on the board plus the de-vigged props from the newest capture into the exact
+        table a report template expects, with a provenance footer naming when those prices were
+        actually observed. <em>copy market block</em> puts the whole thing on the clipboard, ready to
+        paste into a report. This is a read of what's already on the board and in the ingest folder —
+        it writes nothing — so the order that matters is <strong>sync props to the board first</strong>,
+        <em>then</em> pull the market block, or the moneyline rows in it will still be yesterday's.
+        Props de-vig here whether or not they were ever synced (game lines are the only thing
+        <em>sync to board</em> writes), so a player prop shows up the moment a fresh capture lands.
+        Use it once per report, after the capture for that slate is in hand and before writing the
+        rest of the analysis — it is the sourced-numbers half of a report, not the judgment half.</li>
       <li><strong>bets</strong> — what the tool recommends this week from whatever is on the board:
         suspect (implausible-overround) lines flagged first, a bankroll frontier and per-book
         allocation (with tactical advice) when funds are on hand, disjoint parlay tickets with a
