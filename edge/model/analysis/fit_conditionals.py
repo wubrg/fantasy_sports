@@ -178,6 +178,16 @@ BASELINE_YARD_BANDS = [(0, 35), (35, 50), (50, 70), (70, 999)]
 BASELINE_RECEPTION_BANDS = [(0, 2.5), (2.5, 4), (4, 5.5), (5.5, 99)]
 BASELINE_RUSH_BANDS = [(0, 30), (30, 55), (55, 80), (80, 999)]
 BASELINE_PASS_BANDS = [(0, 200), (200, 240), (240, 275), (275, 999)]
+# Baseline bands over a skill player's prior mean COMBINED (rush + rec) TDs per
+# game. Cut near the measured quartiles of the real distribution over 2009-2025
+# with the min_output floor applied -- p25 0.20, p50 0.33, p75 0.50, running
+# 0.06 to 2.0. This is a stat that is ~72% zeros week to week, so the tiers
+# separate the field from goal-line backs and red-zone alphas rather than
+# pretending at a resolution the counts cannot support.
+BASELINE_TD_BANDS = [(0, 0.2), (0.2, 0.35), (0.35, 0.55), (0.55, 999)]
+# Baseline bands over a quarterback's prior mean passing TDs per game. Measured
+# quartiles p25 1.125, p50 1.5, p75 1.875 over the same window, running 0.1-4.0.
+BASELINE_PASS_TD_BANDS = [(0, 1.1), (1.1, 1.5), (1.5, 1.9), (1.9, 999)]
 MIN_CELL = 100  # below this a cell is dropped rather than published thin
 
 # Projected targets. Boundaries follow the natural break points of usage --
@@ -274,6 +284,45 @@ OUTCOMES = {
         # unpriceable, so this outcome keeps one band and says so rather than
         # publishing sites too thin to resolve.
         posted_bands=[(0, 999)],
+    ),
+    "anytime_td": Outcome(
+        "anytime_td", ["rushing_tds", "receiving_tds"], ["carries", "targets"],
+        {"WR", "TE", "RB"},
+        share_based=True, bands=TARGET_BANDS, trend_bands=TREND_BANDS,
+        min_baseline=MIN_BASELINE_SHARE,
+        baseline_bands=BASELINE_TD_BANDS,
+        # A ratio to a prior mean this small is unstable at the very bottom: a
+        # 0.06 baseline turns one TD into a ratio of 16. This floor drops the
+        # noisiest few percent while keeping the population; it is far below
+        # receptions' 1.0 because the stat itself is far smaller.
+        min_output=0.1,
+        # The real market a report prices, Anytime TD, is rushing + receiving
+        # combined for a skill player, and nflverse has no single touchdowns
+        # column -- so yards_field sums the two. Opportunity is total touches,
+        # carries + targets: the combined volume a combined outcome needs,
+        # treated as a share of the team touch pool exactly as receiving and
+        # rushing treat targets and carries.
+        #
+        # An even more extreme low-count stat than receptions -- ~72% of weeks
+        # are zero TDs and ~23% are one. Stored as a ratio to the player's own
+        # prior mean like every other outcome, and marked discrete like
+        # receptions.
+        discrete=True,
+        unit="td",
+    ),
+    "passing_tds": Outcome(
+        "passing_tds", "passing_tds", "attempts", {"QB"},
+        share_based=False, bands=ATTEMPT_BANDS, trend_bands=ATTEMPT_TREND_BANDS,
+        # Attempts, not a share, and the same floor as passing_yards: below ten
+        # a game is a relief appearance describing a different job.
+        min_baseline=10.0,
+        baseline_bands=BASELINE_PASS_TD_BANDS, min_output=0.5,
+        # The same QB opportunity axis as passing_yards -- own prior attempt
+        # volume, trend measured in attempts -- and the same single posted band,
+        # forced by ~32 starters a week against four baseline tiers.
+        posted_bands=[(0, 999)],
+        discrete=True,
+        unit="td",
     ),
 }
 
@@ -542,6 +591,22 @@ def num(s) -> float:
         return 0.0
 
 
+def col_sum(r: dict, field) -> float:
+    """One CSV column, or the sum of several.
+
+    `yards_field` and `opp_field` are each either a single column name (the
+    original behaviour, and what the four yardage/reception outcomes use) or a
+    list of names to add together. nflverse has no single `touchdowns` column --
+    passing/rushing/receiving TDs are separate -- and the market a report prices
+    (Anytime TD) is rushing + receiving combined, so the natural opportunity for
+    it is total touches, carries + targets. Summing lives here rather than in a
+    hardcoded TD branch so any future combined-stat outcome gets it for free.
+    """
+    if isinstance(field, str):
+        return num(r.get(field))
+    return sum(num(r.get(f)) for f in field)
+
+
 def load_games() -> dict:
     """(season, week, team) -> (realized total, that team's margin, posted total).
 
@@ -603,8 +668,8 @@ def load_player_weeks(outcome: Outcome) -> tuple[list[dict], list[int]]:
                     "week": int(num(r["week"])),
                     "player": r.get("player_id", ""),
                     "team": r.get("team") or r.get("recent_team", ""),
-                    "opportunity": num(r.get(outcome.opp_field)),
-                    "yards": num(r.get(outcome.yards_field)),
+                    "opportunity": col_sum(r, outcome.opp_field),
+                    "yards": col_sum(r, outcome.yards_field),
                 }
             )
     return rows, seasons

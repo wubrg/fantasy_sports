@@ -123,21 +123,40 @@ ranking, parlay construction and line shopping — all of it — operates on gam
 For props the tooling is what it has always been: `hitrate`, `scenario`, and price math on
 operator-supplied numbers. Every input is typed by hand.
 
-### The fitted grid is four stats, with different scenarios usable on each
+### The fitted grid is six stats, with different scenarios usable on each
 
-`conditionals.json` covers **receiving yards, receptions, rushing yards and passing yards**,
-2009–2025, with a different set of scenarios validated on each:
+`conditionals.json` covers **receiving yards, receptions, rushing yards, passing yards, anytime
+TD and passing TDs**, 2009–2025, with a different set of scenarios validated on each:
 
 Since 2026-08-23 the gate rules on a **site** — one (opportunity band, trend band) coordinate of
 one scenario — rather than on a whole scenario, so "priceable" is a count rather than a flag.
-102 of 311 sites are priceable:
+124 of 460 sites are priceable:
 
 | outcome | `shootout` | `blowout_loss` | `pass_heavy` | `efficient_offense` |
 |---|---|---|---|---|
 | receiving yards | 13/29 | vetoed | vetoed | 12/30 |
-| receptions | 10/30 | no direction | 18/30 | 9/30 |
+| receptions | 11/30 | no direction | 18/30 | 9/30 |
 | rushing yards | no direction | 8/11 | 8/12 | 9/12 |
 | passing yards | 6/10 | no direction | 5/10 | 4/10 |
+| anytime TD | 0/28 | 0/25 | 0/28 | 1/29 |
+| passing TDs | 8/11 | 2/7 | 2/11 | 8/10 |
+
+The four original outcomes are unchanged — 103 of 311 of their sites priceable, the artifact for
+them byte-identical across the touchdown build. (This table previously read "102 of 311" and
+"10/30" for receptions/`shootout`; the fit's own output has long printed 11, so the count is
+corrected here rather than changed.) The two touchdown outcomes add 21 priceable sites of 149.
+
+**`passing_tds` behaves like `passing_yards`** — 20 of 39 sites priceable, the two volume/efficiency
+scenarios (`shootout`, `efficient_offense`) carrying it. A quarterback throws 1–2 TDs a game, so the
+ratio-to-own-baseline median has enough resolution to gate on.
+
+**`anytime_td` is all but unpriceable — 1 site of 110 — and the reason is the instrument, not the
+absence of an effect.** Combined rush+receiving TDs are zero in ~72% of player-weeks, so within
+almost every cell the median ratio to the player's own baseline is exactly 0.0 on both the occurred
+and not-occurred side, and a median delta of zero cannot clear the per-site bootstrap. The dominant
+direction is real (sign p = 0.0000–0.0125), but the median — which the fit uses for every outcome
+since the ratio change (`FINDINGS.md` §6) — is blind to a stat this zero-heavy, exactly as it was
+blind to raw-count receptions before §6. See `FINDINGS.md` §18.
 
 No override is currently in force; see below.
 

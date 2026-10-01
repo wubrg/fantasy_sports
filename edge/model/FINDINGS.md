@@ -1243,6 +1243,155 @@ realized player-prop outcomes conditional on a scenario; this is about which tea
 likely to **be** in the `blowout_loss` scenario in the first place, which is the forecaster's
 job, not the grid's.
 
+## 18. Touchdowns: passing TDs fit like passing yards, anytime TD defeats the median
+
+`fit_conditionals.py` · 29,280 usable skill-player game-weeks (anytime TD) + 5,564 QB game-weeks
+(passing TDs), 2009–2025 · added 2026-10-01
+
+The grid gained two touchdown outcomes. nflverse has no single `touchdowns` column, so `yards_field`
+and `opp_field` were generalised to accept a list of columns summed together (a plain string still
+works unchanged, and the four original outcomes' cells are **byte-identical** before and after —
+verified against both a fresh refit of the old code and the committed artifact):
+
+- **`anytime_td`** = `rushing_tds + receiving_tds`, the market a report actually prices, for RB/WR/TE.
+  Opportunity is total touches, `carries + targets`, as a share of the team touch pool — the same
+  share treatment receiving and rushing give targets and carries. Marked `discrete` like receptions.
+- **`passing_tds`** = the single `passing_tds` column, for QBs, on the same opportunity axis as
+  passing yards (own prior attempt volume, trend in attempts, one posted band).
+
+Baseline tiers were cut at the measured quartiles of each stat's prior-mean-per-game distribution:
+anytime TD p25/p50/p75 = 0.20 / 0.33 / 0.50 (range 0.06–2.0), passing TD 1.125 / 1.5 / 1.875
+(range 0.1–4.0).
+
+### `passing_tds` validates, and looks like `passing_yards`
+
+| scenario | priceable sites | firm at every knob |
+|---|---|---|
+| `shootout` | **8/11** | 6 |
+| `blowout_loss` | 2/7 | 2 |
+| `pass_heavy` | 2/11 | 1 |
+| `efficient_offense` | **8/10** | 5 |
+
+20 of 39 sites, the two volume/efficiency scenarios carrying it — the same shape as passing yards
+(6/10 and 4/10 on those two). A quarterback throws one to three TDs a game and is zero only ~23% of
+the time, so the ratio to his own prior mean has a median that moves (0.5–2.0 across cells) and the
+per-site bootstrap can resolve it. `pass_heavy` is weak here (2/11) where it is strong for passing
+yards (5/10): a pass-heavy script inflates attempts and yards, but the touchdown is a goal-line
+event the extra between-the-20s throwing does not reliably convert.
+
+### `anytime_td` is all but unpriceable, and the reason is the instrument
+
+| scenario | priceable sites | dominant-sign p |
+|---|---|---|
+| `shootout` | 0/28 | 0.0125 |
+| `blowout_loss` | 0/25 | 0.0000 |
+| `pass_heavy` | 0/28 | 0.0000 |
+| `efficient_offense` | **1/29** | 0.0000 |
+
+**1 site of 110.** The single survivor — `efficient_offense`, baseline 0.55+ TD/game, rising touch
+trend — clears only because its occurred-side median ratio finally lifts to 1.0 against 0.0, and
+it is not firm at any knob setting.
+
+The effect is not absent: every scenario has a real dominant direction (sign p ≤ 0.0125). What fails
+is **resolution**. Combined rush+receiving TDs are zero in ~72% of player-weeks (22,009 of 30,705
+are 0, 7,034 are 1), so within almost every cell more than half the games are 0, and the median
+ratio to the player's own baseline is **exactly 0.0 on both sides of the scenario**. A median delta
+of zero cannot separate from zero under the player-clustered bootstrap, so 109 of 128 site-halves
+fail bootstrap resolution and 98 fail the direction test outright (a zero delta does not agree with
+any sign).
+
+This is precisely the blindness §6 found for raw-count receptions — 12 of 16 cells at a median delta
+of exactly zero — except that there the ratio-to-baseline transform rescued it (receptions baseline
+3–4, ratio median ~0.7–1.0). It does **not** rescue anytime TD, because the baseline is itself below
+1 (median 0.33) and the week-to-week count is zero more often than not, so even the ratio's median is
+pinned at zero. The fit uses the median for every outcome since the ratio change (§6), and that is
+the right conservative choice for the four it was measured on; it is simply the wrong instrument for
+a stat this zero-heavy. No threshold was loosened and the median was not swapped — doing either to
+manufacture anytime-TD sites is the exact move this pipeline exists to refuse. The honest result is
+that **anytime TD is not priceable from this grid as built**, and a usable version would need a
+different instrument (a cell-level P(≥1 TD) rate, or the mean rather than the median for an
+outcome this discrete), measured and gated on its own evidence before anything leaned on it.
+
+### Verification
+
+The pipeline was checked end to end against the raw CSVs, not just re-run. An independent
+reconstruction of all 23 `passing_tds`/`shootout` cells — reimplementing prior-mean baseline, attempt
+trend, the realized-total scenario and the ratio from scratch, without calling `build()` — matched
+the artifact's `n`, median raw TDs and median ratio on every cell (0 mismatches). The list-summing
+path was confirmed on real rows (Saquon Barkley, 2024 wk 1: 2 rushing + 1 receiving = 3 anytime TD,
+24 carries + 2 targets = 26 touches) and the independent anytime-TD usable-observation count (29,280)
+matched the fit exactly.
+
+## 19. Targets and pass attempts as outcomes: persistent, but no opportunity axis to price them on
+
+`targets_gate1.py` · 43,143 pass-catcher game-weeks + 5,726 QB game-weeks, 2009–2025, errors
+clustered by player · added 2026-10-01
+
+Every outcome the grid fits separates OPPORTUNITY (targets, carries, attempts) from PRODUCTION
+(yards, counts). Targets and pass attempts collapse that: the volume is the outcome, so the stat
+and its own opportunity are the same column. The grid could still condition them on the player's own
+prior-mean volume and a role trend — that part is well defined — so the real question measured here
+is whether anything beyond the player's own lag carries information: specifically, whether a
+line-derived team pass-volume signal (posted total and spread, exogenous and known before kickoff)
+separates an individual player's count enough to be worth a conditioning axis. `proe.py --gate1` is
+the pattern; this mirrors it.
+
+### Targets (WR/TE/RB) — persistent, and that is all
+
+| test | result |
+|---|---|
+| persistence | r = **+0.646**, this = 0.57 + 0.866·prior, t = 117, R² = 0.418 |
+| baseline + trend R² | 0.4237 (trend ΔR² +0.0061) |
+| + posted total + implied margin | 0.4241 (**proxy ΔR² +0.0004**) |
+| player-level separation | top vs bottom implied-volume quartile: **+0.17 targets**, residual sd 2.55 |
+
+A player's prior-games mean predicts his targets strongly — the baseline axis is real. But the
+line-derived proxy adds **four ten-thousandths** of R² over baseline + trend. The posted total and
+implied margin are both "significant" (t = +3.5, −4.0) only because 43,143 observations make a
+nothing effect clear the t-table; the direction is even right (underdogs throw more, so a negative
+implied margin lifts targets). Residualising each player's count on his own baseline + trend and then
+splitting by the line's implied pass environment moves him by **0.17 of a target** against a residual
+sd of 2.55 — about one-fifteenth of a standard deviation. The line is a team-level quantity and it is
+far too diffuse to move one receiver's target count. There is no opportunity axis here beyond the
+player's own lag, so a targets grid would be conditioning the stat on a lagged copy of itself plus a
+scenario that barely touches it. **Not added.**
+
+### Pass attempts (QB) — a real line signal, still too small to bank
+
+| test | result |
+|---|---|
+| persistence | r = **+0.322**, this = 13.2 + 0.581·prior, t = 14.9, R² = 0.104 |
+| baseline + trend R² | 0.1111 (trend ΔR² +0.0075) |
+| + posted total + implied margin | 0.1221 (**proxy ΔR² +0.0110**) |
+| posted total coeff | **+0.245 attempts per point, t = +7.3 (significant)** |
+| implied margin coeff | −0.030, t = −1.3 (null) |
+| player-level separation | top vs bottom implied-volume quartile: **+1.84 attempts**, residual sd 9.52 |
+
+Attempts are much less persistent than targets (R² 0.10 vs 0.42) — a quarterback's weekly volume
+swings with a game script his season-to-date average cannot anticipate, which is exactly where a line
+signal could help, and here it does. The posted total adds a genuine ΔR² = +0.011 over baseline +
+trend, 27× what the proxy manages for targets, at t = 7.3: a higher total really does mean more pass
+attempts, net of who the quarterback is. The implied margin is null on its own once the total is in.
+
+But "real" is not "bankable", the distinction §2 drew for the utilization trend. The proxy separates
+a single quarterback by **1.84 attempts** between the richest and poorest implied-volume quartile — a
+quartile-to-quartile extreme — against a residual sd of 9.52, so about **0.19 of a standard
+deviation**. And the signal it adds is the game total, which is the same quantity the `shootout`
+scenario (realised total > 50) already conditions the existing passing-yards and passing-TD grids on,
+one step downstream. Fitting attempts as its own outcome would mostly restate the script axis the
+grid already has, for a per-game swing too small to clear a prop's vig. **Not added** — but this is
+the closer of the two, and the numbers are recorded so it can be revisited if a sharper,
+less team-diffuse volume signal (a QB-specific pace or no-huddle prior, say) is ever measured.
+
+### Verdict
+
+Persistence is real for both (strongly for targets, weakly for attempts), but the second half of the
+bar — a usable non-circular opportunity signal — is not met. The line is too team-level to move an
+individual player's volume: +0.17 targets and +1.84 attempts at the quartile extremes. Neither
+outcome was added to `fit_conditionals.py`. This is the same shape of honest negative as §10's
+rejected usage vacuum: a quantity that is statistically detectable and practically nil at the level a
+wager is actually placed.
+
 ## Data note
 
 `target_share` in nflverse only starts in 2009, but raw `targets` reaches back to 2005, so share is

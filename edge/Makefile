@@ -7,7 +7,7 @@ DEMO_LOG := /tmp/edgectl-demo.jsonl
 	board board-check board-report \
 	data data-status data-clean \
 	roster roster-refresh lateround \
-	fit fit-residuals fit-conditionals fit-belief fit-line-model power-table verify-model lag findings \
+	fit fit-residuals fit-conditionals fit-belief fit-line-model power-table verify-model lag targets-gate1 findings \
 	demo demo-clean
 
 # This is the working entry point for the edge app. It covers both halves:
@@ -206,6 +206,9 @@ backtest-slate: ## The same, restricted to the January 2026 slate
 
 lag: ## Run the utilization-lag test (~10s)
 	$(PY) $(MODEL)/analysis/utilization_lag.py
+
+targets-gate1: ## Go/no-go: is targets/pass-attempts fittable as an outcome? (FINDINGS.md 19; ~10s)
+	$(PY) $(MODEL)/analysis/targets_gate1.py
 
 compare-oos: ## Reproduce the rejected magnitude-aware out-of-sample table (FINDINGS.md 4)
 	@cd $(MODEL)/analysis && $(PY) validate.py --compare-oos
