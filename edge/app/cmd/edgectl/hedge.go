@@ -24,11 +24,21 @@ func hedgeCmd(args []string) error {
 	back := fs.Int("back", 0, "price of the bonus bet you hold (required)")
 	against := fs.Int("against", 0, "price on the OPPOSING side at a different book (required)")
 	target := fs.Float64("target", 0.70, "conversion rate to judge against")
+	book := fs.String("book", "", "book the bonus bet is held at (required, so a push-forfeit rule can be checked)")
+	canPush := fs.Bool("can-push", false, "the bonus-bet side can push -- a whole-number spread or total, not a half-point line or most player props")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 	if *face <= 0 || *back == 0 || *against == 0 {
 		return fmt.Errorf("-face, -back and -against are all required")
+	}
+	if *book == "" {
+		return fmt.Errorf("-book is required: a push-forfeit rule (e.g. FanDuel) can turn this " +
+			"hedge into a total loss of the bonus instead of a reduced conversion, and that can't " +
+			"be checked without knowing which book holds it")
+	}
+	if err := wager.CheckBonusMarket(wager.Book(*book), *canPush); err != nil {
+		return err
 	}
 
 	h, err := wager.ConvertBonus(*face, wager.American(*back), wager.American(*against))
