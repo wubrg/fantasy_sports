@@ -86,6 +86,39 @@ func TestHandlePropsPricesCapture(t *testing.T) {
 	}
 }
 
+// TestHandlePropsTwoSidedPropStaysBoostOnly pins the HTTP endpoint's behaviour
+// across the pairing/de-vig refactor: handleProps de-vigs only two-sided GAME
+// markets. A two-sided PROP market (an Over/Under yardage line) is left on the
+// boosted-breakeven path even though its two sides could be paired, because
+// that is what the props tab showed before the shared helper existed and the
+// refactor must not move it.
+func TestHandlePropsTwoSidedPropStaysBoostOnly(t *testing.T) {
+	dir := t.TempDir()
+	body := `{"events":[{"id":"E1","name":"NE @ SEA"}],` +
+		`"markets":[{"id":"M1","eventId":"E1","name":"JSN Receiving Yards O/U"}],` +
+		`"selections":[{"marketId":"M1","label":"JSN Over","displayOdds":{"american":"-115"},"points":49.5},` +
+		`{"marketId":"M1","label":"JSN Under","displayOdds":{"american":"-105"},"points":49.5}]}`
+	esc, _ := json.Marshal(body)
+	har := `{"log":{"entries":[{"response":{"content":{"text":` + string(esc) + `}}}]}}`
+	if err := os.WriteFile(filepath.Join(dir, "dk.har"), []byte(har), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	r := getProps(t, &boardServer{ingestDir: dir})
+	for _, g := range r.Groups {
+		if g.Category != "Receiving" {
+			continue
+		}
+		for _, row := range g.Rows {
+			if row.Fair != nil {
+				t.Errorf("%q: handleProps must not de-vig a two-sided prop; got Fair=%.3f", row.Selection, *row.Fair)
+			}
+			if row.BoostBE == nil {
+				t.Errorf("%q: a prop row should carry a boosted breakeven", row.Selection)
+			}
+		}
+	}
+}
+
 func TestHandlePropsEmptyAndUnconfigured(t *testing.T) {
 	// Unconfigured ingest dir: a note, no crash.
 	if r := getProps(t, &boardServer{ingestDir: ""}); r.Note == "" {

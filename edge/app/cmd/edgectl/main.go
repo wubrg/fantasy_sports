@@ -51,6 +51,8 @@ func main() {
 		err = hedgeCmd(os.Args[2:])
 	case "board":
 		err = boardCmd(os.Args[2:])
+	case "emit":
+		err = emitCmd(os.Args[2:])
 	case "ledger":
 		err = ledgerCmd(os.Args[2:])
 	case "bet":
@@ -154,6 +156,23 @@ func usage() {
         overrounds, rank the dogs by what a bonus bet actually converts, build
         disjoint two-leg parlays that share no team, and show where the best
         bettable price sits against consensus.
+
+  edgectl board props-report -week <n> [-ingest-dir <path>] [-game "<tokens>"]
+                             [-json] [-save <dir>] [-season <year>]
+        Price a DraftKings props capture: de-vig two-sided Over/Under markets
+        (fair value, hold, and an implausible-overround flag, like the game-line
+        board), and report raw implied + boosted breakeven for one-sided props
+        and ladders. -json emits the MARKET-block row feed; -save writes a
+        git-tracked JSON snapshot under edge/props/<season>/ (see ADR-007).
+
+  edgectl emit market -week <n> [-game "<tokens>"] [-ingest-dir <path>]
+                      [-board-dir <path>] [-book <name>]
+        Emit the MARKET block the URPS wager reports are meant to carry: one
+        table of game lines (from the tracked board) and props (from a capture),
+        each row with implied_raw, de-vigged fair value, breakeven and hold,
+        plus the closing DATA PROVENANCE / CALIBRATION block. Does NOT emit the
+        PROJECTIONS block -- this repo has no external projection source, and a
+        fabricated projection is worse than none.
 
   edgectl board serve [-addr :8085] [-dir <path>]
         A phone-shaped form for typing prices into the board, scoped to one
