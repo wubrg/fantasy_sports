@@ -26,6 +26,7 @@ const el = {
   report: document.getElementById("report"),
   betlog: document.getElementById("betlog"),
   props: document.getElementById("props"),
+  market: document.getElementById("market"),
   funds: document.getElementById("funds"),
   period: document.getElementById("period"),
   beliefs: document.getElementById("beliefs"),
@@ -40,7 +41,7 @@ const el = {
 };
 
 const state = load();
-if (!["bets", "log", "props", "funds", "period", "beliefs", "help"].includes(state.view)) state.view = "bets";
+if (!["bets", "log", "props", "market", "funds", "period", "beliefs", "help"].includes(state.view)) state.view = "bets";
 let data = null;      // last /api/board payload
 
 // ---- selection, remembered ---------------------------------------------
@@ -96,6 +97,19 @@ function probFromInput(id) {
 // which is to say, the first time the feature it formats was exercised.
 function money(x) { return "$" + Number(x || 0).toFixed(2); }
 function amer(n) { return n > 0 ? "+" + n : String(n); }
+
+// copyToClipboard writes text to the clipboard and flashes the outcome on the
+// button that was clicked, restoring its label after a moment on success and
+// leaving "copy failed" in place when the clipboard is unavailable. Shared by
+// the beliefs "copy prompt" button and the market tab's "copy market block"
+// button so the clipboard path lives in one place rather than being copied.
+async function copyToClipboard(btn, text, label) {
+  try {
+    await navigator.clipboard.writeText(text);
+    btn.textContent = "copied";
+    setTimeout(() => (btn.textContent = label), 1200);
+  } catch { btn.textContent = "copy failed"; }
+}
 
 async function loadReport() {
   el.report.innerHTML = `<p class="muted">working…</p>`;
@@ -1072,7 +1086,7 @@ function renderProps(r) {
         x.line != null && !String(x.selection).includes(String(x.line)) ? " " + x.line : ""}</span>
       <span class="price mono">${x.price > 0 ? "+" : ""}${x.price}</span>
       <span class="conv">${pct(x.implied)} impl${
-        x.fair != null ? ` · fair ${pct(x.fair)}`
+        x.fair != null ? ` · fair ${pct(x.fair)}${x.hold != null ? ` · hold ${pct(x.hold)}` : ""}`
         : x.boost_be != null ? ` · boost ${pct(x.boost_be)}` : ""}</span>
       <span class="muted">${x.market || ""}</span>
     </div>`).join("");
@@ -1158,6 +1172,61 @@ async function propsSyncApply() {
     box.innerHTML = `<div class="add">wrote ${body.applied} price(s) to the board.</div>`;
   } catch (e) {
     box.innerHTML = `<div class="bad">not applied: ${e.message}</div>`;
+  }
+}
+
+// ---- the market view ----------------------------------------------------
+//
+// `emit market` renders the MARKET block (and its DATA PROVENANCE footer) that
+// every URPS wager report carries -- the de-vigged moneylines from the board
+// plus the de-vigged props from the newest capture, in the exact Markdown table
+// a downstream template pattern-matches on. This tab is that command in the
+// browser: pick a week, optionally filter to a game, and copy the block whole.
+// The output is identical to `edgectl emit market` on the terminal -- the
+// handler calls the very same functions (see board_emit_api.go), so this never
+// becomes a second, drifting renderer.
+
+async function loadMarket() {
+  const week = state.marketWeek || state.week;
+  const game = state.marketGame || "";
+  el.market.innerHTML = `
+    <div class="scope">
+      <label>week <input id="market-week" inputmode="numeric" value="${week}" style="width:4em"></label>
+      <label>game <input id="market-game" placeholder="e.g. PIT CLE" value="${bpEsc(game)}"></label>
+      <button type="button" id="market-fetch">refresh</button>
+      <button type="button" id="market-copy" disabled>copy market block</button>
+      <span id="market-status" class="muted">reading the board and capture…</span>
+    </div>
+    <pre id="market-out" class="market-out"></pre>`;
+
+  const weekInput = document.getElementById("market-week");
+  const gameInput = document.getElementById("market-game");
+  document.getElementById("market-fetch").addEventListener("click", () => {
+    state.marketWeek = Number(weekInput.value) || state.week;
+    state.marketGame = gameInput.value.trim();
+    save();
+    loadMarket();
+  });
+
+  const status = document.getElementById("market-status");
+  const out = document.getElementById("market-out");
+  const copy = document.getElementById("market-copy");
+  try {
+    const params = new URLSearchParams({ week });
+    if (game) params.set("game", game);
+    const res = await fetch(BASE + "api/emit/market?" + params.toString());
+    const r = await res.json();
+    if (!res.ok) throw new Error(r.error || ("HTTP " + res.status));
+    // Concatenate the two blocks exactly as the CLI prints them: the market
+    // block already ends in a newline, then the provenance footer.
+    const block = (r.market_block || "") + "\n" + (r.provenance || "");
+    out.textContent = block; // textContent, so a table's pipes are never read as HTML
+    status.textContent = `${r.row_count} market(s)` + (r.as_of ? ` · prices as of ${r.as_of}` : "");
+    copy.disabled = false;
+    copy.addEventListener("click", (ev) => copyToClipboard(ev.target, block, "copy market block"));
+  } catch (e) {
+    status.textContent = "";
+    out.textContent = "could not build the market block: " + e.message;
   }
 }
 
@@ -1455,6 +1524,7 @@ function syncView() {
   el.report.hidden = v !== "bets";
   el.betlog.hidden = v !== "log";
   el.props.hidden = v !== "props";
+  el.market.hidden = v !== "market";
   el.funds.hidden = v !== "funds";
   el.period.hidden = v !== "period";
   el.beliefs.hidden = v !== "beliefs";
@@ -1465,6 +1535,7 @@ function syncView() {
   if (v === "bets") loadReport();
   if (v === "log") loadLog();
   if (v === "props") loadProps();
+  if (v === "market") loadMarket();
   if (v === "funds") loadFunds();
   if (v === "period") loadPeriod();
   if (v === "beliefs") loadBeliefs();
@@ -1664,13 +1735,8 @@ function bpRenderPrompt(box, p) {
     <h3>slate</h3>
     <table class="bp-table"><thead><tr><th>game</th><th>away</th><th>home</th><th>total</th><th>spread</th></tr></thead>
       <tbody>${rows}</tbody></table>`;
-  document.getElementById("bpCopy").addEventListener("click", async (ev) => {
-    try {
-      await navigator.clipboard.writeText(p.prompt);
-      ev.target.textContent = "copied";
-      setTimeout(() => (ev.target.textContent = "copy prompt"), 1200);
-    } catch { ev.target.textContent = "copy failed"; }
-  });
+  document.getElementById("bpCopy").addEventListener("click", (ev) =>
+    copyToClipboard(ev.target, p.prompt, "copy prompt"));
 }
 
 async function bpIngest(apply) {

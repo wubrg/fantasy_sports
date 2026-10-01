@@ -17,6 +17,7 @@ type propsResp struct {
 			Implied   float64
 			BoostBE   *float64 `json:"boost_be"`
 			Fair      *float64
+			Hold      *float64
 		}
 	}
 	Sources []map[string]string
@@ -63,6 +64,7 @@ func TestHandlePropsPricesCapture(t *testing.T) {
 		Implied   float64
 		BoostBE   *float64 `json:"boost_be"`
 		Fair      *float64
+		Hold      *float64
 	}
 	for gi := range r.Groups {
 		for ri := range r.Groups[gi].Rows {
@@ -81,18 +83,23 @@ func TestHandlePropsPricesCapture(t *testing.T) {
 	if math.Abs(*game.Fair-0.40) > 0.02 { // NE +140 vs SEA -166 de-vig ~40%
 		t.Errorf("NE fair de-vig = %.3f, want ~0.40", *game.Fair)
 	}
+	// A Game-category row keeps its Fair-only shape: the tab never carried a
+	// hold column for game lines and must not start now.
+	if game.Hold != nil {
+		t.Errorf("Game line should not carry a hold, got %.4f", *game.Hold)
+	}
 	if recv == nil || recv.BoostBE == nil || recv.Fair != nil {
 		t.Fatalf("one-sided prop should have a boost breakeven and no fair: %+v", recv)
 	}
 }
 
-// TestHandlePropsTwoSidedPropStaysBoostOnly pins the HTTP endpoint's behaviour
-// across the pairing/de-vig refactor: handleProps de-vigs only two-sided GAME
-// markets. A two-sided PROP market (an Over/Under yardage line) is left on the
-// boosted-breakeven path even though its two sides could be paired, because
-// that is what the props tab showed before the shared helper existed and the
-// refactor must not move it.
-func TestHandlePropsTwoSidedPropStaysBoostOnly(t *testing.T) {
+// TestHandlePropsTwoSidedPropDevigged pins the HTTP endpoint's behaviour: a
+// two-sided PROP market (an Over/Under yardage line) is now de-vigged the same
+// way a two-sided game line is -- both sides pair by marketId and each gets a
+// fair prob plus the market's hold. (Before this it was left on the
+// boosted-breakeven path; the props tab now matches `props-report`.) A
+// de-vigged prop carries Fair and Hold and no boost breakeven.
+func TestHandlePropsTwoSidedPropDevigged(t *testing.T) {
 	dir := t.TempDir()
 	body := `{"events":[{"id":"E1","name":"NE @ SEA"}],` +
 		`"markets":[{"id":"M1","eventId":"E1","name":"JSN Receiving Yards O/U"}],` +
@@ -104,18 +111,73 @@ func TestHandlePropsTwoSidedPropStaysBoostOnly(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := getProps(t, &boardServer{ingestDir: dir})
+	seen := 0
 	for _, g := range r.Groups {
 		if g.Category != "Receiving" {
 			continue
 		}
 		for _, row := range g.Rows {
-			if row.Fair != nil {
-				t.Errorf("%q: handleProps must not de-vig a two-sided prop; got Fair=%.3f", row.Selection, *row.Fair)
+			seen++
+			if row.Fair == nil {
+				t.Errorf("%q: a two-sided prop should now be de-vigged with a fair prob", row.Selection)
+				continue
 			}
-			if row.BoostBE == nil {
-				t.Errorf("%q: a prop row should carry a boosted breakeven", row.Selection)
+			if row.Hold == nil {
+				t.Errorf("%q: a de-vigged prop should carry the market's hold", row.Selection)
+			}
+			if row.BoostBE != nil {
+				t.Errorf("%q: a de-vigged prop should not also carry a boost breakeven; got %.3f", row.Selection, *row.BoostBE)
+			}
+			// -115/-105 is a modest two-way hold, a few percent.
+			if row.Hold != nil && (*row.Hold < 0 || *row.Hold > 0.10) {
+				t.Errorf("%q: hold %.4f out of the plausible band for -115/-105", row.Selection, *row.Hold)
+			}
+			// Both sides share the same market hold.
+			if row.Fair != nil && (*row.Fair <= 0 || *row.Fair >= 1) {
+				t.Errorf("%q: fair prob %.4f not in (0,1)", row.Selection, *row.Fair)
 			}
 		}
+	}
+	if seen != 2 {
+		t.Fatalf("want 2 receiving prop rows (Over/Under), saw %d", seen)
+	}
+}
+
+// TestHandlePropsOneSidedPropStaysBoostOnly pins that a one-sided prop (a lone
+// alt-line rung with no opposing price) is still priced on the boosted-
+// breakeven path and never gets a fabricated fair/hold -- the refuse-rather-
+// than-guess rule the whole tool runs on.
+func TestHandlePropsOneSidedPropStaysBoostOnly(t *testing.T) {
+	dir := t.TempDir()
+	body := `{"events":[{"id":"E1","name":"NE @ SEA"}],` +
+		`"markets":[{"id":"M1","eventId":"E1","name":"JSN Receiving Yards"}],` +
+		`"selections":[{"marketId":"M1","label":"JSN 100+","displayOdds":{"american":"+135"},"points":100}]}`
+	esc, _ := json.Marshal(body)
+	har := `{"log":{"entries":[{"response":{"content":{"text":` + string(esc) + `}}}]}}`
+	if err := os.WriteFile(filepath.Join(dir, "dk.har"), []byte(har), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	r := getProps(t, &boardServer{ingestDir: dir})
+	seen := 0
+	for _, g := range r.Groups {
+		if g.Category != "Receiving" {
+			continue
+		}
+		for _, row := range g.Rows {
+			seen++
+			if row.Fair != nil {
+				t.Errorf("%q: a one-sided prop must not get a fabricated fair; got %.3f", row.Selection, *row.Fair)
+			}
+			if row.Hold != nil {
+				t.Errorf("%q: a one-sided prop must not get a fabricated hold; got %.3f", row.Selection, *row.Hold)
+			}
+			if row.BoostBE == nil {
+				t.Errorf("%q: a one-sided prop should carry a boosted breakeven", row.Selection)
+			}
+		}
+	}
+	if seen != 1 {
+		t.Fatalf("want 1 receiving prop row, saw %d", seen)
 	}
 }
 
