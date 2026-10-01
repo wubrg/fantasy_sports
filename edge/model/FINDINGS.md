@@ -1498,6 +1498,91 @@ and gated on its own evidence, not for two more median-gated grids. This is the 
 as §19: a real effect with no instrument this grid can price it on. Reproduce with
 `python3 td_split_gate.py`.
 
+## 21. A funnel defense is knowable before kickoff, which is the only good thing about it
+
+`proe.py --gate1` · 7,230 team-weeks with ≥3 prior games + 35,266 pass-catcher game-weeks,
+2009–2025, errors clustered by player · added 2026-10-01
+
+The four scenarios the grid ships are all defined on the player's own team's **final, realised** game
+state — an end-state proxy for a path property (§14 shows `shootout` is partly *caused* by the player
+it predicts). This measures a different and, on its face, more useful kind of scenario: the
+**opponent** a player is about to face, scored on information knowable **before kickoff**. A "funnel
+defense" in `proe.py`'s sense is one whose opponents throw more than down, distance, score and time
+call for — an elite run defense funnels the ball into the air (`funnel_pass`); a weak one funnels it
+onto the ground (`funnel_run`). The scenario value for a player on team A in week W is team B's mean
+defense-PROE over **B's own games strictly before week W** — prior information only, so unlike the
+other four it is a real pre-game belief a wager could be priced against. The question is whether it
+carries any signal to price.
+
+### Forecastable? Barely — and that is the whole result
+
+| PROE series | prior → realised persistence (r) |
+|---|---|
+| offense (the `pass_heavy` axis) | **+0.429** |
+| defense (the funnel axis) | **+0.124** |
+
+A team's *offensive* pass-rate-over-expected persists — scheme and coach tendency, which is why
+`pass_heavy`'s prior is a usable predictor. Its *defensive* PROE, the funnel measure, barely persists
+at all: r = +0.124. The reason is structural. A team's defense-PROE in a game is the PROE of the
+*offense it faced*, so the series is dominated by who the opponents were and the scripts those games
+ran, not by a stable property of the defense. "This defense funnels passes" is three and a half times
+less forecastable than "this offense throws", and everything below follows from that.
+
+### The realised form is an identity, so only the prior form is a predictor
+
+Holding projected opportunity fixed (baseline = projected targets, R² 0.24771):
+
+| term | β | t | ΔR² | |
+|---|---|---|---|---|
+| own realised offense PROE | 0.522 | 18.99 | **+0.01402** | this-game, not usable |
+| own PRIOR offense PROE (`pass_heavy`) | 0.001 | 0.01 | +0.00000 | null here (§11: it is volume) |
+| opp realised defense PROE | 0.522 | 18.99 | **+0.01402** | = own realised offense (same game) |
+| **opp PRIOR defense PROE (funnel, usable)** | **0.129** | **2.14** | **+0.00013** | significant, nil |
+| role trend, for comparison | 47.185 | 11.28 | +0.00369 | the shipped trend axis |
+
+The second and third rows are the trap. A player's opponent's *realised* defense PROE in week W is
+that very game — B's defense faced A's offense — so it is numerically identical to A's own realised
+offense PROE (β 0.522, t 18.99, to the digit). It "explains" receiving yards only because it is the
+player's own passing in the game being predicted; it cannot be known in advance and is not a
+predictor. The one legitimate, before-kickoff quantity is the opponent's **prior** defense PROE, and
+it adds **ΔR² = +0.00013** over projected opportunity — below even §19's rejected targets proxy
+(+0.0004), and 1/28 of the role-trend axis the grid already carries. It clears the t-table (t = 2.14)
+only because 35,266 observations make a nothing effect "significant", exactly as in §19.
+
+### Separation: a quarter of `shootout`'s, at the quartile extremes
+
+Opponent prior defense-PROE splits at p75 = **+1.731** (where a `funnel_pass` threshold would sit) and
+p25 = **−2.204** (`funnel_run`). Top vs bottom quartile of the opponent a player faced:
+
+| receiving-yards line | q (vs a funnel-pass defense) | r (vs a funnel-run defense) | q − r |
+|---|---|---|---|
+| 24.5 | 0.533 | 0.507 | +0.027 |
+| 40.5 | 0.361 | 0.335 | +0.026 |
+| 52.5 | 0.265 | 0.240 | **+0.025** |
+| 75.5 | 0.133 | 0.121 | +0.012 |
+| 100.5 | 0.059 | 0.054 | +0.006 |
+
+At 52.5 the separation is **+0.025**, against the shipped `shootout` grid's **+0.09 to +0.12** — about
+a quarter, and this is already the quartile-to-quartile extreme, not a cell a wager lands in. The
+confound check is the one thing that comes out clean (opponent defense PROE vs the `shootout`
+indicator r = +0.103, vs margin +0.020 — `xpass` divides game script out as intended, so this is not
+a second measurement of `shootout`), but non-redundancy only matters for a signal that exists.
+
+### Verdict — not shipped
+
+The "knowable before kickoff" property is real and is the genuinely more useful shape of scenario the
+other four lack — but the measurement is what decides it, and the measurement says the usable signal
+is nil: ΔR² = +0.00013 and a quartile-extreme q − r of +0.025, a quarter of the weakest shipped
+scenario. The chain breaks at persistence (r = +0.124): a defense's funnel tendency does not carry
+forward, because it is mostly a record of the offenses it happened to face. `funnel_pass` and
+`funnel_run` were **not added** to `fit_conditionals.py`; `SCENARIOS`, `conditionals.json` and the Go
+reader are unchanged. The `proe.py --gate1` harness it predates was repaired to the current
+multi-outcome `build()`/`load_player_weeks()` API and to join the opponent rather than the player's
+own team, and a `load_opponents()` helper was added to resolve the matchup; those are kept so the
+measurement reproduces. This is the same honest negative as §19 and §20: a quantity that is
+statistically detectable and practically nil at the level a wager is placed. Reproduce with
+`python3 proe.py --gate1 --seasons 2009-2025`.
+
 ## Data note
 
 `target_share` in nflverse only starts in 2009, but raw `targets` reaches back to 2005, so share is

@@ -184,6 +184,20 @@ vacuum against 55.6% without. Fifteen points of vacated share delivers 0.7 point
 remaining receiver, so it does not concentrate. Rejected at Gate 1, never fitted. See
 `FINDINGS.md` §10.
 
+### A funnel-defense scenario was measured and does not hold
+
+All four shipped scenarios are defined on the player's own team's realised game state. A
+**funnel defense** would have been the first scenario on the *opponent*, scored on prior information
+and so knowable **before kickoff** — the matchup a player faces, team B's pass-rate-over-expected
+allowed over B's games so far: `funnel_pass` for an elite run defense (> +1.73), `funnel_run` for a
+weak one (< −2.20). That before-the-fact property is genuinely more useful than the end-state proxies
+the grid ships, but the signal is not there to use. A defense's funnel tendency barely persists
+(prior → realised r = +0.124, against offense PROE's +0.429), because defense PROE is mostly a record
+of the offenses that team happened to face. The usable prior form adds ΔR² = +0.00013 to receiving
+yards over projected opportunity, and separates the top from the bottom opponent quartile by only
+q − r = +0.025 at a 52.5 line — a quarter of `shootout`'s +0.09–0.12, at the quartile extreme.
+**Not added**; `SCENARIOS` and `conditionals.json` are unchanged. See `FINDINGS.md` §21.
+
 ### `p_true` by simulation does not exist
 
 `urps-wager-engine.md` requires it and says a prop with only a mean projection must be

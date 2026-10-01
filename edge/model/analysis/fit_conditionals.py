@@ -635,6 +635,32 @@ def load_games() -> dict:
     return out
 
 
+def load_opponents() -> dict:
+    """(season, week, team) -> the team it played that week.
+
+    load_games() deliberately drops the opponent identity -- its three
+    quantities are all keyed to one team's perspective. The funnel-defense
+    scenario needs the other side: a player's own team is not the defense he
+    faces, so an observation for team A in week W must resolve team B to look up
+    B's prior form. Regular season only, matching the player and PROE universes.
+    """
+    path = CACHE / "games.csv"
+    if not path.exists():
+        raise SystemExit(f"{path} not found -- run ingest/nflverse.py")
+    out = {}
+    for r in csv.DictReader(path.open()):
+        if r.get("game_type") != "REG":
+            continue
+        if not (r["season"].strip() and r["week"].strip()
+                and r["home_team"].strip() and r["away_team"].strip()):
+            continue
+        season, week = int(num(r["season"])), int(num(r["week"]))
+        home, away = r["home_team"].strip(), r["away_team"].strip()
+        out[(season, week, home)] = away
+        out[(season, week, away)] = home
+    return out
+
+
 def load_player_weeks(outcome: Outcome) -> tuple[list[dict], list[int]]:
     """Every regular-season game-week in the fit window, for one outcome.
 
