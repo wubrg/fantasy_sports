@@ -55,7 +55,8 @@ type propRow struct {
 	Price     int      `json:"price"`
 	Implied   float64  `json:"implied"`            // raw implied, vig included
 	BoostBE   *float64 `json:"boost_be,omitempty"` // cash-lens boosted breakeven (one-sided)
-	Fair      *float64 `json:"fair,omitempty"`     // de-vigged fair prob (two-sided game lines)
+	Fair      *float64 `json:"fair,omitempty"`     // de-vigged fair prob (two-sided game lines and props)
+	Hold      *float64 `json:"hold,omitempty"`     // book's margin on the market (two-sided props)
 }
 
 type propGroup struct {
@@ -153,21 +154,27 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 		merged[k] = o
 	}
 
-	// De-vig two-sided game lines: group Game outcomes by (event, marketID) and
-	// pair them. A market with exactly two sides gets a fair prob per side.
+	// De-vig the two-sided markets: group outcomes by (event, marketID) and pair
+	// them. A market with exactly two sides gets a fair prob per side.
 	//
-	// Only Game outcomes are passed in. A two-sided PROP (an Over/Under
-	// yardage line) could be de-vigged the same way, but the props tab has
-	// always shown props on the boosted-breakeven path, and `props-report` is
-	// where the prop de-vig lives -- the tab's behaviour is deliberately left
-	// as it was. See devigPairs for the pairing rule itself.
+	// Game lines and props are de-vigged separately so each category pairs only
+	// against itself, but both now run through the same devigPairs the
+	// props-report command uses. A two-sided PROP (an Over/Under yardage line)
+	// gets a fair prob and the book's hold, the same as a game line's two sides;
+	// a one-sided prop (an alt-line rung, an Anytime-TD price) has no opposing
+	// price to de-vig against and stays on the boosted-breakeven path. See
+	// devigPairs for the pairing rule itself.
 	games := make([]oddspull.Outcome, 0, len(order))
+	props := make([]oddspull.Outcome, 0, len(order))
 	for _, k := range order {
 		if merged[k].Category == "Game" {
 			games = append(games, merged[k])
+		} else {
+			props = append(props, merged[k])
 		}
 	}
 	fair := devigPairs(games)
+	fairProps := devigPairs(props)
 
 	byCat := map[string][]propRow{}
 	for _, k := range order {
@@ -179,8 +186,15 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 		row := propRow{Event: o.Event, Market: o.Market, Selection: o.Selection,
 			Line: o.Line, Price: int(o.Price), Implied: implied}
 		if d, ok := fair[k]; ok {
+			// Game lines keep the Fair-only shape they have always had.
 			f := d.Fair
 			row.Fair = &f
+		} else if d, ok := fairProps[k]; ok {
+			// A two-sided prop now carries both the de-vigged fair prob and the
+			// book's margin, the same figures props-report reports.
+			f, h := d.Fair, d.Hold
+			row.Fair = &f
+			row.Hold = &h
 		} else if be, err := wager.BoostedBreakeven(o.Price, defaultBoostPct); err == nil {
 			row.BoostBE = &be
 		}
