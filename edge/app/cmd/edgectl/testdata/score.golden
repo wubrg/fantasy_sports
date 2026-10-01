@@ -30,7 +30,7 @@ BELIEF SCORE  (survivors)
                  on efficient_offense and shootout only — the other scenarios are scored but do not decide
     E1 accuracy     vs the hardest of 3 opponents (market)
                     paired Brier gain +0.18717  [+0.11218, +0.26215]   PASS
-    E2 diagnostic   expected ROI +0.2934  [-0.3529, +0.9036]  on 9 implied wagers
+    E2 diagnostic   expected ROI +0.6318  [-0.4759, +1.7076]  on 9 implied wagers
                     per unit staked at a 6% hold, assuming the frozen site is
                     exact; a robustness check on E1, not independent of it
     VERDICT         PASS — more accurate than every opponent that exists

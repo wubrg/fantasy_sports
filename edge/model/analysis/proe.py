@@ -210,40 +210,54 @@ def gate1(first: int, last: int) -> int:
     print("  is meant to divide that out, and near-zero here says it did.")
 
     fc.FIRST, fc.LAST = first, last
-    obs = fc.build(fc.load_player_weeks()[0], games)
+    outcome = fc.OUTCOMES["receiving_yards"]
+    obs = fc.build(fc.load_player_weeks(outcome)[0], games, outcome)
+    # The funnel scenario conditions on the OPPONENT the player faces, not his
+    # own team. For a player on team A in week W, the defense he runs against is
+    # team B's -- so the usable predictor is B's defense PROE over B's OWN prior
+    # games (dproe_prior), known before kickoff. The realized defense PROE of B
+    # in week W is this very game (B's defense faced A's offense), so it equals
+    # A's own realized offense PROE and is tautological as a predictor; it is
+    # reported only to make that identity visible.
+    opp = fc.load_opponents()
     J = []
     for o in obs:
         k = (o["season"], o["week"], o["team"])
-        if k in tw and k in pf:
+        b = opp.get(k)
+        ok = (o["season"], o["week"], b)
+        if k in tw and k in pf and b and ok in tw and ok in pf:
             o = dict(o)
-            o["proe"], o["dproe"] = tw[k]["offense"], tw[k]["defense"]
-            o["proe_prior"], o["dproe_prior"] = pf[k]["offense_prior"], pf[k]["defense_prior"]
+            o["proe"], o["proe_prior"] = tw[k]["offense"], pf[k]["offense_prior"]
+            o["dproe"], o["dproe_prior"] = tw[ok]["defense"], pf[ok]["defense_prior"]
             J.append(o)
 
-    y = [o["yards"] for o in J]
+    y = [o["output"] for o in J]  # raw receiving yards, not the baseline ratio
     g = [o["player"] for o in J]
     _, _, r2b = ols_clustered([[1.0, o["opportunity"]] for o in J], y, g)
     print(f"\nSIGNAL  ({len(J)} player-games; baseline = projected targets, R2 {r2b:.5f})")
-    print(f"  {'term':<32} {'beta':>9} {'t':>7} {'dR2':>10}   verdict")
-    for label, key in (("realized offense PROE", "proe"),
-                       ("PRIOR offense PROE (usable)", "proe_prior"),
-                       ("realized defense PROE", "dproe"),
-                       ("PRIOR defense PROE (usable)", "dproe_prior"),
+    print(f"  {'term':<36} {'beta':>9} {'t':>7} {'dR2':>10}   verdict")
+    for label, key in (("own realized offense PROE", "proe"),
+                       ("own PRIOR offense PROE (pass_heavy)", "proe_prior"),
+                       ("opp realized defense PROE (=own off)", "dproe"),
+                       ("opp PRIOR defense PROE (funnel, usable)", "dproe_prior"),
                        ("role trend, for comparison", "trend")):
         b, se, r2 = ols_clustered([[1.0, o["opportunity"], o[key]] for o in J], y, g)
         t = b[2] / se[2] if se[2] > 0 else 0.0
-        print(f"  {label:<32} {b[2]:>9.3f} {t:>7.2f} {r2 - r2b:>+10.5f}   "
+        print(f"  {label:<36} {b[2]:>9.3f} {t:>7.2f} {r2 - r2b:>+10.5f}   "
               f"{'SIGNIFICANT' if abs(t) > 1.96 else 'null'}")
 
-    vals = sorted(o["proe"] for o in J)
+    # Separation on the quantity the scenario actually uses: the opponent's
+    # PRIOR defense PROE -- a pass-funnel defense faced, known before kickoff.
+    vals = sorted(o["dproe_prior"] for o in J)
     p25, p75 = vals[len(vals) // 4], vals[3 * len(vals) // 4]
-    hi = [o for o in J if o["proe"] > p75]
-    lo = [o for o in J if o["proe"] < p25]
-    print(f"\nSEPARATION  (top vs bottom PROE quartile -- what q and r would be)")
+    hi = [o for o in J if o["dproe_prior"] > p75]
+    lo = [o for o in J if o["dproe_prior"] < p25]
+    print(f"\nSEPARATION  (top vs bottom OPPONENT prior-defense-PROE quartile)")
+    print(f"  top quartile cut p75 = {p75:+.3f}   bottom cut p25 = {p25:+.3f}")
     print(f"  {'line':>6} {'q':>8} {'r':>8} {'q-r':>8}")
     for line in (24.5, 40.5, 52.5, 75.5, 100.5):
-        q = sum(1 for o in hi if o["yards"] > line) / len(hi)
-        r = sum(1 for o in lo if o["yards"] > line) / len(lo)
+        q = sum(1 for o in hi if o["output"] > line) / len(hi)
+        r = sum(1 for o in lo if o["output"] > line) / len(lo)
         print(f"  {line:>6} {q:>8.3f} {r:>8.3f} {q - r:>+8.3f}")
     print("  shootout's q-r at 52.5 in the shipped grid runs about +0.09 to +0.12.")
     return 0
