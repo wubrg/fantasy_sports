@@ -1211,6 +1211,38 @@ Two screens fall out, and both are things this project can now apply to a named 
    trustworthy at 2× the line and `rushing_yards`'s baseline half is not, and no pooled number
    will tell you which one you are standing on.
 
+## 17. Open question, not yet tested: starting-QB quality as a `blowout_loss` signal
+
+§15/§16 found the fitted belief model's bands sit at roughly the noise scale of their own
+input, and that the entire opportunity is in finding a genuinely better `s` — a read that
+knows a game is meaningfully likelier than its base rate to go a given way, not one that
+restates what the grid already has. Raised 2026-09-30: a team's own starting-QB quality
+(not just its opponent's defense) should move `blowout_loss` directly — a bad or diminished
+quarterback should raise his own team's `blowout_loss` probability, independent of whatever
+the schematic read already says about the opposing defense, because a defense that forces
+turnovers or sacks against a worse passer compounds a deficit a competent one would not let
+compound.
+
+This is not measured anywhere in this repo. Before it becomes a belief-pack input, same two
+screens as §16's close apply:
+
+1. **`q − r` first.** Is there a real, separable swing in realized `blowout_loss` rate between
+   a cohort of games with a clearly weaker starting QB and a cohort without one, net of the
+   spread/total the market has already priced? If the market already prices quarterback quality
+   into the line (plausible — it is public information), this screens to near zero and the
+   signal has nothing left to add.
+2. **Calibration, not a pooled average.** If a real signal survives (1), check whether it holds
+   up out-of-sample the way §12's per-site gate requires, rather than trusting one season's
+   correlation.
+
+No QB-quality metric is defined or computed anywhere in `model/analysis/` today — this would need
+one (passer rating, EPA/dropback, a Sleeper-derived QB2-is-starting flag, or similar) joined
+against realized margins from `games.csv`, which already has what §16 used. Framed as a
+candidate for the belief-probe's `s`, not for the fitted grid's `q`/`r` — the grid prices
+realized player-prop outcomes conditional on a scenario; this is about which teams are more
+likely to **be** in the `blowout_loss` scenario in the first place, which is the forecaster's
+job, not the grid's.
+
 ## Data note
 
 `target_share` in nflverse only starts in 2009, but raw `targets` reaches back to 2005, so share is
