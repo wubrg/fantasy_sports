@@ -91,6 +91,13 @@ edge/model/data/raw/
 # originals; each transcript records its source share URL.
 /*.pdf
 
+# DraftKings props captures. A browser .har is 1-9 MB of mostly-irrelevant
+# session traffic and lives in the ingest folder outside the repo; the tracked
+# artifact is the small JSON snapshot `edgectl board props-report -save` writes
+# under edge/props/, which is the thing a report cites. See ADR-007. This rule
+# is a guard against a capture dropped inside the checkout being committed.
+*.har
+
 # Agent tooling local state: Claude Code's worktrees/settings and the
 # Cowork-imported placeholder. Local to a checkout, not repo content.
 .claude/

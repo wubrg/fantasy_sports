@@ -155,22 +155,19 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 
 	// De-vig two-sided game lines: group Game outcomes by (event, marketID) and
 	// pair them. A market with exactly two sides gets a fair prob per side.
-	fair := map[string]float64{}
-	sides := map[string][]oddspull.Outcome{}
+	//
+	// Only Game outcomes are passed in. A two-sided PROP (an Over/Under
+	// yardage line) could be de-vigged the same way, but the props tab has
+	// always shown props on the boosted-breakeven path, and `props-report` is
+	// where the prop de-vig lives -- the tab's behaviour is deliberately left
+	// as it was. See devigPairs for the pairing rule itself.
+	games := make([]oddspull.Outcome, 0, len(order))
 	for _, k := range order {
-		if o := merged[k]; o.Category == "Game" {
-			sides[o.Event+"|"+o.MarketID] = append(sides[o.Event+"|"+o.MarketID], o)
+		if merged[k].Category == "Game" {
+			games = append(games, merged[k])
 		}
 	}
-	for _, pair := range sides {
-		if len(pair) != 2 {
-			continue
-		}
-		if pa, pb, err := (wager.Market{A: pair[0].Price, B: pair[1].Price}).FairDevig(); err == nil {
-			fair[outcomeKey(pair[0])] = pa
-			fair[outcomeKey(pair[1])] = pb
-		}
-	}
+	fair := devigPairs(games)
 
 	byCat := map[string][]propRow{}
 	for _, k := range order {
@@ -181,7 +178,8 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 		}
 		row := propRow{Event: o.Event, Market: o.Market, Selection: o.Selection,
 			Line: o.Line, Price: int(o.Price), Implied: implied}
-		if f, ok := fair[k]; ok {
+		if d, ok := fair[k]; ok {
+			f := d.Fair
 			row.Fair = &f
 		} else if be, err := wager.BoostedBreakeven(o.Price, defaultBoostPct); err == nil {
 			row.BoostBE = &be
@@ -208,6 +206,70 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 		"dir": s.ingestDir, "week": week, "groups": groups, "sources": ing.sources,
 		"boost_pct": defaultBoostPct, "as_of": asOf, "note": note,
 	})
+}
+
+// devigged is one side of a two-sided market with the vig removed: the fair
+// probability this side is worth, plus the book's margin on the market it
+// belongs to. Hold and Overround are the WHOLE market's, so both sides of a
+// pair carry the same two numbers.
+type devigged struct {
+	Fair      float64 // de-vigged probability for this side
+	Hold      float64 // book's margin on the market (both sides share it)
+	Overround float64 // how far the two raw implied probs exceed 1
+}
+
+// devigPairs groups outcomes by (event, marketID) and, for every market that
+// has EXACTLY two sides, removes the vig and returns the de-vigged figures
+// keyed by outcomeKey.
+//
+// Two sides is the whole rule, and it is doing real work on a props capture.
+// A straight Over/Under -- "Receiving Yards O/U 49.5", an Over and an Under
+// sharing one marketId -- pairs and de-vigs. An alternate-line ladder --
+// "Receiving Yards" with eleven rungs at 15+, 25+, ... all sharing a single
+// marketId -- does NOT: it has eleven sides, not two, and there is no opposing
+// price to measure the vig against, so it is left for the caller to price as
+// one-sided. A lone outcome is skipped for the same reason. This is why the
+// helper pairs by marketId rather than by line: the book models a yardage
+// Over/Under as one two-sided market, and a rung ladder as one many-sided one.
+//
+// Both callers share this so the arithmetic and the two-sided rule live in one
+// place; each caller decides which outcomes to hand in (handleProps passes only
+// Game lines, props-report passes every outcome). Hold and Overround go unused
+// by handleProps and are there for props-report, which reports the book's
+// margin and flags an implausible overround the way the game-line board does.
+func devigPairs(outcomes []oddspull.Outcome) map[string]devigged {
+	sides := map[string][]oddspull.Outcome{}
+	var order []string
+	for _, o := range outcomes {
+		k := o.Event + "|" + o.MarketID
+		if _, seen := sides[k]; !seen {
+			order = append(order, k)
+		}
+		sides[k] = append(sides[k], o)
+	}
+	out := map[string]devigged{}
+	for _, k := range order {
+		pair := sides[k]
+		if len(pair) != 2 {
+			continue
+		}
+		m := wager.Market{A: pair[0].Price, B: pair[1].Price}
+		pa, pb, err := m.FairDevig()
+		if err != nil {
+			continue
+		}
+		hold, err := m.Hold()
+		if err != nil {
+			continue
+		}
+		over, err := m.Overround()
+		if err != nil {
+			continue
+		}
+		out[outcomeKey(pair[0])] = devigged{Fair: pa, Hold: hold, Overround: over}
+		out[outcomeKey(pair[1])] = devigged{Fair: pb, Hold: hold, Overround: over}
+	}
+	return out
 }
 
 func outcomeKey(o oddspull.Outcome) string {
