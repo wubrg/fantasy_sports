@@ -103,6 +103,48 @@ func TestOddsPairsFromOutcomesReversedEvent(t *testing.T) {
 	}
 }
 
+// TestOddsPairsFromOutcomesFullTeamNames guards the other real event shape
+// DraftKings sends (seen on tonight's capture, not covered by dkOutcomes'
+// bare-abbreviation fixture): "AWAY Nickname @ HOME Nickname". Giants/Jets
+// never leaked into the bare-abbreviation fixture because they don't start
+// with their own schedule code the way "DAL Cowboys" or "SF 49ers" do -- the
+// bug this guards shipped silently for exactly that reason.
+func TestOddsPairsFromOutcomesFullTeamNames(t *testing.T) {
+	d := testWeek()
+	outs := []oddspull.Outcome{
+		{Event: "DAL Cowboys @ NY Giants", Market: "Moneyline", Selection: "DAL Cowboys", Price: -150, Category: "Game", MarketID: "M1"},
+		{Event: "DAL Cowboys @ NY Giants", Market: "Moneyline", Selection: "NY Giants", Price: 130, Category: "Game", MarketID: "M1"},
+	}
+	pairs := d.OddsPairsFromOutcomes(outs)
+	if len(pairs) != 1 || pairs[0].GameID != "2026_01_DAL_NYG" {
+		t.Fatalf("got %+v, want one pair resolved to 2026_01_DAL_NYG", pairs)
+	}
+}
+
+// TestOddsPairsFromOutcomesNicknameBeatsAmbiguousCityCode guards the sharper
+// version of the same bug: a bare city-code token isn't just unmatched for a
+// nickname-only team, it can resolve to the WRONG team outright when two
+// teams share a city. "LA Chargers"'s bare "LA" token already means the Rams
+// on this schedule -- only the "Chargers" nickname disambiguates it.
+func TestOddsPairsFromOutcomesNicknameBeatsAmbiguousCityCode(t *testing.T) {
+	d := &Doc{
+		Season: 2026,
+		Week:   1,
+		Games: map[string]*Game{
+			"2026_01_LA_SF":   {Away: "LA", Home: "SF", Kickoff: "2026-09-13T13:00", Books: map[string]Lines{"fanatics": {}}},
+			"2026_01_LAC_SEA": {Away: "LAC", Home: "SEA", Kickoff: "2026-09-13T16:25", Books: map[string]Lines{"fanatics": {}}},
+		},
+	}
+	outs := []oddspull.Outcome{
+		{Event: "LA Chargers @ SEA Seahawks", Market: "Moneyline", Selection: "LA Chargers", Price: -150, Category: "Game", MarketID: "M1"},
+		{Event: "LA Chargers @ SEA Seahawks", Market: "Moneyline", Selection: "SEA Seahawks", Price: 130, Category: "Game", MarketID: "M1"},
+	}
+	pairs := d.OddsPairsFromOutcomes(outs)
+	if len(pairs) != 1 || pairs[0].GameID != "2026_01_LAC_SEA" {
+		t.Fatalf("got %+v, want the Chargers game (2026_01_LAC_SEA), not a false match against the Rams' bare \"LA\" code", pairs)
+	}
+}
+
 func TestOddsPairsFromOutcomesUnscheduledEventSkipped(t *testing.T) {
 	d := testWeek()
 	outs := []oddspull.Outcome{

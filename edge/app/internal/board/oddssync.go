@@ -37,6 +37,64 @@ func (d *Doc) teamIndex() map[[2]string]gameSlot {
 	return idx
 }
 
+// nicknames maps an NFL team's nickname -- the word a sportsbook's own event
+// string actually carries, e.g. "Giants" in "ARI Cardinals @ NY Giants" --
+// to its nflverse schedule abbreviation.
+//
+// This is deliberately separate from CanonicalTeam, which exists for the
+// paste-blob path: untrusted, human-typed input where a full nickname parser
+// would let a typo resolve to the wrong club with no human re-checking it.
+// An odds capture's event string is machine-generated API data, not typed --
+// trustworthy enough to resolve by nickname, and resolving by nickname is
+// actually necessary here: four teams share a city code with a teammate
+// (NY Giants/Jets, LA Rams/Chargers), so the bare city token alone is either
+// ambiguous or -- for the Chargers -- resolves to the WRONG team, since "LA"
+// alone already means the Rams on this schedule.
+var nicknames = map[string]string{
+	"CARDINALS": "ARI", "FALCONS": "ATL", "RAVENS": "BAL", "BILLS": "BUF",
+	"PANTHERS": "CAR", "BEARS": "CHI", "BENGALS": "CIN", "BROWNS": "CLE",
+	"COWBOYS": "DAL", "BRONCOS": "DEN", "LIONS": "DET", "PACKERS": "GB",
+	"TEXANS": "HOU", "COLTS": "IND", "JAGUARS": "JAX", "CHIEFS": "KC",
+	"RAIDERS": "LV", "CHARGERS": "LAC", "RAMS": "LA", "DOLPHINS": "MIA",
+	"VIKINGS": "MIN", "PATRIOTS": "NE", "SAINTS": "NO", "GIANTS": "NYG",
+	"JETS": "NYJ", "EAGLES": "PHI", "STEELERS": "PIT", "SEAHAWKS": "SEA",
+	"49ERS": "SF", "NINERS": "SF", "BUCCANEERS": "TB", "TITANS": "TEN",
+	"COMMANDERS": "WAS",
+}
+
+// resolveTeamHalf finds the one team named in one side of an event string
+// ("ARI Cardinals", say). A nickname match wins over a bare-abbreviation
+// match when both appear, because the abbreviation can be the wrong team's
+// city code (LA Chargers' "LA" token already means the Rams) while the
+// nickname is never ambiguous. Returns ok=false if the half doesn't resolve
+// to exactly one team -- same refuse-rather-than-guess rule as the rest of
+// this file.
+func resolveTeamHalf(half string, known map[string]bool) (team string, ok bool) {
+	var nickHit, abbrHit string
+	for _, f := range strings.FieldsFunc(half, func(r rune) bool {
+		return !(r >= 'A' && r <= 'Z') && !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9')
+	}) {
+		up := strings.ToUpper(f)
+		if nick, isNick := nicknames[up]; isNick && known[nick] {
+			if nickHit != "" && nickHit != nick {
+				return "", false // two different nicknames in one half: unresolvable
+			}
+			nickHit = nick
+			continue
+		}
+		if c := CanonicalTeam(f); known[c] {
+			abbrHit = c
+		}
+	}
+	if nickHit != "" {
+		return nickHit, true
+	}
+	if abbrHit != "" {
+		return abbrHit, true
+	}
+	return "", false
+}
+
 // matchEvent resolves an odds capture's event string (e.g. "NE @ SEA") to a
 // game on this week's schedule.
 //
@@ -48,19 +106,13 @@ func (d *Doc) teamIndex() map[[2]string]gameSlot {
 // defence PlanImport already applies to a pasted blob, so nothing here has to
 // assume the order rather than verifying it.
 func (d *Doc) matchEvent(event string) (gameID, away, home string, reversed bool, err error) {
-	var tokens []string
-	for _, f := range strings.FieldsFunc(event, func(r rune) bool {
-		return !(r >= 'A' && r <= 'Z') && !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9')
-	}) {
-		tokens = append(tokens, CanonicalTeam(f))
-	}
 	known := d.Teams()
 	var teams []string
-	seen := map[string]bool{}
-	for _, t := range tokens {
-		if known[t] && !seen[t] {
-			seen[t] = true
-			teams = append(teams, t)
+	if left, right, split := strings.Cut(event, "@"); split {
+		t1, ok1 := resolveTeamHalf(left, known)
+		t2, ok2 := resolveTeamHalf(right, known)
+		if ok1 && ok2 && t1 != t2 {
+			teams = []string{t1, t2}
 		}
 	}
 	if len(teams) != 2 {
