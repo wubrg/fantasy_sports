@@ -120,7 +120,7 @@ func readIngest(dir string, week int) ingestResult {
 			res.newest = f.mod
 		}
 		for _, o := range outs {
-			k := outcomeKey(o)
+			k := mergeKey(o)
 			if _, seen := merged[k]; !seen {
 				order = append(order, k)
 			}
@@ -132,6 +132,40 @@ func readIngest(dir string, week int) ingestResult {
 		res.outcomes = append(res.outcomes, merged[k])
 	}
 	return res
+}
+
+// mergeKey identifies "the same market" across capture files for readIngest's
+// newest-wins merge.
+//
+// For the board's three literal game-line markets -- Moneyline, Spread,
+// Total, matched by exact name -- it deliberately drops outcomeKey's Line
+// component: Selection is just "Over"/"Under" or a team name, and Line is
+// the book's CURRENT number for that market, not part of its identity. That
+// number is exactly what moves between two captures of the same week, and
+// keying on it (as outcomeKey does, correctly, everywhere else) meant an
+// old and a new capture's versions of a moved line never collided: both
+// survived the merge, so a market that should have had two sides had four,
+// and OddsPairsFromOutcomes's two-sided check silently dropped it instead
+// of using the newer price.
+//
+// Everything else -- an alt-line rung, a prop's own O/U pair, "Spread
+// Alternate"/"Total Alternate" -- keeps the original Line-inclusive key.
+// This matters beyond alt-line rungs (where Selection already carries the
+// threshold and Line is merely redundant): marketKind's board-sync matcher
+// reads market names by substring, so "Spread Alternate" also reads as
+// "spread". Dropping Line there would collapse that whole alternate ladder
+// -- dozens of lines all selecting the same two team names -- down to
+// whichever one entry happened to merge last, a fake two-sided market at
+// some arbitrary extreme line. Scoping the fix to the three exact literal
+// names keeps it off anything with its own, legitimately distinct rungs.
+func mergeKey(o oddspull.Outcome) string {
+	if o.Category == "Game" {
+		switch o.Market {
+		case "Moneyline", "Spread", "Total":
+			return o.Event + "|" + o.Market + "|" + o.Selection
+		}
+	}
+	return outcomeKey(o)
 }
 
 func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
