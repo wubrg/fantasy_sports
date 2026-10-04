@@ -737,6 +737,7 @@ function filterControls(r) {
   return `${chips}<div class="seg" role="group" aria-label="log status">${seg}</div>
   <section class="rep"><div class="fundform">
     <input id="log-q" placeholder="search team, player or note — e.g. Bijan" value="${(r.q || "").replace(/"/g, "&quot;")}">
+    <button type="button" id="log-q-apply">search</button>
   </div></section>`;
 }
 
@@ -944,26 +945,26 @@ el.betlog.addEventListener("click", (e) => {
     state.logStatus = statusBtn.dataset.status;
     save();
     loadLog();
+    return;
   }
+  if (e.target.id === "log-q-apply") applyLogQuery();
 });
 
-// Searching the selection and the narrative, debounced -- a request per
-// keystroke would re-render the tab under the typist's fingers. The focus and
-// caret are put back after the reload for the same reason: the input that was
-// being typed into no longer exists once renderLog has run.
-let logQueryTimer = null;
-el.betlog.addEventListener("input", (e) => {
-  if (e.target.id !== "log-q") return;
-  const v = e.target.value;
-  const caret = e.target.selectionStart;
-  clearTimeout(logQueryTimer);
-  logQueryTimer = setTimeout(async () => {
-    state.logQuery = v.trim();
-    save();
-    await loadLog();
-    const box = document.getElementById("log-q");
-    if (box) { box.focus(); try { box.setSelectionRange(caret, caret); } catch (err) { /* not selectable */ } }
-  }, 700);
+// Searching the selection and the narrative. This used to reload on a debounced
+// "input" event, but even a generous debounce was short enough that a normal
+// typing cadence (word pauses, autocomplete taps) kept re-rendering the tab
+// mid-sentence and stealing focus back from the keyboard. Now it only commits
+// on Enter or the search button -- the typist decides when they're done,
+// nothing reloads out from under them.
+function applyLogQuery() {
+  const box = document.getElementById("log-q");
+  if (!box) return;
+  state.logQuery = box.value.trim();
+  save();
+  loadLog();
+}
+el.betlog.addEventListener("keydown", (e) => {
+  if (e.target.id === "log-q" && e.key === "Enter") applyLogQuery();
 });
 
 // ---- the bankroll -------------------------------------------------------
