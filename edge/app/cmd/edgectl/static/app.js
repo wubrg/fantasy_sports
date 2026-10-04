@@ -963,7 +963,7 @@ el.betlog.addEventListener("input", (e) => {
     await loadLog();
     const box = document.getElementById("log-q");
     if (box) { box.focus(); try { box.setSelectionRange(caret, caret); } catch (err) { /* not selectable */ } }
-  }, 350);
+  }, 700);
 });
 
 // ---- the bankroll -------------------------------------------------------
