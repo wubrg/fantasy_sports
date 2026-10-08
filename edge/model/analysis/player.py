@@ -43,8 +43,8 @@ def _rows(outcome, season):
             "player": r.get("player_id", ""),
             "name": r.get("player_display_name") or r.get("player_name") or "",
             "team": r.get("team") or r.get("recent_team", ""),
-            "opportunity": F.num(r.get(outcome.opp_field)),
-            "yards": F.num(r.get(outcome.yards_field)),
+            "opportunity": F.col_sum(r, outcome.opp_field),
+            "yards": F.col_sum(r, outcome.yards_field),
         })
     return out
 
