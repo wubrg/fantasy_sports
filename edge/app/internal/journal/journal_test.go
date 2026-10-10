@@ -517,6 +517,65 @@ func TestSettle_computesReturnsForWonBonusBet(t *testing.T) {
 	}
 }
 
+// A LOST no-sweat bet must refund NoSweatConversion of the stake as a BONUS
+// asset -- that is the entire point of the token, and computeReturns used to
+// fall through its "a loss returns nothing" default for every bankroll alike,
+// silently dropping this refund for every no-sweat loss ever settled.
+func TestSettle_computesReturnsForLostNoSweatBet(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	grant(t, lg, "mgm-cash", "betmgm", ledger.Cash, 50)
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+	id, err := Place(bl, lg, PlaceRequest{
+		Bet:  betlog.Bet{Selection: "Barkley ATD", Price: wager.American(150), Bankroll: "no-sweat", Stake: 10, Week: 1},
+		Book: "betmgm",
+	}, now)
+	if err != nil {
+		t.Fatalf("Place: %v", err)
+	}
+
+	if err := Settle(bl, lg, id, betlog.Lost, nil, nil, nil, "did not score", now); err != nil {
+		t.Fatalf("Settle: %v", err)
+	}
+
+	r := settleReturns(t, lg, id)
+	if r == nil {
+		t.Fatal("expected a computed returns lot refunding the no-sweat loss as bonus")
+	}
+	// stake 10 * NoSweatConversion (0.70) = 7.
+	if r.Amount != 7 {
+		t.Fatalf("returns amount = %v, want 7 (10 * NoSweatConversion)", r.Amount)
+	}
+	if r.Asset != ledger.Bonus {
+		t.Fatalf("returns asset = %q, want bonus -- a no-sweat refund is a bonus bet, not cash", r.Asset)
+	}
+	if r.Book != "betmgm" {
+		t.Fatalf("returns book = %q, want betmgm", r.Book)
+	}
+}
+
+// A LOST real-money (not no-sweat) bet still returns nothing -- the fix must
+// not widen loss refunds beyond the one bankroll that actually has one.
+func TestSettle_lostCashBetReturnsNothing(t *testing.T) {
+	bl, lg := tmp(t, "bets.jsonl"), tmp(t, "bank.jsonl")
+	grant(t, lg, "dk-cash", "draftkings", ledger.Cash, 50)
+	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+	id, err := Place(bl, lg, PlaceRequest{
+		Bet:  betlog.Bet{Selection: "Barkley ATD", Price: wager.American(150), Bankroll: "real money", Stake: 10, Week: 1},
+		Book: "draftkings",
+	}, now)
+	if err != nil {
+		t.Fatalf("Place: %v", err)
+	}
+
+	if err := Settle(bl, lg, id, betlog.Lost, nil, nil, nil, "did not score", now); err != nil {
+		t.Fatalf("Settle: %v", err)
+	}
+
+	if r := settleReturns(t, lg, id); r != nil {
+		t.Fatalf("expected no returns lot on a lost real-money bet, got %+v", r)
+	}
+}
+
 // An explicit non-nil returns (the CLI -returns path) is written unchanged, not
 // recomputed.
 func TestSettle_explicitReturnsUsedUnchanged(t *testing.T) {
