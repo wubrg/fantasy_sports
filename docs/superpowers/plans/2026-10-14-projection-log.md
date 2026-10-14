@@ -1141,7 +1141,7 @@ func TestScenarioProjectionsFlagWritesAProjection(t *testing.T) {
 
 	err := scenarioCmd([]string{
 		"-outcome", "receiving_yards", "-name", "shootout",
-		"-total", "49", "-threshold", "50",
+		"-total", "40.5", "-threshold", "50",
 		"-baseline", "25.8", "-trend", "0.0007",
 		"-line", "21", "-price", "-116", "-belief", "0.5",
 		"-label", "Cooper Kupp",
@@ -1180,12 +1180,13 @@ func TestScenarioProjectionsFlagRefusedWhenQRStated(t *testing.T) {
 }
 ```
 
-(Note: this test requires `app/internal/scenario/artifacts/conditionals.json` to actually carry a
-priceable cell at `baseline=25.8, posted=49, trend=0.0007` for `receiving_yards/shootout` — if it
-doesn't, adjust the baseline/trend/total values in the first test to real, currently-priceable
-coordinates, found the same way every report this season has: `python3
-model/analysis/player.py --player <real player> --season 2026 --week <n> --outcome
-receiving_yards --total <n> --scenario shootout` against the real cache, and copy its printed
+(Note: `-total 40.5` above was verified directly against the real, current
+`app/internal/scenario/artifacts/conditionals.json` before this task was dispatched — it prices
+cleanly, PRICEABLE, median 17 yds. `-total 49` does NOT price at these coordinates — it falls into
+a different posted-total band whose direction doesn't hold out of sample, confirmed by running the
+built binary directly. If a future refit of `conditionals.json` changes this, the fallback is the
+same either way: `python3 model/analysis/player.py --player <real player> --season 2026 --week <n>
+--outcome receiving_yards --total <n> --scenario shootout` against the real cache, copy its printed
 `-baseline`/`-trend`/`edgectl scenario` command into the test.)
 
 - [ ] **Step 8: Run to confirm both pass**
