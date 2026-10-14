@@ -254,7 +254,7 @@ git commit -m "betlog: extend the shared stream substrate for a third record kin
 
 ---
 
-## Task 2: `Projection` / `SettledProjection` types, `Record`, `Validate`, `LoadProjections`
+## Task 2: `Projection` / `SettledProjection` types, `RecordProjection`, `Validate`, `LoadProjections`
 
 **Files:**
 - Modify: `app/internal/betlog/projection.go` (replace Task 1's stub with the real definitions)
@@ -264,7 +264,7 @@ git commit -m "betlog: extend the shared stream substrate for a third record kin
 - Consumes: `Kind`, `KindProjection`, `Entry`, `Append`, `scan`, `warnSkipped`, `Measured`,
   `NewID` (all from Task 1 / existing `betlog.go`).
 - Produces: `Projection` (full struct), `(p Projection) Validate() error`,
-  `(p Projection) Key() string`, `Record(path string, p Projection, now time.Time) (string,
+  `(p Projection) Key() string`, `RecordProjection(path string, p Projection, now time.Time) (string,
   error)`, `SettledProjection` struct, `LoadProjections(path string) ([]SettledProjection,
   error)`. These are what Task 3 (settle/void) and Task 4 (score) and Task 5/6 (the CLI) build on.
 
@@ -412,7 +412,7 @@ func (p Projection) Validate() error {
 // Record appends a projection to the log, refusing one made after its own
 // kickoff for the same reason Prediction.Record does -- see belief.go and
 // ADR-002. `now` is passed rather than read so the gate is testable.
-func Record(path string, p Projection, now time.Time) (string, error) {
+func RecordProjection(path string, p Projection, now time.Time) (string, error) {
 	if err := p.Validate(); err != nil {
 		return "", err
 	}
@@ -498,7 +498,7 @@ func TestLoadProjectionsRoundTrips(t *testing.T) {
 	dir := t.TempDir()
 	path := dir + "/log.jsonl"
 	p := validProjection()
-	id, err := Record(path, p, p.Kickoff.Add(-time.Hour))
+	id, err := RecordProjection(path, p, p.Kickoff.Add(-time.Hour))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -529,7 +529,7 @@ func TestRecordRefusesAfterKickoff(t *testing.T) {
 	path := dir + "/log.jsonl"
 	p := validProjection() // Kickoff is in the future relative to time.Now() in the fixture
 	p.Kickoff = time.Now().Add(-time.Minute) // already kicked off
-	if _, err := Record(path, p, time.Now()); err == nil {
+	if _, err := RecordProjection(path, p, time.Now()); err == nil {
 		t.Error("expected Record to refuse a projection recorded after its own kickoff")
 	}
 }
@@ -543,7 +543,7 @@ Expected: PASS
 ```bash
 cd edge/app
 git add internal/betlog/projection.go internal/betlog/projection_test.go
-git commit -m "betlog: add Projection/SettledProjection, Record, Validate, LoadProjections"
+git commit -m "betlog: add Projection/SettledProjection, RecordProjection, Validate, LoadProjections"
 ```
 
 ---
@@ -567,7 +567,7 @@ func TestSettleProjection(t *testing.T) {
 	dir := t.TempDir()
 	path := dir + "/log.jsonl"
 	p := validProjection()
-	id, _ := Record(path, p, p.Kickoff.Add(-time.Hour))
+	id, _ := RecordProjection(path, p, p.Kickoff.Add(-time.Hour))
 
 	if err := SettleProjection(path, id, 41.0, ""); err != nil {
 		t.Fatal(err)
@@ -588,7 +588,7 @@ func TestVoidProjectionRequiresAReason(t *testing.T) {
 	dir := t.TempDir()
 	path := dir + "/log.jsonl"
 	p := validProjection()
-	id, _ := Record(path, p, p.Kickoff.Add(-time.Hour))
+	id, _ := RecordProjection(path, p, p.Kickoff.Add(-time.Hour))
 
 	if err := VoidProjection(path, id, ""); err == nil {
 		t.Error("expected VoidProjection to require a reason")
@@ -605,19 +605,37 @@ func TestVoidProjectionRequiresAReason(t *testing.T) {
 	}
 }
 
-func TestSettleProjectionRefusesADoubleSettle(t *testing.T) {
+func TestSettleProjectionCannotBeResettled(t *testing.T) {
 	dir := t.TempDir()
 	path := dir + "/log.jsonl"
 	p := validProjection()
-	id, _ := Record(path, p, p.Kickoff.Add(-time.Hour))
-	if err := SettleProjection(path, id, 41.0, ""); err != nil {
+	id, _ := RecordProjection(path, p, p.Kickoff.Add(-time.Hour))
+	if err := SettleProjection(path, id, 41.0, "first"); err != nil {
 		t.Fatal(err)
 	}
-	if err := SettleProjection(path, id, 50.0, ""); err == nil {
-		t.Error("expected a second settlement to be refused")
+	// Appending a second settlement is possible -- the file is append-only --
+	// but the log must then refuse to LOAD rather than take the last write.
+	// This mirrors TestBeliefCannotBeResettled (belief_test.go) exactly: the
+	// second Settle/SettleBelief call itself succeeds, because Append has no
+	// read-before-write check; only scan()'s replay (exercised via Load) is
+	// where the double-settle is caught. A test asserting the second
+	// SettleProjection call's own return value would be testing behavior
+	// this package does not have anywhere else, and no new code should be
+	// added to manufacture it for projections alone.
+	if err := SettleProjection(path, id, 50.0, "second"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadProjections(path); err == nil {
+		t.Fatal("a second settlement was accepted; hindsight is what this log exists to prevent")
+	} else if !strings.Contains(err.Error(), "already settled") {
+		t.Errorf("error should name the double settlement, got: %v", err)
 	}
 }
 ```
+
+`projection_test.go`'s existing import block (from Task 2) is `"testing"` and `"time"` only — this
+test adds a new import, `"strings"`, to that same block (mirroring `belief_test.go`'s own import
+list, which already has it for exactly this assertion style).
 
 - [ ] **Step 2: Run to confirm it fails**
 
@@ -652,9 +670,17 @@ func VoidProjection(path, id, reason string) error {
 }
 ```
 
-Note: the double-settle refusal in `TestSettleProjectionRefusesADoubleSettle` requires no new
-code — it's already enforced generically by `scan()`'s existing `r.Result != Open` check
-(`betlog.go:367-373`), which applies to every kind, including `KindProjection`, for free.
+Note: `SettleProjection`/`VoidProjection` need no double-settle check of their own. Both are pure
+`Append()` wrappers, exactly like `SettleBelief`/`VoidBelief` — a second `SettleProjection` call
+on an already-settled id succeeds at the append level (the file is append-only; nothing checks
+before writing). The refusal `TestSettleProjectionCannotBeResettled` exercises is enforced
+generically at LOAD time by `scan()`'s existing `r.Result != Open` check (`betlog.go:367-373`,
+added in Task 1), which applies to every kind, including `KindProjection`, for free — it fires
+when `LoadProjections` is called, not inside `SettleProjection` itself. **Do not add a
+pre-settlement existence/duplicate check inside `SettleProjection` or `VoidProjection`** — that
+would be new, duplicated logic the package doesn't have anywhere else (confirmed against
+`SettleBelief`/`VoidBelief`, which have none), and would make projections behave inconsistently
+with how `Bet` and `Prediction` already work.
 
 - [ ] **Step 4: Run the tests to confirm they pass**
 
@@ -1028,7 +1054,7 @@ current file), add:
 			Baseline: *baseline, Trend: *trend,
 			GeneratedAt: now, Kickoff: now.Add(7 * 24 * time.Hour), // see note below
 		}
-		id, err := betlog.Record(*projectionsPath, proj, now)
+		id, err := betlog.RecordProjection(*projectionsPath, proj, now)
 		if err != nil {
 			return err
 		}
@@ -1060,7 +1086,7 @@ not paper over them with a fabricated value:**
 
 2. **Kickoff.** `edgectl scenario` also has no kickoff flag — the command prices a wager, it
    doesn't know what game it's for beyond `-total`/`-spread`. The predates-kickoff gate
-   (`Record`) needs a real kickoff to check against. Add a third flag:
+   (`RecordProjection`) needs a real kickoff to check against. Add a third flag:
 
    ```go
    kickoffFlag := fs.String("kickoff", "", "ISO8601 kickoff time, required when -projections is set (e.g. 2026-10-16T00:15:00Z)")
@@ -1094,7 +1120,7 @@ not paper over them with a fabricated value:**
            Baseline: *baseline, Trend: *trend,
            GeneratedAt: now, Kickoff: kickoff,
        }
-       id, err := betlog.Record(*projectionsPath, proj, now)
+       id, err := betlog.RecordProjection(*projectionsPath, proj, now)
        if err != nil {
            return err
        }
@@ -1115,7 +1141,7 @@ func TestScenarioProjectionsFlagWritesAProjection(t *testing.T) {
 
 	err := scenarioCmd([]string{
 		"-outcome", "receiving_yards", "-name", "shootout",
-		"-total", "49", "-threshold", "50",
+		"-total", "40.5", "-threshold", "50",
 		"-baseline", "25.8", "-trend", "0.0007",
 		"-line", "21", "-price", "-116", "-belief", "0.5",
 		"-label", "Cooper Kupp",
@@ -1154,12 +1180,13 @@ func TestScenarioProjectionsFlagRefusedWhenQRStated(t *testing.T) {
 }
 ```
 
-(Note: this test requires `app/internal/scenario/artifacts/conditionals.json` to actually carry a
-priceable cell at `baseline=25.8, posted=49, trend=0.0007` for `receiving_yards/shootout` — if it
-doesn't, adjust the baseline/trend/total values in the first test to real, currently-priceable
-coordinates, found the same way every report this season has: `python3
-model/analysis/player.py --player <real player> --season 2026 --week <n> --outcome
-receiving_yards --total <n> --scenario shootout` against the real cache, and copy its printed
+(Note: `-total 40.5` above was verified directly against the real, current
+`app/internal/scenario/artifacts/conditionals.json` before this task was dispatched — it prices
+cleanly, PRICEABLE, median 17 yds. `-total 49` does NOT price at these coordinates — it falls into
+a different posted-total band whose direction doesn't hold out of sample, confirmed by running the
+built binary directly. If a future refit of `conditionals.json` changes this, the fallback is the
+same either way: `python3 model/analysis/player.py --player <real player> --season 2026 --week <n>
+--outcome receiving_yards --total <n> --scenario shootout` against the real cache, copy its printed
 `-baseline`/`-trend`/`edgectl scenario` command into the test.)
 
 - [ ] **Step 8: Run to confirm both pass**
@@ -1258,10 +1285,10 @@ func TestProjectionsSettle(t *testing.T) {
 	darnold := betlog.Projection{Season: 2026, Week: 6, Player: "Sam Darnold",
 		Outcome: "passing_yards", Scenario: "shootout", OurMedian: 200, MarketLine: 220,
 		Kickoff: past.Add(time.Minute)}
-	if _, err := betlog.Record(logPath, kupp, past); err != nil {
+	if _, err := betlog.RecordProjection(logPath, kupp, past); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := betlog.Record(logPath, darnold, past); err != nil {
+	if _, err := betlog.RecordProjection(logPath, darnold, past); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1293,7 +1320,7 @@ func TestProjectionsSettleIsIdempotent(t *testing.T) {
 	kupp := betlog.Projection{Season: 2026, Week: 6, Player: "Cooper Kupp",
 		Outcome: "receiving_yards", Scenario: "shootout", OurMedian: 21, MarketLine: 21,
 		Kickoff: past.Add(time.Minute)}
-	betlog.Record(logPath, kupp, past)
+	betlog.RecordProjection(logPath, kupp, past)
 	outcomesPath := writeOutcomesFixture(t, dir)
 
 	if err := projectionsCmd([]string{"settle", "-outcomes", outcomesPath, "-log", logPath}); err != nil {
@@ -1387,7 +1414,6 @@ func projectionsSettle(args []string) error {
 	}
 
 	var settle, void []betlog.SettledProjection
-	var reasons []string
 	var pending, already int
 	for _, sp := range projs {
 		p := sp.Projection
@@ -1410,10 +1436,8 @@ func projectionsSettle(args []string) error {
 					"projections settle: %s is marked settled but carries no actual value", p.Key())
 			}
 			settle = append(settle, sp)
-			reasons = append(reasons, "")
 		case "unavailable":
 			void = append(void, sp)
-			reasons = append(reasons, r.Reason)
 		default:
 			return fmt.Errorf("projections settle: %s: unknown status %q", p.Key(), r.Status)
 		}
@@ -1432,8 +1456,18 @@ func projectionsSettle(args []string) error {
 			return err
 		}
 	}
-	for i, sp := range void {
-		reason := reasons[len(settle)+i]
+	for _, sp := range void {
+		// Looked up fresh from the result map, by (player, outcome) -- not from
+		// a parallel slice indexed by position. A shared reasons slice appended
+		// to in mixed settle/void iteration order, then read back via
+		// reasons[len(settle)+i], only lines up when every settle match happens
+		// to precede every void match in iteration order -- which log order
+		// does not guarantee. (The sibling edgectl beliefs settle has exactly
+		// this bug today, at app/cmd/edgectl/beliefs.go:391 -- out of scope to
+		// fix here since it is existing, already-shipped code, but this task's
+		// own new code must not reproduce it.)
+		r := result[key{sp.Projection.Player, sp.Projection.Outcome}]
+		reason := r.Reason
 		if reason == "" {
 			reason = "unmeasurable"
 		}
@@ -1525,7 +1559,7 @@ func TestProjectionsScore(t *testing.T) {
 	p := betlog.Projection{Season: 2026, Week: 6, Player: "Cooper Kupp",
 		Outcome: "receiving_yards", Scenario: "shootout", OurMedian: 21, MarketLine: 25,
 		Kickoff: past.Add(time.Minute)}
-	id, _ := betlog.Record(logPath, p, past)
+	id, _ := betlog.RecordProjection(logPath, p, past)
 	if err := betlog.SettleProjection(logPath, id, 30, ""); err != nil {
 		t.Fatal(err)
 	}
@@ -1811,7 +1845,7 @@ Expected: every package green, zero regressions from the pre-existing baseline.
 - [ ] **Confirm the spec's own testing section is covered**
 
 Cross-check `docs/superpowers/specs/2026-10-14-projection-log-design.md`'s Testing section
-against what was built: `Projection.Validate`/`Record` (Task 2), `LoadProjections` (Task 2), the
+against what was built: `Projection.Validate`/`RecordProjection` (Task 2), `LoadProjections` (Task 2), the
 new score function pinned against a worked example (Task 4), `edgectl scenario -projections`
 writes a well-formed `Projection` (Task 5), `edgectl projections settle` ingests realized
 outcomes including the pending/void case (Task 6), `edgectl projections score` matches the pinned

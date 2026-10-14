@@ -41,6 +41,9 @@ const (
 	// of them would drift.
 	KindBelief Kind = "belief"
 	KindSettle Kind = "settle"
+	// KindProjection is the grid's own point-estimate for a player/outcome,
+	// with no wager and no scenario claim implied — see projection.go.
+	KindProjection Kind = "projection"
 )
 
 // Result is how a wager finished.
@@ -152,6 +155,9 @@ type Entry struct {
 	Bet  *Bet      `json:"bet,omitempty"`
 	// Prediction is set on a KindBelief entry, never alongside Bet.
 	Prediction *Prediction `json:"prediction,omitempty"`
+	// Projection is set on a KindProjection entry, never alongside Bet or
+	// Prediction.
+	Projection *Projection `json:"projection,omitempty"`
 	Result     Result      `json:"result,omitempty"`
 	Note       string      `json:"note,omitempty"`
 
@@ -163,6 +169,11 @@ type Entry struct {
 	// LegResults, when set on a settlement entry, records what happened to
 	// each leg of a multi-leg wager.
 	LegResults []Leg `json:"leg_results,omitempty"`
+	// Actual is set on a KindSettle entry that settles a Projection -- the
+	// player's realized value for that outcome, or nil if the player did not
+	// play (the entry's Result is Void in that case, same convention as a
+	// belief that could not be measured).
+	Actual *float64 `json:"actual,omitempty"`
 }
 
 // Settled is a bet joined to its outcome.
@@ -299,6 +310,8 @@ type record struct {
 	Time         time.Time
 	Bet          *Bet
 	Pred         *Prediction
+	Proj         *Projection
+	Actual       *float64
 	Result       Result
 	SettleAt     time.Time
 	Note         string
@@ -339,18 +352,21 @@ func scan(path string) (recs []record, order []string, skipped map[Kind]int, err
 			return nil, nil, nil, fmt.Errorf("betlog: %s line %d: %w", path, line, err)
 		}
 		switch en.Kind {
-		case KindBet, KindBelief:
+		case KindBet, KindBelief, KindProjection:
 			if en.Kind == KindBet && en.Bet == nil {
 				return nil, nil, nil, fmt.Errorf("betlog: %s line %d: bet entry with no bet", path, line)
 			}
 			if en.Kind == KindBelief && en.Prediction == nil {
 				return nil, nil, nil, fmt.Errorf("betlog: %s line %d: belief entry with no prediction", path, line)
 			}
+			if en.Kind == KindProjection && en.Projection == nil {
+				return nil, nil, nil, fmt.Errorf("betlog: %s line %d: projection entry with no projection", path, line)
+			}
 			if _, dup := byID[en.ID]; dup {
 				return nil, nil, nil, fmt.Errorf("betlog: %s line %d: duplicate id %q", path, line, en.ID)
 			}
 			byID[en.ID] = &record{ID: en.ID, Kind: en.Kind, Time: en.Time,
-				Bet: en.Bet, Pred: en.Prediction, Result: Open}
+				Bet: en.Bet, Pred: en.Prediction, Proj: en.Projection, Result: Open}
 			order = append(order, en.ID)
 		case KindSettle:
 			r, ok := byID[en.ID]
@@ -380,6 +396,7 @@ func scan(path string) (recs []record, order []string, skipped map[Kind]int, err
 			r.Note = en.Note
 			r.SettledPrice = en.SettledPrice
 			r.LegResults = en.LegResults
+			r.Actual = en.Actual
 		default:
 			skipped[en.Kind]++
 		}

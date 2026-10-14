@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"edge/internal/betlog"
 	"edge/internal/scenario"
@@ -33,6 +34,13 @@ func scenarioCmd(args []string) error {
 	label := fs.String("label", "", "what this wager is")
 	name := fs.String("name", "scenario", "name of the scenario")
 	logPath := fs.String("log", "", "append this wager to a bet log at this path")
+	projectionsPath := fs.String("projections", "",
+		"append this priced player/outcome to a projection log at this path -- "+
+			"independent of -log, and fires even when no wager is recommended")
+	season := fs.Int("season", 0, "season, required when -projections is set")
+	week := fs.Int("week", 0, "the NFL week this projection is FOR, required when -projections is set")
+	kickoffFlag := fs.String("kickoff", "",
+		"ISO8601 kickoff time, required when -projections is set (e.g. 2026-10-16T00:15:00Z)")
 	rungs := fs.String("rungs", "", "ladder as line:price:q:r,... (replaces -price/-q/-r)")
 	outcome := fs.String("outcome", "receiving_yards",
 		"what the prop measures: "+outcomeNames())
@@ -155,7 +163,7 @@ func scenarioCmd(args []string) error {
 		return fmt.Errorf("-price is required (or use -rungs)")
 	}
 
-	qv, rv, condSource, err := resolveConditionals(
+	qv, rv, condSource, ourMedian, hasMedian, err := resolveConditionals(
 		*outcome, *name, *q, *r,
 		scenario.Site{Posted: *total, Baseline: *baseline, Trend: *trend},
 		*line, *confidence, basisVal.String(), *threshold, *side)
@@ -213,6 +221,34 @@ func scenarioCmd(args []string) error {
 		}
 		fmt.Printf("\n  logged as %s\n", id)
 	}
+
+	if *projectionsPath != "" {
+		if !hasMedian {
+			return fmt.Errorf(
+				"-projections has nothing to log: q and r came from stated -q/-r, not the " +
+					"fitted grid, so there is no cell median to compare against the market line")
+		}
+		if *season <= 0 || *week <= 0 {
+			return fmt.Errorf("-projections requires -season and -week")
+		}
+		kickoff, err := time.Parse(time.RFC3339, *kickoffFlag)
+		if err != nil {
+			return fmt.Errorf("-kickoff: %w", err)
+		}
+		now := time.Now()
+		proj := betlog.Projection{
+			Season: *season, Week: *week,
+			Player: pick(*label, "unlabelled"), Outcome: *outcome, Scenario: sc.Name,
+			OurMedian: ourMedian, MarketLine: *line,
+			Baseline: *baseline, Trend: *trend,
+			GeneratedAt: now, Kickoff: kickoff,
+		}
+		id, err := betlog.RecordProjection(*projectionsPath, proj, now)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("  projection logged as %s\n", id)
+	}
 	return nil
 }
 
@@ -231,40 +267,40 @@ func scenarioCmd(args []string) error {
 func resolveConditionals(
 	outcome, name string, q, r float64, at scenario.Site, line, confidence float64,
 	basis string, threshold float64, side string,
-) (float64, float64, string, error) {
+) (qv, rv float64, condSource string, ourMedian float64, hasMedian bool, err error) {
 	if side != "over" && side != "under" {
-		return 0, 0, "", fmt.Errorf("-side must be over or under, got %q", side)
+		return 0, 0, "", 0, false, fmt.Errorf("-side must be over or under, got %q", side)
 	}
 	if q >= 0 && r >= 0 {
-		return q, r, "stated", nil
+		return q, r, "stated", 0, false, nil
 	}
 	if q >= 0 || r >= 0 {
-		return 0, 0, "", fmt.Errorf(
+		return 0, 0, "", 0, false, fmt.Errorf(
 			"-q and -r must be supplied together: one alone would be silently dropped in " +
 				"favour of the fitted grid, and you would never be told")
 	}
 	if at.Baseline <= 0 || line <= 0 {
-		return 0, 0, "", fmt.Errorf(
+		return 0, 0, "", 0, false, fmt.Errorf(
 			"supply both -q and -r, or -baseline and -line to look them up from the fitted grid")
 	}
 	// The grid is conditioned on the POSTED total as well, so a lookup without
 	// one would silently land in whichever band contains zero. Refused: the
 	// number is on the board next to the price.
 	if at.Posted <= 0 {
-		return 0, 0, "", fmt.Errorf(
+		return 0, 0, "", 0, false, fmt.Errorf(
 			"-total is required for a grid lookup: q and r are fitted per posted-total band, " +
 				"so without it the lookup lands in whichever band contains zero")
 	}
 
 	c, err := scenario.LoadConditionals()
 	if err != nil {
-		return 0, 0, "", err
+		return 0, 0, "", 0, false, err
 	}
 	// Before anything is looked up: the grid's q and r answer a fixed question,
 	// and s answers whatever -threshold was passed. If those differ, no amount
 	// of correct arithmetic downstream produces a meaningful number.
 	if err := c.CheckDefinition(outcome, name, basis, threshold, c.OccursBelow(name)); err != nil {
-		return 0, 0, "", err
+		return 0, 0, "", 0, false, err
 	}
 	qc, rc, err := c.QR(outcome, name, at, line, confidence)
 	if err != nil {
@@ -272,10 +308,10 @@ func resolveConditionals(
 		// outside the observed range is a different problem, and answering it
 		// with the list points at the part that was already right.
 		if errors.Is(err, scenario.ErrScenarioNotPriceable) {
-			return 0, 0, "", fmt.Errorf("%w\n  scenarios you can price for %s: %s",
+			return 0, 0, "", 0, false, fmt.Errorf("%w\n  scenarios you can price for %s: %s",
 				err, outcome, strings.Join(c.ValidatedScenarioNames(outcome), ", "))
 		}
-		return 0, 0, "", err
+		return 0, 0, "", 0, false, err
 	}
 	// The grid fits P(output > line) only. An under is the same cell read from
 	// the other end -- and it is where this grid's value tends to sit, because
@@ -358,7 +394,7 @@ func resolveConditionals(
 		fmt.Printf("    not a threshold — move the line in, or supply -q and -r yourself.\n")
 	}
 	fmt.Println()
-	return qc.Prob, rc.Prob, "pooled", nil
+	return qc.Prob, rc.Prob, "pooled", qc.CellMedian, true, nil
 }
 
 // support says how much evidence sits on the side of the line being bet.

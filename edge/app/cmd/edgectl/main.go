@@ -43,6 +43,8 @@ func main() {
 		err = beliefCmd(os.Args[2:])
 	case "beliefs":
 		err = beliefsCmd(os.Args[2:])
+	case "projections":
+		err = projectionsCmd(os.Args[2:])
 	case "scenario":
 		err = scenarioCmd(os.Args[2:])
 	case "log":
@@ -138,6 +140,10 @@ func usage() {
         week, settle it from the data once the games are played, and score
         whether it beat the base rate. No price, no stake, no prop -- the
         belief is the half of q*s + r*(1-s) that needs proving.
+
+  edgectl projections settle|score
+        Realized values for a week's logged projections (grid median vs. market
+        line), and whether the grid or the market tracked reality more closely.
 
   edgectl hedge -face <amount> -back <american> -against <american>
         Convert a bonus bet to guaranteed cash by backing the other side at a
