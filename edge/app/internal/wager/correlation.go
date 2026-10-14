@@ -102,3 +102,36 @@ func RequiredCorrelation(p1, p2, pTarget float64) (CorrelationRequirement, error
 
 	return CorrelationRequirement{P1: p1, P2: p2, Target: pTarget, Required: rho}, nil
 }
+
+// ChainFrechet blends N probabilities pairwise, in listing order, one rho
+// per chain step (len(rhos) must be len(probs)-1): blend probs[0] and
+// probs[1] under rhos[0], then blend that result against probs[2] under
+// rhos[1], and so on.
+//
+// For N=2 this is identical to one FrechetBlend call. For N>=3 it is a real,
+// explicitly-acknowledged approximation: treating a chained intermediate
+// result as a single Bernoulli probability for the next blend has no
+// guarantee of landing within the TRUE N-way Frechet bounds, and the error
+// is not characterized. The order the legs are chained in matters -- this is
+// not a defect to fix, it is the nature of the approximation, which is why
+// the CLI layer (ladder.go) prints a caveat on every 3+-leg correlated combo
+// rather than presenting this as exact.
+func ChainFrechet(probs []float64, rhos []float64) (float64, error) {
+	if len(probs) < 2 {
+		return 0, fmt.Errorf("wager: ChainFrechet needs at least 2 probabilities, got %d", len(probs))
+	}
+	if len(rhos) != len(probs)-1 {
+		return 0, fmt.Errorf(
+			"wager: %d probabilities need %d rho values (one per chain step), got %d",
+			len(probs), len(probs)-1, len(rhos))
+	}
+	running := probs[0]
+	for i := 1; i < len(probs); i++ {
+		blended, err := FrechetBlend(running, probs[i], rhos[i-1])
+		if err != nil {
+			return 0, fmt.Errorf("chain step %d (blending running result against leg %d): %w", i, i+1, err)
+		}
+		running = blended
+	}
+	return running, nil
+}

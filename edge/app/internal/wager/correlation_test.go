@@ -110,3 +110,72 @@ func TestRequiredCorrelationAtIndependence(t *testing.T) {
 		t.Errorf("Required = %v, want 0", req.Required)
 	}
 }
+
+func TestChainFrechetThreeLegs(t *testing.T) {
+	// p1=0.6, p2=0.5, p3=0.4, rhos=[0.5, -0.2] -> 0.128 (hand-worked, see this
+	// plan's Discovery Notes). Step 1 blends p1,p2 under rho[0]; step 2
+	// blends that result against p3 under rho[1].
+	got, err := ChainFrechet([]float64{0.6, 0.5, 0.4}, []float64{0.5, -0.2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if math.Abs(got-0.128) > 1e-9 {
+		t.Errorf("ChainFrechet = %v, want 0.128", got)
+	}
+}
+
+func TestChainFrechetMatchesFrechetBlendForTwoLegs(t *testing.T) {
+	chained, err := ChainFrechet([]float64{0.6, 0.5}, []float64{0.5})
+	if err != nil {
+		t.Fatal(err)
+	}
+	direct, err := FrechetBlend(0.6, 0.5, 0.5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if math.Abs(chained-direct) > 1e-9 {
+		t.Errorf("ChainFrechet(2 legs) = %v, FrechetBlend = %v -- must match exactly", chained, direct)
+	}
+}
+
+func TestChainFrechetOrderMatters(t *testing.T) {
+	// Same three probabilities and the same two rhos, but blending p1 with p3
+	// first (instead of p1 with p2) must produce a DIFFERENT result -- this
+	// is the real, acknowledged limitation of pairwise chaining (it is not a
+	// true N-way joint, and the plan does not claim it is).
+	//
+	// NOTE: the brief's original example values (0.75, 0.5, 0.2 with rhos
+	// 0.6, -0.5) were checked by hand and produced the SAME result (0.045)
+	// under both orderings, so they do not discriminate. Substituted with
+	// 0.3, 0.9, 0.5 and rhos 0.7, -0.6, which hand-work to 0.0582 vs 0.1848.
+	probs := []float64{0.3, 0.9, 0.5}
+	rhos := []float64{0.7, -0.6}
+
+	orderA, err := ChainFrechet([]float64{probs[0], probs[1], probs[2]}, rhos)
+	if err != nil {
+		t.Fatal(err)
+	}
+	orderB, err := ChainFrechet([]float64{probs[0], probs[2], probs[1]}, rhos)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if math.Abs(orderA-orderB) < 1e-9 {
+		t.Error("chaining in a different leg order should generally produce a different result " +
+			"(if this ever legitimately coincides, pick different probs/rhos for this test)")
+	}
+}
+
+func TestChainFrechetRequiresOneFewerRhoThanLegs(t *testing.T) {
+	if _, err := ChainFrechet([]float64{0.6, 0.5, 0.4}, []float64{0.5}); err == nil {
+		t.Error("3 legs need 2 rhos; 1 should be refused")
+	}
+	if _, err := ChainFrechet([]float64{0.6, 0.5}, nil); err == nil {
+		t.Error("2 legs need 1 rho; 0 should be refused")
+	}
+}
+
+func TestChainFrechetRequiresAtLeastTwoLegs(t *testing.T) {
+	if _, err := ChainFrechet([]float64{0.6}, nil); err == nil {
+		t.Error("a single leg has nothing to correlate against")
+	}
+}
