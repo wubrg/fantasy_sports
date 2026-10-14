@@ -230,7 +230,7 @@ func parlayCmd(args []string) error {
 	if err != nil {
 		return err
 	}
-	if err := guardSameGame(legs); err != nil {
+	if err := guardSameGame(legs, nil); err != nil {
 		return err
 	}
 	prices := make([]wager.American, len(legs))
@@ -345,18 +345,25 @@ func parseLegs(s string) ([]parlayLeg, error) {
 }
 
 // guardSameGame is the correlation firewall: parlay math assumes independent
-// legs, which holds only across different games. Two legs sharing a game tag are
-// correlated and must be built as an SGP at the book, so this refuses them.
-func guardSameGame(legs []parlayLeg) error {
+// legs, which holds only across different games. Two legs sharing a game tag
+// are correlated and must be built as an SGP at the book -- UNLESS that
+// game's tag appears in covered (from -correlation), in which case the
+// caller has supplied a correlation factor and intends to price it, not
+// refuse it. covered may be nil, which behaves exactly as before this flag
+// existed: every same-game pair is refused.
+func guardSameGame(legs []parlayLeg, covered map[string]bool) error {
 	seen := map[string]int{}
 	for i, l := range legs {
 		if l.game == "" {
 			return fmt.Errorf("leg %d has no game tag; every leg needs price:game[:label] so same-game (correlated) legs can be rejected", i+1)
 		}
+		if covered[l.game] {
+			continue
+		}
 		if j, ok := seen[l.game]; ok {
 			return fmt.Errorf(
-				"legs %d and %d are both in game %q — they are correlated (one game state), not independent. Build that as an SGP at the book and price the ONE combined number; this tool multiplies independent legs only",
-				j+1, i+1, l.game)
+				"legs %d and %d are both in game %q — they are correlated (one game state), not independent. Build that as an SGP at the book and price the ONE combined number, or supply -correlation %q:<rho> to price it here",
+				j+1, i+1, l.game, l.game)
 		}
 		seen[l.game] = i
 	}

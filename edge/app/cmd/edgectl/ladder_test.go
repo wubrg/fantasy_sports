@@ -48,3 +48,47 @@ func TestParseCorrelationRejectsARhoOutsideRange(t *testing.T) {
 		t.Error("a rho above 1 should be rejected at parse time, not deferred to FrechetBlend")
 	}
 }
+
+func TestGuardSameGameRefusesUncoveredPairs(t *testing.T) {
+	legs := []parlayLeg{
+		{price: -110, game: "mia@lv", label: "A"},
+		{price: +150, game: "mia@lv", label: "B"},
+	}
+	if err := guardSameGame(legs, nil); err == nil {
+		t.Error("two same-game legs with no correlation coverage should still be refused")
+	}
+}
+
+func TestGuardSameGameAllowsCoveredPairs(t *testing.T) {
+	legs := []parlayLeg{
+		{price: -110, game: "mia@lv", label: "A"},
+		{price: +150, game: "mia@lv", label: "B"},
+	}
+	covered := map[string]bool{"mia@lv": true}
+	if err := guardSameGame(legs, covered); err != nil {
+		t.Errorf("a covered game's same-game legs should be allowed, got: %v", err)
+	}
+}
+
+func TestGuardSameGameStillRefusesOtherUncoveredGames(t *testing.T) {
+	// mia@lv is covered; was@phi is not. A same-game pair in was@phi must
+	// still be refused even though some other game in the same call is
+	// covered.
+	legs := []parlayLeg{
+		{price: -110, game: "mia@lv", label: "A"},
+		{price: +150, game: "mia@lv", label: "B"},
+		{price: -120, game: "was@phi", label: "C"},
+		{price: +110, game: "was@phi", label: "D"},
+	}
+	covered := map[string]bool{"mia@lv": true}
+	if err := guardSameGame(legs, covered); err == nil {
+		t.Error("was@phi has no correlation coverage and should still be refused")
+	}
+}
+
+func TestGuardSameGameStillRequiresAGameTag(t *testing.T) {
+	legs := []parlayLeg{{price: -110, game: "", label: "A"}}
+	if err := guardSameGame(legs, nil); err == nil {
+		t.Error("a leg with no game tag at all should still be refused, covered or not")
+	}
+}

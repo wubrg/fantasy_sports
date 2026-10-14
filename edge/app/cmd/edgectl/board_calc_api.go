@@ -153,7 +153,7 @@ func (s *boardServer) handleParlayCombine(w http.ResponseWriter, r *http.Request
 		legs[i] = parlayLeg{price: wager.American(l.Price), game: strings.TrimSpace(l.Game), label: l.Selection}
 		prices[i] = wager.American(l.Price)
 	}
-	if err := guardSameGame(legs); err != nil {
+	if err := guardSameGame(legs, nil); err != nil {
 		httpError(w, http.StatusConflict, err.Error())
 		return
 	}
