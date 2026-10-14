@@ -123,8 +123,9 @@ func TestPropsRowsJSONShape(t *testing.T) {
 		t.Errorf("boost breakeven = %.4f, want %.4f", *rung.boostBE, wantBE)
 	}
 
-	// The serialised shape must be exactly the ten MARKET-block fields, with
-	// null (not zero) for a one-sided prop's fair_devig and hold.
+	// The serialised shape must be exactly the ten MARKET-block fields plus
+	// line (present here because this rung's own capture carried a points
+	// value), with null (not zero) for a one-sided prop's fair_devig and hold.
 	blob, err := json.Marshal(rung)
 	if err != nil {
 		t.Fatal(err)
@@ -133,7 +134,7 @@ func TestPropsRowsJSONShape(t *testing.T) {
 	if err := json.Unmarshal(blob, &generic); err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"id", "game", "market", "selection", "book", "american", "implied_raw", "fair_devig", "breakeven", "hold"}
+	want := []string{"id", "game", "market", "selection", "book", "american", "implied_raw", "fair_devig", "breakeven", "hold", "line"}
 	if len(generic) != len(want) {
 		t.Errorf("row JSON has %d fields, want %d: %s", len(generic), len(want), blob)
 	}
@@ -147,6 +148,24 @@ func TestPropsRowsJSONShape(t *testing.T) {
 	}
 	if string(generic["hold"]) != "null" {
 		t.Errorf("one-sided hold should serialise as null, got %s", generic["hold"])
+	}
+	if rung.Line == nil || *rung.Line != 100 {
+		t.Errorf("line = %v, want 100 (the rung's own posted points value)", rung.Line)
+	}
+
+	// A market with no points value at all (the moneyline) carries no line,
+	// and line is omitted from its JSON entirely rather than serialising null.
+	ml := byID["PIT Steelers"]
+	if ml.Line != nil {
+		t.Errorf("moneyline should carry no line, got %v", *ml.Line)
+	}
+	mlBlob, _ := json.Marshal(ml)
+	var mlGeneric map[string]json.RawMessage
+	if err := json.Unmarshal(mlBlob, &mlGeneric); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := mlGeneric["line"]; ok {
+		t.Errorf("line should be omitted (not null) when the capture carried none: %s", mlBlob)
 	}
 
 	// The id is stable across re-pricing the same capture.
@@ -200,5 +219,48 @@ func TestSaveSnapshotPathAndContent(t *testing.T) {
 	}
 	if len(back) != len(rows) {
 		t.Errorf("snapshot has %d rows, priced %d", len(back), len(rows))
+	}
+}
+
+// TestSelectionTextAppendsLineOnlyForSpreadAndTotal pins the exact bug this
+// fix closes: "SEA Seahawks" and "Over" carried no number at all for a
+// Spread/Total market (unlike a ladder rung, which already reads
+// "Sam Darnold 230+"), so a reader of the report had no way to tell -2.5 from
+// -9.5 without going back to the raw capture by hand.
+func TestSelectionTextAppendsLineOnlyForSpreadAndTotal(t *testing.T) {
+	line := f64(-2.5)
+	cases := []struct {
+		name string
+		row  marketRow
+		want string
+	}{
+		{"spread gets the line appended",
+			marketRow{Selection: "SEA Seahawks", Market: "Spread", Line: line},
+			"SEA Seahawks -2.5"},
+		{"spread alternate gets the line appended",
+			marketRow{Selection: "DEN Broncos", Market: "Spread Alternate", Line: f64(2.5)},
+			"DEN Broncos 2.5"},
+		{"total gets the line appended",
+			marketRow{Selection: "Over", Market: "Total", Line: f64(40.5)},
+			"Over 40.5"},
+		{"total alternate gets the line appended",
+			marketRow{Selection: "Under", Market: "Total Alternate", Line: f64(40.5)},
+			"Under 40.5"},
+		{"a ladder rung is untouched -- its own label already carries the number",
+			marketRow{Selection: "Sam Darnold 230+", Market: "Sam Darnold Passing Yards", Line: f64(230)},
+			"Sam Darnold 230+"},
+		{"moneyline has no line to append",
+			marketRow{Selection: "SEA Seahawks", Market: "Moneyline", Line: nil},
+			"SEA Seahawks"},
+		{"a spread row with no line (should not happen, but must not panic) is untouched",
+			marketRow{Selection: "SEA Seahawks", Market: "Spread", Line: nil},
+			"SEA Seahawks"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := selectionText(c.row); got != c.want {
+				t.Errorf("selectionText = %q, want %q", got, c.want)
+			}
+		})
 	}
 }
