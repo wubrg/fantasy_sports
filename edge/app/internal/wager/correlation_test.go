@@ -64,3 +64,49 @@ func TestFrechetBlendAtTheExtremes(t *testing.T) {
 		t.Errorf("rho=-1 should equal max(0,p1+p2-1)=0.1, got %v", got)
 	}
 }
+
+func TestRequiredCorrelationRoundTrips(t *testing.T) {
+	// Forward: FrechetBlend(0.6, 0.5, 0.5) = 0.40 (pinned in Task 1). The
+	// inverse, solving for the rho that produces 0.40, must return 0.5.
+	req, err := RequiredCorrelation(0.6, 0.5, 0.40)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if math.Abs(req.Required-0.5) > 1e-9 {
+		t.Errorf("Required = %v, want 0.5", req.Required)
+	}
+
+	// Negative branch: FrechetBlend(0.6, 0.5, -0.4) = 0.22 (also pinned in
+	// Task 1). The inverse for 0.22 must return -0.4.
+	req, err = RequiredCorrelation(0.6, 0.5, 0.22)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if math.Abs(req.Required-(-0.4)) > 1e-9 {
+		t.Errorf("Required = %v, want -0.4", req.Required)
+	}
+}
+
+func TestRequiredCorrelationRejectsATargetOutsideTheBounds(t *testing.T) {
+	// min(p1,p2) = 0.5 when p1=0.6, p2=0.5 -- a target above that is not
+	// reachable by any rho in [-1,1] and must be refused, not silently
+	// report a rho outside [-1,1].
+	if _, err := RequiredCorrelation(0.6, 0.5, 0.9); err == nil {
+		t.Error("a target above min(p1,p2) is unreachable and should be refused")
+	}
+	// max(0, p1+p2-1) = 0.1 -- a target below that is equally unreachable.
+	if _, err := RequiredCorrelation(0.6, 0.5, 0.05); err == nil {
+		t.Error("a target below max(0,p1+p2-1) is unreachable and should be refused")
+	}
+}
+
+func TestRequiredCorrelationAtIndependence(t *testing.T) {
+	// A target exactly equal to the independent product requires rho=0.
+	req, err := RequiredCorrelation(0.6, 0.5, 0.30)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if math.Abs(req.Required) > 1e-9 {
+		t.Errorf("Required = %v, want 0", req.Required)
+	}
+}

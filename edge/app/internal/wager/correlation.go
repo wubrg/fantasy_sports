@@ -50,3 +50,55 @@ func FrechetBlend(p1, p2, rho float64) (float64, error) {
 	}
 	return indep + (-rho)*(lower-indep), nil
 }
+
+// CorrelationRequirement is the inverse of FrechetBlend: what rho a target
+// joint probability (typically a book's own raw implied price) requires you
+// to believe, mirroring RequiredScenarioProb's "what would you have to
+// believe" shape (belief.go) for a different quantity.
+type CorrelationRequirement struct {
+	P1, P2   float64
+	Target   float64
+	Required float64 // rho*, in [-1,1]
+}
+
+// RequiredCorrelation solves for the rho that makes FrechetBlend(p1, p2, rho)
+// equal pTarget. Refuses a target outside [max(0,p1+p2-1), min(p1,p2)] --
+// that range is what any rho in [-1,1] can ever produce, so a target outside
+// it is not a correlation question at all; the two input probabilities
+// themselves disagree with the target.
+func RequiredCorrelation(p1, p2, pTarget float64) (CorrelationRequirement, error) {
+	if err := validProb(p1); err != nil {
+		return CorrelationRequirement{}, fmt.Errorf("wager: p1: %w", err)
+	}
+	if err := validProb(p2); err != nil {
+		return CorrelationRequirement{}, fmt.Errorf("wager: p2: %w", err)
+	}
+	if err := validProb(pTarget); err != nil {
+		return CorrelationRequirement{}, fmt.Errorf("wager: target: %w", err)
+	}
+	indep := p1 * p2
+	upper := p1
+	if p2 < upper {
+		upper = p2
+	}
+	lower := p1 + p2 - 1
+	if lower < 0 {
+		lower = 0
+	}
+	if pTarget > upper+1e-9 || pTarget < lower-1e-9 {
+		return CorrelationRequirement{}, fmt.Errorf(
+			"wager: target %.4f is outside [%.4f, %.4f], the range any correlation factor "+
+				"in [-1,1] can produce for p1=%.4f, p2=%.4f -- no rho explains this gap",
+			pTarget, lower, upper, p1, p2)
+	}
+
+	var rho float64
+	switch {
+	case pTarget >= indep && upper != indep:
+		rho = (pTarget - indep) / (upper - indep)
+	case pTarget < indep && indep != lower:
+		rho = -(indep - pTarget) / (indep - lower)
+	} // pTarget == indep, or upper/lower degenerately equal indep: rho stays 0
+
+	return CorrelationRequirement{P1: p1, P2: p2, Target: pTarget, Required: rho}, nil
+}
