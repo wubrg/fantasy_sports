@@ -1414,7 +1414,6 @@ func projectionsSettle(args []string) error {
 	}
 
 	var settle, void []betlog.SettledProjection
-	var reasons []string
 	var pending, already int
 	for _, sp := range projs {
 		p := sp.Projection
@@ -1437,10 +1436,8 @@ func projectionsSettle(args []string) error {
 					"projections settle: %s is marked settled but carries no actual value", p.Key())
 			}
 			settle = append(settle, sp)
-			reasons = append(reasons, "")
 		case "unavailable":
 			void = append(void, sp)
-			reasons = append(reasons, r.Reason)
 		default:
 			return fmt.Errorf("projections settle: %s: unknown status %q", p.Key(), r.Status)
 		}
@@ -1459,8 +1456,18 @@ func projectionsSettle(args []string) error {
 			return err
 		}
 	}
-	for i, sp := range void {
-		reason := reasons[len(settle)+i]
+	for _, sp := range void {
+		// Looked up fresh from the result map, by (player, outcome) -- not from
+		// a parallel slice indexed by position. A shared reasons slice appended
+		// to in mixed settle/void iteration order, then read back via
+		// reasons[len(settle)+i], only lines up when every settle match happens
+		// to precede every void match in iteration order -- which log order
+		// does not guarantee. (The sibling edgectl beliefs settle has exactly
+		// this bug today, at app/cmd/edgectl/beliefs.go:391 -- out of scope to
+		// fix here since it is existing, already-shipped code, but this task's
+		// own new code must not reproduce it.)
+		r := result[key{sp.Projection.Player, sp.Projection.Outcome}]
+		reason := r.Reason
 		if reason == "" {
 			reason = "unmeasurable"
 		}
