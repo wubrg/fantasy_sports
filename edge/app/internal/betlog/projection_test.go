@@ -94,3 +94,58 @@ func TestRecordRefusesAfterKickoff(t *testing.T) {
 		t.Error("expected RecordProjection to refuse a projection recorded after its own kickoff")
 	}
 }
+
+func TestSettleProjection(t *testing.T) {
+	dir := t.TempDir()
+	path := dir + "/log.jsonl"
+	p := validProjection()
+	id, _ := RecordProjection(path, p, p.Kickoff.Add(-time.Hour))
+
+	if err := SettleProjection(path, id, 41.0, ""); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadProjections(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded[0].Result != Measured {
+		t.Errorf("expected Measured, got %v", loaded[0].Result)
+	}
+	if loaded[0].Actual == nil || *loaded[0].Actual != 41.0 {
+		t.Fatalf("expected Actual 41.0, got %v", loaded[0].Actual)
+	}
+}
+
+func TestVoidProjectionRequiresAReason(t *testing.T) {
+	dir := t.TempDir()
+	path := dir + "/log.jsonl"
+	p := validProjection()
+	id, _ := RecordProjection(path, p, p.Kickoff.Add(-time.Hour))
+
+	if err := VoidProjection(path, id, ""); err == nil {
+		t.Error("expected VoidProjection to require a reason")
+	}
+	if err := VoidProjection(path, id, "player inactive"); err != nil {
+		t.Fatal(err)
+	}
+	loaded, _ := LoadProjections(path)
+	if loaded[0].Result != Void {
+		t.Errorf("expected Void, got %v", loaded[0].Result)
+	}
+	if loaded[0].Actual != nil {
+		t.Errorf("expected nil Actual on a void, got %v", *loaded[0].Actual)
+	}
+}
+
+func TestSettleProjectionRefusesADoubleSettle(t *testing.T) {
+	dir := t.TempDir()
+	path := dir + "/log.jsonl"
+	p := validProjection()
+	id, _ := RecordProjection(path, p, p.Kickoff.Add(-time.Hour))
+	if err := SettleProjection(path, id, 41.0, ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := SettleProjection(path, id, 50.0, ""); err == nil {
+		t.Error("expected a second settlement to be refused")
+	}
+}

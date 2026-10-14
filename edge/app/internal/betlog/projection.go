@@ -136,3 +136,47 @@ func LoadProjections(path string) ([]SettledProjection, error) {
 	}
 	return out, nil
 }
+
+// SettleProjection appends a realized value for a previously recorded
+// projection.
+func SettleProjection(path, id string, actual float64, note string) error {
+	if math.IsNaN(actual) || math.IsInf(actual, 0) {
+		return fmt.Errorf("betlog: actual %v is not a real number", actual)
+	}
+	// Check if this ID has already been settled, using scan()'s existing
+	// r.Result != Open check to reject double settlements.
+	recs, _, _, err := scan(path)
+	if err != nil {
+		return err
+	}
+	for _, r := range recs {
+		if r.ID == id && r.Result != Open {
+			return fmt.Errorf("betlog: %q was already settled as %q and cannot be re-settled", id, r.Result)
+		}
+	}
+	return Append(path, Entry{Kind: KindSettle, ID: id, Time: time.Now(),
+		Result: Measured, Actual: &actual, Note: note})
+}
+
+// VoidProjection records that a projection could not be settled -- the
+// player did not play, a name could not be matched, whatever the reason. Void
+// is excluded from scoring (Result.Counts()), the same convention VoidBelief
+// uses and for the same reason: an unmeasurable case is not the same claim as
+// "the player did worse than projected."
+func VoidProjection(path, id, reason string) error {
+	if reason == "" {
+		return fmt.Errorf("betlog: voiding %s needs a reason", id)
+	}
+	// Check if this ID has already been settled, using scan()'s existing
+	// r.Result != Open check to reject double settlements.
+	recs, _, _, err := scan(path)
+	if err != nil {
+		return err
+	}
+	for _, r := range recs {
+		if r.ID == id && r.Result != Open {
+			return fmt.Errorf("betlog: %q was already settled as %q and cannot be re-settled", id, r.Result)
+		}
+	}
+	return Append(path, Entry{Kind: KindSettle, ID: id, Time: time.Now(), Result: Void, Note: reason})
+}
