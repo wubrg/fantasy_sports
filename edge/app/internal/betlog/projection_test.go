@@ -1,6 +1,7 @@
 package betlog
 
 import (
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -162,5 +163,73 @@ func TestSettleProjectionCannotBeResettled(t *testing.T) {
 		t.Fatal("a second settlement was accepted; hindsight is what this log exists to prevent")
 	} else if !strings.Contains(err.Error(), "already settled") {
 		t.Errorf("error should name the double settlement, got: %v", err)
+	}
+}
+
+func TestScoreProjectionsMatchesAHandWorkedExample(t *testing.T) {
+	mk := func(median, line, actual float64) SettledProjection {
+		a := actual
+		return SettledProjection{
+			Projection: Projection{Outcome: "receiving_yards", OurMedian: median, MarketLine: line},
+			Result:     Measured, Actual: &a,
+		}
+	}
+	rows := []SettledProjection{mk(50, 60, 55), mk(50, 60, 48), mk(50, 60, 65), mk(50, 60, 52)}
+
+	s, err := ScoreProjections(rows, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.N != 4 {
+		t.Errorf("N = %d, want 4", s.N)
+	}
+	if math.Abs(s.OurMAE-6.0) > 1e-9 {
+		t.Errorf("OurMAE = %v, want 6.0", s.OurMAE)
+	}
+	if math.Abs(s.MarketMAE-7.5) > 1e-9 {
+		t.Errorf("MarketMAE = %v, want 7.5", s.MarketMAE)
+	}
+	if math.Abs(s.WinRate-0.5) > 1e-9 {
+		t.Errorf("WinRate = %v, want 0.5", s.WinRate)
+	}
+	if math.Abs(s.OurBias-(-5.0)) > 1e-9 {
+		t.Errorf("OurBias = %v, want -5.0", s.OurBias)
+	}
+	if math.Abs(s.MarketBias-5.0) > 1e-9 {
+		t.Errorf("MarketBias = %v, want 5.0", s.MarketBias)
+	}
+}
+
+func TestScoreProjectionsExcludesUnsettledAndVoid(t *testing.T) {
+	a := 55.0
+	rows := []SettledProjection{
+		{Projection: Projection{OurMedian: 50, MarketLine: 60}, Result: Measured, Actual: &a},
+		{Projection: Projection{OurMedian: 50, MarketLine: 60}, Result: Open}, // not yet settled
+		{Projection: Projection{OurMedian: 50, MarketLine: 60}, Result: Void}, // unmeasurable
+	}
+	s, err := ScoreProjections(rows, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.N != 1 {
+		t.Errorf("N = %d, want 1 (only the Measured row counts)", s.N)
+	}
+}
+
+func TestByOutcomeGroupsSeparately(t *testing.T) {
+	a := 55.0
+	rows := []SettledProjection{
+		{Projection: Projection{Outcome: "receiving_yards", OurMedian: 50, MarketLine: 60}, Result: Measured, Actual: &a},
+		{Projection: Projection{Outcome: "rushing_yards", OurMedian: 40, MarketLine: 45}, Result: Measured, Actual: &a},
+	}
+	byOutcome, err := ByOutcome(rows)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(byOutcome) != 2 {
+		t.Fatalf("expected 2 outcome groups, got %d: %+v", len(byOutcome), byOutcome)
+	}
+	if byOutcome["receiving_yards"].N != 1 || byOutcome["rushing_yards"].N != 1 {
+		t.Errorf("expected 1 row per outcome, got %+v", byOutcome)
 	}
 }

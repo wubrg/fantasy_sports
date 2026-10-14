@@ -158,3 +158,89 @@ func VoidProjection(path, id, reason string) error {
 	}
 	return Append(path, Entry{Kind: KindSettle, ID: id, Time: time.Now(), Result: Void, Note: reason})
 }
+
+// ProjectionScore compares the grid's median against the market's line, over
+// a settled population. Unlike Calibration (betlog.go) or the belief log's
+// scoring, this measures point-estimate accuracy, not probabilistic
+// calibration -- "was our number closer to reality," not "did a stated
+// probability come true at the stated rate." Different question, different
+// math, deliberately not reused from either existing scorer.
+type ProjectionScore struct {
+	N int // settled rows scored; pending and void rows are excluded
+
+	OurMAE    float64 // mean(|OurMedian - Actual|)
+	MarketMAE float64 // mean(|MarketLine - Actual|)
+
+	// WinRate is the fraction of rows where our median was STRICTLY closer to
+	// the actual than the market's line. A tie counts toward neither side.
+	WinRate float64
+
+	// OurBias and MarketBias are mean(estimate - actual): positive means
+	// systematically projecting high, negative means systematically low. Two
+	// sides can have the same MAE while one is honest noise and the other is a
+	// consistent directional error, and only the signed mean distinguishes them.
+	OurBias    float64
+	MarketBias float64
+}
+
+// ScoreProjections computes a ProjectionScore over settled rows only --
+// Result == Measured, Actual != nil. Pending (Open) and unmeasurable (Void)
+// rows contribute nothing, mirroring how beliefs score excludes ungraded
+// predictions.
+func ScoreProjections(projs []SettledProjection, filter func(SettledProjection) bool) (ProjectionScore, error) {
+	var s ProjectionScore
+	var ourAbsSum, marketAbsSum, ourSignedSum, marketSignedSum float64
+	var wins int
+	for _, p := range projs {
+		if filter != nil && !filter(p) {
+			continue
+		}
+		if p.Result != Measured || p.Actual == nil {
+			continue
+		}
+		actual := *p.Actual
+		ourErr := p.Projection.OurMedian - actual
+		marketErr := p.Projection.MarketLine - actual
+		ourAbs, marketAbs := math.Abs(ourErr), math.Abs(marketErr)
+
+		s.N++
+		ourAbsSum += ourAbs
+		marketAbsSum += marketAbs
+		ourSignedSum += ourErr
+		marketSignedSum += marketErr
+		if ourAbs < marketAbs {
+			wins++
+		}
+	}
+	if s.N > 0 {
+		s.OurMAE = ourAbsSum / float64(s.N)
+		s.MarketMAE = marketAbsSum / float64(s.N)
+		s.WinRate = float64(wins) / float64(s.N)
+		s.OurBias = ourSignedSum / float64(s.N)
+		s.MarketBias = marketSignedSum / float64(s.N)
+	}
+	return s, nil
+}
+
+// ByOutcome scores settled projections grouped by outcome -- receiving_yards
+// is not passing_yards, and a pooled number would hide which one the grid
+// actually has skill at, the same reasoning BySource (betlog.go) applies to
+// scenario source.
+func ByOutcome(projs []SettledProjection) (map[string]ProjectionScore, error) {
+	seen := map[string]bool{}
+	for _, p := range projs {
+		seen[p.Projection.Outcome] = true
+	}
+	out := map[string]ProjectionScore{}
+	for outcome := range seen {
+		want := outcome
+		s, err := ScoreProjections(projs, func(p SettledProjection) bool {
+			return p.Projection.Outcome == want
+		})
+		if err != nil {
+			return nil, err
+		}
+		out[outcome] = s
+	}
+	return out, nil
+}
