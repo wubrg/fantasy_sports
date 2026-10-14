@@ -1,6 +1,7 @@
 package betlog
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -137,15 +138,29 @@ func TestVoidProjectionRequiresAReason(t *testing.T) {
 	}
 }
 
-func TestSettleProjectionRefusesADoubleSettle(t *testing.T) {
+func TestSettleProjectionCannotBeResettled(t *testing.T) {
 	dir := t.TempDir()
 	path := dir + "/log.jsonl"
 	p := validProjection()
 	id, _ := RecordProjection(path, p, p.Kickoff.Add(-time.Hour))
-	if err := SettleProjection(path, id, 41.0, ""); err != nil {
+	if err := SettleProjection(path, id, 41.0, "first"); err != nil {
 		t.Fatal(err)
 	}
-	if err := SettleProjection(path, id, 50.0, ""); err == nil {
-		t.Error("expected a second settlement to be refused")
+	// Appending a second settlement is possible -- the file is append-only --
+	// but the log must then refuse to LOAD rather than take the last write.
+	// This mirrors TestBeliefCannotBeResettled (belief_test.go) exactly: the
+	// second Settle/SettleBelief call itself succeeds, because Append has no
+	// read-before-write check; only scan()'s replay (exercised via Load) is
+	// where the double-settle is caught. A test asserting the second
+	// SettleProjection call's own return value would be testing behavior
+	// this package does not have anywhere else, and no new code should be
+	// added to manufacture it for projections alone.
+	if err := SettleProjection(path, id, 50.0, "second"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadProjections(path); err == nil {
+		t.Fatal("a second settlement was accepted; hindsight is what this log exists to prevent")
+	} else if !strings.Contains(err.Error(), "already settled") {
+		t.Errorf("error should name the double settlement, got: %v", err)
 	}
 }
