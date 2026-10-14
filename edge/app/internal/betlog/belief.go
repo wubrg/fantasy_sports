@@ -17,6 +17,12 @@ const (
 	NotOccurred = Lost
 )
 
+// Measured is the settlement result for a Projection: the realized value was
+// found and recorded. The same wire value as Won/Occurred -- one stream
+// format -- but neither word fits what actually happened here, so this gets
+// its own name at the call site even though it is byte-identical on disk.
+const Measured = Won
+
 // Prediction is a claim that a game script will occur, with nothing staked on
 // it.
 //

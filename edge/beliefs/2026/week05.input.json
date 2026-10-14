@@ -1,0 +1,658 @@
+{
+ "season": 2026,
+ "week": 5,
+ "generated_at": "2026-10-07T15:52:57Z",
+ "generated_by": "edge/model/analysis/beliefpack.py pack",
+ "cache": {
+  "games.csv": {
+   "bytes": 2183211,
+   "fetched_at": "2026-10-07T15:52:01Z",
+   "sha256": "b2f53b749a1236890d4cd00957d2cc91c6296aa54971a7f5cc8849ff8c30e35e",
+   "url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
+  },
+  "play_by_play_2026.csv.gz": {
+   "bytes": 4380426,
+   "fetched_at": "2026-10-07T15:52:03Z",
+   "sha256": "2b3e9f2c6f92123f3dd41d94009e1978e8635beb775cd4dab32e79c60c46e080",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_2026.csv.gz"
+  }
+ },
+ "staff_source": {
+  "file": "beliefs/staff-2026.csv",
+  "sha256": "219dfee77a8d69c58c13d8e6dff54bd53689c2dabf0728c63cc6690f1b7d94d2"
+ },
+ "definitions": {
+  "shootout": {
+   "basis": "total",
+   "op": ">",
+   "threshold": 50,
+   "unit": "game"
+  },
+  "blowout_loss": {
+   "basis": "margin",
+   "op": "<",
+   "threshold": -7,
+   "unit": "team"
+  },
+  "pass_heavy": {
+   "basis": "offense_proe",
+   "op": ">",
+   "threshold": 3.0,
+   "unit": "team"
+  },
+  "efficient_offense": {
+   "basis": "success_rate",
+   "op": ">",
+   "threshold": 0.46,
+   "unit": "team"
+  }
+ },
+ "base_rates": {
+  "efficient_offense": 0.3721,
+  "pass_heavy": 0.2648,
+  "shootout": 0.3378,
+  "blowout_loss": 0.2617
+ },
+ "spread_convention": "spread_line is the home team's expected margin; positive means the home side is favoured",
+ "form_available": true,
+ "form_absent_because": "",
+ "games": [
+  {
+   "game_id": "2026_05_TB_DAL",
+   "away": "TB",
+   "home": "DAL",
+   "kickoff": "2026-10-08T20:15:00-04:00",
+   "total_line": 47.5,
+   "spread_line": 8.5,
+   "div_game": false,
+   "roof": null,
+   "surface": "matrixturf",
+   "teams": {
+    "TB": {
+     "coach": "Todd Bowles",
+     "coach_is_new": false,
+     "playcaller": "Zac Robinson",
+     "oc": "Zac Robinson",
+     "dc": "Todd Bowles",
+     "rest_days": 4,
+     "prior_form": {
+      "success_rate_prior": 0.3915,
+      "offense_prior": -1.3852,
+      "prior_games": 4,
+      "raoe_prior": -0.3469
+     }
+    },
+    "DAL": {
+     "coach": "Brian Schottenheimer",
+     "coach_is_new": false,
+     "playcaller": "Brian Schottenheimer",
+     "oc": "Klayton Adams",
+     "dc": "Christian Parker",
+     "rest_days": 4,
+     "prior_form": {
+      "success_rate_prior": 0.4819,
+      "offense_prior": 4.7207,
+      "prior_games": 4
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_PHI_JAX",
+   "away": "PHI",
+   "home": "JAX",
+   "kickoff": "2026-10-11T09:30:00-04:00",
+   "total_line": 42.5,
+   "spread_line": 7.0,
+   "div_game": false,
+   "roof": "outdoors",
+   "surface": "grass",
+   "teams": {
+    "PHI": {
+     "coach": "Nick Sirianni",
+     "coach_is_new": false,
+     "playcaller": "Sean Mannion",
+     "oc": "Sean Mannion",
+     "dc": "Vic Fangio",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.3719,
+      "offense_prior": -6.0665,
+      "prior_games": 4
+     }
+    },
+    "JAX": {
+     "coach": "Liam Coen",
+     "coach_is_new": false,
+     "playcaller": "Liam Coen",
+     "oc": "Grant Udinski",
+     "dc": "Anthony Campanile",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.4956,
+      "offense_prior": -3.024,
+      "prior_games": 4,
+      "raoe_prior": 0.7786
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_CHI_GB",
+   "away": "CHI",
+   "home": "GB",
+   "kickoff": "2026-10-11T13:00:00-04:00",
+   "total_line": 45.5,
+   "spread_line": -3.0,
+   "div_game": true,
+   "roof": "outdoors",
+   "surface": "grass",
+   "teams": {
+    "CHI": {
+     "coach": "Ben Johnson",
+     "coach_is_new": false,
+     "playcaller": "Ben Johnson",
+     "oc": "Press Taylor",
+     "dc": "Dennis Allen",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.4752,
+      "offense_prior": -2.88,
+      "prior_games": 4,
+      "raoe_prior": 0.5219
+     }
+    },
+    "GB": {
+     "coach": "Matt LaFleur",
+     "coach_is_new": false,
+     "playcaller": "Matt LaFleur",
+     "oc": "Adam Stenavich",
+     "dc": "Jonathan Gannon",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.3916,
+      "offense_prior": 2.1635,
+      "prior_games": 4
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_CIN_MIA",
+   "away": "CIN",
+   "home": "MIA",
+   "kickoff": "2026-10-11T13:00:00-04:00",
+   "total_line": 42.5,
+   "spread_line": -7.0,
+   "div_game": false,
+   "roof": "outdoors",
+   "surface": "grass",
+   "teams": {
+    "CIN": {
+     "coach": "Zac Taylor",
+     "coach_is_new": false,
+     "playcaller": "Zac Taylor",
+     "oc": "Dan Pitcher",
+     "dc": "Al Golden",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.4491,
+      "offense_prior": 5.4165,
+      "prior_games": 4
+     }
+    },
+    "MIA": {
+     "coach": "Jeff Hafley",
+     "coach_is_new": true,
+     "playcaller": "Bobby Slowik",
+     "oc": "Bobby Slowik",
+     "dc": "Sean Duggan",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.3501,
+      "offense_prior": -9.5337,
+      "prior_games": 4
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_LV_NE",
+   "away": "LV",
+   "home": "NE",
+   "kickoff": "2026-10-11T13:00:00-04:00",
+   "total_line": 45.5,
+   "spread_line": 3.5,
+   "div_game": false,
+   "roof": "outdoors",
+   "surface": "fieldturf",
+   "teams": {
+    "LV": {
+     "coach": "Klint Kubiak",
+     "coach_is_new": true,
+     "playcaller": "Klint Kubiak",
+     "oc": "Andrew Janocko",
+     "dc": "Rob Leonard",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.422,
+      "offense_prior": -3.1582,
+      "prior_games": 4,
+      "raoe_prior": -0.101
+     }
+    },
+    "NE": {
+     "coach": "Mike Vrabel",
+     "coach_is_new": false,
+     "playcaller": "Josh McDaniels",
+     "oc": "Josh McDaniels",
+     "dc": "Zak Kuhr",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.4276,
+      "offense_prior": 0.1547,
+      "prior_games": 4,
+      "raoe_prior": -0.0164
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_MIN_NO",
+   "away": "MIN",
+   "home": "NO",
+   "kickoff": "2026-10-11T13:00:00-04:00",
+   "total_line": 42.5,
+   "spread_line": -1.5,
+   "div_game": false,
+   "roof": "dome",
+   "surface": "sportturf",
+   "teams": {
+    "MIN": {
+     "coach": "Kevin O'Connell",
+     "coach_is_new": false,
+     "playcaller": "Kevin O'Connell",
+     "oc": "Wes Phillips",
+     "dc": "Brian Flores",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.3292,
+      "offense_prior": -4.0757,
+      "prior_games": 4,
+      "raoe_prior": -0.4344
+     }
+    },
+    "NO": {
+     "coach": "Kellen Moore",
+     "coach_is_new": false,
+     "playcaller": "Kellen Moore",
+     "oc": "Doug Nussmeier",
+     "dc": "Brandon Staley",
+     "rest_days": 6,
+     "prior_form": {
+      "success_rate_prior": 0.4439,
+      "offense_prior": 2.0836,
+      "prior_games": 4
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_CLE_NYJ",
+   "away": "CLE",
+   "home": "NYJ",
+   "kickoff": "2026-10-11T13:00:00-04:00",
+   "total_line": 39.5,
+   "spread_line": 2.5,
+   "div_game": false,
+   "roof": "outdoors",
+   "surface": "fieldturf",
+   "teams": {
+    "CLE": {
+     "coach": "Todd Monken",
+     "coach_is_new": true,
+     "playcaller": "Todd Monken",
+     "oc": "Travis Switzer",
+     "dc": "Mike Rutenberg",
+     "rest_days": 10,
+     "prior_form": {
+      "success_rate_prior": 0.4343,
+      "offense_prior": 1.132,
+      "prior_games": 4
+     }
+    },
+    "NYJ": {
+     "coach": "Aaron Glenn",
+     "coach_is_new": false,
+     "playcaller": "Frank Reich",
+     "oc": "Frank Reich",
+     "dc": "Brian Duker",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.4367,
+      "offense_prior": -2.8152,
+      "prior_games": 4
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_IND_PIT",
+   "away": "IND",
+   "home": "PIT",
+   "kickoff": "2026-10-11T13:00:00-04:00",
+   "total_line": 44.5,
+   "spread_line": 2.5,
+   "div_game": false,
+   "roof": "outdoors",
+   "surface": "grass",
+   "teams": {
+    "IND": {
+     "coach": "Shane Steichen",
+     "coach_is_new": false,
+     "playcaller": "Shane Steichen",
+     "oc": "Jim Bob Cooter",
+     "dc": "Lou Anarumo",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.4304,
+      "offense_prior": -3.6343,
+      "prior_games": 4,
+      "raoe_prior": -0.2633
+     }
+    },
+    "PIT": {
+     "coach": "Mike McCarthy",
+     "coach_is_new": true,
+     "playcaller": "Mike McCarthy",
+     "oc": "Brian Angelichio",
+     "dc": "Patrick Graham",
+     "rest_days": 10,
+     "prior_form": {
+      "success_rate_prior": 0.4132,
+      "offense_prior": 4.2586,
+      "prior_games": 4
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_HOU_TEN",
+   "away": "HOU",
+   "home": "TEN",
+   "kickoff": "2026-10-11T13:00:00-04:00",
+   "total_line": 37.5,
+   "spread_line": -7.5,
+   "div_game": true,
+   "roof": "outdoors",
+   "surface": "grass",
+   "teams": {
+    "HOU": {
+     "coach": "DeMeco Ryans",
+     "coach_is_new": false,
+     "playcaller": "Nick Caley",
+     "oc": "Nick Caley",
+     "dc": "Matt Burke",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.4216,
+      "offense_prior": -1.2792,
+      "prior_games": 4
+     }
+    },
+    "TEN": {
+     "coach": "Robert Saleh",
+     "coach_is_new": true,
+     "playcaller": "Brian Daboll",
+     "oc": "Brian Daboll",
+     "dc": "Gus Bradley",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.4142,
+      "offense_prior": -6.8897,
+      "prior_games": 4
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_NYG_WAS",
+   "away": "NYG",
+   "home": "WAS",
+   "kickoff": "2026-10-11T13:00:00-04:00",
+   "total_line": 43.5,
+   "spread_line": 3.5,
+   "div_game": true,
+   "roof": "outdoors",
+   "surface": "grass",
+   "teams": {
+    "NYG": {
+     "coach": "John Harbaugh",
+     "coach_is_new": true,
+     "playcaller": "Matt Nagy",
+     "oc": "Matt Nagy",
+     "dc": "Dennard Wilson",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.394,
+      "offense_prior": -9.8171,
+      "prior_games": 4,
+      "raoe_prior": -0.3315
+     }
+    },
+    "WAS": {
+     "coach": "Dan Quinn",
+     "coach_is_new": false,
+     "playcaller": "David Blough",
+     "oc": "David Blough",
+     "dc": "Daronte Jones",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.3825,
+      "offense_prior": -2.1433,
+      "prior_games": 4
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_DEN_LAC",
+   "away": "DEN",
+   "home": "LAC",
+   "kickoff": "2026-10-11T16:05:00-04:00",
+   "total_line": 42.5,
+   "spread_line": -3.5,
+   "div_game": true,
+   "roof": "dome",
+   "surface": "matrixturf",
+   "teams": {
+    "DEN": {
+     "coach": "Sean Payton",
+     "coach_is_new": false,
+     "playcaller": "Davis Webb",
+     "oc": "Davis Webb",
+     "dc": "Vance Joseph",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.4135,
+      "offense_prior": -2.1465,
+      "prior_games": 4
+     }
+    },
+    "LAC": {
+     "coach": "Jim Harbaugh",
+     "coach_is_new": false,
+     "playcaller": "Mike McDaniel",
+     "oc": "Mike McDaniel",
+     "dc": "Chris O'Leary",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.4032,
+      "offense_prior": -8.511,
+      "prior_games": 4
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_DET_ARI",
+   "away": "DET",
+   "home": "ARI",
+   "kickoff": "2026-10-11T16:25:00-04:00",
+   "total_line": 54.5,
+   "spread_line": -5.5,
+   "div_game": false,
+   "roof": null,
+   "surface": "grass",
+   "teams": {
+    "DET": {
+     "coach": "Dan Campbell",
+     "coach_is_new": false,
+     "playcaller": "Drew Petzing",
+     "oc": "Drew Petzing",
+     "dc": "Kelvin Sheppard",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.4971,
+      "offense_prior": 0.6807,
+      "prior_games": 4,
+      "raoe_prior": -0.1822
+     }
+    },
+    "ARI": {
+     "coach": "Mike LaFleur",
+     "coach_is_new": true,
+     "playcaller": "Mike LaFleur",
+     "oc": "Nathaniel Hackett",
+     "dc": "Nick Rallis",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.4485,
+      "offense_prior": 0.3331,
+      "prior_games": 4
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_SF_SEA",
+   "away": "SF",
+   "home": "SEA",
+   "kickoff": "2026-10-11T16:25:00-04:00",
+   "total_line": 46.5,
+   "spread_line": 2.5,
+   "div_game": true,
+   "roof": "outdoors",
+   "surface": "fieldturf",
+   "teams": {
+    "SF": {
+     "coach": "Kyle Shanahan",
+     "coach_is_new": false,
+     "playcaller": "Kyle Shanahan",
+     "oc": "Klay Kubiak",
+     "dc": "Raheem Morris",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.5481,
+      "offense_prior": 3.2429,
+      "prior_games": 4,
+      "raoe_prior": 0.181
+     }
+    },
+    "SEA": {
+     "coach": "Mike Macdonald",
+     "coach_is_new": false,
+     "playcaller": "Brian Fleury",
+     "oc": "Brian Fleury",
+     "dc": "Aden Durde",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.4399,
+      "offense_prior": -3.8701,
+      "prior_games": 4
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_BAL_ATL",
+   "away": "BAL",
+   "home": "ATL",
+   "kickoff": "2026-10-11T20:20:00-04:00",
+   "total_line": 43.5,
+   "spread_line": 3.5,
+   "div_game": false,
+   "roof": null,
+   "surface": "fieldturf",
+   "teams": {
+    "BAL": {
+     "coach": "Jesse Minter",
+     "coach_is_new": true,
+     "playcaller": "Declan Doyle",
+     "oc": "Declan Doyle",
+     "dc": "Anthony Weaver",
+     "rest_days": 7,
+     "prior_form": {
+      "success_rate_prior": 0.5193,
+      "offense_prior": -4.0811,
+      "prior_games": 4,
+      "raoe_prior": 0.1268
+     }
+    },
+    "ATL": {
+     "coach": "Kevin Stefanski",
+     "coach_is_new": true,
+     "playcaller": "Tommy Rees",
+     "oc": "Tommy Rees",
+     "dc": "Jeff Ulbrich",
+     "rest_days": 6,
+     "prior_form": {
+      "success_rate_prior": 0.4957,
+      "offense_prior": -10.3347,
+      "prior_games": 4,
+      "raoe_prior": 0.7629
+     }
+    }
+   }
+  },
+  {
+   "game_id": "2026_05_BUF_LA",
+   "away": "BUF",
+   "home": "LA",
+   "kickoff": "2026-10-12T20:15:00-04:00",
+   "total_line": 54.5,
+   "spread_line": 3.0,
+   "div_game": false,
+   "roof": "dome",
+   "surface": "matrixturf",
+   "teams": {
+    "BUF": {
+     "coach": "Joe Brady",
+     "coach_is_new": true,
+     "playcaller": "Joe Brady",
+     "oc": "Pete Carmichael Jr.",
+     "dc": "Jim Leonhard",
+     "rest_days": 8,
+     "prior_form": {
+      "success_rate_prior": 0.4699,
+      "offense_prior": -0.4836,
+      "prior_games": 4
+     }
+    },
+    "LA": {
+     "coach": "Sean McVay",
+     "coach_is_new": false,
+     "playcaller": "Sean McVay",
+     "oc": "Nathan Scheelhaase",
+     "dc": "Chris Shula",
+     "rest_days": 8,
+     "prior_form": {
+      "success_rate_prior": 0.4737,
+      "offense_prior": 0.2564,
+      "prior_games": 4
+     }
+    }
+   }
+  }
+ ]
+}

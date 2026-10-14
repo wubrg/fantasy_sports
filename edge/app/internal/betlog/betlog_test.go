@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"edge/internal/wager"
 )
@@ -575,5 +576,37 @@ func TestUnknownBookRejected(t *testing.T) {
 		Book: wager.Book("FanDuel"),
 	}); err != nil {
 		t.Errorf("a known book should be accepted regardless of case: %v", err)
+	}
+}
+
+// TestScanRegistersProjectionEntries confirms that scan() registers and settles
+// projection entries exactly the way it does for bets and beliefs.
+func TestScanRegistersProjectionEntries(t *testing.T) {
+	dir := t.TempDir()
+	path := dir + "/log.jsonl"
+	proj := &Projection{Season: 2026, Week: 6, Player: "Cooper Kupp",
+		Outcome: "receiving_yards", Scenario: "shootout", Kickoff: time.Now().Add(time.Hour)}
+	if err := Append(path, Entry{Kind: KindProjection, ID: "p1", Time: time.Now(), Projection: proj}); err != nil {
+		t.Fatal(err)
+	}
+	actual := 34.0
+	if err := Append(path, Entry{Kind: KindSettle, ID: "p1", Time: time.Now(), Result: Measured, Actual: &actual}); err != nil {
+		t.Fatal(err)
+	}
+	recs, _, skipped, err := scan(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(skipped) != 0 {
+		t.Fatalf("expected no skipped kinds, got %v", skipped)
+	}
+	if len(recs) != 1 {
+		t.Fatalf("expected 1 record, got %d", len(recs))
+	}
+	if recs[0].Proj == nil || recs[0].Proj.Player != "Cooper Kupp" {
+		t.Fatalf("projection not carried through scan: %+v", recs[0])
+	}
+	if recs[0].Actual == nil || *recs[0].Actual != 34.0 {
+		t.Fatalf("actual not carried through scan: %+v", recs[0].Actual)
 	}
 }
