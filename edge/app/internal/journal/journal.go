@@ -243,6 +243,7 @@ func Settle(betlogPath, ledgerPath string, id string, result betlog.Result, sett
 //     any re-granted bonus token is a separate grant event, not a return)
 //   - lost:                 no returns
 func computeReturns(bet betlog.Bet, result betlog.Result, settledPrice *wager.American, book string, now time.Time, id string) (*ledger.Lot, error) {
+	bankroll, bankrollErr := betlog.ParseBankroll(bet.Bankroll)
 	cash := AssetForBankroll(bet.Bankroll) == ledger.Cash
 
 	price := bet.Price
@@ -251,6 +252,7 @@ func computeReturns(bet betlog.Bet, result betlog.Result, settledPrice *wager.Am
 	}
 
 	var amount float64
+	asset := ledger.Cash
 	switch result {
 	case betlog.Won:
 		pm, err := price.ProfitMultiple()
@@ -267,8 +269,23 @@ func computeReturns(bet betlog.Bet, result betlog.Result, settledPrice *wager.Am
 			amount = bet.Stake // stake back
 		}
 		// bonus push/void realizes nothing; amount stays 0.
+	case betlog.Lost:
+		// A lost no-sweat stake isn't a plain cash loss: the book refunds
+		// NoSweatConversion of it, as a bonus bet, not cash -- that is the
+		// whole point of the token. bankrollErr is checked rather than
+		// ignored: a no-sweat bet with an unparseable bankroll string must
+		// not silently fall through to "returns nothing", which would mask
+		// the same class of bug this case exists to fix.
+		if bankrollErr != nil {
+			return nil, fmt.Errorf("cannot compute returns for %s: %w", id, bankrollErr)
+		}
+		if bankroll == wager.NoSweat {
+			amount = bet.Stake * wager.NoSweatConversion
+			asset = ledger.Bonus
+		}
+		// a real-money or bonus-bet loss returns nothing; amount stays 0.
 	default:
-		// A loss (or anything else) returns nothing.
+		// Anything else returns nothing.
 		return nil, nil
 	}
 
@@ -278,7 +295,7 @@ func computeReturns(bet betlog.Bet, result betlog.Result, settledPrice *wager.Am
 	return &ledger.Lot{
 		ID:     ledger.NewID(now, "returns-"+id),
 		Book:   book,
-		Asset:  ledger.Cash,
+		Asset:  asset,
 		Amount: amount,
 	}, nil
 }

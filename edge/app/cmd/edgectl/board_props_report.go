@@ -65,12 +65,19 @@ type marketRow struct {
 	FairDevig  *float64 `json:"fair_devig"`
 	Breakeven  float64  `json:"breakeven"`
 	Hold       *float64 `json:"hold"`
+	// Line is the posted line (points/handicap/spread/total number), whenever
+	// the capture carried one. Nil for markets with no line of their own
+	// (Moneyline, Anytime TD). Present, and redundant with Selection's own
+	// text, for a ladder/alt-line rung ("Sam Darnold 230+" also carries
+	// Line=230) -- a consumer reading structured JSON gets the number as a
+	// clean float either way, rather than needing to parse it back out of a
+	// label built for a human to read.
+	Line *float64 `json:"line,omitempty"`
 
 	// Unexported fields are for the human-readable report only; they are not
 	// part of the serialised MARKET-block contract above.
 	boostBE  *float64 // one-sided cash-lens boosted breakeven
 	suspect  bool     // overround outside the plausible band (two-sided only)
-	line     *float64 // the posted line, when the capture carried one
 	category string   // oddspull category, for grouping the text report
 }
 
@@ -107,7 +114,7 @@ func propsRows(dir string, week int, gameFilter string) ([]marketRow, ingestResu
 			ImpliedRaw: raw,
 			Breakeven:  raw, // the hurdle rate is the raw implied prob, by definition
 			category:   o.Category,
-			line:       o.Line,
+			Line:       o.Line,
 		}
 		if d, ok := fair[outcomeKey(o)]; ok {
 			f, h := d.Fair, d.Hold
@@ -291,7 +298,7 @@ func printPropsReport(rows []marketRow, ing ingestResult, dir string, week int, 
 			}
 			// A one-sided prop shows its boosted breakeven instead of a fair
 			// value, because that is the number the cash lens actually turns on.
-			sel := r.Selection
+			sel := selectionText(r)
 			if r.boostBE != nil {
 				fair = fmt.Sprintf("be %.1f%%", *r.boostBE*100)
 			}
@@ -311,6 +318,28 @@ func printPropsReport(rows []marketRow, ing ingestResult, dir string, week int, 
 			fmt.Printf("    %s  %s\n", s["at"], s["name"])
 		}
 	}
+}
+
+// spreadTotalMarkets carries no number in its own Selection text (a bare team
+// name or "Over"/"Under"), unlike a ladder rung ("Sam Darnold 230+") or a
+// player's own-outcome market, which already reads naturally. Only these
+// four get the line appended for the human report, so a selection is never
+// printed with its own number twice.
+var spreadTotalMarkets = map[string]bool{
+	"Spread": true, "Spread Alternate": true,
+	"Total": true, "Total Alternate": true,
+}
+
+// selectionText is what the human-readable report prints for a row's
+// selection: the bare text, except for a Spread/Total (or alternate) market,
+// where the line itself is the only thing distinguishing one row from the
+// next and was previously missing from the report entirely -- "SEA Seahawks"
+// told a reader nothing about whether that was -2.5 or -9.5.
+func selectionText(r marketRow) string {
+	if r.Line != nil && spreadTotalMarkets[r.Market] {
+		return fmt.Sprintf("%s %g", r.Selection, *r.Line)
+	}
+	return r.Selection
 }
 
 func truncate(s string, n int) string {
