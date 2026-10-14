@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"sort"
 
@@ -19,8 +20,10 @@ func projectionsCmd(args []string) error {
 		return projectionsSettle(args[1:])
 	case "score":
 		return projectionsScore(args[1:])
+	case "robust":
+		return projectionsRobust(args[1:])
 	}
-	return fmt.Errorf("edgectl projections: unknown subcommand %q (want settle or score)", args[0])
+	return fmt.Errorf("edgectl projections: unknown subcommand %q (want settle, score or robust)", args[0])
 }
 
 type outcomesFile struct {
@@ -131,6 +134,122 @@ func projectionsSettle(args []string) error {
 		if err := betlog.VoidProjection(*logPath, sp.ID, reason); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// robustScenario is one scenario's priced view of a player/outcome.
+type robustScenario struct {
+	name       string
+	ourMedian  float64
+	marketLine float64
+}
+
+// robustGroup is a (player, outcome) the grid priced across multiple game
+// scripts this week, with the distinct scenarios it cleared.
+type robustGroup struct {
+	player    string
+	outcome   string
+	count     int              // distinct scenarios
+	maxGap    float64          // largest |OurMedian - MarketLine| across the group
+	scenarios []robustScenario // one per distinct scenario, sorted by name
+}
+
+// robustGroups loads the projection log and returns the (player, outcome)
+// groups for the given season/week that the grid priced under at least
+// minScenarios distinct game-script scenarios. Settlement status is ignored --
+// an Open, Measured or Void row all count as "the grid found this priceable" --
+// because this runs before a week is settled. Results are sorted by distinct
+// scenario count descending, ties broken by the largest market gap descending.
+func robustGroups(logPath string, season, week, minScenarios int) ([]robustGroup, error) {
+	projs, err := betlog.LoadProjections(logPath)
+	if err != nil {
+		return nil, err
+	}
+
+	type key struct{ player, outcome string }
+	// Dedupe scenarios per group: a report that re-priced a player/outcome
+	// under the same scenario must count once, not twice.
+	byGroup := map[key]map[string]robustScenario{}
+	order := []key{} // first-seen order, for a stable base before sorting
+	for _, sp := range projs {
+		p := sp.Projection
+		if p.Season != season || p.Week != week {
+			continue
+		}
+		k := key{p.Player, p.Outcome}
+		if byGroup[k] == nil {
+			byGroup[k] = map[string]robustScenario{}
+			order = append(order, k)
+		}
+		byGroup[k][p.Scenario] = robustScenario{
+			name: p.Scenario, ourMedian: p.OurMedian, marketLine: p.MarketLine}
+	}
+
+	var groups []robustGroup
+	for _, k := range order {
+		scenarios := byGroup[k]
+		if len(scenarios) < minScenarios {
+			continue
+		}
+		g := robustGroup{player: k.player, outcome: k.outcome, count: len(scenarios)}
+		for _, s := range scenarios {
+			g.scenarios = append(g.scenarios, s)
+			if gap := math.Abs(s.ourMedian - s.marketLine); gap > g.maxGap {
+				g.maxGap = gap
+			}
+		}
+		sort.Slice(g.scenarios, func(i, j int) bool {
+			return g.scenarios[i].name < g.scenarios[j].name
+		})
+		groups = append(groups, g)
+	}
+
+	sort.SliceStable(groups, func(i, j int) bool {
+		if groups[i].count != groups[j].count {
+			return groups[i].count > groups[j].count
+		}
+		return groups[i].maxGap > groups[j].maxGap
+	})
+	return groups, nil
+}
+
+// projectionsRobust surfaces the player/outcomes the fitted grid corroborates
+// across multiple game scripts this week -- the "which bets does the grid
+// believe in regardless of how the game breaks" query that was previously only
+// answerable by re-reading report prose.
+func projectionsRobust(args []string) error {
+	fs := flag.NewFlagSet("projections robust", flag.ExitOnError)
+	logPath := fs.String("log", "beliefs/projections.jsonl", "the projection log")
+	season := fs.Int("season", 0, "the season to scan (required)")
+	week := fs.Int("week", 0, "the week to scan (required)")
+	minScenarios := fs.Int("min-scenarios", 3, "keep player/outcomes priced under at least this many distinct scenarios")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *season <= 0 {
+		return fmt.Errorf("projections robust: -season is required")
+	}
+	if *week <= 0 {
+		return fmt.Errorf("projections robust: -week is required")
+	}
+
+	groups, err := robustGroups(*logPath, *season, *week, *minScenarios)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("ROBUST PROJECTIONS  %d week %d  (>= %d scenarios)\n\n", *season, *week, *minScenarios)
+	if len(groups) == 0 {
+		fmt.Printf("  nothing cleared %d scenarios this week\n", *minScenarios)
+		return nil
+	}
+	for _, g := range groups {
+		fmt.Printf("  %s  %s  (%d of 4 scenarios)\n", g.player, g.outcome, g.count)
+		for _, s := range g.scenarios {
+			fmt.Printf("    %-18s  our %.1f  market %.1f\n", s.name, s.ourMedian, s.marketLine)
+		}
+		fmt.Println()
 	}
 	return nil
 }
