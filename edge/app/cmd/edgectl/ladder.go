@@ -276,6 +276,49 @@ func parseSizes(s string, nLegs int) ([]int, error) {
 	return out, nil
 }
 
+// correlationSpec is one game's correlation chain: the rhos to apply, in
+// leg-listing order, one per chain step (N-1 values for N same-game legs).
+type correlationSpec struct {
+	game string
+	rhos []float64
+}
+
+// parseCorrelation reads "-correlation"'s nested format: semicolon-separated
+// per-game entries, each "game:rho[,rho,...]". Empty string is "no
+// correlation specs", not an error -- -correlation is entirely optional.
+func parseCorrelation(s string) ([]correlationSpec, error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil, nil
+	}
+	var specs []correlationSpec
+	for _, entry := range strings.Split(s, ";") {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+		fields := strings.SplitN(entry, ":", 2)
+		if len(fields) != 2 {
+			return nil, fmt.Errorf("-correlation entry %q: want game:rho[,rho,...]", entry)
+		}
+		game := strings.TrimSpace(fields[0])
+		if game == "" {
+			return nil, fmt.Errorf("-correlation entry %q: empty game tag", entry)
+		}
+		rhos, err := parseFloatList(fields[1])
+		if err != nil {
+			return nil, fmt.Errorf("-correlation entry %q: %w", entry, err)
+		}
+		for _, r := range rhos {
+			if r < -1 || r > 1 {
+				return nil, fmt.Errorf("-correlation entry %q: rho %v is out of range [-1,1]", entry, r)
+			}
+		}
+		specs = append(specs, correlationSpec{game: game, rhos: rhos})
+	}
+	return specs, nil
+}
+
 func parseLegs(s string) ([]parlayLeg, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
