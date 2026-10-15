@@ -141,9 +141,11 @@ func usage() {
         whether it beat the base rate. No price, no stake, no prop -- the
         belief is the half of q*s + r*(1-s) that needs proving.
 
-  edgectl projections settle|score
+  edgectl projections settle|score|robust
         Realized values for a week's logged projections (grid median vs. market
         line), and whether the grid or the market tracked reality more closely.
+        robust surfaces the player/outcomes the grid priced across multiple game
+        scripts this week -- the bets it believes in regardless of game flow.
 
   edgectl hedge -face <amount> -back <american> -against <american>
         Convert a bonus bet to guaranteed cash by backing the other side at a
