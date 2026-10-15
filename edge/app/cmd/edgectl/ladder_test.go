@@ -267,3 +267,64 @@ func TestParlayCmdThreeLegCorrelatedPrintsNoError(t *testing.T) {
 		t.Fatalf("parlayCmd with a 3-leg correlated group: %v", err)
 	}
 }
+
+func TestParlayCmdWithoutCorrelationUnchanged(t *testing.T) {
+	// Every pre-existing call shape must still work exactly as before --
+	// -correlation is additive and optional. This exercises a plain
+	// independent-legs round robin with -p and -book, the richest
+	// pre-existing path, and confirms it still succeeds with no
+	// -correlation flag at all.
+	err := parlayCmd([]string{
+		"-legs", "-110:mia@lv:LV -3,+250:was@phi:McLaurin ATD,-130:nyg@dal:Dal ML",
+		"-rr", "2",
+		"-p", "0.55,0.40,0.30",
+		"-total", "30",
+	})
+	if err != nil {
+		t.Fatalf("parlayCmd (no -correlation): %v", err)
+	}
+
+	// Same-game legs with no -correlation flag at all must still be refused,
+	// unchanged.
+	err = parlayCmd([]string{
+		"-legs", "-110:mia@lv:A,+150:mia@lv:B",
+		"-total", "10",
+	})
+	if err == nil {
+		t.Error("same-game legs with no -correlation flag should still be refused")
+	}
+}
+
+func TestParlayCmdCorrelationComposesWithIndependentCrossGameLeg(t *testing.T) {
+	// A round robin mixing one correlated same-game group with an
+	// independent cross-game leg must price correctly end to end. This
+	// collapses to 2 slots: an SGP group (mia@lv, A+B, blended to +275
+	// fair / 26.7% implied) and one independent leg (was@phi, C). With 2
+	// collapsed slots and no -rr (defaults to a single full-parlay combo),
+	// it should produce one combo at decimal 3.75 x (decimal of -120 ~=
+	// 1.8333) ~= 6.875 -> +588, with win probability ~= 0.26667 x (implied
+	// of -120 ~= 0.54545) ~= 14.5%.
+	err := parlayCmd([]string{
+		"-legs", "-110:mia@lv:A,+150:mia@lv:B,-120:was@phi:C",
+		"-correlation", "mia@lv:0.3",
+		"-total", "10",
+	})
+	if err != nil {
+		t.Fatalf("parlayCmd (correlated group + independent cross-game leg): %v", err)
+	}
+}
+
+func TestParlayCmdCorrelationComposesWithIndependentCrossGameLegRoundRobin(t *testing.T) {
+	// Same mixed composition as above, but with -rr 2: two collapsed
+	// slots, round-robin size 2 -- still should produce exactly one combo
+	// (size-2-of-2-slots), and should not error.
+	err := parlayCmd([]string{
+		"-legs", "-110:mia@lv:A,+150:mia@lv:B,-120:was@phi:C",
+		"-correlation", "mia@lv:0.3",
+		"-total", "10",
+		"-rr", "2",
+	})
+	if err != nil {
+		t.Fatalf("parlayCmd (correlated group + independent cross-game leg, -rr 2): %v", err)
+	}
+}
