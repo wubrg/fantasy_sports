@@ -2,11 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 )
 
 type propsResp struct {
@@ -206,5 +209,92 @@ func TestCaptureWeek(t *testing.T) {
 		if got := captureWeek(name); got != want {
 			t.Errorf("captureWeek(%q) = %d, want %d", name, got, want)
 		}
+	}
+}
+
+// TestReadIngestMergesMovedGameLineAcrossCaptures guards the bug this file's
+// mergeKey fixes: two captures of the same week, taken hours apart, with a
+// spread that moved in between. Before the fix, outcomeKey's Line component
+// meant the old and new entries never collided -- both survived the merge,
+// so a market that should have had two sides had four, and
+// OddsPairsFromOutcomes's two-sided check silently dropped it instead of
+// syncing the newer line.
+func TestReadIngestMergesMovedGameLineAcrossCaptures(t *testing.T) {
+	dir := t.TempDir()
+
+	older := `{"events":[{"id":"E1","name":"NE @ SEA"}],` +
+		`"markets":[{"id":"M1","eventId":"E1","name":"Spread"}],` +
+		`"selections":[{"marketId":"M1","label":"NE Patriots","displayOdds":{"american":"-110"},"points":3},` +
+		`{"marketId":"M1","label":"SEA Seahawks","displayOdds":{"american":"-110"},"points":-3}]}`
+	newer := `{"events":[{"id":"E1","name":"NE @ SEA"}],` +
+		`"markets":[{"id":"M1","eventId":"E1","name":"Spread"}],` +
+		`"selections":[{"marketId":"M1","label":"NE Patriots","displayOdds":{"american":"-120"},"points":2.5},` +
+		`{"marketId":"M1","label":"SEA Seahawks","displayOdds":{"american":"+100"},"points":-2.5}]}`
+
+	writeHAR := func(name, body string) {
+		esc, _ := json.Marshal(body)
+		har := `{"log":{"entries":[{"response":{"content":{"text":` + string(esc) + `}}}]}}`
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(har), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeHAR("dk_week4_old.har", older)
+	writeHAR("dk_week4_new.har", newer)
+	now := time.Now()
+	if err := os.Chtimes(filepath.Join(dir, "dk_week4_old.har"), now, now.Add(-time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(filepath.Join(dir, "dk_week4_new.har"), now, now); err != nil {
+		t.Fatal(err)
+	}
+
+	res := readIngest(dir, 4)
+	var spreads []string
+	for _, o := range res.outcomes {
+		if o.Market == "Spread" {
+			spreads = append(spreads, fmt.Sprintf("%s@%v=%v", o.Selection, *o.Line, o.Price))
+		}
+	}
+	if len(spreads) != 2 {
+		t.Fatalf("want exactly 2 merged Spread outcomes (the newer capture's), got %d: %v", len(spreads), spreads)
+	}
+	for _, s := range spreads {
+		if !strings.Contains(s, "2.5=") {
+			t.Errorf("spread outcome %q still reflects the stale 3-point line, not the moved 2.5", s)
+		}
+	}
+}
+
+// TestReadIngestDoesNotCollapseAlternateLines is the regression guard for the
+// fix's first (too-broad) attempt: dropping Line from every merge key, not
+// just the three literal game-line markets, collapsed a whole "Spread
+// Alternate" ladder (every rung selecting the same two team names) down to
+// one arbitrary rung, because marketKind's board-sync matcher reads market
+// names by substring and would have treated it as a real "Spread" market.
+// mergeKey must leave alternates on the original Line-inclusive key.
+func TestReadIngestDoesNotCollapseAlternateLines(t *testing.T) {
+	dir := t.TempDir()
+	body := `{"events":[{"id":"E1","name":"NE @ SEA"}],` +
+		`"markets":[{"id":"M1","eventId":"E1","name":"Spread Alternate"}],` +
+		`"selections":[` +
+		`{"marketId":"M1","label":"NE Patriots","displayOdds":{"american":"-110"},"points":1.5},` +
+		`{"marketId":"M1","label":"SEA Seahawks","displayOdds":{"american":"-110"},"points":-1.5},` +
+		`{"marketId":"M1","label":"NE Patriots","displayOdds":{"american":"+150"},"points":6.5},` +
+		`{"marketId":"M1","label":"SEA Seahawks","displayOdds":{"american":"-200"},"points":-6.5}]}`
+	esc, _ := json.Marshal(body)
+	har := `{"log":{"entries":[{"response":{"content":{"text":` + string(esc) + `}}}]}}`
+	if err := os.WriteFile(filepath.Join(dir, "dk_week4.har"), []byte(har), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	res := readIngest(dir, 4)
+	var alts int
+	for _, o := range res.outcomes {
+		if o.Market == "Spread Alternate" {
+			alts++
+		}
+	}
+	if alts != 4 {
+		t.Errorf("want all 4 alternate-line rungs to survive the merge distinctly, got %d", alts)
 	}
 }

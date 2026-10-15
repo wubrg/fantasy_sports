@@ -266,14 +266,36 @@ func (d *Doc) Teams() map[string]bool {
 // Punctuation is trimmed because a selection reads "CAR ML + GB ML (Week 1)"
 // and a bare Fields() split leaves "(Week" and "1)" attached to their
 // neighbours.
+//
+// A team's nickname (the "Giants" in "NY Giants") is checked alongside its
+// bare code, the same `nicknames` map matchEvent uses for an odds capture's
+// full team names -- a selection string can carry either shape ("NYG ML" from
+// a paste, "NY Giants ML" from a capture-derived record), and only checking
+// bare codes silently dropped every nickname-only team (one whose own
+// abbreviation isn't the city word a book actually prints, chiefly the ones
+// sharing a city with another club: Giants/Jets, Rams/Chargers).
+//
+// A bare-code token immediately followed by a DIFFERENT team's nickname is
+// skipped rather than added: "LA Chargers" tokenizes to "LA" (a real code,
+// but the Rams') then "Chargers" (nickname, LAC) -- the nickname is the
+// specific, correct read, and counting both would wrongly report two teams
+// for a selection naming one.
 func (d *Doc) TeamsMentioned(text string) []string {
 	known := d.Teams()
+	fields := strings.FieldsFunc(text, func(r rune) bool {
+		return !(r >= 'A' && r <= 'Z') && !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9')
+	})
 	seen := map[string]bool{}
 	var out []string
-	for _, f := range strings.FieldsFunc(text, func(r rune) bool {
-		return !(r >= 'A' && r <= 'Z') && !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9')
-	}) {
+	for i, f := range fields {
 		u := strings.ToUpper(f)
+		if nick, ok := nicknames[u]; ok && known[nick] {
+			u = nick
+		} else if known[u] && i+1 < len(fields) {
+			if next, ok := nicknames[strings.ToUpper(fields[i+1])]; ok && known[next] && next != u {
+				continue // the next word's nickname is the specific read; this bare code is the wrong sibling
+			}
+		}
 		if known[u] && !seen[u] {
 			seen[u] = true
 			out = append(out, u)

@@ -192,6 +192,8 @@ func TestTeamsMentioned(t *testing.T) {
 		want []string
 	}{
 		{"NYJ ML + GB ML 2-leg parlay (Week 1)", []string{"NYJ", "GB"}},
+		// A full team name resolves by nickname, not just a bare code.
+		{"NY Jets ML", []string{"NYJ"}},
 		// "ML" is not special-cased any more; it is simply not a team here.
 		{"TEN ML vs NYJ (Week 1)", []string{"TEN", "NYJ"}},
 		// Punctuation must not hide a team behind a bracket.
