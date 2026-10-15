@@ -42,8 +42,17 @@ func betPlace(args []string) error {
 	boost := fs.String("boost", "", "boost lot id to apply and consume")
 	week := fs.Int("week", 0, "the NFL week this wager is FOR")
 	narrative := fs.String("narrative", "", "free-text note")
-	predicted := fs.Float64("predicted", 0, "your win-probability belief in [0,1]; drives the log's EV")
+	predicted := fs.Float64("predicted", 0, "your win-probability belief in [0,1]; drives the log's EV. "+
+		"Zero (the default, same as omitting the flag) is auto-computed instead -- see -belief/-q/-r, "+
+		"-correlation, -opposite below, falling back to the raw implied of -price if none apply")
 	legs := fs.String("legs", "", "same-game parlay legs, as \"selection:price,selection:price\" (optional)")
+	belief := fs.Float64("belief", -1, "your scenario probability s, with -q/-r: auto-computes -predicted as q*s + r*(1-s)")
+	q := fs.Float64("q", -1, "P(hit | scenario), with -belief/-r")
+	r := fs.Float64("r", -1, "P(hit | no scenario), with -belief/-q")
+	correlation := fs.String("correlation", "", "rho[,rho,...] chaining every -legs entry pairwise "+
+		"(N-1 values for N legs, same order as -legs): auto-computes -predicted as the Frechet-blended floor")
+	opposite := fs.Int("opposite", 0, "the other side's American price, if known: auto-computes -predicted "+
+		"as the de-vigged fair probability of (-price, -opposite)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -62,6 +71,11 @@ func betPlace(args []string) error {
 		Selection: *selection, Price: wager.American(*price), Bankroll: bank,
 		Stake: *stake, Week: *week, Narrative: *narrative, Predicted: *predicted,
 		Legs: parsedLegs,
+	}
+	if betRec.Predicted <= 0 {
+		if err := autoPredict(&betRec, *belief, *q, *r, *correlation, *opposite); err != nil {
+			return err
+		}
 	}
 	// Freeze Book onto the log entry only when betlog.PlaceBet will accept it
 	// (a book with bonus-bet rules recorded, wager.Book.Known()) -- same rule
@@ -117,6 +131,68 @@ func betSettle(args []string) error {
 	}
 	fmt.Printf("settled %s %s\n", *id, *result)
 	return nil
+}
+
+// autoPredict fills bet.Predicted (and, for the belief path, the provenance
+// fields SYours/Q/R) when the operator left -predicted at 0 -- which, per
+// this command's own convention, means "compute it" rather than "I predict a
+// 0% win probability" (not a useful thing to assert, and not worth the
+// flag-parsing complexity of distinguishing it from "omitted"). Checked in
+// order: belief/q/r (a grid-priced scenario decomposition), -correlation (a
+// same-game combo's own legs, chained pairwise via the Frechet bound), then
+// -opposite (de-vig against a known other side), falling back to the raw
+// implied of the wager's own price when none of those apply.
+func autoPredict(bet *betlog.Bet, belief, q, r float64, correlation string, opposite int) error {
+	switch {
+	case belief >= 0 && q >= 0 && r >= 0:
+		p, err := wager.BlendedProb(belief, q, r)
+		if err != nil {
+			return fmt.Errorf("-belief/-q/-r: %w", err)
+		}
+		bet.Predicted, bet.SYours, bet.Q, bet.R = p, belief, q, r
+		return nil
+	case strings.TrimSpace(correlation) != "":
+		rhos, err := parseFloatList(correlation)
+		if err != nil {
+			return fmt.Errorf("-correlation: %w", err)
+		}
+		if len(bet.Legs) < 2 {
+			return fmt.Errorf("-correlation needs at least 2 -legs entries to chain, got %d", len(bet.Legs))
+		}
+		if len(rhos) != len(bet.Legs)-1 {
+			return fmt.Errorf("-correlation: %d legs need %d rho values (one per chain step), got %d",
+				len(bet.Legs), len(bet.Legs)-1, len(rhos))
+		}
+		probs := make([]float64, len(bet.Legs))
+		for i, l := range bet.Legs {
+			p, err := l.Price.ImpliedRaw()
+			if err != nil {
+				return fmt.Errorf("-correlation: leg %q: %w", l.Selection, err)
+			}
+			probs[i] = p
+		}
+		p, err := wager.ChainFrechet(probs, rhos)
+		if err != nil {
+			return fmt.Errorf("-correlation: %w", err)
+		}
+		bet.Predicted = p
+		return nil
+	case opposite != 0:
+		m := wager.Market{A: bet.Price, B: wager.American(opposite)}
+		p, _, err := m.FairDevig()
+		if err != nil {
+			return fmt.Errorf("-opposite: %w", err)
+		}
+		bet.Predicted = p
+		return nil
+	default:
+		p, err := bet.Price.ImpliedRaw()
+		if err != nil {
+			return fmt.Errorf("auto-computing -predicted from -price: %w", err)
+		}
+		bet.Predicted = p
+		return nil
+	}
 }
 
 // parseBetLegs reads "selection:price,selection:price" -- the same

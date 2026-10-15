@@ -205,6 +205,13 @@ func usage() {
         and any -returns. Raw "ledger add -kind place" is the low-level escape
         hatch that touches the ledger only.
 
+        -predicted left at 0 (its default) is auto-computed rather than logged
+        as a 0% prediction: -belief/-q/-r blends a scenario decomposition,
+        -correlation chains -legs pairwise via the Fréchet bound, -opposite
+        de-vigs against a known other side, and with none of those it falls
+        back to the raw implied of -price. An explicit nonzero -predicted
+        always wins over any of this.
+
   edgectl log list|settle|score -file <path>
         The calibration log. Predictions are recorded before the outcome and
         settled by appending, never by rewriting, so nothing can be re-predicted
