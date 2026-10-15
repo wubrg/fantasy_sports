@@ -47,12 +47,16 @@ func betPlace(args []string) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	bank := "bonus bet"
-	switch *bankroll {
+	var bank string
+	switch strings.ToLower(strings.TrimSpace(*bankroll)) {
 	case "cash":
 		bank = "real money"
+	case "bonus":
+		bank = "bonus bet"
 	case "no-sweat", "nosweat", "no sweat":
 		bank = "no-sweat"
+	default:
+		return fmt.Errorf("bet place: -bankroll %q not recognized (want cash, bonus or no-sweat)", *bankroll)
 	}
 	parsedLegs, err := parseBetLegs(*legs)
 	if err != nil {

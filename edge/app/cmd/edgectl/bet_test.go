@@ -42,3 +42,29 @@ func TestBetPlace_writesBothLogs(t *testing.T) {
 		t.Fatal("no ledger place tied to the wager")
 	}
 }
+
+// An unrecognized -bankroll value used to fall through to the "bonus bet"
+// default silently, so a typo like "real money" (instead of "cash") would
+// draw from the bonus pool without any error. It must be rejected instead.
+func TestBetPlace_rejectsUnrecognizedBankroll(t *testing.T) {
+	dir := t.TempDir()
+	bl, lg := filepath.Join(dir, "b.jsonl"), filepath.Join(dir, "l.jsonl")
+	_ = ledger.AppendFile(lg, ledger.Event{
+		Kind: ledger.KindGrant, ID: "dk-cash", Time: time.Now(),
+		Creates: &ledger.Lot{ID: "dk-cash", Book: "draftkings", Asset: ledger.Cash, Amount: 100},
+	})
+
+	err := betCmd([]string{
+		"place", "-betlog", bl, "-ledger", lg,
+		"-selection", "Barkley ATD", "-price", "-115", "-stake", "4",
+		"-book", "draftkings", "-bankroll", "real money", "-week", "1",
+	})
+	if err == nil {
+		t.Fatal("expected an error for an unrecognized -bankroll value, got nil")
+	}
+
+	bets, _ := betlog.Load(bl)
+	if len(bets) != 0 {
+		t.Fatalf("expected no betlog entry on a rejected bankroll, got %d", len(bets))
+	}
+}
