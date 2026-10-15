@@ -220,6 +220,9 @@ func parlayCmd(args []string) error {
 	total := fs.Float64("total", 0, "total stake, split equally across combos (required)")
 	pFlag := fs.String("p", "", `optional true probabilities per leg: "0.55,0.40,0.30"`)
 	book := fs.Int("book", 0, "optional: the book's offered combined price, to compare (single-combo only)")
+	correlation := fs.String("correlation", "",
+		`same-game legs' correlation, keyed by game tag: "game:rho[,rho,...][;game:rho,...]" -- `+
+			`lifts the same-game refusal only for the named games`)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -230,32 +233,97 @@ func parlayCmd(args []string) error {
 	if err != nil {
 		return err
 	}
-	if err := guardSameGame(legs, nil); err != nil {
+	specs, err := parseCorrelation(*correlation)
+	if err != nil {
 		return err
 	}
-	prices := make([]wager.American, len(legs))
-	for i, l := range legs {
-		prices[i] = l.price
+	covered := map[string]bool{}
+	for _, s := range specs {
+		covered[s.game] = true
 	}
+	if err := guardSameGame(legs, covered); err != nil {
+		return err
+	}
+
 	probs, err := parseFloatList(*pFlag)
 	if err != nil {
 		return fmt.Errorf("-p: %w", err)
 	}
+	if probs != nil && len(probs) != len(legs) {
+		return fmt.Errorf("-p: got %d probabilities for %d legs", len(probs), len(legs))
+	}
 
-	sizes, err := parseSizes(*rr, len(legs))
-	if err != nil {
-		return err
-	}
-	combos, err := wager.RoundRobin(prices, sizes)
-	if err != nil {
-		return err
-	}
-	ticket, err := wager.BuildTicket(prices, combos, *total, probs)
+	collapsed, err := collapseLegs(legs, specs, probs)
 	if err != nil {
 		return err
 	}
 
-	printParlay(legs, ticket, *book)
+	prices := make([]wager.American, len(collapsed))
+	// reducedProbs stays nil (today's existing "no EV reporting" default)
+	// UNLESS -p was supplied OR at least one correlated group exists --
+	// a correlated group always has its own derived probability, so once
+	// one exists the ticket can always compute EV, with every independent
+	// slot defaulting to its own raw implied exactly as -p already does per
+	// leg when supplied.
+	needProbs := probs != nil
+	for _, c := range collapsed {
+		if c.prob != nil {
+			needProbs = true
+		}
+	}
+	var reducedProbs []float64
+	if needProbs {
+		reducedProbs = make([]float64, len(collapsed))
+	}
+	for i, c := range collapsed {
+		prices[i] = c.price
+		if !needProbs {
+			continue
+		}
+		if c.prob != nil {
+			reducedProbs[i] = *c.prob
+			continue
+		}
+		p, err := c.price.ImpliedRaw()
+		if err != nil {
+			return err
+		}
+		reducedProbs[i] = p
+	}
+
+	var combos []wager.Combo
+	if len(collapsed) == 1 && len(collapsed[0].members) >= 2 {
+		// A pure same-game SGP with no cross-game legs collapses to a single
+		// slot, which is itself the only "combo". wager.RoundRobin (and
+		// CombineParlay) need >=2 legs, so build that one combo directly --
+		// this is the headline floor-shopping case the feature exists for.
+		// A lone independent leg still falls through to RoundRobin below and
+		// is rejected exactly as before this flag existed.
+		d, err := prices[0].Decimal()
+		if err != nil {
+			return err
+		}
+		impl, err := prices[0].ImpliedRaw()
+		if err != nil {
+			return err
+		}
+		combos = []wager.Combo{{Legs: []int{0}, Decimal: d, Price: prices[0], Implied: impl}}
+	} else {
+		sizes, err := parseSizes(*rr, len(collapsed))
+		if err != nil {
+			return err
+		}
+		combos, err = wager.RoundRobin(prices, sizes)
+		if err != nil {
+			return err
+		}
+	}
+	ticket, err := wager.BuildTicket(prices, combos, *total, reducedProbs)
+	if err != nil {
+		return err
+	}
+
+	printParlay(collapsed, ticket, *book)
 	return nil
 }
 
@@ -319,6 +387,105 @@ func parseCorrelation(s string) ([]correlationSpec, error) {
 	return specs, nil
 }
 
+// collapsedLeg is either a single independent leg or a correlated same-game
+// group already blended into one fair price -- the unit parlayCmd actually
+// feeds into wager.RoundRobin/wager.BuildTicket, which only ever see
+// independent probabilities (correlation is resolved BEFORE this point, not
+// inside that pure-math layer).
+type collapsedLeg struct {
+	price   wager.American // the slot's own price: the leg's own price if independent, or the
+	                       // group's blended fair price (via AmericanFromDecimal) if correlated
+	prob    *float64    // the slot's own probability, if one was derived or supplied; nil
+	                    // means "use this price's own raw implied," the existing default
+	members []parlayLeg // the original leg(s) this slot represents (len 1 = independent)
+	caveat  bool        // true when this slot came from chaining 3+ legs (an approximation)
+}
+
+// collapseLegs groups legs sharing a game named in specs into one
+// collapsedLeg each (blended via wager.ChainFrechet), leaving every other
+// leg as its own independent slot. probs, if non-nil, is one operator-
+// supplied true probability per ORIGINAL leg (the existing -p convention) --
+// used as that leg's own probability inside a correlated group's chain
+// instead of its raw implied, exactly mirroring how -p already overrides raw
+// implied for independent legs elsewhere in this file.
+//
+// Slots preserve the relative order legs were listed in: a correlated
+// group's slot sits at the position of that group's FIRST member, and only
+// that one slot represents the whole group afterward.
+func collapseLegs(legs []parlayLeg, specs []correlationSpec, probs []float64) ([]collapsedLeg, error) {
+	bySpec := map[string]correlationSpec{}
+	for _, s := range specs {
+		bySpec[s.game] = s
+	}
+
+	legProb := func(i int) (float64, error) {
+		if probs != nil && i < len(probs) {
+			return probs[i], nil
+		}
+		return legs[i].price.ImpliedRaw()
+	}
+
+	// Gather each covered game's member indices, in listing order.
+	groupIdx := map[string][]int{}
+	var groupOrder []string
+	for i, l := range legs {
+		if _, covered := bySpec[l.game]; !covered {
+			continue
+		}
+		if _, seen := groupIdx[l.game]; !seen {
+			groupOrder = append(groupOrder, l.game)
+		}
+		groupIdx[l.game] = append(groupIdx[l.game], i)
+	}
+
+	placed := map[int]bool{}
+	var out []collapsedLeg
+	for i, l := range legs {
+		if placed[i] {
+			continue
+		}
+		spec, covered := bySpec[l.game]
+		if !covered {
+			out = append(out, collapsedLeg{price: l.price, members: []parlayLeg{l}})
+			continue
+		}
+		idxs := groupIdx[l.game]
+		if i != idxs[0] {
+			// Not this group's first member -- already folded into the slot
+			// emitted when we reached idxs[0].
+			continue
+		}
+		if len(spec.rhos) != len(idxs)-1 {
+			return nil, fmt.Errorf(
+				"-correlation %q: %d legs in this game need %d rho values (one per chain step), got %d",
+				l.game, len(idxs), len(idxs)-1, len(spec.rhos))
+		}
+		groupProbs := make([]float64, len(idxs))
+		members := make([]parlayLeg, len(idxs))
+		for j, legIdx := range idxs {
+			p, err := legProb(legIdx)
+			if err != nil {
+				return nil, fmt.Errorf("leg %d: %w", legIdx+1, err)
+			}
+			groupProbs[j] = p
+			members[j] = legs[legIdx]
+			placed[legIdx] = true
+		}
+		blended, err := wager.ChainFrechet(groupProbs, spec.rhos)
+		if err != nil {
+			return nil, fmt.Errorf("-correlation %q: %w", l.game, err)
+		}
+		price, err := wager.AmericanFromDecimal(1 / blended)
+		if err != nil {
+			return nil, fmt.Errorf("-correlation %q: %w", l.game, err)
+		}
+		out = append(out, collapsedLeg{
+			price: price, prob: &blended, members: members, caveat: len(idxs) >= 3,
+		})
+	}
+	return out, nil
+}
+
 func parseLegs(s string) ([]parlayLeg, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
@@ -370,16 +537,40 @@ func guardSameGame(legs []parlayLeg, covered map[string]bool) error {
 	return nil
 }
 
-func printParlay(legs []parlayLeg, t *wager.Ticket, book int) {
-	fmt.Printf("PARLAY / ROUND ROBIN  (%d legs, %d combo(s), $%.2f total)\n\n", len(legs), len(t.Combos), t.TotalRisk)
-	fmt.Printf("  legs:\n")
-	for i, l := range legs {
-		lbl := l.label
-		if lbl != "" {
-			lbl = "  " + lbl
-		}
-		fmt.Printf("    [%d] %+d  %s%s\n", i+1, int(l.price), l.game, lbl)
+func printParlay(collapsed []collapsedLeg, t *wager.Ticket, book int) {
+	totalMembers := 0
+	for _, c := range collapsed {
+		totalMembers += len(c.members)
 	}
+	fmt.Printf("PARLAY / ROUND ROBIN  (%d legs, %d combo(s), $%.2f total)\n\n", totalMembers, len(t.Combos), t.TotalRisk)
+	fmt.Printf("  legs:\n")
+	for i, c := range collapsed {
+		if len(c.members) == 1 {
+			l := c.members[0]
+			lbl := l.label
+			if lbl != "" {
+				lbl = "  " + lbl
+			}
+			fmt.Printf("    [%d] %+d  %s%s\n", i+1, int(l.price), l.game, lbl)
+			continue
+		}
+		fmt.Printf("    [%d] SGP (%s, %d legs, rho-blended): %+d fair\n",
+			i+1, c.members[0].game, len(c.members), int(c.price))
+		for _, m := range c.members {
+			lbl := m.label
+			if lbl != "" {
+				lbl = "  " + lbl
+			}
+			fmt.Printf("          %+d%s\n", int(m.price), lbl)
+		}
+		if c.caveat {
+			fmt.Printf("      CAVEAT: 3+ same-game legs are priced by chaining pairwise Frechet\n")
+			fmt.Printf("      blends in listing order, not a true N-way joint. This is a structured\n")
+			fmt.Printf("      approximation, not an exact bound -- reorder the legs or price fewer\n")
+			fmt.Printf("      at a time if the result looks wrong.\n")
+		}
+	}
+
 	fmt.Printf("\n  %-14s %-8s %8s %8s %12s", "combo", "price", "decimal", "stake", "payout(win)")
 	if t.HasEV {
 		fmt.Printf(" %8s %9s", "winP", "EV")
@@ -409,23 +600,74 @@ func printParlay(legs []parlayLeg, t *wager.Ticket, book int) {
 			if d.Prob < 1e-9 {
 				continue
 			}
-			fmt.Printf("    %d of %d win   P %5.1f%%   E[net] %+8.2f\n", k, len(legs), d.Prob*100, d.NetSum)
+			fmt.Printf("    %d of %d win   P %5.1f%%   E[net] %+8.2f\n", k, len(collapsed), d.Prob*100, d.NetSum)
 		}
+	}
+
+	// A correlated group's single combo price is, by construction, the
+	// floor: the minimum price that still breaks even under the operator's
+	// own leg probabilities and correlation belief. Print it unconditionally
+	// whenever a correlated group exists -- this is the primary output the
+	// floor-shopping workflow needs, and it does not depend on -book being
+	// supplied at all. (A ticket with more than one combo, e.g. a round
+	// robin mixing a correlated group with independent cross-game legs,
+	// has no single "the" floor to name this way -- each combo row above
+	// already carries its own price, so this block only fires for the
+	// single-combo case.)
+	hasCorrelatedGroup := false
+	for _, c := range collapsed {
+		if len(c.members) > 1 {
+			hasCorrelatedGroup = true
+		}
+	}
+	if hasCorrelatedGroup && len(t.Combos) == 1 {
+		floor := t.Combos[0].Price
+		fmt.Printf("\n  FLOOR (this combo): %+d — the minimum price that still breaks even under the\n", int(floor))
+		fmt.Printf("  leg probabilities and correlation factor(s) supplied above (implied %.1f%%).\n", t.Combos[0].Implied*100)
+		fmt.Printf("  Shop this exact combo at other books; a quote at %+d or longer keeps the edge.\n", int(floor))
 	}
 
 	if book != 0 && len(t.Combos) == 1 {
 		bookImpl, _ := wager.American(book).ImpliedRaw()
-		fmt.Printf("\n  book offers %+d on the combined parlay (implied %.1f%%); the independence-fair\n", book, bookImpl*100)
+		fmt.Printf("\n  book offers %+d on the combined parlay (implied %.1f%%); the fair\n", book, bookImpl*100)
 		fmt.Printf("  price is %+d (implied %.1f%%). ", int(t.Combos[0].Price), t.Combos[0].Implied*100)
 		if book > int(t.Combos[0].Price) {
 			fmt.Printf("The book pays MORE than fair — a positive gap.\n")
 		} else {
 			fmt.Printf("The book pays no better than fair.\n")
 		}
+		// Only one collapsed slot AND it is a correlated group: the breakeven
+		// rho the book's price requires is reportable. A single independent
+		// leg, or a 1-combo parlay of several independent legs, has no
+		// correlation question to answer here.
+		if len(collapsed) == 1 && len(collapsed[0].members) == 2 {
+			m := collapsed[0].members
+			p1, _ := m[0].price.ImpliedRaw()
+			p2, _ := m[1].price.ImpliedRaw()
+			req, err := wager.RequiredCorrelation(p1, p2, bookImpl)
+			if err == nil {
+				fmt.Printf("  the book's price requires believing these two legs correlate at rho %s %.2f to be fair.\n",
+					atLeastOrAtMost(req.Required), req.Required)
+			} else {
+				fmt.Printf("  the book's price implies a correlation outside what any rho in [-1,1] can explain: %v\n", err)
+			}
+		}
 	}
 
-	fmt.Printf("\n  NOTE: legs are treated as INDEPENDENT (probabilities multiply). Same-game\n")
-	fmt.Printf("  legs are correlated — build those as an SGP at the book, not here.\n")
+	fmt.Printf("\n  NOTE: legs are treated as INDEPENDENT (probabilities multiply) unless covered\n")
+	fmt.Printf("  by -correlation. Same-game legs with no -correlation entry are still refused —\n")
+	fmt.Printf("  build those as an SGP at the book, or supply -correlation to price them here.\n")
+}
+
+// atLeastOrAtMost phrases the breakeven-rho sentence in the right direction:
+// a higher required rho means you need MORE correlation for the price to be
+// fair, so the price looks good if you believe correlation is AT LEAST that
+// high; it never makes sense to phrase a positive requirement as "at most."
+func atLeastOrAtMost(required float64) string {
+	if required >= 0 {
+		return "at least"
+	}
+	return "at most"
 }
 
 func comboName(idx []int) string {
