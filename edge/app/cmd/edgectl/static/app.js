@@ -268,6 +268,27 @@ function renderReport(r) {
     </section>`);
   }
 
+  // Robust-in-both: players the fitted grid priced the same side of the
+  // line across 2+ distinct game-script scenarios this week -- the same
+  // query `edgectl projections robust` answers on the CLI, placed here so
+  // a wager worth building around doesn't need a second tool to find, same
+  // reasoning as the exposure section above it.
+  if ((r.robust_groups || []).length) {
+    out.push(`<section class="rep">
+      <h2>robust in both — ${r.robust_groups.length}</h2>
+      <p class="muted">Priced the same side of the line across 2+ scenarios this week --
+      the grid's read holds regardless of which game script actually happens.</p>
+      ${r.robust_groups.map(g => `<div class="dog">
+        <span class="team">${g.player}</span>
+        <span class="conv muted">${g.outcome.replace("_", " ")}</span>
+        <span class="price mono">${g.count} of 4</span>
+      </div>
+      <div class="muted" style="padding-left: 1em; font-size: 0.85em;">
+        ${g.scenarios.map(s => `${s.name}: our ${s.our_median} vs line ${s.market_line}`).join(" &middot; ")}
+      </div>`).join("")}
+    </section>`);
+  }
+
   // Dogs, ranked by what a bonus bet actually converts rather than by price --
   // the distinction the whole tool turns on.
   out.push(`<section class="rep">

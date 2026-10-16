@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -71,6 +72,46 @@ type reportJSON struct {
 	// silently: a token quietly dropped is a token still believed in, and four
 	// of these were carried as $19.03 apiece until someone tested one.
 	CashBoosts int `json:"cash_boosts"`
+
+	// RobustGroups is what the fitted grid priced across 2+ distinct
+	// game-script scenarios this week, same query `edgectl projections
+	// robust` answers on the CLI -- surfaced here so a wager worth building
+	// around doesn't require a second tool and a second pass to find, the
+	// same reasoning that put exposure tracking in this same report.
+	RobustGroups []robustGroupJSON `json:"robust_groups"`
+}
+
+type robustScenarioJSON struct {
+	Name       string  `json:"name"`
+	OurMedian  float64 `json:"our_median"`
+	MarketLine float64 `json:"market_line"`
+}
+
+type robustGroupJSON struct {
+	Player    string               `json:"player"`
+	Outcome   string               `json:"outcome"`
+	Count     int                  `json:"count"`
+	MaxGap    float64              `json:"max_gap"`
+	Scenarios []robustScenarioJSON `json:"scenarios"`
+}
+
+// toRobustGroupJSON converts the unexported CLI-side robustGroup (built for
+// `edgectl projections robust`'s own text output) into the exported shape
+// the JSON API needs. Kept as its own small step rather than exporting
+// robustGroup's fields directly, so the CLI's own internal shape stays free
+// to change without touching this API's response contract.
+func toRobustGroupJSON(groups []robustGroup) []robustGroupJSON {
+	out := make([]robustGroupJSON, 0, len(groups))
+	for _, g := range groups {
+		rg := robustGroupJSON{Player: g.player, Outcome: g.outcome, Count: g.count, MaxGap: g.maxGap}
+		for _, s := range g.scenarios {
+			rg.Scenarios = append(rg.Scenarios, robustScenarioJSON{
+				Name: s.name, OurMedian: s.ourMedian, MarketLine: s.marketLine,
+			})
+		}
+		out = append(out, rg)
+	}
+	return out
 }
 
 type allocJSON struct {
@@ -201,6 +242,18 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 2+ scenarios, not the CLI's own 3+ default: at 3+ most weeks show
+	// nothing (confirmed this week -- only 3 players cleared it across the
+	// whole slate), while 2+ is where this view actually earns its keep.
+	// A missing or empty projections log is not an error here -- it means
+	// nothing has been priced into it yet, not that the report is broken.
+	robust, err := robustGroups(
+		filepath.Join(s.beliefsDir, "projections.jsonl"), wf.doc.Season, week, 2)
+	if err != nil {
+		httpError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	// Same default as the CLI: teams carrying an open wager are excluded unless
 	// explicitly ignored. The UI has no way to retype a list every time, so a
 	// derived exclusion is the only one it can have.
@@ -255,10 +308,11 @@ func (s *boardServer) handleReport(w http.ResponseWriter, r *http.Request) {
 		Priced: len(a.Lines), Total: len(a.Lines) + len(a.Missing),
 		AvgConv: a.Set.AvgConversion, AnyHit: a.Set.AnyHit, Unfille: a.Set.Unfilled,
 		Notes: append(extraNotes, a.Problems...), Provisional: a.Provisional, Missing: len(a.Missing),
-		Committed:   toCommitJSON(committed),
-		PricedBooks: a.PricedBooks,
-		Books:       books,
-		Funds:       funds,
+		Committed:    toCommitJSON(committed),
+		PricedBooks:  a.PricedBooks,
+		Books:        books,
+		Funds:        funds,
+		RobustGroups: toRobustGroupJSON(robust),
 	}
 
 	// A suspect line is held out of the parlay pool but still shown, because
