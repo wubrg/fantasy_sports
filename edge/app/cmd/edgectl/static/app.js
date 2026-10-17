@@ -278,13 +278,14 @@ function renderReport(r) {
       <h2>robust in both — ${r.robust_groups.length}</h2>
       <p class="muted">Priced the same side of the line across 2+ scenarios this week --
       the grid's read holds regardless of which game script actually happens.</p>
-      ${r.robust_groups.map(g => `<div class="dog">
+      ${r.robust_groups.map(g => `<div class="dog${g.robust ? "" : " under"}">
         <span class="team">${g.player}</span>
         <span class="conv muted">${g.outcome.replace("_", " ")}</span>
+        <span class="conv ${g.robust ? "good" : "muted"}">${g.robust ? "✓ Robust" : "Covered (not consistent)"}</span>
         <span class="price mono">${g.count} of 4</span>
       </div>
       <div class="muted" style="padding-left: 1em; font-size: 0.85em;">
-        ${g.scenarios.map(s => `${s.name}: our ${s.our_median} vs line ${s.market_line}`).join(" &middot; ")}
+        ${g.scenarios.map(s => `${s.name}: our ${s.our_median} vs line ${s.market_line}${s.side ? ` (${s.side}, ev ${s.ev}, ${s.edge_source})` : ""}`).join(" &middot; ")}
       </div>`).join("")}
     </section>`);
   }

@@ -240,6 +240,7 @@ func scenarioCmd(args []string) error {
 			Season: *season, Week: *week,
 			Player: pick(*label, "unlabelled"), Outcome: *outcome, Scenario: sc.Name,
 			OurMedian: ourMedian, MarketLine: *line,
+			Side: *side, Predicted: predicted, EV: ev, EdgeSource: class.Source.String(),
 			Baseline: *baseline, Trend: *trend,
 			GeneratedAt: now, Kickoff: kickoff,
 		}

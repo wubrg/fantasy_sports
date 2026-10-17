@@ -33,6 +33,23 @@ type Projection struct {
 	Baseline float64 `json:"baseline"` // the player's own prior mean, for context
 	Trend    float64 `json:"trend"`
 
+	// Side is which side of the line this projection priced -- "over" or
+	// "under", the same value `edgectl scenario`'s own -side flag took. Two
+	// scenarios for the same player/outcome that priced opposite sides cannot
+	// both be called part of one consistent lean.
+	Side string `json:"side,omitempty"`
+	// Predicted is the blended P(hit) for this side -- wager.BlendedProb's
+	// result, the same number scenario.go prints as "your blended P(hit)".
+	Predicted float64 `json:"predicted,omitempty"`
+	// EV is wager.BlendedEV's result for this side, at the price and stake
+	// the projection was priced at.
+	EV float64 `json:"ev,omitempty"`
+	// EdgeSource is wager.Classify's verdict as a string -- "market-alone",
+	// "disagreement-required", or "beyond-your-read" (see wager.EdgeSource).
+	// A "beyond-your-read" projection was priced but not recommended; it
+	// should never count toward a consistent lean.
+	EdgeSource string `json:"edge_source,omitempty"`
+
 	InputPack    string `json:"input_pack,omitempty"`
 	InputPackSHA string `json:"input_pack_sha256,omitempty"`
 

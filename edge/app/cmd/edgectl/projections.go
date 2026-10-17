@@ -143,6 +143,9 @@ type robustScenario struct {
 	name       string
 	ourMedian  float64
 	marketLine float64
+	side       string
+	ev         float64
+	edgeSource string
 }
 
 // robustGroup is a (player, outcome) the grid priced across multiple game
@@ -153,6 +156,32 @@ type robustGroup struct {
 	count     int              // distinct scenarios
 	maxGap    float64          // largest |OurMedian - MarketLine| across the group
 	scenarios []robustScenario // one per distinct scenario, sorted by name
+	// robust is true only when every scenario in the group shares the same
+	// non-empty side, none is classified "beyond-your-read", and every one
+	// has a strictly positive EV -- a consistent, recommended lean, not
+	// merely "priced N times." A group that clears -min-scenarios but fails
+	// this still appears in the output (so coverage is still visible) but
+	// with robust=false.
+	robust bool
+}
+
+// computeRobust sets g.robust: same non-empty side across every scenario,
+// none classified beyond-your-read, and every EV strictly positive.
+func (g *robustGroup) computeRobust() {
+	g.robust = len(g.scenarios) > 0
+	var side string
+	for i, s := range g.scenarios {
+		if s.side == "" || s.edgeSource == "beyond-your-read" || s.ev <= 0 {
+			g.robust = false
+			break
+		}
+		if i == 0 {
+			side = s.side
+		} else if s.side != side {
+			g.robust = false
+			break
+		}
+	}
 }
 
 // robustGroups loads the projection log and returns the (player, outcome)
@@ -183,7 +212,8 @@ func robustGroups(logPath string, season, week, minScenarios int) ([]robustGroup
 			order = append(order, k)
 		}
 		byGroup[k][p.Scenario] = robustScenario{
-			name: p.Scenario, ourMedian: p.OurMedian, marketLine: p.MarketLine}
+			name: p.Scenario, ourMedian: p.OurMedian, marketLine: p.MarketLine,
+			side: p.Side, ev: p.EV, edgeSource: p.EdgeSource}
 	}
 
 	var groups []robustGroup
@@ -199,6 +229,7 @@ func robustGroups(logPath string, season, week, minScenarios int) ([]robustGroup
 				g.maxGap = gap
 			}
 		}
+		g.computeRobust()
 		sort.Slice(g.scenarios, func(i, j int) bool {
 			return g.scenarios[i].name < g.scenarios[j].name
 		})
@@ -245,9 +276,14 @@ func projectionsRobust(args []string) error {
 		return nil
 	}
 	for _, g := range groups {
-		fmt.Printf("  %s  %s  (%d of 4 scenarios)\n", g.player, g.outcome, g.count)
+		label := "COVERED"
+		if g.robust {
+			label = "ROBUST"
+		}
+		fmt.Printf("  %s  %s  %s  (%d of 4 scenarios)\n", label, g.player, g.outcome, g.count)
 		for _, s := range g.scenarios {
-			fmt.Printf("    %-18s  our %.1f  market %.1f\n", s.name, s.ourMedian, s.marketLine)
+			fmt.Printf("    %-18s  our %.1f  market %.1f  side %s  ev %+.4f  %s\n",
+				s.name, s.ourMedian, s.marketLine, s.side, s.ev, s.edgeSource)
 		}
 		fmt.Println()
 	}
