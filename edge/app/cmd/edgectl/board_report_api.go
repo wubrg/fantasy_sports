@@ -85,6 +85,9 @@ type robustScenarioJSON struct {
 	Name       string  `json:"name"`
 	OurMedian  float64 `json:"our_median"`
 	MarketLine float64 `json:"market_line"`
+	Side       string  `json:"side,omitempty"`
+	EV         float64 `json:"ev,omitempty"`
+	EdgeSource string  `json:"edge_source,omitempty"`
 }
 
 type robustGroupJSON struct {
@@ -93,6 +96,7 @@ type robustGroupJSON struct {
 	Count     int                  `json:"count"`
 	MaxGap    float64              `json:"max_gap"`
 	Scenarios []robustScenarioJSON `json:"scenarios"`
+	Robust    bool                 `json:"robust"`
 }
 
 // toRobustGroupJSON converts the unexported CLI-side robustGroup (built for
@@ -103,10 +107,11 @@ type robustGroupJSON struct {
 func toRobustGroupJSON(groups []robustGroup) []robustGroupJSON {
 	out := make([]robustGroupJSON, 0, len(groups))
 	for _, g := range groups {
-		rg := robustGroupJSON{Player: g.player, Outcome: g.outcome, Count: g.count, MaxGap: g.maxGap}
+		rg := robustGroupJSON{Player: g.player, Outcome: g.outcome, Count: g.count, MaxGap: g.maxGap, Robust: g.robust}
 		for _, s := range g.scenarios {
 			rg.Scenarios = append(rg.Scenarios, robustScenarioJSON{
 				Name: s.name, OurMedian: s.ourMedian, MarketLine: s.marketLine,
+				Side: s.side, EV: s.ev, EdgeSource: s.edgeSource,
 			})
 		}
 		out = append(out, rg)

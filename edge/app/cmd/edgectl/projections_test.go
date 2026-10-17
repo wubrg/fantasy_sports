@@ -155,11 +155,13 @@ func TestProjectionsSettleVoidReasonSurvivesInterleavedOrder(t *testing.T) {
 
 // seedRobustProjection records one projection row under a given scenario for a
 // player/outcome, failing the test on any error.
-func seedRobustProjection(t *testing.T, logPath, player, outcome, scenario string, median, line float64) {
+func seedRobustProjection(t *testing.T, logPath, player, outcome, scenario string, median, line float64,
+	side string, ev float64, edgeSource string) {
 	t.Helper()
 	past := time.Now().Add(-time.Hour)
 	p := betlog.Projection{Season: 2026, Week: 7, Player: player, Outcome: outcome,
-		Scenario: scenario, OurMedian: median, MarketLine: line, Kickoff: past.Add(time.Minute)}
+		Scenario: scenario, OurMedian: median, MarketLine: line, Kickoff: past.Add(time.Minute),
+		Side: side, EV: ev, EdgeSource: edgeSource}
 	if _, err := betlog.RecordProjection(logPath, p, past); err != nil {
 		t.Fatal(err)
 	}
@@ -170,21 +172,21 @@ func TestProjectionsRobustThresholdAndSort(t *testing.T) {
 	logPath := filepath.Join(dir, "projections.jsonl")
 
 	// Four distinct scenarios -> should rank first.
-	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "shootout", 70, 60)
-	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "blowout_loss", 68, 60)
-	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "pass_heavy", 72, 60)
-	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "efficient_offense", 69, 60)
+	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "shootout", 70, 60, "under", 0.15, "market-alone")
+	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "blowout_loss", 68, 60, "under", 0.15, "market-alone")
+	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "pass_heavy", 72, 60, "under", 0.15, "market-alone")
+	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "efficient_offense", 69, 60, "under", 0.15, "market-alone")
 
 	// Three distinct scenarios (one duplicated scenario to prove dedup) -> should
 	// still clear the default threshold of 3 and rank below the four-scenario group.
-	seedRobustProjection(t, logPath, "Bravo Three", "rushing_yards", "shootout", 45, 40)
-	seedRobustProjection(t, logPath, "Bravo Three", "rushing_yards", "blowout_loss", 46, 40)
-	seedRobustProjection(t, logPath, "Bravo Three", "rushing_yards", "pass_heavy", 44, 40)
-	seedRobustProjection(t, logPath, "Bravo Three", "rushing_yards", "pass_heavy", 44, 40) // dup scenario
+	seedRobustProjection(t, logPath, "Bravo Three", "rushing_yards", "shootout", 45, 40, "under", 0.15, "market-alone")
+	seedRobustProjection(t, logPath, "Bravo Three", "rushing_yards", "blowout_loss", 46, 40, "under", 0.15, "market-alone")
+	seedRobustProjection(t, logPath, "Bravo Three", "rushing_yards", "pass_heavy", 44, 40, "under", 0.15, "market-alone")
+	seedRobustProjection(t, logPath, "Bravo Three", "rushing_yards", "pass_heavy", 44, 40, "under", 0.15, "market-alone") // dup scenario
 
 	// Only two distinct scenarios -> must NOT appear at the default threshold.
-	seedRobustProjection(t, logPath, "Charlie Two", "passing_yards", "shootout", 250, 240)
-	seedRobustProjection(t, logPath, "Charlie Two", "passing_yards", "blowout_loss", 255, 240)
+	seedRobustProjection(t, logPath, "Charlie Two", "passing_yards", "shootout", 250, 240, "under", 0.1, "market-alone")
+	seedRobustProjection(t, logPath, "Charlie Two", "passing_yards", "blowout_loss", 255, 240, "under", 0.1, "market-alone")
 
 	rows, err := robustGroups(logPath, 2026, 7, 3)
 	if err != nil {
@@ -204,6 +206,12 @@ func TestProjectionsRobustThresholdAndSort(t *testing.T) {
 			t.Errorf("Charlie Two has only 2 scenarios and must not clear a threshold of 3")
 		}
 	}
+	if !rows[0].robust {
+		t.Errorf("Alpha Four should be robust")
+	}
+	if !rows[1].robust {
+		t.Errorf("Bravo Three should be robust")
+	}
 }
 
 func TestProjectionsRobustTieBreaksByGap(t *testing.T) {
@@ -212,13 +220,13 @@ func TestProjectionsRobustTieBreaksByGap(t *testing.T) {
 
 	// Both groups have exactly 3 scenarios; the tie breaks on the largest
 	// |OurMedian - MarketLine| gap within the group, descending.
-	seedRobustProjection(t, logPath, "Small Gap", "receiving_yards", "shootout", 61, 60)
-	seedRobustProjection(t, logPath, "Small Gap", "receiving_yards", "blowout_loss", 59, 60)
-	seedRobustProjection(t, logPath, "Small Gap", "receiving_yards", "pass_heavy", 60, 60)
+	seedRobustProjection(t, logPath, "Small Gap", "receiving_yards", "shootout", 61, 60, "under", 0.1, "market-alone")
+	seedRobustProjection(t, logPath, "Small Gap", "receiving_yards", "blowout_loss", 59, 60, "under", 0.1, "market-alone")
+	seedRobustProjection(t, logPath, "Small Gap", "receiving_yards", "pass_heavy", 60, 60, "under", 0.1, "market-alone")
 
-	seedRobustProjection(t, logPath, "Big Gap", "rushing_yards", "shootout", 80, 60) // gap 20
-	seedRobustProjection(t, logPath, "Big Gap", "rushing_yards", "blowout_loss", 61, 60)
-	seedRobustProjection(t, logPath, "Big Gap", "rushing_yards", "pass_heavy", 59, 60)
+	seedRobustProjection(t, logPath, "Big Gap", "rushing_yards", "shootout", 80, 60, "under", 0.1, "market-alone") // gap 20
+	seedRobustProjection(t, logPath, "Big Gap", "rushing_yards", "blowout_loss", 61, 60, "under", 0.1, "market-alone")
+	seedRobustProjection(t, logPath, "Big Gap", "rushing_yards", "pass_heavy", 59, 60, "under", 0.1, "market-alone")
 
 	rows, err := robustGroups(logPath, 2026, 7, 3)
 	if err != nil {
@@ -232,12 +240,67 @@ func TestProjectionsRobustTieBreaksByGap(t *testing.T) {
 	}
 }
 
+func TestProjectionsRobustRequiresSideAgreement(t *testing.T) {
+	dir := t.TempDir()
+	logPath := filepath.Join(dir, "projections.jsonl")
+
+	// Mixed side: two Unders, one Over, same player/outcome. Clears the
+	// count threshold but must not be called robust.
+	seedRobustProjection(t, logPath, "Delta Mixed", "rushing_yards", "shootout", 60, 55, "under", 0.1, "market-alone")
+	seedRobustProjection(t, logPath, "Delta Mixed", "rushing_yards", "blowout_loss", 58, 55, "under", 0.1, "market-alone")
+	seedRobustProjection(t, logPath, "Delta Mixed", "rushing_yards", "pass_heavy", 50, 55, "over", 0.05, "market-alone")
+
+	// Same side throughout, but refused every time -- must not be robust.
+	seedRobustProjection(t, logPath, "Echo Refused", "rushing_yards", "shootout", 60, 55, "under", 0.02, "beyond-your-read")
+	seedRobustProjection(t, logPath, "Echo Refused", "rushing_yards", "blowout_loss", 58, 55, "under", 0.02, "beyond-your-read")
+	seedRobustProjection(t, logPath, "Echo Refused", "rushing_yards", "pass_heavy", 59, 55, "under", 0.02, "beyond-your-read")
+
+	// Genuinely robust control: same side, all market-alone, all positive EV.
+	seedRobustProjection(t, logPath, "Foxtrot Robust", "rushing_yards", "shootout", 60, 55, "under", 0.1, "market-alone")
+	seedRobustProjection(t, logPath, "Foxtrot Robust", "rushing_yards", "blowout_loss", 58, 55, "under", 0.15, "market-alone")
+	seedRobustProjection(t, logPath, "Foxtrot Robust", "rushing_yards", "pass_heavy", 59, 55, "under", 0.12, "market-alone")
+
+	rows, err := robustGroups(logPath, 2026, 7, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	byPlayer := map[string]robustGroup{}
+	for _, r := range rows {
+		byPlayer[r.player] = r
+	}
+
+	mixed, ok := byPlayer["Delta Mixed"]
+	if !ok {
+		t.Fatalf("Delta Mixed should clear the scenario-count threshold")
+	}
+	if mixed.robust {
+		t.Errorf("Delta Mixed has mixed sides and must not be robust")
+	}
+
+	refused, ok := byPlayer["Echo Refused"]
+	if !ok {
+		t.Fatalf("Echo Refused should clear the scenario-count threshold")
+	}
+	if refused.robust {
+		t.Errorf("Echo Refused was beyond-your-read in every scenario and must not be robust")
+	}
+
+	robust, ok := byPlayer["Foxtrot Robust"]
+	if !ok {
+		t.Fatalf("Foxtrot Robust should clear the scenario-count threshold")
+	}
+	if !robust.robust {
+		t.Errorf("Foxtrot Robust agrees on side, is market-alone, and is +EV in all scenarios -- should be robust")
+	}
+}
+
 func TestProjectionsRobustCmdRuns(t *testing.T) {
 	dir := t.TempDir()
 	logPath := filepath.Join(dir, "projections.jsonl")
-	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "shootout", 70, 60)
-	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "blowout_loss", 68, 60)
-	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "pass_heavy", 72, 60)
+	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "shootout", 70, 60, "under", 0.1, "market-alone")
+	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "blowout_loss", 68, 60, "under", 0.1, "market-alone")
+	seedRobustProjection(t, logPath, "Alpha Four", "receiving_yards", "pass_heavy", 72, 60, "under", 0.1, "market-alone")
 	if err := projectionsCmd([]string{"robust", "-log", logPath, "-season", "2026", "-week", "7"}); err != nil {
 		t.Fatal(err)
 	}
