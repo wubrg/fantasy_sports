@@ -1,0 +1,164 @@
+Week 9 Fantasy Football Matchup Notes
+Read Online
+Just two teams are on bye in Week 9, but with all the injuries piling up across the league and across all four fantasy football positions, we'll still need to play the matchups outside of the few fantasy studs who exist so far in 2026.
+What helps is that we have numerous games with high over/unders. Four matchups have totals over 50, and four more are set at 46.5 or higher.
+What hurts, though, is that a lot of studs have pretty tough matchups. That matchup data itself doesn't mean that we're considering benching said superstars, but if their production is kept in check this week, then perhaps nailing that flex play decision could be all the difference between a win and a loss.
+Which individual matchups stand out — good or bad — in Week 9?
+Let's dig through the stats and find out.
+- Brandon (@gdula13)
+WEEK 9 MATCHUP NOTES
+Let's start by taking a look at a handful of matchups this week with high game totals that could provide extra fantasy potential for stars and fringe players alike.
+GAMES WITH HIGH TOTALS
+Bengals at Falcons (52.5)
+The Bengals and Falcons head across the Atlantic to play in Madrid in a game with a tight three-point spread despite Cincinnati entering with a 5-2 record and Atlanta at 3-5.
+Joe Burrow is coming off a six-touchdown game in Week 8 but has a below-average quarterback matchup this week against the Falcons (who are the 21st-best quarterback matchup by adjusted points allowed).
+Burrow is averaging 27.9 fantasy points per game in his last five after notching 15.2 per game through two weeks. While he's had three straight top-half matchups, he also surpassed 22 fantasy points against Pittsburgh (27th-best quarterback matchup) and Jacksonville (25th-best) in Weeks 3 and 4, respectively, to kick off his five-game heater.
+The Bengals had strange usage in Week 1, with Mike Gesicki leading the team in target share and Ja'Marr Chase getting just 12% of the looks. Since then (and excluding Chase's injury-shortened Week 4), Chase has seen a 31% target share, followed by Tee Higgins' 22% and Chase Brown's 14%.
+Of note, the Falcons have been more vulnerable on the perimeter than in the slot, good news for both Chase and Higgins.
+Chase Brown has played 75% and 71% of the Bengals' snaps in two post-bye games and has finished as the RB25 and RB12 in expected PPR points in those two meetings. Brown has actually been a top-25 back by expected PPR points in six of seven games and a top-12 back in four of seven. He also had a touchdown called back in Week 8.
+After a tough two-game stretch to start the season, the Falcons' offense looked amazing for two games with Michael Penix back in action. In fact, they were the top-ranked offense by EPA per play in Penix's first two games back. Since Week 5, they've been a bottom-eight offense by EPA per play.
+This has dampened Bijan Robinson's production. After games of 31.3, 11.1, 35.3, and 27.7 PPR points to start the season, Robinson has scored 15.8, 7.3, 17.2, and 7.6 in four games in this split. That's an average of 26.4 through Week 4 and 12.0 since Week 5. Also of note, since Week 5, Robinson has played the 26th-best, 24th-best, 12th-best, and 31st-best running back matchups, respectively. This week, he gets the Bengals (28th-best), and his next matchups are 23rd, 30th, 29th, 19th, 22nd, and 31st. I know we're here to focus on Week 9, but Robinson has had some dreadful luck in 2026.
+The Bengals' pass defense has been extremely lopsided: they're the 3rd-best matchup for slot receivers (by composite volume and efficiency data) but 30th-best on the perimeter. While Olamide Zaccheus has the highest slot share (percent of routes from the slot) in the offense this season, Kyle Pitts and Drake London ran the most routes from the slot for the Falcons last week.
+Cowboys at Colts (51.5)
+The Cowboys rank fourth in the NFL in EPA per play offensively and have notched positive EPA marks in seven of eight games, the highest positive EPA game rate in the NFL. The Colts, meanwhile, have had positive EPA data in one game this year, the second-lowest rate in the league.
+The Cowboys' offense has really become the CeeDee Lamb show in recent weeks. Since Week 6, Lamb has had a 38% target share, a 41% target-per-route rate, and 17.7 PPR points per game. His 52% catch rate in this split has actually cut into his 25.6 expected PPR points per game rate in this stretch.
+After Lamb, no other player has a higher target share than George Pickens' 19% mark. Ryan Flournoy has seen 16% of the team's targets, and Brevyn Spann-Ford has 11% since Week 6.
+The Colts' extreme slot (2nd-best matchup) and perimeter (31st) splits could factor in this week, as Lamb rotates into the slot much more often than Pickens does. With that said, Ryan Flournoy leads the team in slot snaps on the season, and tight end Brevyn Spann-Ford saw slot action in Week 8 after Jake Ferguson exited.
+According to Late-Round Fantasy Football's expected touchdown model, Javonte Williams leads all running backs with 10.2 expected scores (he's scored nine times). He now draws a matchup with a Colts team that represents the third-best matchup by yards before contact allowed to running backs.
+The Colts' season is at a crossroads: the 2-6 team has already moved some pieces but hasn't yet traded Jonathan Taylor or Josh Downs. However, the Cowboys are the third-best adjusted matchup for running backs and the fifth-best for wide receivers.
+Unfortunately, Daniel Jones' efficiency has been a real problem in 2026. Jones has averaged -0.19 EPA per drop back this season, ranking him 33rd of 35 qualified quarterbacks. Last season, he averaged +0.14 per drop back (8th of 45 qualified quarterbacks). This is the largest year-over-year EPA per drop back drop (-0.35) of any quarterback since 2016 among players with at least 250 drop backs in consecutive seasons.
+Tyler Warren returned to a big role in Week 8, and in three games with Warren, Keenan Allen, and Josh Downs (but no Alec Pierce), Warren paces the team with a 27% target share. Allen (23%) and Downs (20%) make for a concentrated top-three. Warren has been a top-eight tight end by expected PPR points in four of six games.
+Jonathan Taylor has had his two worst workloads by expected PPR points (RB23, RB20) in each of the last two weeks. That coincides with his two lowest snap rates of the season, as well.
+Raiders at 49ers (51.5)
+The Raiders travel back to Cali to face the 49ers in Week 9 in a game with a 10-point spread. Las Vegas has quietly had a top-eight season by offensive EPA per play while ranking sixth in EPA per drop back but 29th in EPA per rush.
+That rushing data point may have played part in a backfield shuffle in Week 8. Mike Washington outsnapped Ashton Jeanty 63% to 37% and logged 25 of 27 carries between them. Jeanty was utilized as the third-down back primarily. While the overall split may not stick, Jeanty's stake to the receiving work should. That's relevant this week. While the 49ers are the 12th-best running back matchup on the board, they're actually 29th from a rushing standpoint but first from a receiving standpoint. They've allowed the highest adjusted target share to running backs in the league.
+The 49ers have allowed just three tight ends to go over 10 PPR points: Trey McBride (16.5), Chig Okonkwo (13.9), and Kyle Pitts (13.2) this season. However, Brock Bowers has scored 11.0 or more in all six games and has a 28% target share on the season in his active games.
+One thing to keep an eye on as it pertains to Tre Tucker. Jack Bech returned last week and was the primary receiver on the field when the team ran one-receiver sets. Tucker saw his first single-digit target share of the season in Week 8.
+The Niners are fresh off a bye, and Brock Purdy gets a top-10 adjusted quarterback matchup, his fourth so far this season. In his first three, he averaged 25.7 fantasy points per game. Each of his four other games was against bottom-half opponents (he averaged 17.2 against them). The 49ers have allowed the lowest pressure rate in the league, and the Raiders are a top-10 matchup by pressure rate generated. Purdy should have all day.
+Mike Evans and Deebo Samuel could return, but the main constant this season has been George Kittle, who draws the fifth-best tight end matchup in the league this week. Not only that, but the Raiders are the eighth-best slot matchup in the NFL, and Kittle gets some run there.
+Kittle has had one of the easiest tight end schedules of the season and has taken advantage of them. In five top-12 matchups, Kittle has averaged 18.8 PPR points per game. In his two other matchups, he's averaged just 5.3 PPR points.
+QUARTERBACK MATCHUP NOTES
+The five best quarterback matchups of the week:
+Dolphins (vs. Lions)
+Colts (vs. Cowboys)
+Seahawks (vs. Cardinals)
+Rams (at Commanders)
+Eagles (vs. Giants)
+Malik Willis has played one of the tougher quarterback schedules in the league thus far. Now, he gets the nut matchup against the Lions, who are just his third top-10 matchup of the season.
+In his first two top-10 matchups, he logged 16.7 fantasy points back in Week 1 against the Raiders and then a season-high 26.0 in Week 7 against the Jets.
+Notably, the Lions are much weaker through the air (the easiest matchup in the league) than on the ground (just the 15th-best matchup) against opposing quarterbacks after adjusting for opponents faced.
+Sam Darnold also is in the midst of a cakewalk stretch. After a top-12 meeting with the Bears on Monday Night Football in Week 8, he faces the Cardinals (third-best) this week and the Raiders (ninth-best) next week. But this is just his third top-12 matchup of the season.
+That comes after a four-game stretch against bottom-half matchups in each game.
+In Darnold's two easier-than-average matchups, he's averaged 22.6 points per game.
+In all others, he's averaged 11.7 (even excluding Week 1 when he left early).
+Matthew Stafford is entering a great two-week stretch, as he faces the Commanders this week and the Cardinals the next. Then, he hits a bye and faces one of the toughest remaining schedules for any quarterback.
+The last two weeks without Davante Adams have been a step down for Stafford as a passer.
+From Week 2 through Week 6 (omitting the Australia game in Week 1), Stafford had averaged 328 passing yards and 2.2 touchdowns for 20.4 fantasy points per game. In his last two matchups, he's thrown for just 176 yards per game. Even with two touchdowns per contest in that span, he's averaged only 12.9 points per game.
+Tanner McKee gets one more easy matchup before a Week 10 bye. McKee has now played in three top-half matchups since taking over for the Eagles.
+He is yet to reach 13 fantasy points or 220 passing yards in a game.
+Jared Goff gets a bit of a reprieve after the worst matchup in the league last week against the Vikings (and he has two more bottom-10 matchups upcoming after this).
+But Goff started the season with five straight top-20 matchups and took advantage of them.
+Goff in top-20 matchups: 23.0 points per game; Goff in two other games: 13.5 points per game.
+Let's shift to the bad matchups of the week. Josh Allen runs into the Vikings' buzzsaw in Week 9. Minnesota has not allowed a 20-point scorer yet this season, and only Jordan Love (19.48) has scored more than 12 against them.
+Allen has played in two bottom-10 matchups to date. In them, he scored 17.5 points against the Chargers in Week 3 and 18.5 points against the Patriots in Week 4, an average of 18.0 points.
+In all other games, he's averaged 30.4 points per game.
+Minnesota has generated pressure on 46.4% of opponent drop backs, the highest in the NFL by almost five full percentage points.
+Allen, under pressure, has been pretty average in terms of passing success rate.
+Gardner Minshew averaged 8.2 yards per attempt and a whopping 0.74 EPA per drop back last week in relief of Jacoby Brissett but now gets a bottom-two matchup with the Seahawks.
+CJ Stroud returns from bye to get a bottom-three matchup with the Chargers, who are a top-12 team by EPA per drop back allowed — it's not all just passing volume related.
+In Stroud's only bottom-12 matchup of the season to date, he put up 23.0 points against the Jaguars: 312 passing yards and 3 touchdowns.
+WIDE RECEIVER MATCHUP NOTES
+These are the top five overall wide receiver matchups by adjusted points allowed this week:
+Dolphins (vs. Lions)
+Chargers (vs. Texans)
+Giants (at Eagles)
+Ravens (vs. Jaguars)
+Colts (vs. Cowboys)
+Although the Dolphins have had four games with Malik Washington, Caleb Douglas, and Chris Bell active together, Week 8 looks to be the most indicative of the deployment moving forward. It was a post-bye game, and it saw Bell run 78% of the routes, the highest in this four-game split by a notable margin.
+Targets were flat, though: 20% for Washington and Douglas and 17% for Bell last week.
+On a more granular level, the Lions are the softest slot matchup — and just barely a below-average perimeter matchup this season.
+This puts Washington in the best spot to take advantage this week among the trio while operating from the slot.
+In two games with Ladd McConkey and Quentin Johnston fully together this season (where McConkey didn't have his snaps limited for one reason or the other), McConkey leads the team in target share...at 18%.
+Johnston (16%), Tre' Harris (16%), and Oronde Gadsden (13%) are part of a dispersed offense with their top guys fully healthy, an offense that ranks 32nd in EPA per drop back.
+The Eagles continue to be generous to the slot (5th-best matchup) but tough on the perimeter (27th), not the best news for Malik Nabers and Malachi Fields from a pure matchup standpoint.
+With that said, the Eagles are the 12th-best matchup on deep routes (posts, corners, and go routes).
+Nabers has had a 33% target share or better in three straight games, ranking third in the league in target share in that split (36%).
+Down Lamar Jackson and Tyler Huntley, the Ravens' quarterback situation is up in the air for Week 9. Last week, with Joe Fagnano under center, the team struggled mightily.
+Before some starters were pulled late in the game, Zay Flowers had run every route with Fagnano at quarterback but drew four catchless targets.
+The Jaguars have been the second-best perimeter matchup possible this season and are about average in the slot, where Flowers primarily lines up.
+The Jaguars get the next-best matchup of the week for receivers (at the Ravens), and they could use it. Not because they've been an inefficient offense, but just because the production has been down.
+In four games since Week 3, Jaguars receivers have combined for just one top-25 PPR week (Parker Washington was WR3 in Week 5).
+Since Week 3, Washington is tied with tight end Brenton Strange for a team-high 21% target share. Jakobi Meyers is at 19%, and nobody else is above a 10% share in that split.
+Washington's target share was 36% through Week 2 by comparison.
+Michael Wilson and the Cards get the week's toughest matchup (at the Seahawks).
+Seattle has allowed only four double-digit PPR outputs to receivers this season, and only Mike Evans (113 yards) has had more than 87 against them.
+The Jets not only have three viable receivers now but also the second-worst matchup possible — on the road against the Chiefs.
+Kansas City has allowed only one 75-yard receiver (Jaxon Smith-Njigba tagged them for 150 yards).
+Last week, with AD Mitchell's role scaled back up, Garrett Wilson (39% target share) and Mitchell (29%) dusted Omar Cooper (0%), despite Cooper entering with two straight huge games.
+With that said, routes were actually the same for Cooper and Mitchell (74%).
+The Lions are outdoors in a bottom-three weekly receiver matchup this week against the Dolphins.
+Amon-Ra St. Brown has had some pretty extreme splits in top-20 matchups (25.3 PPR points per game in four contests) compared to his three toughest matchups (13.3 PPR points per game).
+Jameson Williams (14.7 points per game in top-20 matchups and 14.0 in the others) has been less matchup-dependent.
+Interestingly, while the Dolphins grade out as a tough per-game opponent, they're actually allowing the highest PPR points per target to the position. They just have faced a bottom-two adjusted wide receiver target share.
+TIGHT END MATCHUP NOTES
+The best tight end matchups of the week:
+Dolphins (vs. Lions)
+Rams (at Commanders)
+Lions (at Dolphins)
+Jets (at Chiefs)
+49ers (vs. Raiders)
+The Lions are currently a big outlier as far as tight end production allowed goes, in terms of adjusted fantasy points allowed. They're also a top-three matchup by adjusted target share allowed to tight ends.
+Greg Dulcich has had target shares of 19%, 24%, and 20% in his last three games. Since Week 5, Dulcich ranks eighth among tight ends in target share (21%). He's been the TE13 by PPR points per game.
+The Rams' crop of tight ends set up well again in Week 9, and Terrance Ferguson could return.
+In Ferguson's last full game (Week 2), he had a 72% route rate and caught 6 of 9 targets for 54 yards and a touchdown.
+In his absence, Tyler Higbee has had a 70% route rate (since Week 4).
+Sam LaPorta gets a great matchup on the other side of that Dolphins/Lions game. LaPorta has played the two worst adjusted tight end matchups in the NFL (the Packers and Vikings) in back-to-back weeks since his bye.
+In Week 7 against the Packers, he caught 1 of 2 targets for 18 yards and 2.8 PPR points despite an 85% route rate. It was his first game of the season below 44 yards to that point.
+Then, in Week 8 against the Vikings, he notched 33 yards on 5 targets for 6.5 PPR points.
+The Dolphins have now allowed 48 catches on 55 targets to tight ends, an 87.3% completion rate. This would be the highest catch rate allowed to tight ends since at least 2016 by more than six percentage points.
+The Jets get their third straight top-five tight end matchup this week against the Chiefs.
+In four games since returning from injury, Mason Taylor has had a 60% route rate, separating from Kenyon Sadiq (35%). With that said, Sadiq had his in-split high of 43% last week.
+Taylor, though, has a 17% target share in this split (it's 8% for Sadiq). And over the last three weeks, Taylor has target shares of 21%, 21%, and 16%.
+Harold Fannin and the Browns will play their first top-10 matchup of the season this week against the Saints.
+Colston Loveland and the Bears get their first top-12 matchup of the season this week against the Buccaneers.
+As far as tough matchups go, the toughest tight end matchup of the week belongs to Dalton Kincaid and the Buffalo Bills as they face the Vikings, who have stifled tight ends all season.
+No tight end has had double-digit PPR points against Minnesota yet. Partly because they haven't allowed a receiving touchdown to the position yet.
+After Hunter Henry's injury in Week 8, Eli Raridon played every snap for the Patriots but drew just one target on 14 routes (an 82% route rate).
+He could be freed up for a bigger role, but the Patriots face the Packers, who are a top-two tight end defense to date.
+Isaiah Likely has a 27% target share on the season, third-best in the league — trailing just Brock Bowers and Trey McBride at 28%.
+The only tight end to go over 14 PPR points against Philadelphia this season has been Tommy Tremble, who has scored the only two receiving touchdowns against them this season by tight ends.
+Trey McBride faces the Seahawks in Week 9, a rematch of his Week 2 game against them in Seattle.
+In Week 2, McBride had 18.1 PPR points against the Seahawks.
+However, it took him 10 targets and 8 catches to muster 41 yards and a touchdown.
+This is his third bottom-eight matchup of the season. In his first three, he's averaged 18.3 PPR points, scoring in two of them to help boost that output.
+RUNNING BACK MATCHUP NOTES
+Here are the best running back matchups of the week:
+Browns (at Saints)
+Broncos (at Panthers)
+Colts (vs. Cowboys)
+Bengals (at Falcons)
+Lions (at Dolphins)
+Dylan Sampson out-snapped Quinshon Judkins (56% to 39%) in Week 8 after a 52%/47% split in Judkins' favor in Sampson's first game in Week 7.
+The Saints are ceding the most adjusted rushing points per game to running backs but are a little stingier through the air: 13th. They also allow the 26th-highest adjusted target share to the position.
+Without RJ Harvey to deal with in Week 8, Jonah Coleman dominated the Broncos' backfield, outsnapping JK Dobbins 68% to 21%. Coleman out-snapped Dobbins 72% to 28% on early downs and 46% to 0% on third downs.
+The Panthers are letting up the eighth-most yards before contact per attempt to opposing running backs, and the Broncos are 13th offensively.
+It's a great matchup on paper for the Vikings' backs, but their usage last week was brutal.
+Aaron Jones led the backfield with just a 38% snap rate, followed by DeeJay Dallas (34%) and Jordan Mason (28%).
+Dallas operated as the third-down back, and Jones and Mason split the early-down snaps.
+Rhamondre Stevenson saw a 76% snap rate last week without TreVeyon Henderson, giving Stevenson snap rates of 85% and 76% in two games without Henderson this season.
+The Packers are actually allowing the fewest yards before contact per attempt by running backs this season and the Pats are only 27th offensively.
+However, Green Bay lets up the fourth-most yards after contact per attempt to backs.
+Some big-name backs have tough matchups in Week 9.
+The toughest spot of the week belongs to Derrick Henry against the Jaguars. The Ravens' implied team total is only 17.0 points, and the team is an 8.5-point underdog.
+The Jaguars allow the fewest adjusted rushing yards per game to running backs.
+The second-worst spot is James Cook's. This is Cook's second straight bottom-eight matchup and his fifth already this season.
+In his first four bottom-eight matchups, Cook has come through, averaging 19.5 PPR points per game. In his other three, that number has been 17.9.
+Further, the Vikings are the second-toughest receiving matchup for backs but around the league average on the ground specifically, as they're the 12th-best matchup by yards before contact allowed to backs.
+Waiver-wire darling Ollie Gordon faces the pass funnel defense of Detroit this weekend, as the Lions are a bottom-three running back matchup that allows the highest pass rate over expectation in the league.
+He's no stranger to bad spots, though. Since his snap rate jumped, he has had just one top-20 matchup in five games.
+Bijan Robinson is mired in a three-game stretch before his bye against top-eight adjusted running back defenses. In fact, after the bye, he gets five more bottom-12 matchups before two smash spots in Weeks 17 and 18, only one of them being fantasy relevant for the majority of us.
+This week in particular, Robinson is up against a Bengals team allowing a top-five yards before contact per attempt number to backs but bottom-10 receiving data by adjusted fantasy points and adjusted target share.
+Josh Jacobs has been horribly inefficient so far in 2026, ranking 56th in yards before contact per attempt and 48th in yards after contact per attempt (among 57 qualified backs) through two games.
+He probably won't get more lanes opened up this week. Green Bay backs are 28th in yards before contact per attempt generated. The Patriots are just the 26th-best matchup defensively in that metric.
+Want to change how you receive these emails?
+You can update your preferences or unsubscribe from this list.
