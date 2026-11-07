@@ -173,6 +173,48 @@ func TestCollapseLegsLeavesIndependentLegsAlone(t *testing.T) {
 	}
 }
 
+func TestCollapseLegsIndependentLegsKeepSuppliedProbs(t *testing.T) {
+	// Regression: -p was dropped for independent legs and every slot fell back
+	// to its raw implied probability, so a supplied edge never reached the EV.
+	legs := []parlayLeg{
+		{price: -110, game: "mia@lv", label: "A"},
+		{price: -120, game: "was@phi", label: "B"},
+	}
+	collapsed, err := collapseLegs(legs, nil, []float64{0.60, 0.55})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []float64{0.60, 0.55}
+	for i, c := range collapsed {
+		if c.prob == nil {
+			t.Fatalf("slot %d: a supplied -p must reach the slot, got nil", i)
+		}
+		if math.Abs(*c.prob-want[i]) > 1e-12 {
+			t.Errorf("slot %d prob = %v, want %v", i, *c.prob, want[i])
+		}
+	}
+}
+
+func TestCollapseLegsMixedGroupAndIndependentKeepProbs(t *testing.T) {
+	legs := []parlayLeg{
+		{price: -110, game: "mia@lv", label: "A"},
+		{price: +150, game: "mia@lv", label: "B"},
+		{price: -120, game: "was@phi", label: "C"},
+	}
+	specs := []correlationSpec{{game: "mia@lv", rhos: []float64{0.3}}}
+	collapsed, err := collapseLegs(legs, specs, []float64{0.55, 0.45, 0.58})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(collapsed) != 2 {
+		t.Fatalf("want 2 slots (SGP + independent), got %d", len(collapsed))
+	}
+	ind := collapsed[1]
+	if ind.prob == nil || math.Abs(*ind.prob-0.58) > 1e-12 {
+		t.Errorf("independent leg should carry its supplied 0.58, got %v", ind.prob)
+	}
+}
+
 func TestCollapseLegsThreeLegGroupSetsCaveat(t *testing.T) {
 	legs := []parlayLeg{
 		{price: -110, game: "mia@lv", label: "A"},
