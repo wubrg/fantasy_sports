@@ -446,7 +446,14 @@ func collapseLegs(legs []parlayLeg, specs []correlationSpec, probs []float64) ([
 		}
 		spec, covered := bySpec[l.game]
 		if !covered {
-			out = append(out, collapsedLeg{price: l.price, members: []parlayLeg{l}})
+			// An independent leg keeps its own -p probability; without this the
+			// slot reads as nil and parlayCmd silently falls back to raw implied.
+			var own *float64
+			if probs != nil && i < len(probs) {
+				p := probs[i]
+				own = &p
+			}
+			out = append(out, collapsedLeg{price: l.price, prob: own, members: []parlayLeg{l}})
 			continue
 		}
 		idxs := groupIdx[l.game]
