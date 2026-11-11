@@ -131,6 +131,37 @@ func TestPropsRowsReadsBet365AndScopesToTheWeek(t *testing.T) {
 	}
 }
 
+func TestPropsRowsScopesDraftKingsToTheWeekToo(t *testing.T) {
+	// A DraftKings capture can hold games from other weeks (a week-10 TNF capture
+	// held 27 events, 12 of them not week 10). Only the week's board games stay.
+	ingest, boards := t.TempDir(), t.TempDir()
+	writeWeekBoard(t, boards) // SF @ LA only
+	body := `{"events":[{"id":"E1","name":"SF @ LA"},{"id":"E2","name":"DAL @ NYG"}],` +
+		`"markets":[{"id":"M1","eventId":"E1","name":"Moneyline"},{"id":"M2","eventId":"E2","name":"Moneyline"}],` +
+		`"selections":[` +
+		`{"marketId":"M1","label":"SF 49ers","displayOdds":{"american":"-150"}},` +
+		`{"marketId":"M1","label":"LA Rams","displayOdds":{"american":"+130"}},` +
+		`{"marketId":"M2","label":"DAL Cowboys","displayOdds":{"american":"-120"}},` +
+		`{"marketId":"M2","label":"NYG Giants","displayOdds":{"american":"+100"}}]}`
+	if err := os.WriteFile(filepath.Join(ingest, "dk_week1.json"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	rows, _, _ := propsRows(ingest, 1, "", "draftkings", boards)
+	if len(rows) != 2 {
+		t.Fatalf("want only SF @ LA's two moneyline rows, got %d: %+v", len(rows), rows)
+	}
+	for _, r := range rows {
+		if strings.Contains(r.Game, "DAL") {
+			t.Errorf("DAL @ NYG is not on the week's board: %+v", r)
+		}
+	}
+	// With no board there is nothing to scope by.
+	if all, _, _ := propsRows(ingest, 1, "", "draftkings", ""); len(all) != 4 {
+		t.Errorf("with no board directory all 4 rows should show, got %d", len(all))
+	}
+}
+
 func TestPropsRowsBookFilterKeepsDraftKingsDefaultSafe(t *testing.T) {
 	ingest, boards := t.TempDir(), t.TempDir()
 	writeBet365Capture(t, ingest, "bet365_week1.har")
