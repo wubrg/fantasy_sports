@@ -270,7 +270,7 @@ func (d *Doc) TeamsMentioned(text string) []string {
 	known := d.Teams()
 	seen := map[string]bool{}
 	var out []string
-	for _, f := range strings.FieldsFunc(text, func(r rune) bool {
+	for _, f := range strings.FieldsFunc(expandTeamNames(text), func(r rune) bool {
 		return !(r >= 'A' && r <= 'Z') && !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9')
 	}) {
 		u := strings.ToUpper(f)

@@ -2,6 +2,7 @@ package board
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -30,6 +31,30 @@ import (
 var teamAliases = map[string]string{
 	"LAR": "LA",
 	"MN":  "MIN",
+}
+
+// ambiguousNames are the four team names whose first word alone misleads a
+// token match: "NY" is neither NYG nor NYJ, and "LA" in "LA Chargers" reads as
+// the Rams. Books print them in full ("NY Giants", "LA Chargers"), so the full
+// phrase is rewritten to the schedule abbreviation before any token matching.
+// Exact phrases only: this is not a general team-name resolver (see teamAliases).
+var ambiguousNames = []struct {
+	re  *regexp.Regexp
+	abv string
+}{
+	{regexp.MustCompile(`(?i)\bNY\s+Giants\b`), "NYG"},
+	{regexp.MustCompile(`(?i)\bNY\s+Jets\b`), "NYJ"},
+	{regexp.MustCompile(`(?i)\bLA\s+Chargers\b`), "LAC"},
+	{regexp.MustCompile(`(?i)\bLA\s+Rams\b`), "LA"},
+}
+
+// expandTeamNames rewrites the ambiguous full team names in an odds capture's
+// text ("NY Giants -3.5", "LA Chargers @ BAL Ravens") to schedule abbreviations.
+func expandTeamNames(s string) string {
+	for _, a := range ambiguousNames {
+		s = a.re.ReplaceAllString(s, a.abv)
+	}
+	return s
 }
 
 // CanonicalTeam converts a pasted abbreviation to the schedule's spelling.

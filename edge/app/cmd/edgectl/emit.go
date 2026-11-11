@@ -76,7 +76,7 @@ func emitMarket(args []string) error {
 		return err
 	}
 
-	propRowsAll, ing, err := propsRows(*ingestDir, *week, *game)
+	propRowsAll, ing, err := propsRows(*ingestDir, *week, *game, *bookFlag, *boardDir)
 	if err != nil {
 		return err
 	}

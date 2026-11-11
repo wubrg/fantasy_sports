@@ -46,7 +46,11 @@ func (s *boardServer) planPropsSync(r *http.Request) (propsSyncRequest, []board.
 	}
 
 	ing := readIngest(s.ingestDir, req.Week)
-	pairs := wf.doc.OddsPairsFromOutcomes(ing.outcomes)
+	// Only the target book's prices may land in the target book's column: a bet365
+	// price synced into the draftkings column (or the reverse) would be silently
+	// wrong. A multi-week bet365 page is also scoped to this week's board here.
+	outs := outcomesForBook(scopeToWeek(ing.outcomes, wf.doc), req.Book)
+	pairs := wf.doc.OddsPairsFromOutcomes(outs)
 	changes, err := wf.doc.PlanOddsSync(pairs, req.Book)
 	return req, changes, err
 }

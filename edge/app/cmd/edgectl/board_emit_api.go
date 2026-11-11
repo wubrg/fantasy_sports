@@ -42,7 +42,7 @@ func (s *boardServer) handleEmitMarket(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusBadRequest, "no ingest folder configured (-ingest-dir); the MARKET block's props come from a capture")
 		return
 	}
-	propRowsAll, ing, err := propsRows(s.ingestDir, week, game)
+	propRowsAll, ing, err := propsRows(s.ingestDir, week, game, book, s.dir)
 	if err != nil {
 		httpError(w, http.StatusInternalServerError, err.Error())
 		return

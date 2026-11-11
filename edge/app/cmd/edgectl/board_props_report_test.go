@@ -81,7 +81,7 @@ func TestPropsRowsJSONShape(t *testing.T) {
 	dir := t.TempDir()
 	writeIngestFixture(t, dir)
 
-	rows, ing, err := propsRows(dir, 4, "")
+	rows, ing, err := propsRows(dir, 4, "", "", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,7 +169,7 @@ func TestPropsRowsJSONShape(t *testing.T) {
 	}
 
 	// The id is stable across re-pricing the same capture.
-	rows2, _, _ := propsRows(dir, 4, "")
+	rows2, _, _ := propsRows(dir, 4, "", "", "")
 	if rows2[0].ID != rows[0].ID {
 		t.Errorf("row id is not stable: %q vs %q", rows2[0].ID, rows[0].ID)
 	}
@@ -180,10 +180,10 @@ func TestPropsRowsGameFilter(t *testing.T) {
 	writeIngestFixture(t, dir)
 	// Tokens are matched case-insensitively against the event; a non-match
 	// yields no rows.
-	if rows, _, _ := propsRows(dir, 4, "PIT CLE"); len(rows) != 5 {
+	if rows, _, _ := propsRows(dir, 4, "PIT CLE", "", ""); len(rows) != 5 {
 		t.Errorf("'PIT CLE' should match the only event, got %d rows", len(rows))
 	}
-	if rows, _, _ := propsRows(dir, 4, "DAL HOU"); len(rows) != 0 {
+	if rows, _, _ := propsRows(dir, 4, "DAL HOU", "", ""); len(rows) != 0 {
 		t.Errorf("'DAL HOU' should match nothing, got %d rows", len(rows))
 	}
 }
@@ -191,7 +191,7 @@ func TestPropsRowsGameFilter(t *testing.T) {
 func TestSaveSnapshotPathAndContent(t *testing.T) {
 	dir := t.TempDir()
 	writeIngestFixture(t, dir)
-	rows, ing, err := propsRows(dir, 4, "PIT CLE")
+	rows, ing, err := propsRows(dir, 4, "PIT CLE", "", "")
 	if err != nil {
 		t.Fatal(err)
 	}
