@@ -325,18 +325,19 @@ func scopeDoc(boardDir string, week int) *board.Doc {
 	return doc
 }
 
-// scopeToWeek keeps only the outcomes of the requested week. A DraftKings capture
-// is saved per week, so its outcomes are taken as they come. A bet365 page lists
-// the current slate and the next one together, so a bet365 outcome is kept only
-// when its event is a matchup on the week's board. With no board (doc nil) every
-// outcome is kept.
+// scopeToWeek keeps only the outcomes of the requested week, for every book. A
+// capture is named for a week but the page behind it often lists more than that
+// week's games (a bet365 page shows this slate and the next; a DraftKings week-10
+// TNF capture held 27 events, 12 of them from other weeks), so an outcome is kept
+// only when its event is a matchup on the week's board. With no board (doc nil)
+// every outcome is kept, and so is one with no event name, which cannot be judged.
 func scopeToWeek(outs []oddspull.Outcome, doc *board.Doc) []oddspull.Outcome {
 	if doc == nil {
 		return outs
 	}
 	keep := outs[:0:0]
 	for _, o := range outs {
-		if o.BookName() != oddspull.DraftKings && !doc.HasMatchup(o.Event) {
+		if o.Event != "" && !doc.HasMatchup(o.Event) {
 			continue
 		}
 		keep = append(keep, o)
