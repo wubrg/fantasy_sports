@@ -1,0 +1,1000 @@
+{
+  "season": 2026,
+  "week": 8,
+  "input_pack": "beliefs/2026/week08.input.json",
+  "input_pack_sha256": "a146b3bac80d49cb1fd7007313d2e690afcf1d9e02c4adb3dc12b58d6ebbb1ef",
+  "model": "claude-sonnet-5/belief-v1",
+  "prompt": "belief-v1",
+  "generated_at": "2026-10-28T20:00:00Z",
+  "predictions": [
+    {
+      "game_id": "2026_08_CAR_GB",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.3378,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CAR_GB",
+      "team": "CAR",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CAR_GB",
+      "team": "GB",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CAR_GB",
+      "team": "CAR",
+      "scenario": "pass_heavy",
+      "belief": 0.47,
+      "confidence": 0.52,
+      "abstained": false,
+      "claims": [
+        "form: CAR \u2014 prior offensive PROE +3.7010, above the +3.0 pass_heavy threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_CAR_GB",
+      "team": "GB",
+      "scenario": "pass_heavy",
+      "belief": 0.49,
+      "confidence": 0.54,
+      "abstained": false,
+      "claims": [
+        "form: GB \u2014 prior offensive PROE +4.0889, above the +3.0 pass_heavy threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_CAR_GB",
+      "team": "CAR",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CAR_GB",
+      "team": "GB",
+      "scenario": "efficient_offense",
+      "belief": 0.31,
+      "confidence": 0.45,
+      "abstained": false,
+      "claims": [
+        "form: GB \u2014 prior success rate 0.3933, below the .46 efficient-offense threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_BAL_BUF",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.51,
+      "confidence": 0.5,
+      "abstained": false,
+      "claims": [
+        "market: BAL@BUF \u2014 posted total 54.5",
+        "form: BUF \u2014 prior success rate 0.4845"
+      ]
+    },
+    {
+      "game_id": "2026_08_BAL_BUF",
+      "team": "BAL",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_BAL_BUF",
+      "team": "BUF",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_BAL_BUF",
+      "team": "BAL",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_BAL_BUF",
+      "team": "BUF",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_BAL_BUF",
+      "team": "BAL",
+      "scenario": "efficient_offense",
+      "belief": 0.49,
+      "confidence": 0.5,
+      "abstained": false,
+      "claims": [
+        "form: BAL \u2014 prior success rate 0.4711, above the .46 efficient-offense threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_BAL_BUF",
+      "team": "BUF",
+      "scenario": "efficient_offense",
+      "belief": 0.52,
+      "confidence": 0.52,
+      "abstained": false,
+      "claims": [
+        "form: BUF \u2014 prior success rate 0.4845, above the .46 efficient-offense threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_TEN_CIN",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.3378,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_TEN_CIN",
+      "team": "TEN",
+      "scenario": "blowout_loss",
+      "belief": 0.42,
+      "confidence": 0.5,
+      "abstained": false,
+      "claims": [
+        "market: TEN@CIN \u2014 posted spread 10.0 with TEN the underdog",
+        "form: TEN \u2014 prior success rate 0.4037"
+      ]
+    },
+    {
+      "game_id": "2026_08_TEN_CIN",
+      "team": "CIN",
+      "scenario": "blowout_loss",
+      "belief": 0.12,
+      "confidence": 0.5,
+      "abstained": false,
+      "claims": [
+        "market: TEN@CIN \u2014 posted spread 10.0 with CIN favoured",
+        "form: CIN \u2014 prior success rate 0.4871"
+      ]
+    },
+    {
+      "game_id": "2026_08_TEN_CIN",
+      "team": "TEN",
+      "scenario": "pass_heavy",
+      "belief": 0.13,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "form: TEN \u2014 prior offensive PROE -5.6112, well below the +3.0 pass_heavy threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_TEN_CIN",
+      "team": "CIN",
+      "scenario": "pass_heavy",
+      "belief": 0.55,
+      "confidence": 0.58,
+      "abstained": false,
+      "claims": [
+        "form: CIN \u2014 prior offensive PROE +6.7437, the highest pass-rate-over-expected mark in this slate"
+      ]
+    },
+    {
+      "game_id": "2026_08_TEN_CIN",
+      "team": "TEN",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_TEN_CIN",
+      "team": "CIN",
+      "scenario": "efficient_offense",
+      "belief": 0.53,
+      "confidence": 0.55,
+      "abstained": false,
+      "claims": [
+        "form: CIN \u2014 prior success rate 0.4871, above the .46 efficient-offense threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_ARI_DAL",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.48,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "market: ARI@DAL \u2014 posted total 54.5",
+        "form: DAL \u2014 prior success rate 0.4804"
+      ]
+    },
+    {
+      "game_id": "2026_08_ARI_DAL",
+      "team": "ARI",
+      "scenario": "blowout_loss",
+      "belief": 0.34,
+      "confidence": 0.45,
+      "abstained": false,
+      "claims": [
+        "market: ARI@DAL \u2014 posted spread 6.5 with ARI the underdog",
+        "form: ARI \u2014 prior success rate 0.4365"
+      ]
+    },
+    {
+      "game_id": "2026_08_ARI_DAL",
+      "team": "DAL",
+      "scenario": "blowout_loss",
+      "belief": 0.15,
+      "confidence": 0.45,
+      "abstained": false,
+      "claims": [
+        "market: ARI@DAL \u2014 posted spread 6.5 with DAL favoured",
+        "form: DAL \u2014 prior success rate 0.4804"
+      ]
+    },
+    {
+      "game_id": "2026_08_ARI_DAL",
+      "team": "ARI",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_ARI_DAL",
+      "team": "DAL",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_ARI_DAL",
+      "team": "ARI",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_ARI_DAL",
+      "team": "DAL",
+      "scenario": "efficient_offense",
+      "belief": 0.51,
+      "confidence": 0.52,
+      "abstained": false,
+      "claims": [
+        "form: DAL \u2014 prior success rate 0.4804, above the .46 efficient-offense threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_MIN_DET",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.3378,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_MIN_DET",
+      "team": "MIN",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_MIN_DET",
+      "team": "DET",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_MIN_DET",
+      "team": "MIN",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_MIN_DET",
+      "team": "DET",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_MIN_DET",
+      "team": "MIN",
+      "scenario": "efficient_offense",
+      "belief": 0.25,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "form: MIN \u2014 prior success rate 0.3567, below the .46 efficient-offense threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_MIN_DET",
+      "team": "DET",
+      "scenario": "efficient_offense",
+      "belief": 0.54,
+      "confidence": 0.56,
+      "abstained": false,
+      "claims": [
+        "form: DET \u2014 prior success rate 0.4981, above the .46 efficient-offense threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_IND_JAX",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.3378,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_IND_JAX",
+      "team": "IND",
+      "scenario": "blowout_loss",
+      "belief": 0.41,
+      "confidence": 0.5,
+      "abstained": false,
+      "claims": [
+        "market: IND@JAX \u2014 posted spread 9.5 with IND the underdog",
+        "form: IND \u2014 prior success rate 0.4242"
+      ]
+    },
+    {
+      "game_id": "2026_08_IND_JAX",
+      "team": "JAX",
+      "scenario": "blowout_loss",
+      "belief": 0.12,
+      "confidence": 0.5,
+      "abstained": false,
+      "claims": [
+        "market: IND@JAX \u2014 posted spread 9.5 with JAX favoured",
+        "form: JAX \u2014 prior success rate 0.4812"
+      ]
+    },
+    {
+      "game_id": "2026_08_IND_JAX",
+      "team": "IND",
+      "scenario": "pass_heavy",
+      "belief": 0.14,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "form: IND \u2014 prior offensive PROE -5.2113, well below the +3.0 pass_heavy threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_IND_JAX",
+      "team": "JAX",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_IND_JAX",
+      "team": "IND",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_IND_JAX",
+      "team": "JAX",
+      "scenario": "efficient_offense",
+      "belief": 0.52,
+      "confidence": 0.5,
+      "abstained": false,
+      "claims": [
+        "form: JAX \u2014 prior success rate 0.4812, above the .46 efficient-offense threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_LV_NYJ",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.3378,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_LV_NYJ",
+      "team": "LV",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_LV_NYJ",
+      "team": "NYJ",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_LV_NYJ",
+      "team": "LV",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_LV_NYJ",
+      "team": "NYJ",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_LV_NYJ",
+      "team": "LV",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_LV_NYJ",
+      "team": "NYJ",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CLE_PIT",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.13,
+      "confidence": 0.5,
+      "abstained": false,
+      "claims": [
+        "market: CLE@PIT \u2014 posted total 39.5",
+        "form: PIT \u2014 prior success rate 0.4177"
+      ]
+    },
+    {
+      "game_id": "2026_08_CLE_PIT",
+      "team": "CLE",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CLE_PIT",
+      "team": "PIT",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CLE_PIT",
+      "team": "CLE",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CLE_PIT",
+      "team": "PIT",
+      "scenario": "pass_heavy",
+      "belief": 0.46,
+      "confidence": 0.52,
+      "abstained": false,
+      "claims": [
+        "form: PIT \u2014 prior offensive PROE +3.6144, above the +3.0 pass_heavy threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_CLE_PIT",
+      "team": "CLE",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CLE_PIT",
+      "team": "PIT",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_ATL_TB",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.3378,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_ATL_TB",
+      "team": "ATL",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_ATL_TB",
+      "team": "TB",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_ATL_TB",
+      "team": "ATL",
+      "scenario": "pass_heavy",
+      "belief": 0.12,
+      "confidence": 0.5,
+      "abstained": false,
+      "claims": [
+        "form: ATL \u2014 prior offensive PROE -6.3537, well below the +3.0 pass_heavy threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_ATL_TB",
+      "team": "TB",
+      "scenario": "pass_heavy",
+      "belief": 0.14,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "form: TB \u2014 prior offensive PROE -5.1184, well below the +3.0 pass_heavy threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_ATL_TB",
+      "team": "ATL",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_ATL_TB",
+      "team": "TB",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_LAC_LA",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.3378,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_LAC_LA",
+      "team": "LAC",
+      "scenario": "blowout_loss",
+      "belief": 0.34,
+      "confidence": 0.45,
+      "abstained": false,
+      "claims": [
+        "market: LAC@LA \u2014 posted spread 6.5 with LAC the underdog",
+        "form: LAC \u2014 prior success rate 0.3595"
+      ]
+    },
+    {
+      "game_id": "2026_08_LAC_LA",
+      "team": "LA",
+      "scenario": "blowout_loss",
+      "belief": 0.15,
+      "confidence": 0.45,
+      "abstained": false,
+      "claims": [
+        "market: LAC@LA \u2014 posted spread 6.5 with LA favoured",
+        "form: LA \u2014 prior success rate 0.4906"
+      ]
+    },
+    {
+      "game_id": "2026_08_LAC_LA",
+      "team": "LAC",
+      "scenario": "pass_heavy",
+      "belief": 0.09,
+      "confidence": 0.52,
+      "abstained": false,
+      "claims": [
+        "form: LAC \u2014 prior offensive PROE -8.9487, far below the +3.0 pass_heavy threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_LAC_LA",
+      "team": "LA",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_LAC_LA",
+      "team": "LAC",
+      "scenario": "efficient_offense",
+      "belief": 0.26,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "form: LAC \u2014 prior success rate 0.3595, below the .46 efficient-offense threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_LAC_LA",
+      "team": "LA",
+      "scenario": "efficient_offense",
+      "belief": 0.54,
+      "confidence": 0.55,
+      "abstained": false,
+      "claims": [
+        "form: LA \u2014 prior success rate 0.4906, above the .46 efficient-offense threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_KC_DEN",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.16,
+      "confidence": 0.46,
+      "abstained": false,
+      "claims": [
+        "market: KC@DEN \u2014 posted total 41.5",
+        "form: DEN \u2014 prior success rate 0.3777"
+      ]
+    },
+    {
+      "game_id": "2026_08_KC_DEN",
+      "team": "KC",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_KC_DEN",
+      "team": "DEN",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_KC_DEN",
+      "team": "KC",
+      "scenario": "pass_heavy",
+      "belief": 0.45,
+      "confidence": 0.5,
+      "abstained": false,
+      "claims": [
+        "form: KC \u2014 prior offensive PROE +3.5288, above the +3.0 pass_heavy threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_KC_DEN",
+      "team": "DEN",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_KC_DEN",
+      "team": "KC",
+      "scenario": "efficient_offense",
+      "belief": 0.49,
+      "confidence": 0.5,
+      "abstained": false,
+      "claims": [
+        "form: KC \u2014 prior success rate 0.4703, above the .46 efficient-offense threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_KC_DEN",
+      "team": "DEN",
+      "scenario": "efficient_offense",
+      "belief": 0.29,
+      "confidence": 0.45,
+      "abstained": false,
+      "claims": [
+        "form: DEN \u2014 prior success rate 0.3777, below the .46 efficient-offense threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_NE_MIA",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.3378,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_NE_MIA",
+      "team": "NE",
+      "scenario": "blowout_loss",
+      "belief": 0.14,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "market: NE@MIA \u2014 posted spread 7.0 with NE favoured",
+        "form: NE \u2014 prior success rate 0.4503"
+      ]
+    },
+    {
+      "game_id": "2026_08_NE_MIA",
+      "team": "MIA",
+      "scenario": "blowout_loss",
+      "belief": 0.36,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "market: NE@MIA \u2014 posted spread 7.0 with MIA the underdog",
+        "form: MIA \u2014 prior success rate 0.3949"
+      ]
+    },
+    {
+      "game_id": "2026_08_NE_MIA",
+      "team": "NE",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_NE_MIA",
+      "team": "MIA",
+      "scenario": "pass_heavy",
+      "belief": 0.07,
+      "confidence": 0.55,
+      "abstained": false,
+      "claims": [
+        "form: MIA \u2014 prior offensive PROE -11.2014, by far the most run-leaning mark in this slate"
+      ]
+    },
+    {
+      "game_id": "2026_08_NE_MIA",
+      "team": "NE",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_NE_MIA",
+      "team": "MIA",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_PHI_WAS",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.14,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "market: PHI@WAS \u2014 posted total 40.5",
+        "form: PHI \u2014 prior success rate 0.3677"
+      ]
+    },
+    {
+      "game_id": "2026_08_PHI_WAS",
+      "team": "PHI",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_PHI_WAS",
+      "team": "WAS",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_PHI_WAS",
+      "team": "PHI",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_PHI_WAS",
+      "team": "WAS",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_PHI_WAS",
+      "team": "PHI",
+      "scenario": "efficient_offense",
+      "belief": 0.27,
+      "confidence": 0.47,
+      "abstained": false,
+      "claims": [
+        "form: PHI \u2014 prior success rate 0.3677, below the .46 efficient-offense threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_PHI_WAS",
+      "team": "WAS",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CHI_SEA",
+      "team": null,
+      "scenario": "shootout",
+      "belief": 0.3378,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CHI_SEA",
+      "team": "CHI",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CHI_SEA",
+      "team": "SEA",
+      "scenario": "blowout_loss",
+      "belief": 0.2617,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CHI_SEA",
+      "team": "CHI",
+      "scenario": "pass_heavy",
+      "belief": 0.2648,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CHI_SEA",
+      "team": "SEA",
+      "scenario": "pass_heavy",
+      "belief": 0.13,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "form: SEA \u2014 prior offensive PROE -5.4723, well below the +3.0 pass_heavy threshold"
+      ]
+    },
+    {
+      "game_id": "2026_08_CHI_SEA",
+      "team": "CHI",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    },
+    {
+      "game_id": "2026_08_CHI_SEA",
+      "team": "SEA",
+      "scenario": "efficient_offense",
+      "belief": 0.3721,
+      "confidence": 0.0,
+      "abstained": true,
+      "claims": []
+    }
+  ],
+  "flagged": [
+    "2026_08_TEN_CIN/CIN/pass_heavy",
+    "2026_08_TEN_CIN/CIN/efficient_offense",
+    "2026_08_MIN_DET/DET/efficient_offense",
+    "2026_08_LAC_LA/LA/efficient_offense",
+    "2026_08_BAL_BUF/BUF/efficient_offense",
+    "2026_08_ARI_DAL/DAL/efficient_offense",
+    "2026_08_CAR_GB/GB/pass_heavy",
+    "2026_08_NE_MIA/MIA/pass_heavy",
+    "2026_08_LAC_LA/LAC/pass_heavy",
+    "2026_08_MIN_DET/MIN/efficient_offense"
+  ]
+}
