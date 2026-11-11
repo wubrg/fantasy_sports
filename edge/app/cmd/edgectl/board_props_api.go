@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"edge/internal/board"
 	"edge/internal/oddspull"
 	"edge/internal/wager"
 )
@@ -48,6 +49,7 @@ func defaultIngestDir() string {
 }
 
 type propRow struct {
+	Book      string   `json:"book,omitempty"` // set only for a book other than DraftKings
 	Event     string   `json:"event,omitempty"`
 	Market    string   `json:"market"`
 	Selection string   `json:"selection"`
@@ -146,6 +148,10 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 	week, _ := strconv.Atoi(r.URL.Query().Get("week"))
 
 	ing := readIngest(s.ingestDir, week)
+	// An optional ?book=draftkings|bet365 shows one book; empty shows every book
+	// the captures hold. A bet365 page that spans two weeks is scoped to this
+	// week's board.
+	ing.outcomes = outcomesForBook(scopeToWeek(ing.outcomes, scopeDoc(s.dir, week)), r.URL.Query().Get("book"))
 	order := make([]string, 0, len(ing.outcomes))
 	merged := make(map[string]oddspull.Outcome, len(ing.outcomes))
 	for _, o := range ing.outcomes {
@@ -185,6 +191,9 @@ func (s *boardServer) handleProps(w http.ResponseWriter, r *http.Request) {
 		}
 		row := propRow{Event: o.Event, Market: o.Market, Selection: o.Selection,
 			Line: o.Line, Price: int(o.Price), Implied: implied}
+		if b := o.BookName(); b != oddspull.DraftKings {
+			row.Book = b
+		}
 		if d, ok := fair[k]; ok {
 			// Game lines keep the Fair-only shape they have always had.
 			f := d.Fair
@@ -286,10 +295,65 @@ func devigPairs(outcomes []oddspull.Outcome) map[string]devigged {
 	return out
 }
 
+// outcomeKey identifies one priced selection. A DraftKings outcome's key is
+// unchanged from before other books existed; any other book is prefixed with its
+// name, so the same selection at two books is two rows and a newer capture of one
+// book never overwrites the other's price.
 func outcomeKey(o oddspull.Outcome) string {
 	line := ""
 	if o.Line != nil {
 		line = strconv.FormatFloat(*o.Line, 'f', -1, 64)
 	}
-	return o.Event + "|" + o.Market + "|" + o.Selection + "|" + line
+	k := o.Event + "|" + o.Market + "|" + o.Selection + "|" + line
+	if b := o.BookName(); b != oddspull.DraftKings {
+		k = b + "|" + k
+	}
+	return k
+}
+
+// scopeDoc reads the week's board for scoping, or nil when there is no board
+// directory, no such week, or it does not parse. Scoping by the board is an
+// extra, never a requirement, so a missing board means "no scoping".
+func scopeDoc(boardDir string, week int) *board.Doc {
+	if boardDir == "" || week <= 0 {
+		return nil
+	}
+	doc, err := loadWeekDoc(boardDir, week)
+	if err != nil {
+		return nil
+	}
+	return doc
+}
+
+// scopeToWeek keeps only the outcomes of the requested week. A DraftKings capture
+// is saved per week, so its outcomes are taken as they come. A bet365 page lists
+// the current slate and the next one together, so a bet365 outcome is kept only
+// when its event is a matchup on the week's board. With no board (doc nil) every
+// outcome is kept.
+func scopeToWeek(outs []oddspull.Outcome, doc *board.Doc) []oddspull.Outcome {
+	if doc == nil {
+		return outs
+	}
+	keep := outs[:0:0]
+	for _, o := range outs {
+		if o.BookName() != oddspull.DraftKings && !doc.HasMatchup(o.Event) {
+			continue
+		}
+		keep = append(keep, o)
+	}
+	return keep
+}
+
+// outcomesForBook keeps only one book's outcomes; an empty book keeps all of them.
+func outcomesForBook(outs []oddspull.Outcome, book string) []oddspull.Outcome {
+	if book == "" {
+		return outs
+	}
+	keep := outs[:0:0]
+	for _, o := range outs {
+		if o.BookName() == book {
+			keep = append(keep, o)
+		}
+	}
+	return keep
 }

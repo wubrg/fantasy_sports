@@ -29,6 +29,9 @@ type Outcome struct {
 	Price     wager.American
 	Category  string
 	MarketID  string
+	// Book is the sportsbook the price was read from. Empty means DraftKings (see
+	// BookName); only the bet365 extractor sets it.
+	Book string
 }
 
 // Parse reads a JSON odds body or a .har wrapping one or more of them and
@@ -47,6 +50,11 @@ func Parse(data []byte) ([]Outcome, error) {
 	} else {
 		extractMany([]any{root}, &out)
 	}
+	// bet365 answers in its own text format rather than JSON, so a bet365 HAR
+	// contributes nothing above; its responses are read separately.
+	if texts := harBet365Texts(root); len(texts) > 0 {
+		extractBet365(texts, &out)
+	}
 
 	out = dedup(out)
 	if len(out) == 0 {
@@ -60,19 +68,53 @@ func Parse(data []byte) ([]Outcome, error) {
 // is not a HAR. A HAR is full of images and scripts; only the JSON ones parse,
 // and the rest are skipped rather than treated as failures.
 func harBodies(root any) []any {
-	m, ok := root.(map[string]any)
-	if !ok {
-		return nil
-	}
-	log, ok := m["log"].(map[string]any)
-	if !ok {
-		return nil
-	}
-	entries, ok := log["entries"].([]any)
-	if !ok {
+	texts, isHAR := harTexts(root)
+	if !isHAR {
 		return nil
 	}
 	var out []any
+	for _, text := range texts {
+		var body any
+		if json.Unmarshal([]byte(text), &body) != nil {
+			continue // not a JSON response — skip
+		}
+		out = append(out, body)
+	}
+	return out
+}
+
+// harBet365Texts returns the response bodies of a HAR that are bet365's text
+// wire format (see bet365.go), or nil if this is not a HAR or has none.
+func harBet365Texts(root any) []string {
+	texts, isHAR := harTexts(root)
+	if !isHAR {
+		return nil
+	}
+	var out []string
+	for _, t := range texts {
+		if isBet365Text(t) {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// harTexts decodes the response body of every HAR entry that has one, and
+// reports whether root is a HAR at all.
+func harTexts(root any) ([]string, bool) {
+	m, ok := root.(map[string]any)
+	if !ok {
+		return nil, false
+	}
+	log, ok := m["log"].(map[string]any)
+	if !ok {
+		return nil, false
+	}
+	entries, ok := log["entries"].([]any)
+	if !ok {
+		return nil, false
+	}
+	var out []string
 	for _, e := range entries {
 		ent, ok := e.(map[string]any)
 		if !ok {
@@ -91,13 +133,9 @@ func harBodies(root any) []any {
 			}
 			text = string(dec)
 		}
-		var body any
-		if json.Unmarshal([]byte(text), &body) != nil {
-			continue // not a JSON response — skip
-		}
-		out = append(out, body)
+		out = append(out, text)
 	}
-	return out
+	return out, true
 }
 
 // extractMany dispatches each body on shape: DraftKings' current normalised
@@ -355,7 +393,7 @@ func dedup(in []Outcome) []Outcome {
 		if o.Line != nil {
 			line = strconv.FormatFloat(*o.Line, 'f', -1, 64)
 		}
-		key := o.Event + "|" + o.Market + "|" + o.Selection + "|" + line + "|" + strconv.Itoa(int(o.Price))
+		key := o.BookName() + "|" + o.Event + "|" + o.Market + "|" + o.Selection + "|" + line + "|" + strconv.Itoa(int(o.Price))
 		if !seen[key] {
 			seen[key] = true
 			out = append(out, o)

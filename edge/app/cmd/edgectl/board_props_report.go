@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -28,10 +29,9 @@ import (
 // It is read-only against the captures and, with -save, append-only against
 // the snapshot folder: it never edits a capture and never rewrites a snapshot.
 
-// propsBook is the book every prop row is attributed to. The ingest folder
-// holds DraftKings captures and nothing else (see board_props_api.go), so the
-// attribution is a fact about where the price was read, not a guess.
-const propsBook = "draftkings"
+// Each prop row carries the book it was read from (oddspull.Outcome.BookName):
+// DraftKings for a DraftKings capture, bet365 for a bet365 one. The attribution is
+// a fact about where the price was read, not a guess. -book narrows a report to one.
 
 // defaultPropsSeason scopes the snapshot path. The board defaults to 2026 for
 // the same reason; a capture carries no season of its own, so the operator's
@@ -89,8 +89,11 @@ type marketRow struct {
 // gameMatches). The returned ingestResult carries the capture provenance --
 // which files were read and the newest mtime among them -- so a caller can
 // report what a price was actually observed against.
-func propsRows(dir string, week int, gameFilter string) ([]marketRow, ingestResult, error) {
+func propsRows(dir string, week int, gameFilter, book, boardDir string) ([]marketRow, ingestResult, error) {
 	ing := readIngest(dir, week)
+	// A bet365 page lists more than one week's games, so its outcomes are scoped to
+	// this week's board (boardDir "" means no scoping); book "" keeps every book.
+	ing.outcomes = outcomesForBook(scopeToWeek(ing.outcomes, scopeDoc(boardDir, week)), book)
 	fair := devigPairs(ing.outcomes)
 
 	var rows []marketRow
@@ -105,11 +108,11 @@ func propsRows(dir string, week int, gameFilter string) ([]marketRow, ingestResu
 			continue
 		}
 		row := marketRow{
-			ID:         rowID(o, propsBook),
+			ID:         rowID(o, o.BookName()),
 			Game:       o.Event,
 			Market:     o.Market,
 			Selection:  o.Selection,
-			Book:       propsBook,
+			Book:       o.BookName(),
 			American:   int(o.Price),
 			ImpliedRaw: raw,
 			Breakeven:  raw, // the hurdle rate is the raw implied prob, by definition
@@ -202,7 +205,11 @@ func gameMatches(event, filter string) bool {
 func boardPropsReport(args []string) error {
 	fs := flag.NewFlagSet("board props-report", flag.ExitOnError)
 	ingestDir := fs.String("ingest-dir", defaultIngestDir(),
-		"folder of DraftKings captures (.har/.json) to price")
+		"folder of captures (.har/.json) to price")
+	book := fs.String("book", board.DefaultBook,
+		"which book's prices to report: draftkings, bet365, or all")
+	boardDir := fs.String("board-dir", defaultBoardDir,
+		"directory of week files; scopes a multi-week bet365 page to this week's games")
 	week := fs.Int("week", 0, "week to report on (required); scopes to captures named for that week")
 	game := fs.String("game", "",
 		"keep only outcomes whose event matches these tokens, e.g. 'PIT CLE'")
@@ -218,9 +225,21 @@ func boardPropsReport(args []string) error {
 		return fmt.Errorf("-week is required")
 	}
 
-	rows, ing, err := propsRows(*ingestDir, *week, *game)
+	bookSel := *book
+	if bookSel == "all" {
+		bookSel = ""
+	}
+	rows, ing, err := propsRows(*ingestDir, *week, *game, bookSel, *boardDir)
 	if err != nil {
 		return err
+	}
+	if len(rows) == 0 && bookSel != "" {
+		// Say which books the folder does hold, so an empty report for the default
+		// book is not mistaken for an empty capture.
+		if others := booksInFolder(*ingestDir, *week, *boardDir); len(others) > 0 {
+			fmt.Fprintf(os.Stderr, "no %s prices found; this folder has: %s (use -book)\n",
+				bookSel, strings.Join(others, ", "))
+		}
 	}
 
 	// A snapshot is written before the report is printed, and its confirmation
@@ -243,15 +262,31 @@ func boardPropsReport(args []string) error {
 		return enc.Encode(rows)
 	}
 
-	printPropsReport(rows, ing, *ingestDir, *week, *game)
+	printPropsReport(rows, ing, *ingestDir, *week, *game, *book)
 	return nil
+}
+
+// booksInFolder lists the books that have any outcome in the ingest folder for
+// the week, sorted.
+func booksInFolder(dir string, week int, boardDir string) []string {
+	ing := readIngest(dir, week)
+	seen := map[string]bool{}
+	for _, o := range scopeToWeek(ing.outcomes, scopeDoc(boardDir, week)) {
+		seen[o.BookName()] = true
+	}
+	var out []string
+	for b := range seen {
+		out = append(out, b)
+	}
+	sort.Strings(out)
+	return out
 }
 
 // printPropsReport lays out the human-readable table. The arithmetic is all in
 // propsRows; this only formats it, grouped by category the way the props tab
 // groups it.
-func printPropsReport(rows []marketRow, ing ingestResult, dir string, week int, game string) {
-	fmt.Printf("PROPS REPORT  week %d — %s\n", week, propsBook)
+func printPropsReport(rows []marketRow, ing ingestResult, dir string, week int, game, book string) {
+	fmt.Printf("PROPS REPORT  week %d — %s\n", week, book)
 	fmt.Printf("  %s\n", dir)
 	if game != "" {
 		fmt.Printf("  filtered to: %s\n", game)
@@ -360,7 +395,14 @@ func saveSnapshot(root string, season, week int, game string, rows []marketRow, 
 	if ts.IsZero() {
 		ts = time.Now()
 	}
-	name := fmt.Sprintf("week%02d-%s-%s.json", week, snapshotSlug(game, rows), ts.Format("20060102-1504"))
+	slug := snapshotSlug(game, rows)
+	// A snapshot of one non-DraftKings book says so in its name, so it never sits
+	// beside (or is mistaken for) the DraftKings snapshot of the same slate. A
+	// DraftKings or mixed-book snapshot keeps the name it always had.
+	if b := singleBook(rows); b != "" && b != oddspull.DraftKings {
+		slug += "-" + b
+	}
+	name := fmt.Sprintf("week%02d-%s-%s.json", week, slug, ts.Format("20060102-1504"))
 	dir := filepath.Join(root, strconv.Itoa(season))
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
@@ -386,6 +428,20 @@ func saveSnapshot(root string, season, week int, game string, rows []marketRow, 
 		return "", err
 	}
 	return path, nil
+}
+
+// singleBook is the one book every row came from, or "" if there are no rows or
+// they come from more than one.
+func singleBook(rows []marketRow) string {
+	book := ""
+	for _, r := range rows {
+		if book == "" {
+			book = r.Book
+		} else if r.Book != book {
+			return ""
+		}
+	}
+	return book
 }
 
 // snapshotSlug names the game a snapshot is of. A -game filter is used verbatim

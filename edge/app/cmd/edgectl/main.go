@@ -166,12 +166,18 @@ func usage() {
         bettable price sits against consensus.
 
   edgectl board props-report -week <n> [-ingest-dir <path>] [-game "<tokens>"]
+                             [-book draftkings|bet365|all] [-board-dir <path>]
                              [-json] [-save <dir>] [-season <year>]
-        Price a DraftKings props capture: de-vig two-sided Over/Under markets
-        (fair value, hold, and an implausible-overround flag, like the game-line
-        board), and report raw implied + boosted breakeven for one-sided props
-        and ladders. -json emits the MARKET-block row feed; -save writes a
-        git-tracked JSON snapshot under edge/props/<season>/ (see ADR-007).
+        Price a props capture (DraftKings JSON or a bet365 HAR): de-vig
+        two-sided Over/Under markets (fair value, hold, and an
+        implausible-overround flag, like the game-line board), and report raw
+        implied + boosted breakeven for one-sided props and ladders. -book picks
+        whose prices to report (default draftkings). A bet365 page lists more
+        than one week, so its games are scoped to the week's board (-board-dir).
+        bet365 ladder rungs are read as "N+", like DraftKings'; confirm on screen.
+        -json emits the MARKET-block row feed; -save writes a git-tracked JSON
+        snapshot under edge/props/<season>/ (see ADR-007); a single-book bet365
+        snapshot carries "-bet365" in its name.
 
   edgectl emit market -week <n> [-game "<tokens>"] [-ingest-dir <path>]
                       [-board-dir <path>] [-book <name>]

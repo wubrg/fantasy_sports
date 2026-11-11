@@ -55,7 +55,7 @@ func TestHandleEmitMarketMatchesFunctions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	propRowsAll, ing, err := propsRows(ingest, 4, "")
+	propRowsAll, ing, err := propsRows(ingest, 4, "", "", "")
 	if err != nil {
 		t.Fatal(err)
 	}

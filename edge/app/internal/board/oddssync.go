@@ -49,7 +49,7 @@ func (d *Doc) teamIndex() map[[2]string]gameSlot {
 // assume the order rather than verifying it.
 func (d *Doc) matchEvent(event string) (gameID, away, home string, reversed bool, err error) {
 	var tokens []string
-	for _, f := range strings.FieldsFunc(event, func(r rune) bool {
+	for _, f := range strings.FieldsFunc(expandTeamNames(event), func(r rune) bool {
 		return !(r >= 'A' && r <= 'Z') && !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9')
 	}) {
 		tokens = append(tokens, CanonicalTeam(f))
@@ -74,6 +74,15 @@ func (d *Doc) matchEvent(event string) (gameID, away, home string, reversed bool
 	}
 	g := d.Games[s.id]
 	return s.id, g.Away, g.Home, s.reversed, nil
+}
+
+// HasMatchup reports whether an odds capture's event string ("AWAY @ HOME")
+// resolves to a game on this week's schedule. A capture can list games from
+// more than one week (bet365's page does); this is how a reader keeps only the
+// week it asked for.
+func (d *Doc) HasMatchup(event string) bool {
+	_, _, _, _, err := d.matchEvent(event)
+	return err == nil
 }
 
 // OddsPair is one matchup's game-line price, resolved against this week's
