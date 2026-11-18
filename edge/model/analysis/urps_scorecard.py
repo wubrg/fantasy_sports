@@ -134,6 +134,32 @@ def parse_block(lines: list[str], end: int, key: str) -> list[tuple[dict, int, i
     return rows
 
 
+def parse_scenario_sgp(lines: list[str], end: int) -> dict | None:
+    """The `scenario_sgp:` mapping (scalars at 2 spaces, `legs:` flow rows at 4)."""
+    for i in range(1, end):
+        if not lines[i].startswith("scenario_sgp:"):
+            continue
+        if val(lines[i].split(":", 1)[1]) is not None:
+            return None
+        d, legs, j = {}, [], i + 1
+        while j < end and lines[j].startswith("  "):
+            s = lines[j].strip()
+            if s.startswith("- {"):
+                leg = {}
+                for p in split_flow(s[3:s.rindex("}")]):
+                    k, v = p.split(":", 1)
+                    leg[k.strip()] = val(v)
+                legs.append(leg)
+            elif ":" in s and not s.startswith("-"):
+                k, v = s.split(":", 1)
+                if k.strip() != "legs":
+                    d[k.strip()] = val(v)
+            j += 1
+        d["legs"] = legs
+        return d
+    return None
+
+
 def meta_of(lines: list[str], end: int) -> dict:
     meta = {}
     for ln in lines[1:end]:
@@ -205,6 +231,34 @@ def grade_row(d: dict, week: int, teams, box: BoxScore) -> dict:
 
 def report_paths(vault: Path, week: int) -> list[str]:
     return sorted(glob.glob(str(vault / f"Week {week} {SEASON}" / "URPS-Report-*.md")))
+
+
+def load_sgps(vault: Path, week: int, box: BoxScore) -> list[dict]:
+    """Grade each report's scenario floor SGP: every leg, then the parlay
+    (a void leg drops out, as books reduce the parlay; any loss loses it)."""
+    out = []
+    for p in report_paths(vault, week):
+        lines, end = frontmatter(p)
+        sgp = parse_scenario_sgp(lines, end)
+        if not sgp or not sgp.get("legs"):
+            continue
+        meta = meta_of(lines, end)
+        teams = [meta.get("away"), meta.get("home")]
+        legs = [grade_row(dict(l, price=l.get("price", -110)), week, teams, box) for l in sgp["legs"]]
+        gs = [l["grade"] for l in legs]
+        if "loss" in gs:
+            res = "loss"
+        elif all(g in ("void", "refused") for g in gs):
+            res = "void"
+        else:
+            res = "win"
+        bp = sgp.get("book_price")
+        profit = None
+        if bp:
+            profit = payout(bp) if res == "win" else (-1.0 if res == "loss" else 0.0)
+        out.append(dict(sgp, week=week, report=os.path.basename(p)[:-3], graded_legs=legs,
+                        grade=res, profit=profit))
+    return out
 
 
 def load_week(vault: Path, week: int, box: BoxScore):
@@ -491,6 +545,7 @@ generator: edge/model/analysis/urps_scorecard.py
 - [[#Calibration]]
 - [[#Leans]]
 - [[#Aces and de-facto lines]]
+- [[#Scenario floor SGPs]]
 - [[#Scenario identification]]
 - [[#Hit rate within the priced scenario]]
 - [[#Every recommended wager]]
@@ -565,6 +620,29 @@ Unique wagers, deduped across scenarios.
         rs = [r for r in L if r.get("outcome") == st]
         if rs:
             o.append(summary(rs, st))
+
+    sgps = [s for wk in weeks for s in load_sgps(vault, wk, box)]
+    o.append("\n## Scenario floor SGPs\n\nThe 5-6 leg, ~+1000 scenario parlays (added Week 11). A void leg drops out; "
+             "any losing leg loses the parlay. P&L counts only parlays with a recorded `book_price`.\n")
+    if not sgps:
+        o.append("None graded yet.")
+    else:
+        o.append("| Week | Report | Scenario | Belief | Legs hit | Scenario occurred? | Our P(all) | Fair | Book | Result |\n"
+                 "|---|---|---|---|---|---|---|---|---|---|")
+        for s in sgps:
+            a, h = s["report"].split(f"W{s['week']:02d}-")[-1].split("-")[:2]
+            oc = occ.get((f"{SEASON}_{s['week']:02d}_{a}_{h}", s.get("team"), s.get("scenario")))
+            hit = sum(l["grade"] == "win" for l in s["graded_legs"])
+            n = sum(l["grade"] in GRADED for l in s["graded_legs"])
+            o.append(f"| {s['week']} | [[{s['report']}]] | {s.get('scenario')} {s.get('team') or ''} | {s.get('belief')} | "
+                     f"{hit} of {n} | {'n/a' if oc is None else ('yes' if oc else 'no')} | {s.get('p_all')} | "
+                     f"{s.get('fair_price')} | {s.get('book_price') or 'unread'} | {s['grade']} |")
+        legs = [l for s in sgps for l in s["graded_legs"]]
+        o.append("\n" + HEAD + "\n" + summary(legs, "Every scenario-SGP leg", pred_key="q"))
+        pl = [s for s in sgps if s["profit"] is not None]
+        if pl:
+            o.append(f"\nParlays with a book price: {len(pl)}, won {sum(s['grade'] == 'win' for s in pl)}, "
+                     f"P&L {sum(s['profit'] for s in pl):+.1f}u at 1u each.")
 
     sweeks = sorted({r["week"] for r in srows})
     o.append(f"\n## Scenario identification\n\nWeeks with a settled outcomes file: {', '.join(map(str, sweeks)) or 'none'}. "

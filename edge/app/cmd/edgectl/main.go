@@ -35,6 +35,8 @@ func main() {
 		err = ladderCmd(os.Args[2:])
 	case "parlay":
 		err = parlayCmd(os.Args[2:])
+	case "sgp-scenario":
+		err = sgpScenarioCmd(os.Args[2:])
 	case "card":
 		err = cardCmd(os.Args[2:])
 	case "hitrate":
@@ -106,6 +108,14 @@ func usage() {
         leg needs a game tag; two legs sharing a game are correlated and are
         refused -- build those as an SGP at the book. -rr sets combo size(s);
         with -p, reports EV and the exact outcome distribution by legs won.
+
+  edgectl sgp-scenario -belief <s> -legs "q:r:<american>[:<label>],..."
+                       [-name <scenario>] [-book <american>] [-target 1000]
+        Price a scenario-tuned SGP: 5-6 floor legs one game script lifts
+        together. P(all) = s*prod(q) + (1-s)*prod(r), with each leg's q/r from
+        edgectl scenario and s from the week's belief forecast. Prints the fair
+        (minimum) price, flags legs the scenario does not lift, and with -book
+        compares the book's combined SGP price.
 
   edgectl card bonus [-target <rate>]
         The static bonus-bet reference card. Needs no data: a bonus bet is +EV
