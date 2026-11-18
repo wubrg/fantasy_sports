@@ -1,0 +1,615 @@
+{
+  "season": 2026,
+  "week": 8,
+  "rows": [
+    {
+      "player": "Aaron Jones",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 22.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Rodgers",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 172.0,
+      "reason": ""
+    },
+    {
+      "player": "Amon-Ra St. Brown",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 46.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Bhayshul Tuten",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 104.0,
+      "reason": ""
+    },
+    {
+      "player": "Blake Corum",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 73.0,
+      "reason": ""
+    },
+    {
+      "player": "Brenton Strange",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 55.0,
+      "reason": ""
+    },
+    {
+      "player": "Bucky Irving",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 170.0,
+      "reason": ""
+    },
+    {
+      "player": "Cade Otton",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Cade Otton in week 8 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Calvin Ridley",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 10.0,
+      "reason": ""
+    },
+    {
+      "player": "Chase Brown",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 46.0,
+      "reason": ""
+    },
+    {
+      "player": "Chase Brown",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 55.0,
+      "reason": ""
+    },
+    {
+      "player": "Chris Rodriguez Jr.",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 41.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian Watson",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 113.0,
+      "reason": ""
+    },
+    {
+      "player": "Chuba Hubbard",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 81.0,
+      "reason": ""
+    },
+    {
+      "player": "Dak Prescott",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 195.0,
+      "reason": ""
+    },
+    {
+      "player": "Darnell Washington",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Darren Waller",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 11.0,
+      "reason": ""
+    },
+    {
+      "player": "Denzel Boston",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 37.0,
+      "reason": ""
+    },
+    {
+      "player": "Derrick Henry",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 53.0,
+      "reason": ""
+    },
+    {
+      "player": "Deshaun Watson",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 324.0,
+      "reason": ""
+    },
+    {
+      "player": "Drake Maye",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 199.0,
+      "reason": ""
+    },
+    {
+      "player": "Elic Ayomanor",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 34.0,
+      "reason": ""
+    },
+    {
+      "player": "Garrett Wilson",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 83.0,
+      "reason": ""
+    },
+    {
+      "player": "Geno Smith",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 290.0,
+      "reason": ""
+    },
+    {
+      "player": "George Pickens",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 48.0,
+      "reason": ""
+    },
+    {
+      "player": "Germie Bernard",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 30.0,
+      "reason": ""
+    },
+    {
+      "player": "Gunnar Helm",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 76.0,
+      "reason": ""
+    },
+    {
+      "player": "Harold Fannin",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 154.0,
+      "reason": ""
+    },
+    {
+      "player": "Hunter Henry",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 30.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 119.0,
+      "reason": ""
+    },
+    {
+      "player": "Jahan Dotson",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 95.0,
+      "reason": ""
+    },
+    {
+      "player": "Jahmyr Gibbs",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 153.0,
+      "reason": ""
+    },
+    {
+      "player": "Jake Ferguson",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Jake Ferguson in week 8 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jakobi Meyers",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 24.0,
+      "reason": ""
+    },
+    {
+      "player": "Jalen Coker",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 36.0,
+      "reason": ""
+    },
+    {
+      "player": "James Cook",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 80.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 56.0,
+      "reason": ""
+    },
+    {
+      "player": "Jaylen Warren",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 143.0,
+      "reason": ""
+    },
+    {
+      "player": "Jeremiyah Love",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Jerry Jeudy",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "John Metchie III",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 14.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 289.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Downs",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Jacobs",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 13.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Jacobs",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 39.0,
+      "reason": ""
+    },
+    {
+      "player": "Justin Jefferson",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 33.0,
+      "reason": ""
+    },
+    {
+      "player": "KC Concepcion",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 37.0,
+      "reason": ""
+    },
+    {
+      "player": "Keenan Allen",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 67.0,
+      "reason": ""
+    },
+    {
+      "player": "Kendrick Bourne",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 29.0,
+      "reason": ""
+    },
+    {
+      "player": "Keon Coleman",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Khalil Shakir",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 64.0,
+      "reason": ""
+    },
+    {
+      "player": "Kimani Vidal",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 247.0,
+      "reason": ""
+    },
+    {
+      "player": "Konata Mumpfield",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 56.0,
+      "reason": ""
+    },
+    {
+      "player": "Ladd McConkey",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 86.0,
+      "reason": ""
+    },
+    {
+      "player": "Lamar Jackson",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Laquon Treadwell",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 18.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Washington",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 40.0,
+      "reason": ""
+    },
+    {
+      "player": "MarShawn Lloyd",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Mark Andrews",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 14.0,
+      "reason": ""
+    },
+    {
+      "player": "Mason Taylor",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Matthew Golden",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 79.0,
+      "reason": ""
+    },
+    {
+      "player": "Michael Mayer",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 53.0,
+      "reason": ""
+    },
+    {
+      "player": "Michael Penix",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 125.0,
+      "reason": ""
+    },
+    {
+      "player": "Michael Wilson",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 111.0,
+      "reason": ""
+    },
+    {
+      "player": "Mike Gesicki",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 76.0,
+      "reason": ""
+    },
+    {
+      "player": "Mike Washington",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 83.0,
+      "reason": ""
+    },
+    {
+      "player": "Omarion Hampton",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 20.0,
+      "reason": ""
+    },
+    {
+      "player": "Oronde Gadsden II",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 52.0,
+      "reason": ""
+    },
+    {
+      "player": "Parker Washington",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 16.0,
+      "reason": ""
+    },
+    {
+      "player": "Pat Freiermuth",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 35.0,
+      "reason": ""
+    },
+    {
+      "player": "Quinshon Judkins",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 25.0,
+      "reason": ""
+    },
+    {
+      "player": "Rhamondre Stevenson",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Rhamondre Stevenson",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 82.0,
+      "reason": ""
+    },
+    {
+      "player": "Rico Dowdle",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 56.0,
+      "reason": ""
+    },
+    {
+      "player": "Sam LaPorta",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 33.0,
+      "reason": ""
+    },
+    {
+      "player": "Ted Hurst",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Tetairoa McMillan",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 58.0,
+      "reason": ""
+    },
+    {
+      "player": "Trevor Lawrence",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 210.0,
+      "reason": ""
+    },
+    {
+      "player": "Trey McBride",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 72.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 53.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Higbee",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 14.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Warren",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 18.0,
+      "reason": ""
+    },
+    {
+      "player": "Wan'Dale Robinson",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 57.0,
+      "reason": ""
+    },
+    {
+      "player": "Zay Flowers",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    }
+  ]
+}

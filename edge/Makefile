@@ -6,7 +6,7 @@ DEMO_LOG := /tmp/edgectl-demo.jsonl
 .PHONY: help build check test vet fmt fmt-check lint clean list \
 	board board-check board-report \
 	data data-status data-clean \
-	roster roster-refresh lateround \
+	roster roster-refresh lateround urps-scorecard \
 	fit fit-residuals fit-conditionals fit-belief fit-line-model power-table verify-model lag targets-gate1 findings \
 	demo demo-clean
 
@@ -192,6 +192,9 @@ belief-settle: ## Settle a week from its outcome pack. make belief-settle SEASON
 	@cd $(APP) && ./edgectl beliefs settle \
 		-outcomes ../$(BELIEF_DIR)/$(SEASON)/week$(shell printf %02d $(WEEK)).outcomes.json \
 		-log ../$(BELIEF_DIR)/log.jsonl
+
+urps-scorecard: ## Grade the URPS reports' wagers vs the box score; write the vault scorecard. make urps-scorecard WEEKS=7-10 [WRITEBACK=1]
+	@cd $(MODEL)/analysis && $(PY) urps_scorecard.py --weeks $(WEEKS) $(if $(WRITEBACK),--writeback)
 
 belief-score: ## Score every recorded belief
 	@cd $(APP) && ./edgectl beliefs score -log ../$(BELIEF_DIR)/log.jsonl
