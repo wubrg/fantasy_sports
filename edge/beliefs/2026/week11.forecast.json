@@ -3,9 +3,9 @@
   "week": 11,
   "input_pack": "beliefs/2026/week11.input.json",
   "input_pack_sha256": "64b468e808bb1687d5286eb6c89e9ff96edfe96a68ec478449a514e04d01e1f4",
-  "model": "claude-sonnet-5/belief-v1",
+  "model": "mechanical/belief-v1",
   "prompt": "belief-v1",
-  "generated_at": "2026-11-18T16:00:00Z",
+  "generated_at": "2026-11-18T20:00:00Z",
   "predictions": [
     {
       "game_id": "2026_11_IND_HOU",
@@ -20,7 +20,7 @@
       "game_id": "2026_11_IND_HOU",
       "team": "IND",
       "scenario": "blowout_loss",
-      "belief": 0.47,
+      "belief": 0.7,
       "confidence": 0.48,
       "abstained": false,
       "claims": [
@@ -32,7 +32,7 @@
       "game_id": "2026_11_IND_HOU",
       "team": "HOU",
       "scenario": "blowout_loss",
-      "belief": 0.1,
+      "belief": 0.07,
       "confidence": 0.48,
       "abstained": false,
       "claims": [
@@ -91,7 +91,7 @@
       "game_id": "2026_11_MIA_BUF",
       "team": "MIA",
       "scenario": "blowout_loss",
-      "belief": 0.55,
+      "belief": 0.79,
       "confidence": 0.48,
       "abstained": false,
       "claims": [
@@ -103,7 +103,7 @@
       "game_id": "2026_11_MIA_BUF",
       "team": "BUF",
       "scenario": "blowout_loss",
-      "belief": 0.06,
+      "belief": 0.04,
       "confidence": 0.48,
       "abstained": false,
       "claims": [
@@ -166,10 +166,13 @@
       "game_id": "2026_11_BAL_CAR",
       "team": "BAL",
       "scenario": "blowout_loss",
-      "belief": 0.2617,
-      "confidence": 0.0,
-      "abstained": true,
-      "claims": []
+      "belief": 0.37,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "market: BAL@CAR \u2014 posted spread 2.5 with BAL the underdog",
+        "form: BAL \u2014 prior success rate 0.4380"
+      ]
     },
     {
       "game_id": "2026_11_BAL_CAR",
@@ -238,7 +241,7 @@
       "game_id": "2026_11_NO_CHI",
       "team": "NO",
       "scenario": "blowout_loss",
-      "belief": 0.45,
+      "belief": 0.68,
       "confidence": 0.48,
       "abstained": false,
       "claims": [
@@ -250,7 +253,7 @@
       "game_id": "2026_11_NO_CHI",
       "team": "CHI",
       "scenario": "blowout_loss",
-      "belief": 0.1,
+      "belief": 0.08,
       "confidence": 0.48,
       "abstained": false,
       "claims": [
@@ -314,7 +317,7 @@
       "game_id": "2026_11_TEN_DAL",
       "team": "TEN",
       "scenario": "blowout_loss",
-      "belief": 0.39,
+      "belief": 0.58,
       "confidence": 0.48,
       "abstained": false,
       "claims": [
@@ -326,7 +329,7 @@
       "game_id": "2026_11_TEN_DAL",
       "team": "DAL",
       "scenario": "blowout_loss",
-      "belief": 0.13,
+      "belief": 0.11,
       "confidence": 0.48,
       "abstained": false,
       "claims": [
@@ -387,7 +390,7 @@
       "game_id": "2026_11_TB_DET",
       "team": "TB",
       "scenario": "blowout_loss",
-      "belief": 0.36,
+      "belief": 0.53,
       "confidence": 0.48,
       "abstained": false,
       "claims": [
@@ -399,7 +402,7 @@
       "game_id": "2026_11_TB_DET",
       "team": "DET",
       "scenario": "blowout_loss",
-      "belief": 0.14,
+      "belief": 0.13,
       "confidence": 0.48,
       "abstained": false,
       "claims": [
@@ -525,19 +528,25 @@
       "game_id": "2026_11_JAX_NYG",
       "team": "JAX",
       "scenario": "blowout_loss",
-      "belief": 0.2617,
-      "confidence": 0.0,
-      "abstained": true,
-      "claims": []
+      "belief": 0.15,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "market: JAX@NYG \u2014 posted spread 6.0 with JAX favoured",
+        "form: JAX \u2014 prior success rate 0.4761"
+      ]
     },
     {
       "game_id": "2026_11_JAX_NYG",
       "team": "NYG",
       "scenario": "blowout_loss",
-      "belief": 0.2617,
-      "confidence": 0.0,
-      "abstained": true,
-      "claims": []
+      "belief": 0.48,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "market: JAX@NYG \u2014 posted spread 6.0 with NYG the underdog",
+        "form: NYG \u2014 prior success rate 0.4106"
+      ]
     },
     {
       "game_id": "2026_11_JAX_NYG",
@@ -594,10 +603,13 @@
       "game_id": "2026_11_NYJ_LAC",
       "team": "NYJ",
       "scenario": "blowout_loss",
-      "belief": 0.2617,
-      "confidence": 0.0,
-      "abstained": true,
-      "claims": []
+      "belief": 0.41,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "market: NYJ@LAC \u2014 posted spread 3.5 with NYJ the underdog",
+        "form: NYJ \u2014 prior success rate 0.4507"
+      ]
     },
     {
       "game_id": "2026_11_NYJ_LAC",
@@ -664,7 +676,7 @@
       "game_id": "2026_11_LV_DEN",
       "team": "LV",
       "scenario": "blowout_loss",
-      "belief": 0.42,
+      "belief": 0.63,
       "confidence": 0.48,
       "abstained": false,
       "claims": [
@@ -676,7 +688,7 @@
       "game_id": "2026_11_LV_DEN",
       "team": "DEN",
       "scenario": "blowout_loss",
-      "belief": 0.12,
+      "belief": 0.1,
       "confidence": 0.48,
       "abstained": false,
       "claims": [
@@ -749,10 +761,13 @@
       "game_id": "2026_11_PIT_PHI",
       "team": "PHI",
       "scenario": "blowout_loss",
-      "belief": 0.2617,
-      "confidence": 0.0,
-      "abstained": true,
-      "claims": []
+      "belief": 0.43,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "market: PIT@PHI \u2014 posted spread 4.5 with PHI the underdog",
+        "form: PHI \u2014 prior success rate 0.3582"
+      ]
     },
     {
       "game_id": "2026_11_PIT_PHI",
@@ -805,10 +820,13 @@
       "game_id": "2026_11_MIN_SF",
       "team": "MIN",
       "scenario": "blowout_loss",
-      "belief": 0.2617,
-      "confidence": 0.0,
-      "abstained": true,
-      "claims": []
+      "belief": 0.39,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "market: MIN@SF \u2014 posted spread 3.0 with MIN the underdog",
+        "form: MIN \u2014 prior success rate 0.3715"
+      ]
     },
     {
       "game_id": "2026_11_MIN_SF",
@@ -877,19 +895,25 @@
       "game_id": "2026_11_CIN_WAS",
       "team": "CIN",
       "scenario": "blowout_loss",
-      "belief": 0.2617,
-      "confidence": 0.0,
-      "abstained": true,
-      "claims": []
+      "belief": 0.14,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "market: CIN@WAS \u2014 posted spread 6.5 with CIN favoured",
+        "form: CIN \u2014 prior success rate 0.5060"
+      ]
     },
     {
       "game_id": "2026_11_CIN_WAS",
       "team": "WAS",
       "scenario": "blowout_loss",
-      "belief": 0.2617,
-      "confidence": 0.0,
-      "abstained": true,
-      "claims": []
+      "belief": 0.51,
+      "confidence": 0.48,
+      "abstained": false,
+      "claims": [
+        "market: CIN@WAS \u2014 posted spread 6.5 with WAS the underdog",
+        "form: WAS \u2014 prior success rate 0.4228"
+      ]
     },
     {
       "game_id": "2026_11_CIN_WAS",
