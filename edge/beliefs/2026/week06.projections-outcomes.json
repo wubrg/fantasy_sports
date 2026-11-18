@@ -1,0 +1,272 @@
+{
+  "season": 2026,
+  "week": 6,
+  "rows": [
+    {
+      "player": "Ashton Jeanty",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 36.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 22.0,
+      "reason": ""
+    },
+    {
+      "player": "Blake Corum",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Braelon Allen",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 78.0,
+      "reason": ""
+    },
+    {
+      "player": "Brock Purdy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 264.0,
+      "reason": ""
+    },
+    {
+      "player": "Carnell Tate",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 70.0,
+      "reason": ""
+    },
+    {
+      "player": "CeeDee Lamb",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 70.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian McCaffrey",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 53.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian McCaffrey",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 64.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Kincaid",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 38.0,
+      "reason": ""
+    },
+    {
+      "player": "Daniel Jones",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 269.0,
+      "reason": ""
+    },
+    {
+      "player": "Drake Maye",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 235.0,
+      "reason": ""
+    },
+    {
+      "player": "Geno Smith",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 252.0,
+      "reason": ""
+    },
+    {
+      "player": "George Kittle",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 69.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 218.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacory Croskey-Merritt",
+      "outcome": "rushing_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no rushing_yards row for Jacory Croskey-Merritt in week 6 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jake Ferguson",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 13.0,
+      "reason": ""
+    },
+    {
+      "player": "James Cook",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 58.0,
+      "reason": ""
+    },
+    {
+      "player": "James Cook",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 95.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 41.0,
+      "reason": ""
+    },
+    {
+      "player": "Jeremiyah Love",
+      "outcome": "rushing_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no rushing_yards row for Jeremiyah Love in week 6 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jonathan Taylor",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 255.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Downs",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 40.0,
+      "reason": ""
+    },
+    {
+      "player": "Kendrick Bourne",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 47.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 313.0,
+      "reason": ""
+    },
+    {
+      "player": "MarShawn Lloyd",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 10.0,
+      "reason": ""
+    },
+    {
+      "player": "Matthew Golden",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 104.0,
+      "reason": ""
+    },
+    {
+      "player": "Michael Wilson",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 32.0,
+      "reason": ""
+    },
+    {
+      "player": "Mike Evans",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Rachaad White",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 27.0,
+      "reason": ""
+    },
+    {
+      "player": "Rhamondre Stevenson",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 36.0,
+      "reason": ""
+    },
+    {
+      "player": "Tony Pollard",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 76.0,
+      "reason": ""
+    },
+    {
+      "player": "Tre Tucker",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 97.0,
+      "reason": ""
+    },
+    {
+      "player": "Trey McBride",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 53.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Allgeier",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 38.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Higbee",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 22.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Warren",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Tyler Warren in week 6 (inactive, bye, or name mismatch)"
+    }
+  ]
+}

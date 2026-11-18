@@ -23,6 +23,7 @@ Usage:
       > ../beliefs/2026/week06.projections-outcomes.json
 """
 import argparse
+import re
 import csv
 import json
 import sys
@@ -100,7 +101,15 @@ def _realized_value(player, outcome_name, season, week):
 def outcomes(projections_path, season, week):
     rows = []
     for player, outcome_name in sorted(_load_projections(projections_path, season, week)):
-        value, reason = _realized_value(player, outcome_name, season, week)
+        # Some logged rows carry a descriptive label in `player` ("AJ Barner
+        # receiving_yards 20+ (-180) efficient_offense", the Week 10 log); look
+        # up by the name before the outcome token, but keep the logged string as
+        # the row key -- settle matches on it.
+        # Both "... receiving_yards 20+ ..." and "... rec yds 40+ (bet365) ..."
+        # occur: cut at the first lowercase stat word or number (names are
+        # capitalised, so a real name never starts a token with these).
+        name = re.split(r"\s+(?=(?:pass|rush|rec|anytime|\d))", player)[0].strip() or player
+        value, reason = _realized_value(name, outcome_name, season, week)
         if value is None:
             rows.append({"player": player, "outcome": outcome_name, "status": "unavailable",
                          "actual": None, "reason": reason})

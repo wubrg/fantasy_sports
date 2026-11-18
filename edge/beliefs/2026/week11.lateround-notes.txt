@@ -1,0 +1,202 @@
+Week 11 Fantasy Football Matchup Notes
+Read Online
+The fantasy football playoffs draw near.
+Just in time for six teams to go on bye in Week 11.
+The Falcons, Browns, Packers, Rams, Patriots, and Seahawks are all resting up in Week 11, a sextet with plenty of starting-caliber fantasy football assets in 2026.
+As a result, this week is going to be a particularly tough one to navigate with regard to flex choices and deep-league plays. But even in shallow leagues, we're looking at a week where matchups might matter plenty and might be the difference between a win and a loss.
+Let's break down Week 11 from a matchup standpoint, looking at the best and worst matchups of the week.
+- Brandon (@gdula13)
+WEEK 11 MATCHUP NOTES
+Let's start by taking a look at a handful of matchups this week with high game totals that could provide extra fantasy potential for stars and fringe players alike.
+GAMES WITH HIGH TOTALS
+Titans at Cowboys (54.5)
+The Titans have been shifting their offensive philosophy a bit in recent weeks. From Weeks 1 through 7, their no-huddle rate in one-score games (excluding two-minute drills) was 12%, already the second-highest in the NFL. In two games since Week 8, that mark is 43%, best in the NFL, with no other team above 15%. They had averaged 54.3 plays per game through Week 7 and 63.5 since Week 8.
+Their EPA per play has risen to +0.01, up from -0.12 (30th-best through Week 7).
+Cam Ward has finished as QB4 and QB12 in these two games, rushing for 41 and 39 yards, respectively — the two highest outputs of the season for him. The Cowboys are the second-best quarterback matchup in the league, via our adjusted points per game numbers.
+Even with Tyjae Spears returning in Week 10, Tony Pollard has finished as the RB1, RB3, and RB7 in his last three games, operating as the RB2 overall in that span. The Cowboys let up the most adjusted fantasy points per game to running backs.
+Last week with Carnell Tate out and Wan'Dale Robinson leaving early, Elic Ayomanor paced the team with an 86% route rate and 27% target share. Chimere Dike ran a route on 81% of the team's dropbacks, the only other Titan to go over 55%, but he had just an 8% target share. This duo primarily played in two-receiver sets. Xavier Restrepo also benefited from Robinson's injury, as Restrepo operated as the team's primary slot receiver post-injury.
+In Carnell Tate's active games, he has had a 26% target share. The Cowboys are the 10th-best wide receiver matchup in the league.
+Dak Prescott enters a top-five adjusted quarterback matchup, the eighth easier-than-average matchup he'll have so far this season. He's taken advantage of them: 22.8 points per game in the first seven. In his three tougher spots, he's been at 14.2. Better yet: in three top-half matchups at home, Prescott has averaged 28.0 points per game on a line of 272 yards and 3.3 touchdowns per game.
+Fresh off a huge game, George Pickens gets the best adjusted matchup in football for wide receivers. Pickens had a 37% target share in Week 10, good for an 18-target, 11-catch, 145-yard, 3-touchdown game. CeeDee Lamb had a 27% target share of his own (13 targets for 72 yards and a touchdown). Ryan Flournoy could be relevant in a heavy bye week. Since Week 4, he hasn't had better than a 17% single-game target share but has a 13% share in that seven-game split overall.
+Even without Jake Ferguson last week, Brevyn Spann-Ford earned a 6% target share in a Cowboys offense that has targeted tight ends at the lowest rate (15%) in the NFL through Week 10 and the lowest rate for any team since 2024.
+Javonte Williams has hovered right around a 70% snap rate for the last five games but has seen his production yo-yo: 13.0, 21.5, 6.7, 22.2, and 7.7 PPR points, respectively. It's a middling overall matchup (18th), but Dallas' 31.5-point implied team total gives Javonte plenty of touchdown equity.
+Bengals at Commanders (52.5)
+The Commanders' win in Week 10 on Thursday night was huge for their playoff probability, and that has a ripple effect in fantasy football, as their starters can remain relevant for longer.
+Jayden Daniels has now averaged 20.2 fantasy points in his six completed games while playing a very generous schedule. Though the Bengals are more of a middle-of-the-road matchup overall, they're a top-three matchup for quarterbacks from a rushing standpoint after adjusting for opponents faced.
+In Weeks 8 and 10 (with Treylon Burks but without Terry McLaurin), Stefon Diggs has a team-leading 27% target share. Chig Okonkwo (20%), Antonio Williams (15%), and Burks (13%) round out the pass-catching corps.
+The Bengals are very generous to the slot (they're the third-best composite matchup by volume and efficiency) compared to the perimeter (30th-best matchup). Okonkwo (64%) and Diggs (55%) have run a majority of their routes from the slot since the Week 7 bye. Williams (44%) and Burks (23%) operate more on the perimeter.
+Over the last two games without Jeremy McNichols, snaps have been pretty evenly split between Rachaad White (54%) and Austin Ekeler (45%) in the backfield. Ekeler has actually played a higher early-down snap rate (52% to 46%), as White has played primarily as the third-down (77% to 23%) and red zone (83% to 17%) back. By our expected fantasy points model, Ekeler has had a better overall workload (8.7 expected points per game to 7.7), though neither has been stellar in that metric.
+Chase Brown had the best game of his fantasy season in Week 10 when he scored 28.3 PPR points, his first game with more than 20 all season. He caught 8 passes for 39 yards and 2 touchdowns and also ran 10 times for 44 yards. The Commanders are a middle-of-the-road matchup against running backs, but Cincinnati's implied total is nearly 30 points.
+Joe Burrow continues to carve up any defense put in front of him, and he's now the QB1 by points per game (25.8) while averaging 310.6 yards and 3.0 touchdowns per game.
+Burrow's elite season has helped maintain two top-six fantasy receivers on a points-per-game basis (Ja'Marr Chase, WR4, and Tee Higgins, WR6). This past week, Drew Sample ran more routes (57%) than Mike Gesicki (48%) for the first time all season.
+Saints vs. Bears (49.5)
+The Jordyn Tyson era has arrived. In Week 10, Tyson's second game, he earned 13 targets on 31 routes (a 39% target share and a 72% route share for a so-good-it's-unsustainable 42% target-per-route rate). He caught 11 passes for 80 yards.
+With Tyson's role extended, we saw Chris Olave earn just a 12% target share (4 targets on 39 routes) and Devaughn Vele get 2 targets on 36 routes (a 6% target share and an 84% route rate).
+Tyler Shough has run 16 times in the last two weeks, 11 of which were scrambles (5.5 per game). The Bears are the 13th-best adjusted quarterback matchup in the league.
+The backfield here was a three-way split with Travis Etienne back. Audric Estime led the backfield in snap rate (44%) in Week 10, but Etienne led in early-down snap rate (44%). Estime was the third-down back (77% snap rate, 35% route rate), and Alvin Kamara was the red zone back (67% snap rate).
+The Bears are coming off a bye in a game against the Saints, a top-half adjusted quarterback matchup. This will be Caleb Williams' second top-half matchup all season. In his other easy matchup, he logged 37.3 fantasy points against the Panthers in Week 1.
+Kyle Monangai is set to return to the backfield for the first time since Week 4. Through Week 4, Monangai was the secondary option (44% snap rate) behind D'Andre Swift (56%). By expected fantasy points per game, Swift led 17.4 to 12.9 per game in this split, but Monangai was below 9.0 expected PPR points in the first three weeks before erupting in Week 4, a 30-carry, 1-target game.
+On the season, Luther Burden leads the team with a 22% target share, followed by Colston Loveland (19%) and Rome Odunze (17%). The better matchup belongs to Loveland (eighth-best tight end matchup) rather than the receivers (25th-best).
+QUARTERBACK MATCHUP NOTES
+These are the top adjusted fantasy points matchups for quarterbacks this week:
+Buccaneers (at Lions)
+Titans (at Cowboys)
+Jaguars (at Giants)
+Chiefs (vs. Cardinals)
+Cowboys (vs. Titans)
+Even though he is coming off a bye, Baker Mayfield may miss Week 11. It'd be a downer because if he plays, he will have the best possible matchup in the league for quarterbacks by adjusted points allowed — and will be indoors against the Lions.
+Mayfield, in a down year from a production standpoint, has had just one top-12 matchup all season, and it came way back in Week 1.
+While Mayfield hasn't scored more than 12.2 fantasy points in a game, the Lions have held just one starter below 17 fantasy points (if we forgive Drake Maye's early exit, that is).
+The Lions allow the third-highest pass rate over expectation, which could help the Bucs throw a bit more. They rank 31st in that metric offensively.
+Trevor Lawrence finally threw the ball a bit in the second half in Week 10 and rewarded managers with a QB5 performance, his fifth-straight QB13 finish or better.
+The Giants are letting up the 11th-most adjusted passing fantasy points to opponents but the most adjusted rushing points.
+Lawrence has averaged 2.8 rushes for 11.8 yards per game but has three games with 25-plus rushing yards.
+Fresh off a five-touchdown game, Patrick Mahomes now faces a Cardinals team that is letting up a league-high EPA per dropback and generating pressure at the second-lowest rate in football.
+One possible wrinkle here is that the Cardinals have seen the fourth-lowest pass rate over expectation defensively, while the Chiefs are second offensively.
+In three games during which the Chiefs were touchdown favorites or better, Mahomes has averaged just 14.3 points per game while throwing 28.3 times per game. In six other games, he's averaging 35.5 pass attempts and 22.4 fantasy points.
+They're favored by 16.5 this week.
+Bo Nix gets the Raiders, the next best matchup in the league. Las Vegas is letting up the fifth-highest EPA per dropback in the league. Only one quarterback has scored fewer than 15.5 fantasy points against the Raiders, and that was Justin Herbert back in Week 2.
+Nix has averaged 20.4 points per game over his last three, throwing for 227.0 yards and 1.7 touchdowns through the air and rushing 5.0 times for 26.3 yards on the ground.
+Aaron Rodgers gets a second straight top-12 matchup. He scored 15.6 points last week against the Bengals and has now averaged 18.2 points per game in top-half matchups but only 12.0 in bottom-half matchups.
+With that said, while the Eagles rank as the eighth-best quarterback matchup, they're 15th from a pure passing standpoint (and fourth from a rushing standpoint) after adjusting for opponents faced. It's not the most ideal matchup for Rodgers to take full advantage.
+CJ Stroud faces the Colts for a second time this season, the first being a road matchup in Week 3. In that game, Stroud threw 27 times for just 167 yards and totaled 11.7 fantasy points. After that game, Stroud's breakout began.
+Now, Stroud is vibing, averaging 23.2 points per game since Week 4. In that span, he's been the QB2 in points per game and the QB4 by EPA per dropback.
+The Colts are generating the lowest pressure rate in the NFL this season. Houston will get some reprieve, as their offensive line ranks 20th in pressure rate allowed.
+These are the five worst matchups of the week for quarterbacks:
+49ers (vs. Vikings)
+Lions (vs. Buccaneers)
+Cardinals (at Chiefs)
+Giants (vs. Jaguars)
+Jets (at Chargers)
+The worst matchup of the week belongs to Brock Purdy, who hosts the Vikings.
+Purdy has actually averaged 18.0 points per game in three bottom-eight matchups, but the Vikings are a real outlier.
+After holding Jordan Love to 10.8 points in Week 10, the Vikings are still yet to allow a 20-point quarterback, and they've held opposing quarterbacks to 9.1 points below their points per game average. Just unreal stuff.
+But with that said, the 49ers could finally have the antidote. The Vikings generate the most pressure in the NFL; the 49ers allow the lowest pressure rate. Minnesota faces the lowest pass rate over expectation, but the 49ers hold the fifth-highest pass rate over expectation offensively.
+Jared Goff also gets a bottom-three matchup against the Buccaneers, but he'll be indoors at home with an implied team total of 26.5 points.
+Like the Vikings, Tampa Bay has also not allowed a 20-point passer, and this is actually just Goff's second bottom-eight matchup of the season (he played the Vikings already).
+Working in his favor: the Bucs are a top-10 matchup by both pressure rate and pass rate over expectation allowed.
+WIDE RECEIVER MATCHUP NOTES
+Which wideouts have the best matchup by adjusted points allowed?
+Cowboys (vs. Titans)
+Colts (at Texans)
+Steelers (at Eagles)
+Jets (at Chargers)
+Broncos (vs. Raiders)
+Based on last week's usage, the Colts have nobody to take advantage of a juicy matchup on the road with the Texans. In Week 10, with Josh Downs and Keenan Allen out of town, Laquon Treadwell led the receivers in route rate (84%), followed by Anthony Gould (60%), Deion Burks (56%), Ashton Dulin (32%), and Nick Westbrook-Ikhine (20%).
+Gould led with four targets (a 19% share). Treadwell had three targets (14%), with Dulin and Burks getting two each (10%).
+In theory, the best matchup belongs to Treadwell and Dulin on the perimeter against a Texans team that's really soft on the outside, allowing the third-most PPR points per game to the perimeter. They've actually been pretty tough in the slot, allowing the lowest completion rate to players lined up inside.
+The Steelers' receivers are also questionable to make the most of a great matchup in Week 11 against the Eagles.
+Over the last three weeks, the Steelers have generated just one top-36 PPR performance: DK Metcalf in Week 10 (WR19).
+Metcalf leads the team with a 23% target share in this three-game sample, with Germie Bernard second at 17%. Those are fine — maybe good but definitely not great — target shares for a team's top receiving duo.
+This should, though, be a Bernard matchup in the slot, as the Eagles have let up the second-most PPR points per game to the slot. Bernard has run more than half of his routes from the slot since Week 5.
+Last week, with Omar Cooper leaving after a single snap, we saw Garrett Wilson command a 35% target share with 20% of the Jets' targets going to AD Mitchell. Even Isaiah Williams was peppered (18% share) with Cooper sidelined.
+The team turned to Cade Klubnik after Geno Smith sustained an ankle injury, and Klubnik posted a better-than-average success rate but poor overall EPA per dropback numbers. Smith is expected to return as the starter when healthy.
+The Broncos' top trio of receivers — Jaylen Waddle, Courtland Sutton, and Pat Bryant — have really only played three games together: the first three of the season before the team's playcaller change.
+Over 96 snaps with all three on the field this season, Waddle leads the way with a better-than-average-but-not-amazing 23% target per route rate. Sutton's mark is pretty average around 20%, and Bryant is at 11%.
+The Raiders' secondary represents a top-five adjusted matchup for receivers and a top-six slot matchup by PPR points per game allowed.
+Waddle and Bryant are more likely to benefit than Sutton inside this week.
+In Emeka Egbuka's return to the lineup in Week 9, he ran 72% of the team's routes, third among receivers behind Chris Godwin (89%) and Tez Johnson (78%). Egbuka and Johnson led the way with a 17% target share, five targets apiece. Godwin had just a 10% market share — just three targets.
+The Buccaneers have played some wonky games of late due to game script and weather, but even in a 27-24 loss to the Bears in Week 9, they were really run-heavy. Since Week 7, their pass rate over expectation is -26.4. For context, the Dolphins have the lowest PROE on the season at -9.4.
+When combining target frequency and efficiency data, the Lions represent the best overall slot matchup in the league, and they're letting up the 12th-most PPR points per game to the slot. That gives Godwin the best individual matchup of the week among the Bucs' receivers.
+The Vikings' target shares in Kirk Cousins' first start need context, as Jordan Addison, Jauan Jennings, and TJ Hockenson were all out.
+With that said, Cousins peppered Justin Jefferson, who had 13 targets (a 43% share). Tai Felton (17%), Myles Price (13%), and tight end Gavin Bartholomew (13%) were Cousins' other top targets.
+The 49ers have forced target volume to the perimeter (eighth-highest perimeter target share) this season.
+That's always good for Jefferson, but Tai Felton played extensively on the outside without Addison last week. Addison is set to miss multiple weeks due to a thumb injury.
+The five worst matchups don't have that huge of a fantasy impact, given who they pertain to.
+Cardinals (at Chiefs)
+Bills (vs. Dolphins)
+49ers (vs. Vikings)
+Raiders (at Broncos)
+Chargers (vs. Jets)
+Last week without Michael Wilson, Devin Duvernay led Cardinals receivers with a 17% target share (just three targets), and only Simi Fehoko (67%) had better than a 50% route rate.
+DJ Moore, in his full games, has had a 30% target-per-route rate, an elite number. And in those, he's averaging 3.01 yards per route run. Miami mostly looks like a tough matchup due to volume. They're actually sixth in PPR points per target allowed to receivers.
+With Keenan Allen in the 49ers' lineup last week, he ran just 57% of the team's routes but earned a 25% target share and an awesome 35% target-per-route rate.
+Deebo Samuel (77% route rate) and Jordan Watkins (60%) earned 11% shares, fewer targets than George Kittle (32%) and Christian McCaffrey (14%).
+The Vikings run way more zone coverage than any team.
+Against zone this year, Mike Evans (3.62), Deebo Samuel (2.31), George Kittle (2.30), and Keenan Allen (2.04) are averaging over 2.0 yards per route run against zone coverage.
+With Brock Bowers out most of the game in Week 10, the Raiders changed gears and used more 11 personnel than in any other game this season.
+Jack Bech was the lead target earner (seven targets, a 30% share) for the team, and only Jalen Nailor (four targets) and Ashton Jeanty (three) also had more than two targets.
+The last two weeks without Ladd McConkey have led to plenty of routes for Tre' Harris (88%) and Quentin Johnston (86%), but Harris has seen 12 targets (26%) to Johnston's 5 (11%).
+The Jets allow the second-lowest average depth of target to receivers, so Johnston might again struggle to take advantage of McConkey's absence if he were to miss again.
+TIGHT END MATCHUP NOTES
+The five best tight end matchups this week:
+Buccaneers (at Lions)
+Bengals (at Commanders)
+Raiders (at Broncos)
+Cardinals (at Chiefs)
+Bills (vs. Dolphins)
+Cade Otton gets the nut matchup for tight ends against the Lions.
+He has run at least two-thirds of the Buccaneers' routes in every game so far this season but has maxed out at 8.8 PPR points and a 27% target share.
+That 27% target share game did come in Week 9 before the bye. Otton has a 17% target share for the season.
+In games with Mayfield, Otton's target share has been 19%.
+It's not uncommon for Mike Gesicki to cede snaps to Drew Sample, but Week 10 was the first game all season during which Sample ran more routes (57%) than Gesicki (48%).
+Gesicki had run 71% of the routes in Weeks 8 and 9, with Sample at just 26%.
+Last week with Fernando Mendoza starting and Brock Bowers leaving early, Michael Mayer had a season-high 80% route rate but earned just three targets (11%).
+He was facing the fifth-toughest tight end defense in the league last year; this week, he gets the third-best.
+Last week with Carson Beck starting, Trey McBride led the Cardinals with a 28% target share (just five targets in a low-volume game) but comfortably ran the most routes of any Cardinal.
+For as good as the Chiefs are against receivers (second-toughest), they've been vulnerable to tight ends, including allowing the fourth-highest target-per-route rate to the position.
+Dalton Kincaid started off the season hot but has fallen off in recent weeks. He had a 25% target share through Week 2 and has since had just one game with better than a 20% share.
+Kincaid's route share has been 50% in two straight games, too (it was 69% through Week 2).
+The Dolphins' defense is allowing an 83% completion rate to tight ends, 12 points higher than the NFL average. So, even in more of a part-time role, Kincaid could produce for tight end-needy teams.
+The worst tight end matchups:
+49ers (vs. Vikings)
+Steelers (at Eagles)
+Colts (at Texans)
+Giants (vs. Jaguars)
+Saints (at Bears)
+George Kittle has it rough against the Vikings, the only team allowing fewer than 10 PPR points per game to tight ends (they're letting up 8.5), but Kittle did lead the 49ers in target share (32%) in Week 10.
+Minnesota is actually the 10th-best matchup by adjusted target share allowed to tight ends, so he should still get his opportunities.
+While Pat Freiermuth continues to run more routes than Darnell Washington (64% versus 38% on the season), the target share gap has been tight (13% to 10%).
+But Freiermuth has had just a 51% route rate over Pittsburgh's last two games and has accounted for just 10% of the team's targets.
+Washington, in these two games, still only has a 36% route rate — but a 16% target share.
+Tyler Warren somehow managed to see a season-low target share (14%) in Week 10 without Keenan Allen and Josh Downs on the team. Prior to that game, he hadn't been below a 17% target share in a game all year.
+Isaiah Likely had started a little slow with JJ McCarthy but erupted on Thursday night in Week 10 against the Commanders.
+In Week 10, Likely saw a 32% target share, up from 15% and 22% in his first two games with McCarthy (primarily) at the helm.
+This week, he has a much tougher matchup against the Jaguars.
+Not only is Juwan Johnson's matchup bad, but he has also had a single-digit target share in four straight games.
+RUNNING BACK MATCHUP NOTES
+The top matchups for running backs by adjusted points allowed:
+Titans (at Cowboys)
+Bears (vs. Saints)
+Ravens (at Panthers)
+Texans (vs. Colts)
+Broncos (vs. Raiders)
+In Week 10's loss to the Chargers, Derrick Henry played his highest snap rate (58%) since Week 6. He had his best showing (19.0 PPR points) since Week 5, as well, though it took two rushing touchdowns and five catches to get there.
+Henry has really started to show some opponent-split sensitivity. In four below-average matchups by adjusted points allowed, he's averaged only 8.1 PPR points (13.3 expected PPR points).
+In six top-half matchups, he's averaged 21.5 PPR points (18.3 expected).
+Something to note: the Ravens had a +6.8 pass rate over expectation in Week 10 with Jacoby Brissett, their highest of the season.
+Woody Marks is expected to miss Thursday Night Football against the Colts. David Montgomery practiced in full on Friday last week but didn't play.
+After Marks left in Week 10, Emari Demercado — the subject of one of JJ's 15 Transactions this week — led the backfield with a 58% snap rate.
+Dare Ogunbowale operated as the third-down back.
+Jonah Coleman's 82% snap rate from Week 9 was the highest rate by a Broncos running back all season, and the second-best mark was his 68% rate in Week 8.
+The Raiders have extreme rushing and receiving splits allowed to backs. They're letting up the second-most adjusted rushing fantasy points but 28th-most adjusted receiving points to backs.
+That also includes a league-low adjusted target share allowed to the position.
+But the Raiders are ceding the most yards before contact to running backs and the seventh-most yards after contact to backs in 2026.
+Although James Cook's receiving workload remains down, he has scored 16.3 or more PPR points in every game since Week 1.
+Miami is letting up top-10 yards before and after contact per attempt to backs, and the Bills' offense is generating the most yards before contact of any offense in the league.
+Omarion Hampton showed life in Week 10 on Monday Night Football.
+He tied a season-high with 17.5 PPR points, just his third game all year with double-digit PPR points.
+Hampton's 105 scrimmage yards also marked a high since Week 2 (115 yards). Those are the only games all season by a Chargers back with more than 67 scrimmage yards.
+Better yet, he had a 63% snap rate, his highest mark since Week 3.
+The Dolphins were less run-heavy with Kyle McCord under center in Week 10, but Ollie Gordon finished as the RB16 while setting a season-high in scrimmage yards (115).
+While the Bills are a top-10 overall running back matchup, they're actually 24th on the ground alone but the fourth-softest through the air.
+Gordon just had a season-high four catches last week.
+These are the five worst running back matchups in Week 11:
+Lions (vs. Buccaneers)
+49ers (vs. Vikings)
+Buccaneers (at Lions)
+Steelers (at Eagles)
+Giants (vs. Jaguars)
+This will actually be only Jahmyr Gibbs' second below-average matchup all season. In his first, he romped his way to 24.8 PPR points against the Vikings.
+Speaking of the Vikings, that's who Christian McCaffrey and Kaelon Black face in Week 11.
+McCaffrey has now played fewer than 60% of the 49ers' offensive snaps in two of his last three games and fewer than 70% in all three. However, he's averaged 18.2 PPR points in the first half of these three games and has posted at least 22.0 PPR points in all three games.
+While the Buccaneers have been super run-heavy the last three games, Bucky Irving has benefited. He's averaged 24.5 PPR points per game in this split while having a 59% snap rate.
+The Lions are allowing the seventh-most yards before contact per attempt to backs but just the second-fewest after contact.
+In three games with Rico Dowdle back in a larger role, the split between him and Jaylen Warren has gotten quite close.
+Warren leads with a 53% snap rate with Dowdle at 47%, and Dowdle out-snapped Warren in Week 10 (48% to 38%).
+Quirkily, the Eagles are letting up the fewest adjusted receiving points to backs this season but the 11th-most adjusted points on the ground.
+Cam Skattebo got featured back treatment in Week 10 on Thursday Night Football, just in time for a rough matchup with the Jaguars.
+Jacksonville is letting up the 29th-most adjusted rushing points but the sixth-most receiving points to backs, thanks to a top-10 adjusted target share allowed to the position.
+Skattebo had a 12% target share in Week 10.
+Want to change how you receive these emails?
+You can update your preferences or unsubscribe from this list.

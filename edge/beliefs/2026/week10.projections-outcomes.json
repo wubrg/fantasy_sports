@@ -1,0 +1,6733 @@
+{
+  "season": 2026,
+  "week": 10,
+  "rows": [
+    {
+      "player": "AJ Barner receiving_yards 20+ (-180) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "AJ Barner receiving_yards 20+ (-180) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "AJ Barner receiving_yards 30+ (130) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "AJ Barner receiving_yards 30+ (130) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "AJ Barner receptions 3+ (-125) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "AJ Barner receptions 3+ (-125) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "AJ Barner receptions 3+ (-125) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "AJ Barner receptions 4+ (200) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "AJ Barner receptions 4+ (200) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "AJ Barner receptions 4+ (200) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Jones receiving_yards 10+ (DK -113) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Jones receiving_yards 15+ (DK +161) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Jones receptions 2+ (DK -172) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Jones receptions 3+ (DK +170) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Jones rushing_yards 29+ (DK -107) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 47.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Jones rushing_yards 30+ (DK +102) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 47.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Jones rushing_yards 40+ (DK +228) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 47.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Rodgers passing_yards 200+ (-325) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 143.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Rodgers passing_yards 200+ (-325) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 143.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Rodgers passing_yards 200+ (-325) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 143.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Rodgers passing_yards 225+ (-160) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 143.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Rodgers passing_yards 225+ (-160) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 143.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Rodgers passing_yards 225+ (-160) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 143.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Rodgers passing_yards 250+ (+120) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 143.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Rodgers passing_yards 250+ (+120) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 143.0,
+      "reason": ""
+    },
+    {
+      "player": "Aaron Rodgers passing_yards 250+ (+120) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 143.0,
+      "reason": ""
+    },
+    {
+      "player": "Adonai Mitchell receptions 3+ (-200) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Adonai Mitchell receptions 4+ (130) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Alvin Kamara receiving_yards 20+ (-115 b365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 10.0,
+      "reason": ""
+    },
+    {
+      "player": "Alvin Kamara receiving_yards 30+ (+190 b365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 10.0,
+      "reason": ""
+    },
+    {
+      "player": "Alvin Kamara receptions 3+ (-170 b365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Alvin Kamara receptions 3+ (-170 b365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Alvin Kamara receptions 3+ (-170 b365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Alvin Kamara receptions 4+ (+135 b365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Alvin Kamara receptions 4+ (+135 b365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Alvin Kamara receptions 4+ (+135 b365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Amon-Ra St. Brown receiving_yards 70+ (-180) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 98.0,
+      "reason": ""
+    },
+    {
+      "player": "Amon-Ra St. Brown receiving_yards 80+ (-115) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 98.0,
+      "reason": ""
+    },
+    {
+      "player": "Amon-Ra St. Brown receiving_yards 90+ (135) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 98.0,
+      "reason": ""
+    },
+    {
+      "player": "Antonio Williams rec yds 40+ (bet365)",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty receiving_yards 30+ (140) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 46.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty receiving_yards 30+ (140) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 46.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty receiving_yards 40+ (275) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 46.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty receiving_yards 40+ (275) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 46.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty receptions 4+ (-145) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty receptions 4+ (-145) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty receptions 4+ (-145) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty receptions 5+ (140) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty receptions 5+ (140) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty receptions 5+ (140) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty rushing_yards 30+ (-175) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 18.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty rushing_yards 30+ (-175) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 18.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty rushing_yards 30+ (-175) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 18.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty rushing_yards 40+ (135) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 18.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty rushing_yards 40+ (135) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 18.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty rushing_yards 40+ (135) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 18.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty rushing_yards 50+ (250) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 18.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty rushing_yards 50+ (250) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 18.0,
+      "reason": ""
+    },
+    {
+      "player": "Ashton Jeanty rushing_yards 50+ (250) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 18.0,
+      "reason": ""
+    },
+    {
+      "player": "Bhayshul Tuten receiving_yards 20+ (225) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 25.0,
+      "reason": ""
+    },
+    {
+      "player": "Bhayshul Tuten receptions 2+ (-150) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Bhayshul Tuten receptions 2+ (-150) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Bhayshul Tuten receptions 3+ (200) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Bhayshul Tuten receptions 3+ (200) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Bhayshul Tuten rushing_yards 60+ (-200) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 88.0,
+      "reason": ""
+    },
+    {
+      "player": "Bhayshul Tuten rushing_yards 70+ (-115) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 88.0,
+      "reason": ""
+    },
+    {
+      "player": "Bhayshul Tuten rushing_yards 80+ (145) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 88.0,
+      "reason": ""
+    },
+    {
+      "player": "Bhayshul Tuten rushing_yards 90+ (225) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 88.0,
+      "reason": ""
+    },
+    {
+      "player": "Blake Corum receiving_yards 20+ (350) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Blake Corum receiving_yards 20+ (350) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Blake Corum rushing_yards 50+ (-190) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 100.0,
+      "reason": ""
+    },
+    {
+      "player": "Blake Corum rushing_yards 50+ (-190) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 100.0,
+      "reason": ""
+    },
+    {
+      "player": "Blake Corum rushing_yards 50+ (-190) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 100.0,
+      "reason": ""
+    },
+    {
+      "player": "Blake Corum rushing_yards 60+ (100) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 100.0,
+      "reason": ""
+    },
+    {
+      "player": "Blake Corum rushing_yards 60+ (100) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 100.0,
+      "reason": ""
+    },
+    {
+      "player": "Blake Corum rushing_yards 60+ (100) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 100.0,
+      "reason": ""
+    },
+    {
+      "player": "Blake Corum rushing_yards 70+ (160) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 100.0,
+      "reason": ""
+    },
+    {
+      "player": "Blake Corum rushing_yards 70+ (160) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 100.0,
+      "reason": ""
+    },
+    {
+      "player": "Blake Corum rushing_yards 70+ (160) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 100.0,
+      "reason": ""
+    },
+    {
+      "player": "Braelon Allen receiving_yards 20+ (275) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Braelon Allen rushing_yards 30+ (-230) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 40.0,
+      "reason": ""
+    },
+    {
+      "player": "Braelon Allen rushing_yards 30+ (-230) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 40.0,
+      "reason": ""
+    },
+    {
+      "player": "Braelon Allen rushing_yards 30+ (-230) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 40.0,
+      "reason": ""
+    },
+    {
+      "player": "Braelon Allen rushing_yards 40+ (100) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 40.0,
+      "reason": ""
+    },
+    {
+      "player": "Braelon Allen rushing_yards 40+ (100) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 40.0,
+      "reason": ""
+    },
+    {
+      "player": "Braelon Allen rushing_yards 40+ (100) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 40.0,
+      "reason": ""
+    },
+    {
+      "player": "Braelon Allen rushing_yards 50+ (180) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 40.0,
+      "reason": ""
+    },
+    {
+      "player": "Braelon Allen rushing_yards 50+ (180) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 40.0,
+      "reason": ""
+    },
+    {
+      "player": "Braelon Allen rushing_yards 50+ (180) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 40.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall receiving_yards 20+ (145) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 67.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall receptions 2+ (-280) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall receptions 2+ (-280) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall receptions 2+ (-280) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall receptions 3+ (115) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall receptions 3+ (115) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall receptions 3+ (115) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall rushing_yards 40+ (-200) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 41.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall rushing_yards 40+ (-200) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 41.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall rushing_yards 40+ (-200) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 41.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall rushing_yards 50+ (100) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 41.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall rushing_yards 50+ (100) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 41.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall rushing_yards 50+ (100) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 41.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall rushing_yards 60+ (165) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 41.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall rushing_yards 60+ (165) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 41.0,
+      "reason": ""
+    },
+    {
+      "player": "Breece Hall rushing_yards 60+ (165) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 41.0,
+      "reason": ""
+    },
+    {
+      "player": "Brenton Strange receptions 3+ (-250) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Brenton Strange receptions 4+ (105) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Brenton Strange receptions 5+ (225) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Brock Purdy passing_yards 225+ (-350) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 389.0,
+      "reason": ""
+    },
+    {
+      "player": "Brock Purdy passing_yards 225+ (-350) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 389.0,
+      "reason": ""
+    },
+    {
+      "player": "Brock Purdy passing_yards 225+ (-350) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 389.0,
+      "reason": ""
+    },
+    {
+      "player": "Brock Purdy passing_yards 250+ (-165) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 389.0,
+      "reason": ""
+    },
+    {
+      "player": "Brock Purdy passing_yards 250+ (-165) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 389.0,
+      "reason": ""
+    },
+    {
+      "player": "Brock Purdy passing_yards 250+ (-165) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 389.0,
+      "reason": ""
+    },
+    {
+      "player": "Brock Purdy passing_yards 275+ (115) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 389.0,
+      "reason": ""
+    },
+    {
+      "player": "Brock Purdy passing_yards 275+ (115) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 389.0,
+      "reason": ""
+    },
+    {
+      "player": "Brock Purdy passing_yards 275+ (115) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 389.0,
+      "reason": ""
+    },
+    {
+      "player": "Brock Purdy passing_yards 300+ (210) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 389.0,
+      "reason": ""
+    },
+    {
+      "player": "Brock Purdy passing_yards 300+ (210) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 389.0,
+      "reason": ""
+    },
+    {
+      "player": "Brock Purdy passing_yards 300+ (210) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 389.0,
+      "reason": ""
+    },
+    {
+      "player": "Bryce Young passing_yards 225+ (-300 b365) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 200.0,
+      "reason": ""
+    },
+    {
+      "player": "Bryce Young passing_yards 225+ (-300 b365) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 200.0,
+      "reason": ""
+    },
+    {
+      "player": "Bryce Young passing_yards 225+ (-300 b365) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 200.0,
+      "reason": ""
+    },
+    {
+      "player": "Bryce Young passing_yards 250+ (-150 b365) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 200.0,
+      "reason": ""
+    },
+    {
+      "player": "Bryce Young passing_yards 250+ (-150 b365) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 200.0,
+      "reason": ""
+    },
+    {
+      "player": "Bryce Young passing_yards 250+ (-150 b365) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 200.0,
+      "reason": ""
+    },
+    {
+      "player": "Bryce Young passing_yards 275+ (+120 b365) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 200.0,
+      "reason": ""
+    },
+    {
+      "player": "Bryce Young passing_yards 275+ (+120 b365) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 200.0,
+      "reason": ""
+    },
+    {
+      "player": "Bryce Young passing_yards 275+ (+120 b365) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 200.0,
+      "reason": ""
+    },
+    {
+      "player": "Calvin Ridley receiving_yards 20+ (155) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Calvin Ridley in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Calvin Ridley receiving_yards 30+ (300) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Calvin Ridley in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Calvin Ridley receptions 1+ (-350) pass_heavy",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Calvin Ridley in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Calvin Ridley receptions 2+ (145) pass_heavy",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Calvin Ridley in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Calvin Ridley receptions 2+ (145) shootout",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Calvin Ridley in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Cam Skattebo rush 40+ (bet365) efficient",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 78.0,
+      "reason": ""
+    },
+    {
+      "player": "Cam Skattebo rush 40+ (bet365) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 78.0,
+      "reason": ""
+    },
+    {
+      "player": "Cam Skattebo rush 50+ (bet365) efficient",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 78.0,
+      "reason": ""
+    },
+    {
+      "player": "Cam Skattebo rush 50+ (bet365) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 78.0,
+      "reason": ""
+    },
+    {
+      "player": "Carnell Tate receiving_yards 50+ (-130) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Carnell Tate in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Carnell Tate receiving_yards 50+ (-130) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Carnell Tate in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Carnell Tate receiving_yards 60+ (120) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Carnell Tate in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Carnell Tate receiving_yards 60+ (120) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Carnell Tate in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Carnell Tate receiving_yards 70+ (180) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Carnell Tate in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Carnell Tate receiving_yards 70+ (180) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Carnell Tate in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Carnell Tate receiving_yards 80+ (275) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Carnell Tate in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Carnell Tate receiving_yards 80+ (275) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Carnell Tate in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Carnell Tate receptions 4+ (-260) pass_heavy",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Carnell Tate in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Carnell Tate receptions 5+ (-115) pass_heavy",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Carnell Tate in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Carnell Tate receptions 6+ (165) pass_heavy",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Carnell Tate in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Chase Brown receiving_yards 30+ (+120) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 39.0,
+      "reason": ""
+    },
+    {
+      "player": "Chase Brown rushing_yards 40+ (-165) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 44.0,
+      "reason": ""
+    },
+    {
+      "player": "Chase Brown rushing_yards 40+ (-165) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 44.0,
+      "reason": ""
+    },
+    {
+      "player": "Chase Brown rushing_yards 40+ (-165) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 44.0,
+      "reason": ""
+    },
+    {
+      "player": "Chase Brown rushing_yards 50+ (+115) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 44.0,
+      "reason": ""
+    },
+    {
+      "player": "Chase Brown rushing_yards 50+ (+115) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 44.0,
+      "reason": ""
+    },
+    {
+      "player": "Chase Brown rushing_yards 50+ (+115) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 44.0,
+      "reason": ""
+    },
+    {
+      "player": "Chase Brown rushing_yards 60+ (+200) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 44.0,
+      "reason": ""
+    },
+    {
+      "player": "Chase Brown rushing_yards 60+ (+200) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 44.0,
+      "reason": ""
+    },
+    {
+      "player": "Chase Brown rushing_yards 60+ (+200) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 44.0,
+      "reason": ""
+    },
+    {
+      "player": "Chig Okonkwo rec yds 40+ (bet365)",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 24.0,
+      "reason": ""
+    },
+    {
+      "player": "Chris Bell receiving_yards 20+ (bet365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Chris Bell in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Chris Bell receiving_yards 20+ (bet365) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Chris Bell in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Chris Bell receiving_yards 30+ (bet365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Chris Bell in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Chris Bell receiving_yards 30+ (bet365) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Chris Bell in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Chris Olave receiving_yards 60+ (-190 b365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 30.0,
+      "reason": ""
+    },
+    {
+      "player": "Chris Olave receiving_yards 70+ (-125 b365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 30.0,
+      "reason": ""
+    },
+    {
+      "player": "Chris Olave receiving_yards 80+ (+120 b365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 30.0,
+      "reason": ""
+    },
+    {
+      "player": "Chris Rodriguez rushing_yards 30+ (-260) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Chris Rodriguez rushing_yards 30+ (-260) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Chris Rodriguez rushing_yards 30+ (-260) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Chris Rodriguez rushing_yards 40+ (-115) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Chris Rodriguez rushing_yards 40+ (-115) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Chris Rodriguez rushing_yards 40+ (-115) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Chris Rodriguez rushing_yards 50+ (150) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Chris Rodriguez rushing_yards 50+ (150) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Chris Rodriguez rushing_yards 50+ (150) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian McCaffrey receiving_yards 30+ (-185) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 161.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian McCaffrey receiving_yards 40+ (110) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 161.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian McCaffrey receiving_yards 50+ (200) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 161.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian McCaffrey receptions 4+ (-250) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian McCaffrey receptions 5+ (-105) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian McCaffrey receptions 6+ (200) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian McCaffrey rushing_yards 50+ (-260) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 62.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian McCaffrey rushing_yards 60+ (-140) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 62.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian McCaffrey rushing_yards 70+ (125) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 62.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian McCaffrey rushing_yards 80+ (210) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 62.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian Watson receptions 5+ (DK -157) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian Watson receptions 5+ (DK -157) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian Watson receptions 5+ (bet365 -150) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian Watson receptions 5+ (bet365 -150) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian Watson receptions 6+ (DK +132) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian Watson receptions 6+ (DK +132) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian Watson receptions 6+ (bet365 +135) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Christian Watson receptions 6+ (bet365 +135) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Chuba Hubbard receiving_yards 20+ (-140 b365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 80.0,
+      "reason": ""
+    },
+    {
+      "player": "Chuba Hubbard receiving_yards 30+ (+160 b365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 80.0,
+      "reason": ""
+    },
+    {
+      "player": "Cooper Kupp receiving_yards 20+ (-135) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 34.0,
+      "reason": ""
+    },
+    {
+      "player": "Cooper Kupp receiving_yards 20+ (-135) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 34.0,
+      "reason": ""
+    },
+    {
+      "player": "Cooper Kupp receiving_yards 30+ (155) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 34.0,
+      "reason": ""
+    },
+    {
+      "player": "Cooper Kupp receiving_yards 30+ (155) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 34.0,
+      "reason": ""
+    },
+    {
+      "player": "Cooper Kupp receiving_yards 40+ (275) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 34.0,
+      "reason": ""
+    },
+    {
+      "player": "Cooper Kupp receiving_yards 40+ (275) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 34.0,
+      "reason": ""
+    },
+    {
+      "player": "Cooper Kupp receptions 2+ (-250) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Cooper Kupp receptions 2+ (-250) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Cooper Kupp receptions 2+ (-250) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Cooper Kupp receptions 3+ (125) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Cooper Kupp receptions 3+ (125) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Cooper Kupp receptions 3+ (125) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Corey Kiner rushing_yards 40+ (-240) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 25.0,
+      "reason": ""
+    },
+    {
+      "player": "Corey Kiner rushing_yards 40+ (-240) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 25.0,
+      "reason": ""
+    },
+    {
+      "player": "Corey Kiner rushing_yards 50+ (-125) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 25.0,
+      "reason": ""
+    },
+    {
+      "player": "Corey Kiner rushing_yards 50+ (-125) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 25.0,
+      "reason": ""
+    },
+    {
+      "player": "Corey Kiner rushing_yards 60+ (140) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 25.0,
+      "reason": ""
+    },
+    {
+      "player": "Corey Kiner rushing_yards 60+ (140) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 25.0,
+      "reason": ""
+    },
+    {
+      "player": "DJ Moore receiving_yards 40+ (-175) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 90.0,
+      "reason": ""
+    },
+    {
+      "player": "DJ Moore receiving_yards 40+ (-175) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 90.0,
+      "reason": ""
+    },
+    {
+      "player": "DJ Moore receiving_yards 50+ (-105) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 90.0,
+      "reason": ""
+    },
+    {
+      "player": "DJ Moore receiving_yards 50+ (-105) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 90.0,
+      "reason": ""
+    },
+    {
+      "player": "DJ Moore receiving_yards 60+ (145) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 90.0,
+      "reason": ""
+    },
+    {
+      "player": "DJ Moore receiving_yards 60+ (145) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 90.0,
+      "reason": ""
+    },
+    {
+      "player": "DJ Moore receptions 3+ (-325) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "DJ Moore receptions 3+ (-325) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "DJ Moore receptions 3+ (-325) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "DJ Moore receptions 4+ (-115) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "DJ Moore receptions 4+ (-115) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "DJ Moore receptions 4+ (-115) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "DK Metcalf receiving_yards 40+ (-220) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 54.0,
+      "reason": ""
+    },
+    {
+      "player": "DK Metcalf receiving_yards 40+ (-220) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 54.0,
+      "reason": ""
+    },
+    {
+      "player": "DK Metcalf receiving_yards 50+ (-135) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 54.0,
+      "reason": ""
+    },
+    {
+      "player": "DK Metcalf receiving_yards 50+ (-135) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 54.0,
+      "reason": ""
+    },
+    {
+      "player": "DK Metcalf receiving_yards 60+ (+115) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 54.0,
+      "reason": ""
+    },
+    {
+      "player": "DK Metcalf receiving_yards 60+ (+115) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 54.0,
+      "reason": ""
+    },
+    {
+      "player": "DK Metcalf receptions 5+ (+130) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Dak Prescott passing_yards 225+ (-450) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 343.0,
+      "reason": ""
+    },
+    {
+      "player": "Dak Prescott passing_yards 225+ (-450) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 343.0,
+      "reason": ""
+    },
+    {
+      "player": "Dak Prescott passing_yards 225+ (-450) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 343.0,
+      "reason": ""
+    },
+    {
+      "player": "Dak Prescott passing_yards 250+ (-200) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 343.0,
+      "reason": ""
+    },
+    {
+      "player": "Dak Prescott passing_yards 250+ (-200) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 343.0,
+      "reason": ""
+    },
+    {
+      "player": "Dak Prescott passing_yards 250+ (-200) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 343.0,
+      "reason": ""
+    },
+    {
+      "player": "Dak Prescott passing_yards 275+ (-105) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 343.0,
+      "reason": ""
+    },
+    {
+      "player": "Dak Prescott passing_yards 275+ (-105) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 343.0,
+      "reason": ""
+    },
+    {
+      "player": "Dak Prescott passing_yards 275+ (-105) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 343.0,
+      "reason": ""
+    },
+    {
+      "player": "Dak Prescott passing_yards 300+ (165) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 343.0,
+      "reason": ""
+    },
+    {
+      "player": "Dak Prescott passing_yards 300+ (165) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 343.0,
+      "reason": ""
+    },
+    {
+      "player": "Dak Prescott passing_yards 300+ (165) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 343.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Kincaid receiving_yards 40+ (-115) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 58.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Kincaid receiving_yards 40+ (-115) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 58.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Kincaid receiving_yards 50+ (150) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 58.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Kincaid receiving_yards 50+ (150) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 58.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Kincaid receptions 4+ (-115) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Kincaid receptions 4+ (-115) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Kincaid receptions 4+ (-115) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Kincaid receptions 5+ (180) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Kincaid receptions 5+ (180) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Kincaid receptions 5+ (180) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Schultz receiving_yards 30+ (-130) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 11.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Schultz receiving_yards 30+ (-130) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 11.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Schultz receiving_yards 40+ (150) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 11.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Schultz receiving_yards 40+ (150) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 11.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Schultz receptions 4+ (-115) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Schultz receptions 4+ (-115) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Schultz receptions 4+ (-115) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Schultz receptions 5+ (190) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Schultz receptions 5+ (190) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Dalton Schultz receptions 5+ (190) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Darnell Washington receiving_yards 30+ (+120) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Darren Waller receptions 3+ (-130 b365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Darren Waller receptions 4+ (+170 b365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Dawson Knox receiving_yards 20+ (160) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Denzel Boston receptions 3+ (-250) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Denzel Boston receptions 3+ (-250) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Denzel Boston receptions 4+ (105) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Denzel Boston receptions 4+ (105) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Derrick Henry receptions 2+ (110) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Derrick Henry receptions 2+ (110) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Derrick Henry receptions 2+ (110) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Derrick Henry receptions 3+ (350) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Derrick Henry receptions 3+ (350) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Derrick Henry receptions 3+ (350) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Derrick Henry rushing_yards 100+ (225) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 10.0,
+      "reason": ""
+    },
+    {
+      "player": "Derrick Henry rushing_yards 60+ (-280) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 10.0,
+      "reason": ""
+    },
+    {
+      "player": "Derrick Henry rushing_yards 70+ (-165) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 10.0,
+      "reason": ""
+    },
+    {
+      "player": "Derrick Henry rushing_yards 80+ (100) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 10.0,
+      "reason": ""
+    },
+    {
+      "player": "Derrick Henry rushing_yards 90+ (155) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 10.0,
+      "reason": ""
+    },
+    {
+      "player": "Deshaun Watson passing_yards 175+ (-275) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 312.0,
+      "reason": ""
+    },
+    {
+      "player": "Deshaun Watson passing_yards 175+ (-275) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 312.0,
+      "reason": ""
+    },
+    {
+      "player": "Deshaun Watson passing_yards 200+ (-135) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 312.0,
+      "reason": ""
+    },
+    {
+      "player": "Deshaun Watson passing_yards 200+ (-135) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 312.0,
+      "reason": ""
+    },
+    {
+      "player": "Deshaun Watson passing_yards 225+ (145) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 312.0,
+      "reason": ""
+    },
+    {
+      "player": "Deshaun Watson passing_yards 225+ (145) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 312.0,
+      "reason": ""
+    },
+    {
+      "player": "Devaughn Vele receptions 4+ (-125 b365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Devaughn Vele receptions 5+ (+200 b365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Dohnte Meyers receiving_yards 30+ (+180) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 20.0,
+      "reason": ""
+    },
+    {
+      "player": "Drake Maye passing_yards 225+ (-275) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 48.0,
+      "reason": ""
+    },
+    {
+      "player": "Drake Maye passing_yards 225+ (-275) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 48.0,
+      "reason": ""
+    },
+    {
+      "player": "Drake Maye passing_yards 225+ (-275) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 48.0,
+      "reason": ""
+    },
+    {
+      "player": "Drake Maye passing_yards 250+ (-140) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 48.0,
+      "reason": ""
+    },
+    {
+      "player": "Drake Maye passing_yards 250+ (-140) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 48.0,
+      "reason": ""
+    },
+    {
+      "player": "Drake Maye passing_yards 250+ (-140) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 48.0,
+      "reason": ""
+    },
+    {
+      "player": "Drake Maye passing_yards 275+ (140) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 48.0,
+      "reason": ""
+    },
+    {
+      "player": "Drake Maye passing_yards 275+ (140) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 48.0,
+      "reason": ""
+    },
+    {
+      "player": "Drake Maye passing_yards 275+ (140) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 48.0,
+      "reason": ""
+    },
+    {
+      "player": "Dylan Sampson rushing_yards 20+ (-115) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Dylan Sampson rushing_yards 20+ (-115) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Dylan Sampson rushing_yards 20+ (-115) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Dylan Sampson rushing_yards 30+ (210) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Dylan Sampson rushing_yards 30+ (210) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Dylan Sampson rushing_yards 30+ (210) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Elic Ayomanor receiving_yards 20+ (-135) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 79.0,
+      "reason": ""
+    },
+    {
+      "player": "Elic Ayomanor receiving_yards 30+ (150) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 79.0,
+      "reason": ""
+    },
+    {
+      "player": "Elic Ayomanor receiving_yards 40+ (250) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 79.0,
+      "reason": ""
+    },
+    {
+      "player": "Elijah Higgins receiving_yards 30+ (210) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Elijah Higgins in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Elijah Higgins receiving_yards 30+ (210) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Elijah Higgins in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Elijah Higgins receiving_yards 40+ (400) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Elijah Higgins in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Elijah Higgins receiving_yards 40+ (400) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Elijah Higgins in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Garrett Wilson receiving_yards 50+ (-240) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 106.0,
+      "reason": ""
+    },
+    {
+      "player": "Garrett Wilson receiving_yards 60+ (-140) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 106.0,
+      "reason": ""
+    },
+    {
+      "player": "Garrett Wilson receiving_yards 70+ (110) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 106.0,
+      "reason": ""
+    },
+    {
+      "player": "Garrett Wilson receiving_yards 80+ (160) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 106.0,
+      "reason": ""
+    },
+    {
+      "player": "Garrett Wilson receptions 5+ (-240) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Garrett Wilson receptions 6+ (-115) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Garrett Wilson receptions 7+ (170) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Geno Smith passing_tds 1+ (-350) shootout",
+      "outcome": "passing_tds",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Geno Smith passing_tds 2+ (160) shootout",
+      "outcome": "passing_tds",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Geno Smith passing_yards 175+ (-400) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 148.0,
+      "reason": ""
+    },
+    {
+      "player": "Geno Smith passing_yards 200+ (-210) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 148.0,
+      "reason": ""
+    },
+    {
+      "player": "Geno Smith passing_yards 225+ (-105) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 148.0,
+      "reason": ""
+    },
+    {
+      "player": "Geno Smith passing_yards 250+ (165) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 148.0,
+      "reason": ""
+    },
+    {
+      "player": "George Kittle receptions 5+ (-200) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "George Kittle receptions 6+ (110) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "George Kittle receptions 7+ (210) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Germie Bernard receiving_yards 40+ (-165) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Germie Bernard receiving_yards 40+ (-165) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Germie Bernard receiving_yards 50+ (+105) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Germie Bernard receiving_yards 50+ (+105) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receiving_yards 30+ (bet365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receiving_yards 30+ (bet365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receiving_yards 40+ (bet365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receiving_yards 40+ (bet365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receiving_yards 50+ (bet365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receiving_yards 50+ (bet365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receptions 3+ (bet365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receptions 3+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receptions 3+ (bet365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receptions 4+ (bet365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receptions 4+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receptions 4+ (bet365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receptions 5+ (bet365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receptions 5+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Greg Dulcich receptions 5+ (bet365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Gunnar Helm receiving_yards 20+ (-140) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Gunnar Helm receiving_yards 30+ (165) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Gunnar Helm receiving_yards 40+ (320) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Harold Fannin receiving_yards 40+ (-110) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 91.0,
+      "reason": ""
+    },
+    {
+      "player": "Harold Fannin receiving_yards 40+ (-110) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 91.0,
+      "reason": ""
+    },
+    {
+      "player": "Harold Fannin receiving_yards 50+ (165) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 91.0,
+      "reason": ""
+    },
+    {
+      "player": "Harold Fannin receiving_yards 50+ (165) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 91.0,
+      "reason": ""
+    },
+    {
+      "player": "Harold Fannin receptions 4+ (-150) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Harold Fannin receptions 4+ (-150) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Harold Fannin receptions 4+ (-150) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Harold Fannin receptions 5+ (140) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Harold Fannin receptions 5+ (140) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Harold Fannin receptions 5+ (140) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Isaac TeSlaa receiving_yards 20+ (-105) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Isaac TeSlaa receiving_yards 30+ (200) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Isaac TeSlaa receptions 2+ (-115) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Isaac TeSlaa receptions 2+ (-115) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Isaac TeSlaa receptions 3+ (250) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Isaac TeSlaa receptions 3+ (250) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Isaiah Likely rec yds 50+ (bet365)",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 127.0,
+      "reason": ""
+    },
+    {
+      "player": "Ja'Kobi Lane receiving_yards 20+ (125) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 61.0,
+      "reason": ""
+    },
+    {
+      "player": "Ja'Kobi Lane receiving_yards 30+ (250) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 61.0,
+      "reason": ""
+    },
+    {
+      "player": "Ja'Kobi Lane receptions 2+ (115) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett passing_yards 175+ (-185) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 340.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett passing_yards 175+ (-185) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 340.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett passing_yards 175+ (-185) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 340.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett passing_yards 200+ (110) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 340.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett passing_yards 200+ (110) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 340.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett passing_yards 200+ (110) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 340.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett passing_yards 225+ (210) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 340.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett passing_yards 225+ (210) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 340.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett passing_yards 225+ (210) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 340.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett passing_yards 250+ (400) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 340.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett passing_yards 250+ (400) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 340.0,
+      "reason": ""
+    },
+    {
+      "player": "Jacoby Brissett passing_yards 250+ (400) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 340.0,
+      "reason": ""
+    },
+    {
+      "player": "Jadarian Price receptions 2+ (-170) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Jadarian Price receptions 3+ (150) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Jadarian Price rushing_yards 30+ (-280) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 36.0,
+      "reason": ""
+    },
+    {
+      "player": "Jadarian Price rushing_yards 30+ (-280) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 36.0,
+      "reason": ""
+    },
+    {
+      "player": "Jadarian Price rushing_yards 30+ (-280) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 36.0,
+      "reason": ""
+    },
+    {
+      "player": "Jadarian Price rushing_yards 40+ (-115) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 36.0,
+      "reason": ""
+    },
+    {
+      "player": "Jadarian Price rushing_yards 40+ (-115) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 36.0,
+      "reason": ""
+    },
+    {
+      "player": "Jadarian Price rushing_yards 40+ (-115) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 36.0,
+      "reason": ""
+    },
+    {
+      "player": "Jadarian Price rushing_yards 50+ (180) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 36.0,
+      "reason": ""
+    },
+    {
+      "player": "Jadarian Price rushing_yards 50+ (180) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 36.0,
+      "reason": ""
+    },
+    {
+      "player": "Jadarian Price rushing_yards 50+ (180) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 36.0,
+      "reason": ""
+    },
+    {
+      "player": "Jahmyr Gibbs receptions 4+ (-185) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Jahmyr Gibbs receptions 5+ (125) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Jakobi Meyers receptions 3+ (-300) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Jakobi Meyers receptions 4+ (-115) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Jakobi Meyers receptions 5+ (200) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Jalen Coker receiving_yards 50+ (-135 b365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Jalen Coker receiving_yards 60+ (+120 b365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Jalen Coker receptions 4+ (-230 b365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Jalen Coker receptions 5+ (+110 b365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Jalen Nailor receiving_yards 20+ (150) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": -1.0,
+      "reason": ""
+    },
+    {
+      "player": "Jalen Nailor receiving_yards 20+ (150) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": -1.0,
+      "reason": ""
+    },
+    {
+      "player": "Jalen Nailor receiving_yards 30+ (300) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": -1.0,
+      "reason": ""
+    },
+    {
+      "player": "Jalen Nailor receiving_yards 30+ (300) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": -1.0,
+      "reason": ""
+    },
+    {
+      "player": "James Cook receiving_yards 20+ (320) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "James Cook receptions 2+ (-105) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "James Cook receptions 2+ (-105) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "James Cook receptions 3+ (300) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "James Cook receptions 3+ (300) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receiving_yards 40+ (-240) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 50.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receiving_yards 40+ (-240) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 50.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receiving_yards 50+ (-140) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 50.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receiving_yards 50+ (-140) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 50.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receiving_yards 60+ (110) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 50.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receiving_yards 60+ (110) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 50.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receiving_yards 70+ (160) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 50.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receiving_yards 70+ (160) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 50.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receptions 3+ (-325) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receptions 3+ (-325) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receptions 3+ (-325) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receptions 4+ (-115) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receptions 4+ (-115) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receptions 4+ (-115) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receptions 5+ (190) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receptions 5+ (190) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Jameson Williams receptions 5+ (190) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Jared Goff passing_yards 225+ (-350) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 303.0,
+      "reason": ""
+    },
+    {
+      "player": "Jared Goff passing_yards 225+ (-350) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 303.0,
+      "reason": ""
+    },
+    {
+      "player": "Jared Goff passing_yards 225+ (-350) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 303.0,
+      "reason": ""
+    },
+    {
+      "player": "Jared Goff passing_yards 250+ (-175) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 303.0,
+      "reason": ""
+    },
+    {
+      "player": "Jared Goff passing_yards 250+ (-175) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 303.0,
+      "reason": ""
+    },
+    {
+      "player": "Jared Goff passing_yards 250+ (-175) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 303.0,
+      "reason": ""
+    },
+    {
+      "player": "Jared Goff passing_yards 275+ (110) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 303.0,
+      "reason": ""
+    },
+    {
+      "player": "Jared Goff passing_yards 275+ (110) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 303.0,
+      "reason": ""
+    },
+    {
+      "player": "Jared Goff passing_yards 275+ (110) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 303.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams receiving_yards 20+ (140) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams receiving_yards 30+ (320) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams receptions 2+ (-500) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams receptions 2+ (-500) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams receptions 2+ (-500) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams receptions 3+ (-140) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams receptions 3+ (-140) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams receptions 3+ (-140) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams receptions 4+ (160) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams receptions 4+ (160) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams receptions 4+ (160) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams rushing_yards 60+ (-210) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 63.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams rushing_yards 70+ (-115) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 63.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams rushing_yards 80+ (135) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 63.0,
+      "reason": ""
+    },
+    {
+      "player": "Javonte Williams rushing_yards 90+ (210) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 63.0,
+      "reason": ""
+    },
+    {
+      "player": "Jaxon Smith-Njigba receptions 6+ (-325) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Jaxon Smith-Njigba receptions 6+ (-325) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Jaxon Smith-Njigba receptions 7+ (-145) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Jaxon Smith-Njigba receptions 7+ (-145) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Jaxon Smith-Njigba receptions 8+ (120) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Jaxon Smith-Njigba receptions 8+ (120) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Jayden Daniels pass yds 175+ (bet365) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 249.0,
+      "reason": ""
+    },
+    {
+      "player": "Jayden Daniels pass yds 175+ (bet365) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 249.0,
+      "reason": ""
+    },
+    {
+      "player": "Jayden Daniels pass yds 200+ (bet365) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 249.0,
+      "reason": ""
+    },
+    {
+      "player": "Jayden Daniels pass yds 200+ (bet365) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 249.0,
+      "reason": ""
+    },
+    {
+      "player": "Jaylen Warren receiving_yards 30+ (+105) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Jaylen Warren receiving_yards 30+ (+105) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Jaylen Warren receiving_yards 40+ (+200) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Jaylen Warren receiving_yards 40+ (+200) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Jerry Jeudy receiving_yards 20+ (145) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 74.0,
+      "reason": ""
+    },
+    {
+      "player": "Jerry Jeudy receiving_yards 30+ (275) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 74.0,
+      "reason": ""
+    },
+    {
+      "player": "Jerry Jeudy receptions 2+ (-120) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "John Metchie III receiving_yards 20+ (-130 b365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "John Metchie III receiving_yards 30+ (+155 b365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "John Metchie III receptions 3+ (+140 b365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "John Metchie III receptions 3+ (+140 b365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Jonathan Taylor receiving_yards 20+ (bet365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 20.0,
+      "reason": ""
+    },
+    {
+      "player": "Jonathan Taylor receiving_yards 30+ (bet365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 20.0,
+      "reason": ""
+    },
+    {
+      "player": "Jonathan Taylor receptions 3+ (bet365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Jonathan Taylor receptions 3+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Jonathan Taylor receptions 4+ (bet365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Jonathan Taylor receptions 4+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Jonathan Taylor rushing_yards 50+ (bet365) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 83.0,
+      "reason": ""
+    },
+    {
+      "player": "Jonathan Taylor rushing_yards 60+ (bet365) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 83.0,
+      "reason": ""
+    },
+    {
+      "player": "Jonathan Taylor rushing_yards 70+ (bet365) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 83.0,
+      "reason": ""
+    },
+    {
+      "player": "Jonathan Taylor rushing_yards 80+ (bet365) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 83.0,
+      "reason": ""
+    },
+    {
+      "player": "Jordan Addison receiving_yards 40+ (DK -130) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Addison receiving_yards 40+ (DK -130) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Addison receiving_yards 43+ (DK -110) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Addison receiving_yards 43+ (DK -110) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Addison receiving_yards 50+ (DK +129) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Addison receiving_yards 50+ (DK +129) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Addison receiving_yards 60+ (DK +208) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Addison receiving_yards 60+ (DK +208) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Addison receptions 4+ (DK -144) efficient_offense",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Addison receptions 4+ (DK -144) pass_heavy",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Addison receptions 4+ (DK -144) shootout",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Addison receptions 5+ (DK +151) efficient_offense",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Addison receptions 5+ (DK +151) pass_heavy",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Addison receptions 5+ (DK +151) shootout",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Jordan Addison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Jordan Mason rushing_yards 40+ (DK -147) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 59.0,
+      "reason": ""
+    },
+    {
+      "player": "Jordan Mason rushing_yards 40+ (DK -147) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 59.0,
+      "reason": ""
+    },
+    {
+      "player": "Jordan Mason rushing_yards 44+ (DK -112) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 59.0,
+      "reason": ""
+    },
+    {
+      "player": "Jordan Mason rushing_yards 44+ (DK -112) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 59.0,
+      "reason": ""
+    },
+    {
+      "player": "Jordan Mason rushing_yards 50+ (DK +130) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 59.0,
+      "reason": ""
+    },
+    {
+      "player": "Jordan Mason rushing_yards 50+ (DK +130) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 59.0,
+      "reason": ""
+    },
+    {
+      "player": "Jordan Mason rushing_yards 60+ (DK +226) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 59.0,
+      "reason": ""
+    },
+    {
+      "player": "Jordan Mason rushing_yards 60+ (DK +226) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 59.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_tds 2+ (-120) efficient_offense",
+      "outcome": "passing_tds",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_tds 2+ (-120) shootout",
+      "outcome": "passing_tds",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_tds 3+ (300) efficient_offense",
+      "outcome": "passing_tds",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_tds 3+ (300) shootout",
+      "outcome": "passing_tds",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_yards 200+ (-275) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 196.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_yards 200+ (-275) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 196.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_yards 200+ (-275) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 196.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_yards 225+ (-135) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 196.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_yards 225+ (-135) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 196.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_yards 225+ (-135) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 196.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_yards 250+ (145) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 196.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_yards 250+ (145) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 196.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_yards 250+ (145) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 196.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_yards 275+ (275) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 196.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_yards 275+ (275) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 196.0,
+      "reason": ""
+    },
+    {
+      "player": "Josh Allen passing_yards 275+ (275) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 196.0,
+      "reason": ""
+    },
+    {
+      "player": "Justice Hill receptions 2+ (-280) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Justice Hill receptions 3+ (120) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Justice Hill rushing_yards 20+ (-115) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Justice Hill rushing_yards 20+ (-115) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Justice Hill rushing_yards 30+ (225) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Justice Hill rushing_yards 30+ (225) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Justin Jefferson receptions 5+ (DK -372) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Justin Jefferson receptions 5+ (DK -372) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Justin Jefferson receptions 6+ (DK -182) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Justin Jefferson receptions 6+ (DK -182) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Justin Jefferson receptions 7+ (DK +105) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Justin Jefferson receptions 7+ (DK +105) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Juwan Johnson receptions 3+ (-140 b365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Juwan Johnson receptions 4+ (+165 b365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "KC Concepcion receiving_yards 40+ (-185) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 21.0,
+      "reason": ""
+    },
+    {
+      "player": "KC Concepcion receiving_yards 50+ (-110) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 21.0,
+      "reason": ""
+    },
+    {
+      "player": "KC Concepcion receiving_yards 60+ (150) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 21.0,
+      "reason": ""
+    },
+    {
+      "player": "KC Concepcion receptions 4+ (-230) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "KC Concepcion receptions 4+ (-230) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "KC Concepcion receptions 4+ (-230) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "KC Concepcion receptions 5+ (100) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "KC Concepcion receptions 5+ (100) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "KC Concepcion receptions 5+ (100) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaelon Black receptions 1+ (-145) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaelon Black receptions 1+ (-145) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaelon Black receptions 2+ (320) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaelon Black receptions 2+ (320) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaelon Black rushing_yards 30+ (-190) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 53.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaelon Black rushing_yards 30+ (-190) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 53.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaelon Black rushing_yards 40+ (110) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 53.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaelon Black rushing_yards 40+ (110) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 53.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaelon Black rushing_yards 50+ (200) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 53.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaelon Black rushing_yards 50+ (200) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 53.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaelon Black rushing_yards 60+ (350) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 53.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaelon Black rushing_yards 60+ (350) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 53.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaleb Johnson rushing_yards 30+ (bet365 -140) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaleb Johnson rushing_yards 30+ (bet365 -140) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaleb Johnson rushing_yards 33+ (DK -112) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaleb Johnson rushing_yards 33+ (DK -112) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaleb Johnson rushing_yards 40+ (DK +146) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaleb Johnson rushing_yards 40+ (DK +146) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaleb Johnson rushing_yards 40+ (bet365 +155) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaleb Johnson rushing_yards 40+ (bet365 +155) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaleb Johnson rushing_yards 50+ (bet365 +300) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Kaleb Johnson rushing_yards 50+ (bet365 +300) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Kayshon Boutte receiving_yards 30+ (210) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Kayshon Boutte receiving_yards 30+ (210) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Kayshon Boutte receiving_yards 40+ (400) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Kayshon Boutte receiving_yards 40+ (400) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Kenyon Sadiq receiving_yards 20+ (105) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Keon Coleman receiving_yards 30+ (115) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 11.0,
+      "reason": ""
+    },
+    {
+      "player": "Keon Coleman receiving_yards 30+ (115) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 11.0,
+      "reason": ""
+    },
+    {
+      "player": "Keon Coleman receiving_yards 40+ (190) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 11.0,
+      "reason": ""
+    },
+    {
+      "player": "Keon Coleman receiving_yards 40+ (190) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 11.0,
+      "reason": ""
+    },
+    {
+      "player": "Keon Coleman receptions 2+ (-190) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Keon Coleman receptions 2+ (-190) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Keon Coleman receptions 2+ (-190) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Keon Coleman receptions 3+ (160) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Keon Coleman receptions 3+ (160) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Keon Coleman receptions 3+ (160) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Khalil Shakir receiving_yards 40+ (-115) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Khalil Shakir receiving_yards 40+ (-115) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Khalil Shakir receiving_yards 50+ (145) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Khalil Shakir receiving_yards 50+ (145) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Khalil Shakir receiving_yards 60+ (225) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Khalil Shakir receiving_yards 60+ (225) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Khalil Shakir receptions 4+ (-135) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Khalil Shakir receptions 4+ (-135) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Khalil Shakir receptions 4+ (-135) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Khalil Shakir receptions 5+ (155) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Khalil Shakir receptions 5+ (155) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Khalil Shakir receptions 5+ (155) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 225+ (bet365 -150) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 225+ (bet365 -150) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 225+ (bet365 -150) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 232+ (DK -111) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 232+ (DK -111) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 232+ (DK -111) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 240+ (DK +109) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 240+ (DK +109) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 240+ (DK +109) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 250+ (bet365 +130) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 250+ (bet365 +130) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 250+ (bet365 +130) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 275+ (bet365 +225) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 275+ (bet365 +225) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kirk Cousins passing_yards 275+ (bet365 +225) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 207.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams receiving_yards 30+ (165) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams receiving_yards 40+ (320) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams receptions 3+ (-250) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams receptions 3+ (-250) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams receptions 3+ (-250) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams receptions 4+ (105) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams receptions 4+ (105) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams receptions 4+ (105) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams rushing_yards 50+ (-350) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams rushing_yards 50+ (-350) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams rushing_yards 50+ (-350) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams rushing_yards 60+ (-175) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams rushing_yards 60+ (-175) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams rushing_yards 60+ (-175) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams rushing_yards 70+ (105) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams rushing_yards 70+ (105) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams rushing_yards 70+ (105) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams rushing_yards 80+ (190) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams rushing_yards 80+ (190) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Kyren Williams rushing_yards 80+ (190) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Laquon Treadwell receiving_yards 20+ (bet365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 24.0,
+      "reason": ""
+    },
+    {
+      "player": "Laquon Treadwell receiving_yards 30+ (bet365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 24.0,
+      "reason": ""
+    },
+    {
+      "player": "Laquon Treadwell receiving_yards 40+ (bet365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 24.0,
+      "reason": ""
+    },
+    {
+      "player": "Laquon Treadwell receptions 2+ (bet365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Laquon Treadwell receptions 3+ (bet365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Malachi Fields rec yds 40+ (bet365)",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 62.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Nabers rec 5+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Nabers rec 5+ (bet365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Nabers rec 6+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Nabers rec 6+ (bet365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Washington receiving_yards 30+ (bet365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 50.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Washington receiving_yards 40+ (bet365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 50.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Washington receiving_yards 50+ (bet365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 50.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Washington receptions 3+ (bet365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Washington receptions 3+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Washington receptions 3+ (bet365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Washington receptions 4+ (bet365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Washington receptions 4+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Washington receptions 4+ (bet365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Washington receptions 5+ (bet365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Washington receptions 5+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Malik Washington receptions 5+ (bet365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "MarShawn Lloyd rushing_yards 13+ (DK -116) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 13.0,
+      "reason": ""
+    },
+    {
+      "player": "MarShawn Lloyd rushing_yards 15+ (DK +111) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 13.0,
+      "reason": ""
+    },
+    {
+      "player": "MarShawn Lloyd rushing_yards 20+ (DK +194) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 13.0,
+      "reason": ""
+    },
+    {
+      "player": "Mark Andrews receiving_yards 30+ (145) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 82.0,
+      "reason": ""
+    },
+    {
+      "player": "Mark Andrews receiving_yards 40+ (275) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 82.0,
+      "reason": ""
+    },
+    {
+      "player": "Mark Andrews receptions 3+ (-110) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Mark Andrews receptions 4+ (225) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Marvin Harrison receiving_yards 20+ (105) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Marvin Harrison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Marvin Harrison receiving_yards 20+ (105) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Marvin Harrison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Marvin Harrison receiving_yards 30+ (200) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Marvin Harrison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Marvin Harrison receiving_yards 30+ (200) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Marvin Harrison in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Mason Taylor receiving_yards 30+ (150) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 20.0,
+      "reason": ""
+    },
+    {
+      "player": "Mason Taylor receptions 2+ (-260) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Mason Taylor receptions 3+ (125) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Matthew Hibner receiving_yards 20+ (275) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Matthew Hibner in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Matthew Hibner receiving_yards 20+ (275) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for Matthew Hibner in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Matthew Hibner receptions 1+ (-240) efficient_offense",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Matthew Hibner in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Matthew Hibner receptions 1+ (-240) pass_heavy",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Matthew Hibner in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Matthew Hibner receptions 1+ (-240) shootout",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Matthew Hibner in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Matthew Hibner receptions 2+ (190) efficient_offense",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Matthew Hibner in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Matthew Hibner receptions 2+ (190) pass_heavy",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Matthew Hibner in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Matthew Hibner receptions 2+ (190) shootout",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Matthew Hibner in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Matthew Stafford passing_yards 200+ (-175) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 249.0,
+      "reason": ""
+    },
+    {
+      "player": "Matthew Stafford passing_yards 200+ (-175) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 249.0,
+      "reason": ""
+    },
+    {
+      "player": "Matthew Stafford passing_yards 200+ (-175) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 249.0,
+      "reason": ""
+    },
+    {
+      "player": "Matthew Stafford passing_yards 225+ (120) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 249.0,
+      "reason": ""
+    },
+    {
+      "player": "Matthew Stafford passing_yards 225+ (120) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 249.0,
+      "reason": ""
+    },
+    {
+      "player": "Matthew Stafford passing_yards 225+ (120) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 249.0,
+      "reason": ""
+    },
+    {
+      "player": "Matthew Stafford passing_yards 250+ (250) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 249.0,
+      "reason": ""
+    },
+    {
+      "player": "Matthew Stafford passing_yards 250+ (250) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 249.0,
+      "reason": ""
+    },
+    {
+      "player": "Matthew Stafford passing_yards 250+ (250) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 249.0,
+      "reason": ""
+    },
+    {
+      "player": "Michael Mayer receiving_yards 20+ (-165) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 16.0,
+      "reason": ""
+    },
+    {
+      "player": "Michael Mayer receiving_yards 20+ (-165) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 16.0,
+      "reason": ""
+    },
+    {
+      "player": "Michael Mayer receiving_yards 30+ (140) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 16.0,
+      "reason": ""
+    },
+    {
+      "player": "Michael Mayer receiving_yards 30+ (140) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 16.0,
+      "reason": ""
+    },
+    {
+      "player": "Michael Mayer receiving_yards 40+ (275) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 16.0,
+      "reason": ""
+    },
+    {
+      "player": "Michael Mayer receiving_yards 40+ (275) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 16.0,
+      "reason": ""
+    },
+    {
+      "player": "Mike Gesicki receiving_yards 30+ (+125) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Mike Gesicki receiving_yards 30+ (+125) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Mike Gesicki receiving_yards 40+ (+225) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Mike Gesicki receiving_yards 40+ (+225) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Mike Washington Jr. rushing_yards 20+ (-210) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Mike Washington Jr. rushing_yards 20+ (-210) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Mike Washington Jr. rushing_yards 30+ (120) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Mike Washington Jr. rushing_yards 30+ (120) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 23.0,
+      "reason": ""
+    },
+    {
+      "player": "Mitchell Evans receiving_yards 20+ (+250 b365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Nico Collins receiving_yards 50+ (-165) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Nico Collins receiving_yards 60+ (100) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Nico Collins receiving_yards 70+ (145) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Nico Collins receptions 4+ (-260) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Nico Collins receptions 4+ (-260) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Nico Collins receptions 4+ (-260) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Nico Collins receptions 5+ (-110) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Nico Collins receptions 5+ (-110) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Nico Collins receptions 5+ (-110) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Nico Collins receptions 6+ (190) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Nico Collins receptions 6+ (190) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Nico Collins receptions 6+ (190) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Noah Fant receiving_yards 20+ (+190 b365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Ollie Gordon II receiving_yards 20+ (bet365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 39.0,
+      "reason": ""
+    },
+    {
+      "player": "Ollie Gordon II receiving_yards 20+ (bet365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 39.0,
+      "reason": ""
+    },
+    {
+      "player": "Ollie Gordon II receptions 2+ (bet365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Ollie Gordon II receptions 2+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Ollie Gordon II receptions 2+ (bet365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Ollie Gordon II receptions 3+ (bet365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Ollie Gordon II receptions 3+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Ollie Gordon II receptions 3+ (bet365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Omar Cooper Jr. receptions 4+ (120) shootout",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Omar Cooper Jr. in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Omar Cooper Jr. receptions 5+ (250) shootout",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for Omar Cooper Jr. in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Parker Washington receiving_yards 50+ (-260) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 152.0,
+      "reason": ""
+    },
+    {
+      "player": "Parker Washington receiving_yards 60+ (-160) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 152.0,
+      "reason": ""
+    },
+    {
+      "player": "Parker Washington receiving_yards 70+ (100) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 152.0,
+      "reason": ""
+    },
+    {
+      "player": "Parker Washington receiving_yards 80+ (145) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 152.0,
+      "reason": ""
+    },
+    {
+      "player": "Parker Washington receptions 4+ (-240) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Parker Washington receptions 5+ (100) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Parker Washington receptions 6+ (210) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 7.0,
+      "reason": ""
+    },
+    {
+      "player": "Pat Freiermuth receiving_yards 30+ (+115) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 35.0,
+      "reason": ""
+    },
+    {
+      "player": "Pat Freiermuth receptions 3+ (-135) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Pat Freiermuth receptions 3+ (-135) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Pat Freiermuth receptions 3+ (-135) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Pierre Strong rushing_yards 11+ (DK -106) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no rushing_yards row for Pierre Strong in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Pierre Strong rushing_yards 15+ (DK +159) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no rushing_yards row for Pierre Strong in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Pierre Strong rushing_yards 20+ (bet365 +225) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no rushing_yards row for Pierre Strong in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Quinshon Judkins receptions 2+ (160) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Quinshon Judkins rushing_yards 40+ (-135) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 38.0,
+      "reason": ""
+    },
+    {
+      "player": "Quinshon Judkins rushing_yards 40+ (-135) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 38.0,
+      "reason": ""
+    },
+    {
+      "player": "Quinshon Judkins rushing_yards 40+ (-135) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 38.0,
+      "reason": ""
+    },
+    {
+      "player": "Quinshon Judkins rushing_yards 50+ (150) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 38.0,
+      "reason": ""
+    },
+    {
+      "player": "Quinshon Judkins rushing_yards 50+ (150) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 38.0,
+      "reason": ""
+    },
+    {
+      "player": "Quinshon Judkins rushing_yards 50+ (150) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 38.0,
+      "reason": ""
+    },
+    {
+      "player": "Quinshon Judkins rushing_yards 60+ (250) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 38.0,
+      "reason": ""
+    },
+    {
+      "player": "Quinshon Judkins rushing_yards 60+ (250) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 38.0,
+      "reason": ""
+    },
+    {
+      "player": "Quinshon Judkins rushing_yards 60+ (250) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 38.0,
+      "reason": ""
+    },
+    {
+      "player": "Rachaad White rush 40+ (bet365)",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 47.0,
+      "reason": ""
+    },
+    {
+      "player": "Rashod Bateman receiving_yards 30+ (130) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Rashod Bateman receiving_yards 30+ (130) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Rashod Bateman receiving_yards 40+ (225) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Rashod Bateman receiving_yards 40+ (225) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 42.0,
+      "reason": ""
+    },
+    {
+      "player": "Rashod Bateman receptions 2+ (-190) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Rashod Bateman receptions 2+ (-190) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Rashod Bateman receptions 2+ (-190) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Rashod Bateman receptions 3+ (155) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Rashod Bateman receptions 3+ (155) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Rashod Bateman receptions 3+ (155) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Rico Dowdle receiving_yards 20+ (+140) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Rico Dowdle rushing_yards 30+ (+100) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Rico Dowdle rushing_yards 30+ (+100) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Rico Dowdle rushing_yards 30+ (+100) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Rico Dowdle rushing_yards 40+ (+210) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Rico Dowdle rushing_yards 40+ (+210) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Rico Dowdle rushing_yards 40+ (+210) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 26.0,
+      "reason": ""
+    },
+    {
+      "player": "Sam LaPorta receiving_yards 30+ (-300) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 16.0,
+      "reason": ""
+    },
+    {
+      "player": "Sam LaPorta receiving_yards 30+ (-300) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 16.0,
+      "reason": ""
+    },
+    {
+      "player": "Sam LaPorta receiving_yards 40+ (-150) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 16.0,
+      "reason": ""
+    },
+    {
+      "player": "Sam LaPorta receiving_yards 40+ (-150) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 16.0,
+      "reason": ""
+    },
+    {
+      "player": "Sam LaPorta receiving_yards 50+ (110) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 16.0,
+      "reason": ""
+    },
+    {
+      "player": "Sam LaPorta receiving_yards 50+ (110) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 16.0,
+      "reason": ""
+    },
+    {
+      "player": "Sam LaPorta receptions 4+ (-200) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Sam LaPorta receptions 5+ (122) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Samaje Perine rushing_yards 20+ (-135) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 14.0,
+      "reason": ""
+    },
+    {
+      "player": "Samaje Perine rushing_yards 20+ (-135) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 14.0,
+      "reason": ""
+    },
+    {
+      "player": "Savion Williams receiving_yards 20+ (bet365 -115) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 27.0,
+      "reason": ""
+    },
+    {
+      "player": "Savion Williams receiving_yards 20+ (bet365 -115) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 27.0,
+      "reason": ""
+    },
+    {
+      "player": "Savion Williams receiving_yards 25+ (DK +127) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 27.0,
+      "reason": ""
+    },
+    {
+      "player": "Savion Williams receiving_yards 25+ (DK +127) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 27.0,
+      "reason": ""
+    },
+    {
+      "player": "Savion Williams receiving_yards 30+ (bet365 +170) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 27.0,
+      "reason": ""
+    },
+    {
+      "player": "Savion Williams receiving_yards 30+ (bet365 +170) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 27.0,
+      "reason": ""
+    },
+    {
+      "player": "Savion Williams receptions 3+ (bet365 +140) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Savion Williams receptions 3+ (bet365 +140) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Savion Williams receptions 3+ (bet365 +140) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Savion Williams receptions 4+ (bet365 +160) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Savion Williams receptions 4+ (bet365 +160) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Savion Williams receptions 4+ (bet365 +160) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Seth McGowan rushing_yards 20+ (bet365) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 77.0,
+      "reason": ""
+    },
+    {
+      "player": "Seth McGowan rushing_yards 20+ (bet365) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 77.0,
+      "reason": ""
+    },
+    {
+      "player": "Seth McGowan rushing_yards 30+ (bet365) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 77.0,
+      "reason": ""
+    },
+    {
+      "player": "Seth McGowan rushing_yards 30+ (bet365) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 77.0,
+      "reason": ""
+    },
+    {
+      "player": "Seth McGowan rushing_yards 40+ (bet365) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 77.0,
+      "reason": ""
+    },
+    {
+      "player": "Seth McGowan rushing_yards 40+ (bet365) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 77.0,
+      "reason": ""
+    },
+    {
+      "player": "Seth McGowan rushing_yards 50+ (bet365) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 77.0,
+      "reason": ""
+    },
+    {
+      "player": "Seth McGowan rushing_yards 50+ (bet365) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 77.0,
+      "reason": ""
+    },
+    {
+      "player": "Simi Fehoko receiving_yards 30+ (210) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 21.0,
+      "reason": ""
+    },
+    {
+      "player": "Simi Fehoko receiving_yards 30+ (210) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 21.0,
+      "reason": ""
+    },
+    {
+      "player": "Sione Vaki rushing_yards 20+ (210) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 28.0,
+      "reason": ""
+    },
+    {
+      "player": "Sione Vaki rushing_yards 20+ (210) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 28.0,
+      "reason": ""
+    },
+    {
+      "player": "Stefon Diggs rec 4+ (bet365) efficient",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Stefon Diggs rec 4+ (bet365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Stefon Diggs rec yds 30+ (bet365) efficient",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 83.0,
+      "reason": ""
+    },
+    {
+      "player": "Stefon Diggs rec yds 40+ (bet365) efficient",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 83.0,
+      "reason": ""
+    },
+    {
+      "player": "T.J. Hockenson receiving_yards 30+ (DK -200) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "T.J. Hockenson receiving_yards 30+ (DK -200) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "T.J. Hockenson receiving_yards 39+ (DK -112) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "T.J. Hockenson receiving_yards 39+ (DK -112) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "T.J. Hockenson receiving_yards 40+ (DK -106) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "T.J. Hockenson receiving_yards 40+ (DK -106) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "T.J. Hockenson receiving_yards 50+ (DK +166) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "T.J. Hockenson receiving_yards 50+ (DK +166) shootout",
+      "outcome": "receiving_yards",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receiving_yards row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "T.J. Hockenson receptions 4+ (DK -209) efficient_offense",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "T.J. Hockenson receptions 4+ (DK -209) pass_heavy",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "T.J. Hockenson receptions 4+ (DK -209) shootout",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "T.J. Hockenson receptions 5+ (DK +103) efficient_offense",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "T.J. Hockenson receptions 5+ (DK +103) pass_heavy",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "T.J. Hockenson receptions 5+ (DK +103) shootout",
+      "outcome": "receptions",
+      "status": "unavailable",
+      "actual": null,
+      "reason": "no receptions row for T.J. Hockenson in week 10 (inactive, bye, or name mismatch)"
+    },
+    {
+      "player": "Tee Higgins receiving_yards 60+ (-230) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 66.0,
+      "reason": ""
+    },
+    {
+      "player": "Tee Higgins receiving_yards 60+ (-230) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 66.0,
+      "reason": ""
+    },
+    {
+      "player": "Tee Higgins receiving_yards 70+ (-150) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 66.0,
+      "reason": ""
+    },
+    {
+      "player": "Tee Higgins receiving_yards 70+ (-150) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 66.0,
+      "reason": ""
+    },
+    {
+      "player": "Tee Higgins receiving_yards 80+ (+105) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 66.0,
+      "reason": ""
+    },
+    {
+      "player": "Tee Higgins receiving_yards 80+ (+105) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 66.0,
+      "reason": ""
+    },
+    {
+      "player": "Tee Higgins receptions 5+ (-325) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Tee Higgins receptions 5+ (-325) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Tee Higgins receptions 5+ (-325) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Tee Higgins receptions 6+ (-135) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Tee Higgins receptions 6+ (-135) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Tee Higgins receptions 6+ (-135) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 5.0,
+      "reason": ""
+    },
+    {
+      "player": "Tetairoa McMillan receiving_yards 60+ (-150 b365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 35.0,
+      "reason": ""
+    },
+    {
+      "player": "Tetairoa McMillan receiving_yards 60+ (-150 b365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 35.0,
+      "reason": ""
+    },
+    {
+      "player": "Tetairoa McMillan receiving_yards 70+ (+105 b365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 35.0,
+      "reason": ""
+    },
+    {
+      "player": "Tetairoa McMillan receiving_yards 70+ (+105 b365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 35.0,
+      "reason": ""
+    },
+    {
+      "player": "Tetairoa McMillan receiving_yards 80+ (+155 b365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 35.0,
+      "reason": ""
+    },
+    {
+      "player": "Tetairoa McMillan receiving_yards 80+ (+155 b365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 35.0,
+      "reason": ""
+    },
+    {
+      "player": "Tetairoa McMillan receptions 5+ (-175 b365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Tetairoa McMillan receptions 5+ (-175 b365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Tetairoa McMillan receptions 5+ (-175 b365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Tetairoa McMillan receptions 6+ (+125 b365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Tetairoa McMillan receptions 6+ (+125 b365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Tetairoa McMillan receptions 6+ (+125 b365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Tommy Tremble receiving_yards 20+ (-130 b365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 48.0,
+      "reason": ""
+    },
+    {
+      "player": "Tommy Tremble receiving_yards 30+ (+165 b365) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 48.0,
+      "reason": ""
+    },
+    {
+      "player": "Tommy Tremble receptions 3+ (-110 b365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Tommy Tremble receptions 3+ (-110 b365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Tommy Tremble receptions 3+ (-110 b365) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Tony Pollard receiving_yards 20+ (165) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 66.0,
+      "reason": ""
+    },
+    {
+      "player": "Tony Pollard receptions 2+ (-220) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Tony Pollard receptions 2+ (-220) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Tony Pollard receptions 3+ (135) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Tony Pollard receptions 3+ (135) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 8.0,
+      "reason": ""
+    },
+    {
+      "player": "Tre Tucker receiving_yards 30+ (-115) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Tre Tucker receiving_yards 40+ (140) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Tre Tucker receiving_yards 50+ (225) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 9.0,
+      "reason": ""
+    },
+    {
+      "player": "Tre Tucker receptions 3+ (115) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tre Tucker receptions 4+ (135) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Trevor Lawrence passing_yards 200+ (-325) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 352.0,
+      "reason": ""
+    },
+    {
+      "player": "Trevor Lawrence passing_yards 200+ (-325) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 352.0,
+      "reason": ""
+    },
+    {
+      "player": "Trevor Lawrence passing_yards 200+ (-325) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 352.0,
+      "reason": ""
+    },
+    {
+      "player": "Trevor Lawrence passing_yards 225+ (-165) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 352.0,
+      "reason": ""
+    },
+    {
+      "player": "Trevor Lawrence passing_yards 225+ (-165) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 352.0,
+      "reason": ""
+    },
+    {
+      "player": "Trevor Lawrence passing_yards 225+ (-165) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 352.0,
+      "reason": ""
+    },
+    {
+      "player": "Trevor Lawrence passing_yards 250+ (120) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 352.0,
+      "reason": ""
+    },
+    {
+      "player": "Trevor Lawrence passing_yards 250+ (120) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 352.0,
+      "reason": ""
+    },
+    {
+      "player": "Trevor Lawrence passing_yards 250+ (120) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 352.0,
+      "reason": ""
+    },
+    {
+      "player": "Trevor Lawrence passing_yards 275+ (225) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 352.0,
+      "reason": ""
+    },
+    {
+      "player": "Trevor Lawrence passing_yards 275+ (225) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 352.0,
+      "reason": ""
+    },
+    {
+      "player": "Trevor Lawrence passing_yards 275+ (225) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 352.0,
+      "reason": ""
+    },
+    {
+      "player": "Trey McBride receiving_yards 50+ (-230) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 37.0,
+      "reason": ""
+    },
+    {
+      "player": "Trey McBride receiving_yards 60+ (-130) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 37.0,
+      "reason": ""
+    },
+    {
+      "player": "Trey McBride receiving_yards 70+ (130) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 37.0,
+      "reason": ""
+    },
+    {
+      "player": "Trey McBride receiving_yards 80+ (210) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 37.0,
+      "reason": ""
+    },
+    {
+      "player": "Treylon Burks rec yds 40+ (bet365)",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 27.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receiving_yards 39+ (DK -111) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receiving_yards 39+ (DK -111) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receiving_yards 40+ (DK -104) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receiving_yards 40+ (DK -104) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receiving_yards 40+ (bet365 -115) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receiving_yards 40+ (bet365 -115) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receiving_yards 50+ (DK +166) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receiving_yards 50+ (DK +166) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receiving_yards 50+ (bet365 +150) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receiving_yards 50+ (bet365 +150) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 19.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receptions 4+ (bet365 -400) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receptions 4+ (bet365 -400) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receptions 4+ (bet365 -400) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receptions 5+ (DK +125) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receptions 5+ (DK +125) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receptions 5+ (DK +125) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receptions 5+ (bet365 +135) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receptions 5+ (bet365 +135) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receptions 5+ (bet365 +135) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receptions 6+ (bet365 +140) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receptions 6+ (bet365 +140) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tucker Kraft receptions 6+ (bet365 +140) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Allgeier receiving_yards 20+ (180) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Allgeier receptions 3+ (-130) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Allgeier receptions 3+ (-130) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Allgeier receptions 4+ (165) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Allgeier receptions 4+ (165) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Allgeier rushing_yards 40+ (-185) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 14.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Allgeier rushing_yards 40+ (-185) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 14.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Allgeier rushing_yards 50+ (105) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 14.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Allgeier rushing_yards 50+ (105) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 14.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Allgeier rushing_yards 60+ (165) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 14.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Allgeier rushing_yards 60+ (165) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 14.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Shough passing_yards 225+ (-280 b365) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 187.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Shough passing_yards 225+ (-280 b365) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 187.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Shough passing_yards 225+ (-280 b365) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 187.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Shough passing_yards 250+ (-140 b365) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 187.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Shough passing_yards 250+ (-140 b365) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 187.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Shough passing_yards 250+ (-140 b365) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 187.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Shough passing_yards 275+ (+135 b365) efficient_offense",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 187.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Shough passing_yards 275+ (+135 b365) pass_heavy",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 187.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Shough passing_yards 275+ (+135 b365) shootout",
+      "outcome": "passing_yards",
+      "status": "settled",
+      "actual": 187.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Warren receiving_yards 30+ (bet365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Warren receiving_yards 40+ (bet365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Warren receiving_yards 50+ (bet365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Warren receiving_yards 60+ (bet365) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 1.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Warren receptions 4+ (bet365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Warren receptions 4+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Warren receptions 5+ (bet365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Warren receptions 5+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Warren receptions 6+ (bet365) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Tyler Warren receptions 6+ (bet365) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 2.0,
+      "reason": ""
+    },
+    {
+      "player": "Wan'Dale Robinson receiving_yards 30+ (-150) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 10.0,
+      "reason": ""
+    },
+    {
+      "player": "Wan'Dale Robinson receiving_yards 40+ (135) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 10.0,
+      "reason": ""
+    },
+    {
+      "player": "Wan'Dale Robinson receiving_yards 50+ (225) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 10.0,
+      "reason": ""
+    },
+    {
+      "player": "Wan'Dale Robinson receptions 4+ (-155) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Wan'Dale Robinson receptions 5+ (135) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Wan'Dale Robinson receptions 6+ (275) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 3.0,
+      "reason": ""
+    },
+    {
+      "player": "Xavier Hutchinson receiving_yards 30+ (115) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 58.0,
+      "reason": ""
+    },
+    {
+      "player": "Xavier Hutchinson receiving_yards 30+ (115) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 58.0,
+      "reason": ""
+    },
+    {
+      "player": "Xavier Hutchinson receiving_yards 40+ (210) efficient_offense",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 58.0,
+      "reason": ""
+    },
+    {
+      "player": "Xavier Hutchinson receiving_yards 40+ (210) shootout",
+      "outcome": "receiving_yards",
+      "status": "settled",
+      "actual": 58.0,
+      "reason": ""
+    },
+    {
+      "player": "Xavier Hutchinson receptions 3+ (-125) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Xavier Hutchinson receptions 3+ (-125) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Xavier Hutchinson receptions 3+ (-125) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Xavier Hutchinson receptions 4+ (200) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Xavier Hutchinson receptions 4+ (200) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Xavier Hutchinson receptions 4+ (200) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 4.0,
+      "reason": ""
+    },
+    {
+      "player": "Zach Charbonnet receptions 2+ (-125) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Zach Charbonnet receptions 2+ (-125) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Zach Charbonnet receptions 2+ (-125) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 0.0,
+      "reason": ""
+    },
+    {
+      "player": "Zach Charbonnet rushing_yards 40+ (-325) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Zach Charbonnet rushing_yards 40+ (-325) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Zach Charbonnet rushing_yards 40+ (-325) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Zach Charbonnet rushing_yards 50+ (-165) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Zach Charbonnet rushing_yards 50+ (-165) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Zach Charbonnet rushing_yards 50+ (-165) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Zach Charbonnet rushing_yards 60+ (-120) blowout_loss",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Zach Charbonnet rushing_yards 60+ (-120) efficient_offense",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Zach Charbonnet rushing_yards 60+ (-120) pass_heavy",
+      "outcome": "rushing_yards",
+      "status": "settled",
+      "actual": 94.0,
+      "reason": ""
+    },
+    {
+      "player": "Zay Flowers receptions 5+ (-145) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Zay Flowers receptions 5+ (-145) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Zay Flowers receptions 5+ (-145) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Zay Flowers receptions 6+ (140) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Zay Flowers receptions 6+ (140) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Zay Flowers receptions 6+ (140) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Zay Flowers receptions 7+ (275) efficient_offense",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Zay Flowers receptions 7+ (275) pass_heavy",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    },
+    {
+      "player": "Zay Flowers receptions 7+ (275) shootout",
+      "outcome": "receptions",
+      "status": "settled",
+      "actual": 6.0,
+      "reason": ""
+    }
+  ]
+}
