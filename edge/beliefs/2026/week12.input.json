@@ -1,19 +1,19 @@
 {
  "season": 2026,
  "week": 12,
- "generated_at": "2026-11-26T14:24:04Z",
+ "generated_at": "2026-11-26T14:26:21Z",
  "generated_by": "edge/model/analysis/beliefpack.py pack",
  "cache": {
   "games.csv": {
-   "bytes": 2190573,
-   "fetched_at": "2026-11-18T15:04:10Z",
-   "sha256": "56044abfb280cb467df563dd8f26659245638b65b2578c375079aa6e73acb4a7",
+   "bytes": 2192547,
+   "fetched_at": "2026-11-26T14:25:55Z",
+   "sha256": "140370297733d144fe165d3c2e1ff73247f2c16f3adc31eb36817e738415134c",
    "url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
   },
   "play_by_play_2026.csv.gz": {
-   "bytes": 10547358,
-   "fetched_at": "2026-11-18T15:04:12Z",
-   "sha256": "696bf931fc5097ae1cab274cb08421fdb448a431b5e5f75cdfa12c6e9f480015",
+   "bytes": 11514061,
+   "fetched_at": "2026-11-26T14:25:56Z",
+   "sha256": "a80ca5d6303eeca592dca62418906385cf01068c835bd4903c19cd1bc2a0e783",
    "url": "https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_2026.csv.gz"
   }
  },
@@ -62,11 +62,11 @@
    "away": "GB",
    "home": "LA",
    "kickoff": "2026-11-25T20:00:00-05:00",
-   "total_line": 45.5,
-   "spread_line": 3.5,
+   "total_line": 43.5,
+   "spread_line": 2.5,
    "div_game": false,
    "roof": "dome",
-   "surface": "matrixturf",
+   "surface": null,
    "teams": {
     "GB": {
      "coach": "Matt LaFleur",
@@ -76,8 +76,8 @@
      "dc": "Jonathan Gannon",
      "rest_days": 10,
      "prior_form": {
-      "success_rate_prior": 0.4051,
-      "offense_prior": 4.1575,
+      "success_rate_prior": 0.409,
+      "offense_prior": 4.3844,
       "prior_games": 10
      }
     },
@@ -89,8 +89,8 @@
      "dc": "Chris Shula",
      "rest_days": 10,
      "prior_form": {
-      "success_rate_prior": 0.482,
-      "offense_prior": -0.8914,
+      "success_rate_prior": 0.5031,
+      "offense_prior": 1.0428,
       "prior_games": 10
      }
     }
@@ -101,8 +101,8 @@
    "away": "CHI",
    "home": "DET",
    "kickoff": "2026-11-26T13:00:00-05:00",
-   "total_line": 54.5,
-   "spread_line": -2.5,
+   "total_line": 56.5,
+   "spread_line": -1.5,
    "div_game": true,
    "roof": "dome",
    "surface": "fieldturf",
@@ -115,9 +115,9 @@
      "dc": "Dennis Allen",
      "rest_days": 4,
      "prior_form": {
-      "success_rate_prior": 0.4667,
-      "offense_prior": 1.2544,
-      "prior_games": 9,
+      "success_rate_prior": 0.457,
+      "offense_prior": 0.3574,
+      "prior_games": 10,
       "raoe_prior": -0.1125
      }
     },
@@ -129,10 +129,10 @@
      "dc": "Kelvin Sheppard",
      "rest_days": 4,
      "prior_form": {
-      "success_rate_prior": 0.4882,
-      "offense_prior": -2.226,
-      "prior_games": 9,
-      "raoe_prior": 0.4753
+      "success_rate_prior": 0.5127,
+      "offense_prior": 0.3473,
+      "prior_games": 10,
+      "raoe_prior": 0.5097
      }
     }
    }
@@ -142,7 +142,7 @@
    "away": "PHI",
    "home": "DAL",
    "kickoff": "2026-11-26T16:30:00-05:00",
-   "total_line": 47.5,
+   "total_line": 49.5,
    "spread_line": 8.5,
    "div_game": true,
    "roof": null,
@@ -156,10 +156,10 @@
      "dc": "Vic Fangio",
      "rest_days": 4,
      "prior_form": {
-      "success_rate_prior": 0.3582,
-      "offense_prior": -1.9622,
-      "prior_games": 9,
-      "raoe_prior": 0.5251
+      "success_rate_prior": 0.3572,
+      "offense_prior": -2.5495,
+      "prior_games": 10,
+      "raoe_prior": 0.6708
      }
     },
     "DAL": {
@@ -170,10 +170,10 @@
      "dc": "Christian Parker",
      "rest_days": 4,
      "prior_form": {
-      "success_rate_prior": 0.474,
-      "offense_prior": 0.6203,
-      "prior_games": 10,
-      "raoe_prior": 0.2536
+      "success_rate_prior": 0.5015,
+      "offense_prior": 2.7461,
+      "prior_games": 11,
+      "raoe_prior": 0.1757
      }
     }
    }
@@ -183,7 +183,7 @@
    "away": "KC",
    "home": "BUF",
    "kickoff": "2026-11-26T20:20:00-05:00",
-   "total_line": 50.5,
+   "total_line": 45.5,
    "spread_line": 3.0,
    "div_game": false,
    "roof": "outdoors",
@@ -197,10 +197,10 @@
      "dc": "Steve Spagnuolo",
      "rest_days": 4,
      "prior_form": {
-      "success_rate_prior": 0.4799,
-      "offense_prior": 5.3217,
-      "prior_games": 9,
-      "raoe_prior": 1.7317
+      "success_rate_prior": 0.4916,
+      "offense_prior": 5.7846,
+      "prior_games": 10,
+      "raoe_prior": 1.6181
      }
     },
     "BUF": {
@@ -211,10 +211,10 @@
      "dc": "Jim Leonhard",
      "rest_days": 4,
      "prior_form": {
-      "success_rate_prior": 0.4749,
-      "offense_prior": -2.9225,
-      "prior_games": 9,
-      "raoe_prior": 0.9805
+      "success_rate_prior": 0.481,
+      "offense_prior": 0.1355,
+      "prior_games": 10,
+      "raoe_prior": 0.9192
      }
     }
    }
@@ -224,8 +224,8 @@
    "away": "DEN",
    "home": "PIT",
    "kickoff": "2026-11-27T15:00:00-05:00",
-   "total_line": 40.5,
-   "spread_line": -1.5,
+   "total_line": 36.5,
+   "spread_line": -4.5,
    "div_game": false,
    "roof": "outdoors",
    "surface": "grass",
@@ -238,10 +238,10 @@
      "dc": "Vance Joseph",
      "rest_days": 5,
      "prior_form": {
-      "success_rate_prior": 0.3908,
-      "offense_prior": -0.2271,
-      "prior_games": 9,
-      "raoe_prior": -0.895
+      "success_rate_prior": 0.4002,
+      "offense_prior": 0.6015,
+      "prior_games": 10,
+      "raoe_prior": -0.7411
      }
     },
     "PIT": {
@@ -252,9 +252,9 @@
      "dc": "Patrick Graham",
      "rest_days": 5,
      "prior_form": {
-      "success_rate_prior": 0.4217,
-      "offense_prior": 0.7682,
-      "prior_games": 9,
+      "success_rate_prior": 0.4199,
+      "offense_prior": 2.0664,
+      "prior_games": 10,
       "raoe_prior": 2.3112
      }
     }
@@ -265,7 +265,7 @@
    "away": "NO",
    "home": "CIN",
    "kickoff": "2026-11-29T13:00:00-05:00",
-   "total_line": 52.5,
+   "total_line": 49.5,
    "spread_line": 10.0,
    "div_game": false,
    "roof": "outdoors",
@@ -279,9 +279,9 @@
      "dc": "Brandon Staley",
      "rest_days": 7,
      "prior_form": {
-      "success_rate_prior": 0.4047,
-      "offense_prior": 0.1745,
-      "prior_games": 9
+      "success_rate_prior": 0.4182,
+      "offense_prior": 1.8845,
+      "prior_games": 10
      }
     },
     "CIN": {
@@ -292,9 +292,9 @@
      "dc": "Al Golden",
      "rest_days": 6,
      "prior_form": {
-      "success_rate_prior": 0.506,
-      "offense_prior": 9.3214,
-      "prior_games": 9,
+      "success_rate_prior": 0.5104,
+      "offense_prior": 11.3285,
+      "prior_games": 10,
       "raoe_prior": -0.3187
      }
     }
@@ -305,8 +305,8 @@
    "away": "BAL",
    "home": "HOU",
    "kickoff": "2026-11-29T13:00:00-05:00",
-   "total_line": 44.5,
-   "spread_line": 6.0,
+   "total_line": 47.5,
+   "spread_line": 6.5,
    "div_game": false,
    "roof": null,
    "surface": "astroturf",
@@ -319,9 +319,9 @@
      "dc": "Anthony Weaver",
      "rest_days": 7,
      "prior_form": {
-      "success_rate_prior": 0.438,
-      "offense_prior": -5.0362,
-      "prior_games": 10,
+      "success_rate_prior": 0.4518,
+      "offense_prior": -3.3176,
+      "prior_games": 11,
       "raoe_prior": 0.0113
      }
     },
@@ -333,10 +333,10 @@
      "dc": "Matt Burke",
      "rest_days": 10,
      "prior_form": {
-      "success_rate_prior": 0.4207,
-      "offense_prior": 0.5043,
-      "prior_games": 9,
-      "raoe_prior": -0.3635
+      "success_rate_prior": 0.4282,
+      "offense_prior": 1.7905,
+      "prior_games": 10,
+      "raoe_prior": -0.3605
      }
     }
    }
@@ -346,8 +346,8 @@
    "away": "NYG",
    "home": "IND",
    "kickoff": "2026-11-29T13:00:00-05:00",
-   "total_line": 43.5,
-   "spread_line": -3.5,
+   "total_line": 41.5,
+   "spread_line": -6.0,
    "div_game": false,
    "roof": null,
    "surface": "fieldturf",
@@ -360,9 +360,9 @@
      "dc": "Dennard Wilson",
      "rest_days": 7,
      "prior_form": {
-      "success_rate_prior": 0.4106,
-      "offense_prior": -4.7262,
-      "prior_games": 9,
+      "success_rate_prior": 0.4128,
+      "offense_prior": -2.9465,
+      "prior_games": 10,
       "raoe_prior": 0.1217
      }
     },
@@ -374,9 +374,9 @@
      "dc": "Lou Anarumo",
      "rest_days": 10,
      "prior_form": {
-      "success_rate_prior": 0.4235,
-      "offense_prior": -4.6037,
-      "prior_games": 10,
+      "success_rate_prior": 0.4089,
+      "offense_prior": -2.9589,
+      "prior_games": 11,
       "raoe_prior": 0.2176
      }
     }
@@ -387,7 +387,7 @@
    "away": "TEN",
    "home": "JAX",
    "kickoff": "2026-11-29T13:00:00-05:00",
-   "total_line": 47.5,
+   "total_line": 49.5,
    "spread_line": 14.5,
    "div_game": true,
    "roof": "outdoors",
@@ -401,10 +401,10 @@
      "dc": "Gus Bradley",
      "rest_days": 7,
      "prior_form": {
-      "success_rate_prior": 0.4154,
-      "offense_prior": -2.9312,
-      "prior_games": 9,
-      "raoe_prior": 0.4466
+      "success_rate_prior": 0.4474,
+      "offense_prior": -4.1478,
+      "prior_games": 10,
+      "raoe_prior": 0.5809
      }
     },
     "JAX": {
@@ -415,9 +415,9 @@
      "dc": "Anthony Campanile",
      "rest_days": 7,
      "prior_form": {
-      "success_rate_prior": 0.4761,
-      "offense_prior": -3.3359,
-      "prior_games": 9,
+      "success_rate_prior": 0.4793,
+      "offense_prior": -1.2246,
+      "prior_games": 10,
       "raoe_prior": -0.1368
      }
     }
@@ -428,8 +428,8 @@
    "away": "NYJ",
    "home": "MIA",
    "kickoff": "2026-11-29T13:00:00-05:00",
-   "total_line": 41.5,
-   "spread_line": -3.0,
+   "total_line": 40.5,
+   "spread_line": -4.5,
    "div_game": true,
    "roof": "outdoors",
    "surface": "grass",
@@ -442,10 +442,10 @@
      "dc": "Brian Duker",
      "rest_days": 7,
      "prior_form": {
-      "success_rate_prior": 0.4507,
-      "offense_prior": -3.0563,
-      "prior_games": 10,
-      "raoe_prior": 0.6561
+      "success_rate_prior": 0.4723,
+      "offense_prior": -3.32,
+      "prior_games": 11,
+      "raoe_prior": 0.6595
      }
     },
     "MIA": {
@@ -456,9 +456,9 @@
      "dc": "Sean Duggan",
      "rest_days": 7,
      "prior_form": {
-      "success_rate_prior": 0.3778,
-      "offense_prior": -9.8392,
-      "prior_games": 9,
+      "success_rate_prior": 0.3712,
+      "offense_prior": -9.9031,
+      "prior_games": 10,
       "raoe_prior": -0.3589
      }
     }
@@ -469,7 +469,7 @@
    "away": "ATL",
    "home": "MIN",
    "kickoff": "2026-11-29T13:00:00-05:00",
-   "total_line": 42.5,
+   "total_line": 41.5,
    "spread_line": 7.0,
    "div_game": false,
    "roof": "dome",
@@ -483,8 +483,8 @@
      "dc": "Jeff Ulbrich",
      "rest_days": 14,
      "prior_form": {
-      "success_rate_prior": 0.4205,
-      "offense_prior": -6.6995,
+      "success_rate_prior": 0.4292,
+      "offense_prior": -5.1993,
       "prior_games": 10,
       "raoe_prior": 0.9151
      }
@@ -497,9 +497,9 @@
      "dc": "Brian Flores",
      "rest_days": 7,
      "prior_form": {
-      "success_rate_prior": 0.3715,
-      "offense_prior": -0.5602,
-      "prior_games": 9,
+      "success_rate_prior": 0.4005,
+      "offense_prior": 0.7018,
+      "prior_games": 10,
       "raoe_prior": -0.4034
      }
     }
@@ -510,8 +510,8 @@
    "away": "NE",
    "home": "LAC",
    "kickoff": "2026-11-29T16:05:00-05:00",
-   "total_line": 40.5,
-   "spread_line": 4.5,
+   "total_line": 35.5,
+   "spread_line": -1.5,
    "div_game": false,
    "roof": "dome",
    "surface": "matrixturf",
@@ -524,8 +524,8 @@
      "dc": "Zak Kuhr",
      "rest_days": 14,
      "prior_form": {
-      "success_rate_prior": 0.4424,
-      "offense_prior": -0.8451,
+      "success_rate_prior": 0.4512,
+      "offense_prior": 0.2764,
       "prior_games": 10,
       "raoe_prior": 0.019
      }
@@ -538,9 +538,9 @@
      "dc": "Chris O'Leary",
      "rest_days": 7,
      "prior_form": {
-      "success_rate_prior": 0.3505,
-      "offense_prior": -8.7272,
-      "prior_games": 9,
+      "success_rate_prior": 0.3931,
+      "offense_prior": -8.9166,
+      "prior_games": 10,
       "raoe_prior": 0.1748
      }
     }
@@ -565,9 +565,9 @@
      "dc": "Daronte Jones",
      "rest_days": 6,
      "prior_form": {
-      "success_rate_prior": 0.4228,
-      "offense_prior": 0.364,
-      "prior_games": 9
+      "success_rate_prior": 0.4283,
+      "offense_prior": 0.5411,
+      "prior_games": 10
      }
     },
     "ARI": {
@@ -578,9 +578,9 @@
      "dc": "Nick Rallis",
      "rest_days": 7,
      "prior_form": {
-      "success_rate_prior": 0.419,
-      "offense_prior": 0.63,
-      "prior_games": 10,
+      "success_rate_prior": 0.4171,
+      "offense_prior": 0.3032,
+      "prior_games": 11,
       "raoe_prior": -0.0858
      }
     }
@@ -591,8 +591,8 @@
    "away": "SEA",
    "home": "SF",
    "kickoff": "2026-11-29T16:25:00-05:00",
-   "total_line": 46.5,
-   "spread_line": 3.0,
+   "total_line": 44.5,
+   "spread_line": 2.5,
    "div_game": true,
    "roof": "outdoors",
    "surface": "grass",
@@ -605,8 +605,8 @@
      "dc": "Aden Durde",
      "rest_days": 14,
      "prior_form": {
-      "success_rate_prior": 0.4183,
-      "offense_prior": -6.6528,
+      "success_rate_prior": 0.4376,
+      "offense_prior": -5.0847,
       "prior_games": 10,
       "raoe_prior": 0.2332
      }
@@ -619,9 +619,9 @@
      "dc": "Raheem Morris",
      "rest_days": 7,
      "prior_form": {
-      "success_rate_prior": 0.5266,
-      "offense_prior": 1.6107,
-      "prior_games": 9,
+      "success_rate_prior": 0.5376,
+      "offense_prior": 4.0082,
+      "prior_games": 10,
       "raoe_prior": 0.0732
      }
     }
@@ -633,7 +633,7 @@
    "home": "CLE",
    "kickoff": "2026-11-29T20:20:00-05:00",
    "total_line": 40.5,
-   "spread_line": 3.5,
+   "spread_line": 4.5,
    "div_game": false,
    "roof": "outdoors",
    "surface": "grass",
@@ -646,9 +646,9 @@
      "dc": "Rob Leonard",
      "rest_days": 7,
      "prior_form": {
-      "success_rate_prior": 0.4143,
-      "offense_prior": -1.5006,
-      "prior_games": 10,
+      "success_rate_prior": 0.4232,
+      "offense_prior": -1.6748,
+      "prior_games": 11,
       "raoe_prior": -0.0812
      }
     },
@@ -660,8 +660,8 @@
      "dc": "Mike Rutenberg",
      "rest_days": 14,
      "prior_form": {
-      "success_rate_prior": 0.4151,
-      "offense_prior": 0.1197,
+      "success_rate_prior": 0.4213,
+      "offense_prior": 0.8522,
       "prior_games": 10,
       "raoe_prior": 0.3533
      }
@@ -674,7 +674,7 @@
    "home": "TB",
    "kickoff": "2026-11-30T20:15:00-05:00",
    "total_line": 43.5,
-   "spread_line": 2.5,
+   "spread_line": 3.0,
    "div_game": true,
    "roof": "outdoors",
    "surface": "grass",
@@ -687,10 +687,10 @@
      "dc": "Ejiro Evero",
      "rest_days": 8,
      "prior_form": {
-      "success_rate_prior": 0.4172,
-      "offense_prior": 2.2553,
-      "prior_games": 9,
-      "raoe_prior": 0.7843
+      "success_rate_prior": 0.4343,
+      "offense_prior": 2.2356,
+      "prior_games": 10,
+      "raoe_prior": 0.7132
      }
     },
     "TB": {
@@ -701,10 +701,10 @@
      "dc": "Todd Bowles",
      "rest_days": 8,
      "prior_form": {
-      "success_rate_prior": 0.4092,
-      "offense_prior": -9.9682,
-      "prior_games": 9,
-      "raoe_prior": 0.6125
+      "success_rate_prior": 0.421,
+      "offense_prior": -9.6114,
+      "prior_games": 10,
+      "raoe_prior": 0.6037
      }
     }
    }

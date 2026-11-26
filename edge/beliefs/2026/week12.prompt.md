@@ -167,7 +167,7 @@ So: abstain freely, commit where you have a reason, and make the reason checkabl
 
 ## THE PACK — the facts your forecast is bound to
 
-pack_sha256: 3cc7ab2ea3c62d0c9f5d8f9e5c672ab2aa1d467ce8fe4040d7a7cd009fc78b1d
+pack_sha256: 664ec5ce2a118a442a6ffaafc3a8a3973d73e670ec0174a79adac9fb612c3278
 Echo this sha back in your output. It binds your forecast to exactly these facts.
 
 ## BASE — how often each scenario happens to anyone
@@ -185,22 +185,22 @@ spread_line is the home team's expected margin; positive means the home side is 
 
 | game | away | home | kickoff | total | spread | venue |
 |---|---|---|---|---|---|---|
-| 2026_12_GB_LA | GB | LA | 2026-11-25T20:00:00-05:00 | 45.5 | 3.5 | dome, matrixturf |
-| 2026_12_CHI_DET | CHI | DET | 2026-11-26T13:00:00-05:00 | 54.5 | -2.5 | dome, fieldturf, divisional |
-| 2026_12_PHI_DAL | PHI | DAL | 2026-11-26T16:30:00-05:00 | 47.5 | 8.5 | matrixturf, divisional |
-| 2026_12_KC_BUF | KC | BUF | 2026-11-26T20:20:00-05:00 | 50.5 | 3.0 | outdoors, a_turf |
-| 2026_12_DEN_PIT | DEN | PIT | 2026-11-27T15:00:00-05:00 | 40.5 | -1.5 | outdoors, grass |
-| 2026_12_NO_CIN | NO | CIN | 2026-11-29T13:00:00-05:00 | 52.5 | 10.0 | outdoors, fieldturf |
-| 2026_12_BAL_HOU | BAL | HOU | 2026-11-29T13:00:00-05:00 | 44.5 | 6.0 | astroturf |
-| 2026_12_NYG_IND | NYG | IND | 2026-11-29T13:00:00-05:00 | 43.5 | -3.5 | fieldturf |
-| 2026_12_TEN_JAX | TEN | JAX | 2026-11-29T13:00:00-05:00 | 47.5 | 14.5 | outdoors, grass, divisional |
-| 2026_12_NYJ_MIA | NYJ | MIA | 2026-11-29T13:00:00-05:00 | 41.5 | -3.0 | outdoors, grass, divisional |
-| 2026_12_ATL_MIN | ATL | MIN | 2026-11-29T13:00:00-05:00 | 42.5 | 7.0 | dome, sportturf |
-| 2026_12_NE_LAC | NE | LAC | 2026-11-29T16:05:00-05:00 | 40.5 | 4.5 | dome, matrixturf |
+| 2026_12_GB_LA | GB | LA | 2026-11-25T20:00:00-05:00 | 43.5 | 2.5 | dome |
+| 2026_12_CHI_DET | CHI | DET | 2026-11-26T13:00:00-05:00 | 56.5 | -1.5 | dome, fieldturf, divisional |
+| 2026_12_PHI_DAL | PHI | DAL | 2026-11-26T16:30:00-05:00 | 49.5 | 8.5 | matrixturf, divisional |
+| 2026_12_KC_BUF | KC | BUF | 2026-11-26T20:20:00-05:00 | 45.5 | 3.0 | outdoors, a_turf |
+| 2026_12_DEN_PIT | DEN | PIT | 2026-11-27T15:00:00-05:00 | 36.5 | -4.5 | outdoors, grass |
+| 2026_12_NO_CIN | NO | CIN | 2026-11-29T13:00:00-05:00 | 49.5 | 10.0 | outdoors, fieldturf |
+| 2026_12_BAL_HOU | BAL | HOU | 2026-11-29T13:00:00-05:00 | 47.5 | 6.5 | astroturf |
+| 2026_12_NYG_IND | NYG | IND | 2026-11-29T13:00:00-05:00 | 41.5 | -6.0 | fieldturf |
+| 2026_12_TEN_JAX | TEN | JAX | 2026-11-29T13:00:00-05:00 | 49.5 | 14.5 | outdoors, grass, divisional |
+| 2026_12_NYJ_MIA | NYJ | MIA | 2026-11-29T13:00:00-05:00 | 40.5 | -4.5 | outdoors, grass, divisional |
+| 2026_12_ATL_MIN | ATL | MIN | 2026-11-29T13:00:00-05:00 | 41.5 | 7.0 | dome, sportturf |
+| 2026_12_NE_LAC | NE | LAC | 2026-11-29T16:05:00-05:00 | 35.5 | -1.5 | dome, matrixturf |
 | 2026_12_WAS_ARI | WAS | ARI | 2026-11-29T16:25:00-05:00 | 41.5 | -6.5 | grass |
-| 2026_12_SEA_SF | SEA | SF | 2026-11-29T16:25:00-05:00 | 46.5 | 3.0 | outdoors, grass, divisional |
-| 2026_12_LV_CLE | LV | CLE | 2026-11-29T20:20:00-05:00 | 40.5 | 3.5 | outdoors, grass |
-| 2026_12_CAR_TB | CAR | TB | 2026-11-30T20:15:00-05:00 | 43.5 | 2.5 | outdoors, grass, divisional |
+| 2026_12_SEA_SF | SEA | SF | 2026-11-29T16:25:00-05:00 | 44.5 | 2.5 | outdoors, grass, divisional |
+| 2026_12_LV_CLE | LV | CLE | 2026-11-29T20:20:00-05:00 | 40.5 | 4.5 | outdoors, grass |
+| 2026_12_CAR_TB | CAR | TB | 2026-11-30T20:15:00-05:00 | 43.5 | 3.0 | outdoors, grass, divisional |
 
 ## STAFF — who is coaching, who calls the offence, and who is new
 
@@ -247,35 +247,35 @@ Coordinator and play-caller names are supplied context; they are **not** auto-ch
 
 | team | success rate | offence PROE | RAOE (rush yds/att over expected) | games |
 |---|---|---|---|---|
-| GB | 0.4051 | +4.1575 | — | 10 |
-| LA | 0.4820 | -0.8914 | — | 10 |
-| CHI | 0.4667 | +1.2544 | -0.1125 | 9 |
-| DET | 0.4882 | -2.2260 | +0.4753 | 9 |
-| PHI | 0.3582 | -1.9622 | +0.5251 | 9 |
-| DAL | 0.4740 | +0.6203 | +0.2536 | 10 |
-| KC | 0.4799 | +5.3217 | +1.7317 | 9 |
-| BUF | 0.4749 | -2.9225 | +0.9805 | 9 |
-| DEN | 0.3908 | -0.2271 | -0.8950 | 9 |
-| PIT | 0.4217 | +0.7682 | +2.3112 | 9 |
-| NO | 0.4047 | +0.1745 | — | 9 |
-| CIN | 0.5060 | +9.3214 | -0.3187 | 9 |
-| BAL | 0.4380 | -5.0362 | +0.0113 | 10 |
-| HOU | 0.4207 | +0.5043 | -0.3635 | 9 |
-| NYG | 0.4106 | -4.7262 | +0.1217 | 9 |
-| IND | 0.4235 | -4.6037 | +0.2176 | 10 |
-| TEN | 0.4154 | -2.9312 | +0.4466 | 9 |
-| JAX | 0.4761 | -3.3359 | -0.1368 | 9 |
-| NYJ | 0.4507 | -3.0563 | +0.6561 | 10 |
-| MIA | 0.3778 | -9.8392 | -0.3589 | 9 |
-| ATL | 0.4205 | -6.6995 | +0.9151 | 10 |
-| MIN | 0.3715 | -0.5602 | -0.4034 | 9 |
-| NE | 0.4424 | -0.8451 | +0.0190 | 10 |
-| LAC | 0.3505 | -8.7272 | +0.1748 | 9 |
-| WAS | 0.4228 | +0.3640 | — | 9 |
-| ARI | 0.4190 | +0.6300 | -0.0858 | 10 |
-| SEA | 0.4183 | -6.6528 | +0.2332 | 10 |
-| SF | 0.5266 | +1.6107 | +0.0732 | 9 |
-| LV | 0.4143 | -1.5006 | -0.0812 | 10 |
-| CLE | 0.4151 | +0.1197 | +0.3533 | 10 |
-| CAR | 0.4172 | +2.2553 | +0.7843 | 9 |
-| TB | 0.4092 | -9.9682 | +0.6125 | 9 |
+| GB | 0.4090 | +4.3844 | — | 10 |
+| LA | 0.5031 | +1.0428 | — | 10 |
+| CHI | 0.4570 | +0.3574 | -0.1125 | 10 |
+| DET | 0.5127 | +0.3473 | +0.5097 | 10 |
+| PHI | 0.3572 | -2.5495 | +0.6708 | 10 |
+| DAL | 0.5015 | +2.7461 | +0.1757 | 11 |
+| KC | 0.4916 | +5.7846 | +1.6181 | 10 |
+| BUF | 0.4810 | +0.1355 | +0.9192 | 10 |
+| DEN | 0.4002 | +0.6015 | -0.7411 | 10 |
+| PIT | 0.4199 | +2.0664 | +2.3112 | 10 |
+| NO | 0.4182 | +1.8845 | — | 10 |
+| CIN | 0.5104 | +11.3285 | -0.3187 | 10 |
+| BAL | 0.4518 | -3.3176 | +0.0113 | 11 |
+| HOU | 0.4282 | +1.7905 | -0.3605 | 10 |
+| NYG | 0.4128 | -2.9465 | +0.1217 | 10 |
+| IND | 0.4089 | -2.9589 | +0.2176 | 11 |
+| TEN | 0.4474 | -4.1478 | +0.5809 | 10 |
+| JAX | 0.4793 | -1.2246 | -0.1368 | 10 |
+| NYJ | 0.4723 | -3.3200 | +0.6595 | 11 |
+| MIA | 0.3712 | -9.9031 | -0.3589 | 10 |
+| ATL | 0.4292 | -5.1993 | +0.9151 | 10 |
+| MIN | 0.4005 | +0.7018 | -0.4034 | 10 |
+| NE | 0.4512 | +0.2764 | +0.0190 | 10 |
+| LAC | 0.3931 | -8.9166 | +0.1748 | 10 |
+| WAS | 0.4283 | +0.5411 | — | 10 |
+| ARI | 0.4171 | +0.3032 | -0.0858 | 11 |
+| SEA | 0.4376 | -5.0847 | +0.2332 | 10 |
+| SF | 0.5376 | +4.0082 | +0.0732 | 10 |
+| LV | 0.4232 | -1.6748 | -0.0812 | 11 |
+| CLE | 0.4213 | +0.8522 | +0.3533 | 10 |
+| CAR | 0.4343 | +2.2356 | +0.7132 | 10 |
+| TB | 0.4210 | -9.6114 | +0.6037 | 10 |
